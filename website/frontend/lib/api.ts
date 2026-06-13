@@ -26,7 +26,7 @@ export interface FamilyItem { id: number; name: string; plan: string; member_cou
 export interface DeviceItem { id: number; device_name: string; os: string; os_version: string; app_version: string; battery_level: number; is_online: boolean; last_seen: string; owner_name: string; owner_id: number }
 export interface SOSAlert { id: number; user_name: string; family_name: string; place_name: string; lat: number; lng: number; triggered_at: string; resolved_at?: string; status: string }
 export interface Notification { id: number; title: string; body: string; type: string; target: string; sent_count: number; delivered_count: number; opened_count: number; sent_at: string }
-export interface AdminUser { id: number; name: string; email: string; phone: string; is_active: boolean; status: string; devices: number; family_name: string; created_at: string; avatar: string }
+export interface AdminUser { id: number; name: string; email: string; phone: string; is_active: boolean; status: string; role: string; devices: number; family_name: string; created_at: string; avatar: string }
 
 // ── Admin API ─────────────────────────────────────────────────────
 export const adminApi = {
@@ -79,6 +79,8 @@ export const adminApi = {
     apiFetch<{ message: string }>(`/admin-api/users/${id}/status`, { method: 'PATCH', body: JSON.stringify({ is_active }) }, true),
   changeUserPassword: (id: number, new_password: string) =>
     apiFetch<{ message: string }>(`/admin-api/users/${id}/change-password`, { method: 'POST', body: JSON.stringify({ new_password }) }, true),
+  changeUserRole: (id: number, role: string) =>
+    apiFetch<{ message: string }>(`/admin-api/users/${id}/role`, { method: 'PATCH', body: JSON.stringify({ role }) }, true),
   deleteUser: (id: number) =>
     apiFetch<{ message: string }>(`/admin-api/users/${id}`, { method: 'DELETE' }, true),
 }

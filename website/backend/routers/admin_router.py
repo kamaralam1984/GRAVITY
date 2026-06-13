@@ -174,22 +174,29 @@ def analytics_data(admin=Depends(get_current_admin), db: Session = Depends(get_d
 
 # ── User Management ───────────────────────────────────────────────
 
+VALID_ROLES = ["user", "moderator", "admin", "superadmin"]
+
 class UserCreateRequest(BaseModel):
     name: str
     email: str
     phone: Optional[str] = None
     password: str
+    role: Optional[str] = "user"
 
 class UserUpdateRequest(BaseModel):
     name: Optional[str] = None
     email: Optional[str] = None
     phone: Optional[str] = None
+    role: Optional[str] = None
 
 class UserStatusRequest(BaseModel):
     is_active: bool
 
 class UserPasswordRequest(BaseModel):
     new_password: str
+
+class UserRoleRequest(BaseModel):
+    role: str
 
 @router.get("/users")
 def list_users(
@@ -222,6 +229,7 @@ def list_users(
             "id": u.id, "name": u.name, "email": u.email,
             "phone": u.phone or "", "is_active": u.is_active,
             "status": "active" if u.is_active else "inactive",
+            "role": u.role or "user",
             "devices": device_count, "family_name": family_name,
             "created_at": u.created_at.isoformat() if u.created_at else None,
             "avatar": (u.name[:2].upper() if u.name and len(u.name) >= 2 else (u.name[0].upper() if u.name else "?")),
@@ -234,7 +242,9 @@ def create_user(data: UserCreateRequest, admin=Depends(get_current_admin), db: S
         raise HTTPException(status_code=400, detail="Email already registered")
     user = models.User(
         name=data.name, email=data.email, phone=data.phone,
-        password_hash=get_password_hash(data.password), is_active=True,
+        password_hash=get_password_hash(data.password),
+        role=data.role if data.role in VALID_ROLES else "user",
+        is_active=True,
     )
     db.add(user)
     db.commit()
@@ -254,8 +264,23 @@ def update_user(user_id: int, data: UserUpdateRequest, admin=Depends(get_current
         user.email = data.email
     if data.phone is not None:
         user.phone = data.phone
+    if data.role is not None:
+        if data.role not in VALID_ROLES:
+            raise HTTPException(status_code=400, detail=f"Invalid role. Must be one of: {', '.join(VALID_ROLES)}")
+        user.role = data.role
     db.commit()
     return {"message": "User updated"}
+
+@router.patch("/users/{user_id}/role")
+def change_user_role(user_id: int, data: UserRoleRequest, admin=Depends(get_current_admin), db: Session = Depends(get_db)):
+    if data.role not in VALID_ROLES:
+        raise HTTPException(status_code=400, detail=f"Invalid role. Must be one of: {', '.join(VALID_ROLES)}")
+    user = db.query(models.User).filter(models.User.id == user_id).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    user.role = data.role
+    db.commit()
+    return {"message": "Role updated"}
 
 @router.patch("/users/{user_id}/status")
 def update_user_status(user_id: int, data: UserStatusRequest, admin=Depends(get_current_admin), db: Session = Depends(get_db)):

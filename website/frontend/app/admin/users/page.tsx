@@ -14,6 +14,14 @@ const AVATAR_COLORS = ['#4B80F0', '#D4A853', '#10B981', '#8B5CF6', '#EF4444', '#
 const STATUS_FILTERS = ['All', 'Active', 'Inactive']
 const PAGE_SIZE = 10
 
+const ROLES = ['user', 'moderator', 'admin', 'superadmin']
+const ROLE_CONFIG: Record<string, { label: string; color: string; bg: string }> = {
+  user:        { label: 'User',       color: '#6B7280', bg: 'rgba(107,114,128,0.12)' },
+  moderator:   { label: 'Moderator',  color: '#06B6D4', bg: 'rgba(6,182,212,0.12)'   },
+  admin:       { label: 'Admin',      color: '#8B5CF6', bg: 'rgba(139,92,246,0.12)'  },
+  superadmin:  { label: 'Super Admin',color: '#D4A853', bg: 'rgba(212,168,83,0.12)'  },
+}
+
 // ── Modal backdrop ────────────────────────────────────────────────
 function Backdrop({ onClick }: { onClick: () => void }) {
   return (
@@ -118,6 +126,26 @@ function DeleteConfirm({ user, onConfirm, onClose, loading }: { user: AdminUser;
 }
 
 // ── Create / Edit form ────────────────────────────────────────────
+function RoleSelect({ value, onChange }: { value: string; onChange: (v: string) => void }) {
+  return (
+    <div style={{ marginBottom: 14 }}>
+      <label style={{ display: 'block', fontSize: 12.5, fontWeight: 600, color: 'var(--text-secondary)', marginBottom: 5 }}>Role<span style={{ color: '#EF4444', marginLeft: 2 }}>*</span></label>
+      <div style={{ display: 'flex', gap: 7, flexWrap: 'wrap' }}>
+        {ROLES.map(r => {
+          const cfg = ROLE_CONFIG[r]
+          const active = value === r
+          return (
+            <button key={r} type="button" onClick={() => onChange(r)}
+              style={{ padding: '5px 13px', borderRadius: 8, border: `1.5px solid ${active ? cfg.color : 'var(--border)'}`, background: active ? cfg.bg : 'transparent', color: active ? cfg.color : 'var(--text-secondary)', fontSize: 12.5, fontWeight: active ? 700 : 400, cursor: 'pointer', transition: 'all 0.15s' }}>
+              {cfg.label}
+            </button>
+          )
+        })}
+      </div>
+    </div>
+  )
+}
+
 function UserForm({ mode, user, onSubmit, onClose, loading, error }: {
   mode: 'create' | 'edit'; user?: AdminUser; onSubmit: (data: any) => void
   onClose: () => void; loading: boolean; error: string
@@ -125,6 +153,7 @@ function UserForm({ mode, user, onSubmit, onClose, loading, error }: {
   const [name, setName] = useState(user?.name || '')
   const [email, setEmail] = useState(user?.email || '')
   const [phone, setPhone] = useState(user?.phone || '')
+  const [role, setRole] = useState(user?.role || 'user')
   const [password, setPassword] = useState('')
   const [confirm, setConfirm] = useState('')
 
@@ -133,9 +162,9 @@ function UserForm({ mode, user, onSubmit, onClose, loading, error }: {
     if (mode === 'create') {
       if (!password) return
       if (password !== confirm) return
-      onSubmit({ name, email, phone: phone || undefined, password })
+      onSubmit({ name, email, phone: phone || undefined, password, role })
     } else {
-      onSubmit({ name, email, phone: phone || undefined })
+      onSubmit({ name, email, phone: phone || undefined, role })
     }
   }
 
@@ -144,6 +173,7 @@ function UserForm({ mode, user, onSubmit, onClose, loading, error }: {
       <Field label="Full Name" value={name} onChange={setName} placeholder="Enter full name" required />
       <Field label="Email" value={email} onChange={setEmail} type="email" placeholder="user@example.com" required />
       <Field label="Phone" value={phone} onChange={setPhone} placeholder="+91 98765 43210" />
+      <RoleSelect value={role} onChange={setRole} />
       {mode === 'create' && (
         <>
           <Field label="Password" value={password} onChange={setPassword} type="password" placeholder="Min. 6 characters" required hint="Must be at least 6 characters" />
@@ -379,7 +409,7 @@ export default function UsersPage() {
           <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: 760 }}>
             <thead>
               <tr style={{ borderBottom: '1px solid var(--border)', background: 'var(--bg-surface2)' }}>
-                {['User', 'Email / Phone', 'Status', 'Devices', 'Family', 'Joined', 'Actions'].map(h => (
+                {['User', 'Email / Phone', 'Role', 'Status', 'Devices', 'Family', 'Joined', 'Actions'].map(h => (
                   <th key={h} style={{ padding: '10px 14px', textAlign: 'left', fontSize: 11.5, fontWeight: 600, color: 'var(--text-muted)', whiteSpace: 'nowrap' }}>{h}</th>
                 ))}
               </tr>
@@ -423,6 +453,17 @@ export default function UsersPage() {
                     <td style={{ padding: '11px 14px' }}>
                       <p style={{ margin: '0 0 2px', fontSize: 12.5, color: 'var(--text-secondary)' }}>{user.email}</p>
                       {user.phone && <p style={{ margin: 0, fontSize: 12, color: 'var(--text-muted)' }}>{user.phone}</p>}
+                    </td>
+                    {/* Role */}
+                    <td style={{ padding: '11px 14px' }}>
+                      {(() => {
+                        const cfg = ROLE_CONFIG[user.role] || ROLE_CONFIG.user
+                        return (
+                          <span style={{ padding: '3px 9px', borderRadius: 999, fontSize: 11.5, fontWeight: 600, color: cfg.color, background: cfg.bg }}>
+                            {cfg.label}
+                          </span>
+                        )
+                      })()}
                     </td>
                     {/* Status */}
                     <td style={{ padding: '11px 14px' }}>
@@ -513,10 +554,16 @@ export default function UsersPage() {
                   {drawer.avatar}
                 </div>
                 <h4 style={{ margin: '0 0 3px', fontFamily: 'Plus Jakarta Sans, sans-serif', fontWeight: 700, fontSize: 17, color: 'var(--text-primary)' }}>{drawer.name}</h4>
-                <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, padding: '3px 10px', borderRadius: 999, fontSize: 12, fontWeight: 600, color: drawer.is_active ? '#10B981' : '#F59E0B', background: drawer.is_active ? 'rgba(16,185,129,0.12)' : 'rgba(245,158,11,0.12)' }}>
-                  <span style={{ width: 5, height: 5, borderRadius: '50%', background: drawer.is_active ? '#10B981' : '#F59E0B' }} />
-                  {drawer.is_active ? 'Active' : 'Inactive'}
-                </span>
+                <div style={{ display: 'flex', gap: 7, flexWrap: 'wrap', justifyContent: 'center' }}>
+                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, padding: '3px 10px', borderRadius: 999, fontSize: 12, fontWeight: 600, color: drawer.is_active ? '#10B981' : '#F59E0B', background: drawer.is_active ? 'rgba(16,185,129,0.12)' : 'rgba(245,158,11,0.12)' }}>
+                    <span style={{ width: 5, height: 5, borderRadius: '50%', background: drawer.is_active ? '#10B981' : '#F59E0B' }} />
+                    {drawer.is_active ? 'Active' : 'Inactive'}
+                  </span>
+                  {(() => {
+                    const cfg = ROLE_CONFIG[drawer.role] || ROLE_CONFIG.user
+                    return <span style={{ padding: '3px 10px', borderRadius: 999, fontSize: 12, fontWeight: 600, color: cfg.color, background: cfg.bg }}>{cfg.label}</span>
+                  })()}
+                </div>
               </div>
 
               {[
