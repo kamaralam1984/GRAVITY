@@ -310,3 +310,227 @@ def delete_user(user_id: int, admin=Depends(get_current_admin), db: Session = De
     db.delete(user)
     db.commit()
     return {"message": "User deleted"}
+
+
+# ── Children ──────────────────────────────────────────────────────────────────
+
+@router.get("/children")
+def list_children(
+    skip: int = 0, limit: int = 50, search: str = "",
+    status: str = "All",
+    admin=Depends(get_current_admin), db: Session = Depends(get_db)
+):
+    """All users who are FamilyMembers with role='child'."""
+    q = (
+        db.query(models.User, models.FamilyMember, models.Family)
+        .join(models.FamilyMember, models.FamilyMember.user_id == models.User.id)
+        .join(models.Family, models.Family.id == models.FamilyMember.family_id)
+        .filter(models.FamilyMember.role == "child")
+    )
+    if search:
+        q = q.filter(models.User.name.ilike(f"%{search}%"))
+    total = q.count()
+    rows = q.order_by(desc(models.User.created_at)).offset(skip).limit(limit).all()
+    result = []
+    for user, member, family in rows:
+        # find parent (owner of family)
+        owner_member = db.query(models.FamilyMember).filter(
+            models.FamilyMember.family_id == family.id,
+            models.FamilyMember.role == "owner"
+        ).first()
+        parent = db.query(models.User).filter(models.User.id == owner_member.user_id).first() if owner_member else None
+        device_count = db.query(func.count(models.Device.id)).filter(models.Device.user_id == user.id).scalar() or 0
+        has_device = device_count > 0
+        result.append({
+            "id": user.id,
+            "name": user.name,
+            "family_name": family.name,
+            "parent_name": parent.name if parent else "—",
+            "device_count": device_count,
+            "device": "GravityWatch" if has_device else "No Device",
+            "status": "Safe" if user.is_active else "Offline",
+            "is_active": user.is_active,
+            "joined_at": user.created_at.isoformat() if user.created_at else None,
+        })
+    # count by status
+    total_safe = sum(1 for r in result if r["status"] == "Safe")
+    total_offline = len(result) - total_safe
+    if status != "All":
+        result = [r for r in result if r["status"] == status]
+    return {
+        "total": total,
+        "safe_count": total_safe,
+        "offline_count": total_offline,
+        "alert_count": 0,
+        "children": result,
+    }
+
+
+# ── Elderly ───────────────────────────────────────────────────────────────────
+
+@router.get("/elderly")
+def list_elderly(
+    skip: int = 0, limit: int = 50, search: str = "",
+    health_filter: str = "All",
+    admin=Depends(get_current_admin), db: Session = Depends(get_db)
+):
+    """Users who have health records (indicating health monitoring)."""
+    q = (
+        db.query(models.User, models.HealthRecord)
+        .join(models.HealthRecord, models.HealthRecord.user_id == models.User.id)
+    )
+    if search:
+        q = q.filter(models.User.name.ilike(f"%{search}%"))
+    # deduplicate by user
+    seen_ids: set = set()
+    rows = q.order_by(desc(models.HealthRecord.recorded_at)).all()
+    unique_rows = []
+    for user, record in rows:
+        if user.id not in seen_ids:
+            seen_ids.add(user.id)
+            unique_rows.append((user, record))
+    total = len(unique_rows)
+    result = []
+    for user, record in unique_rows[skip: skip + limit]:
+        # find caregiver (family owner)
+        member = db.query(models.FamilyMember).filter(models.FamilyMember.user_id == user.id).first()
+        caregiver_name = "—"
+        if member:
+            owner_m = db.query(models.FamilyMember).filter(
+                models.FamilyMember.family_id == member.family_id,
+                models.FamilyMember.role == "owner"
+            ).first()
+            if owner_m:
+                owner = db.query(models.User).filter(models.User.id == owner_m.user_id).first()
+                caregiver_name = owner.name if owner else "—"
+        device_count = db.query(func.count(models.Device.id)).filter(models.Device.user_id == user.id).scalar() or 0
+        # derive health status from heart rate
+        hr = record.heart_rate or 0
+        if hr == 0:
+            health = "Stable"
+        elif hr > 110 or hr < 50:
+            health = "Critical"
+        elif hr > 100 or hr < 55:
+            health = "At Risk"
+        else:
+            health = "Stable"
+        result.append({
+            "id": user.id,
+            "name": user.name,
+            "caregiver": caregiver_name,
+            "health": health,
+            "heart_rate": hr,
+            "steps": record.steps or 0,
+            "last_checkin": record.created_at.isoformat() if record.created_at else None,
+            "device": "GravityWatch" if device_count > 0 else "No Device",
+            "is_active": user.is_active,
+        })
+    if health_filter != "All":
+        result = [r for r in result if r["health"] == health_filter]
+    return {
+        "total": total,
+        "stable_count": sum(1 for r in result if r["health"] == "Stable"),
+        "at_risk_count": sum(1 for r in result if r["health"] == "At Risk"),
+        "critical_count": sum(1 for r in result if r["health"] == "Critical"),
+        "elderly": result,
+    }
+
+
+# ── Caregivers ────────────────────────────────────────────────────────────────
+
+@router.get("/caregivers")
+def list_caregivers(
+    skip: int = 0, limit: int = 50, search: str = "",
+    status_filter: str = "All",
+    admin=Depends(get_current_admin), db: Session = Depends(get_db)
+):
+    """Family owners who have health-monitored members (acting as caregivers)."""
+    owner_members = db.query(models.FamilyMember).filter(models.FamilyMember.role == "owner").all()
+    result = []
+    for om in owner_members:
+        user = db.query(models.User).filter(models.User.id == om.user_id).first()
+        if not user:
+            continue
+        if search and search.lower() not in user.name.lower():
+            continue
+        # count monitored members in their family that have health records
+        family_members = db.query(models.FamilyMember).filter(
+            models.FamilyMember.family_id == om.family_id,
+            models.FamilyMember.user_id != om.user_id
+        ).all()
+        monitored_count = 0
+        for fm in family_members:
+            has_hr = db.query(models.HealthRecord).filter(models.HealthRecord.user_id == fm.user_id).first()
+            if has_hr:
+                monitored_count += 1
+        status = "Active" if user.is_active else "Inactive"
+        result.append({
+            "id": user.id,
+            "name": user.name,
+            "phone": user.phone or "—",
+            "email": user.email,
+            "elders_monitored": monitored_count,
+            "family_members": len(family_members),
+            "status": status,
+            "is_active": user.is_active,
+            "joined_at": user.created_at.isoformat() if user.created_at else None,
+        })
+    total = len(result)
+    if status_filter != "All":
+        result = [r for r in result if r["status"] == status_filter]
+    result = result[skip: skip + limit]
+    return {
+        "total": total,
+        "active_count": sum(1 for r in result if r["status"] == "Active"),
+        "inactive_count": sum(1 for r in result if r["status"] == "Inactive"),
+        "caregivers": result,
+    }
+
+
+# ── KYC / User Verification ───────────────────────────────────────────────────
+
+@router.get("/verification")
+def list_verification(
+    skip: int = 0, limit: int = 50, search: str = "",
+    status_filter: str = "All", type_filter: str = "All",
+    admin=Depends(get_current_admin), db: Session = Depends(get_db)
+):
+    """User verification status based on phone/email presence."""
+    q = db.query(models.User)
+    if search:
+        q = q.filter(
+            (models.User.name.ilike(f"%{search}%")) |
+            (models.User.email.ilike(f"%{search}%"))
+        )
+    total = q.count()
+    users = q.order_by(desc(models.User.created_at)).offset(skip).limit(limit).all()
+    result = []
+    for u in users:
+        # derive verification type and status
+        if u.phone:
+            v_type = "Phone"
+            v_status = "Verified"
+        else:
+            v_type = "Email"
+            v_status = "Pending" if u.is_active else "Rejected"
+        result.append({
+            "id": u.id,
+            "user": u.name,
+            "email": u.email,
+            "phone": u.phone or "—",
+            "submitted": u.created_at.strftime("%d %b %Y") if u.created_at else "—",
+            "type": v_type,
+            "status": v_status,
+            "is_active": u.is_active,
+        })
+    if status_filter != "All":
+        result = [r for r in result if r["status"] == status_filter]
+    if type_filter != "All":
+        result = [r for r in result if r["type"] == type_filter]
+    return {
+        "total": total,
+        "pending_count": sum(1 for r in result if r["status"] == "Pending"),
+        "verified_count": sum(1 for r in result if r["status"] == "Verified"),
+        "rejected_count": sum(1 for r in result if r["status"] == "Rejected"),
+        "verifications": result,
+    }
