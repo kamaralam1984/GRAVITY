@@ -101,9 +101,10 @@ const BADGES = [
 
 /* ─── Stat pills ─────────────────────────────────────────────────────────────── */
 const STATS = [
-  { dot: '#10B981', label: '99.9% Uptime' },
-  { dot: '#3B82F6', label: '50+ Countries' },
-  { dot: '#D4A853', label: 'Military Grade Encryption' },
+  { dot: '#D4A853', label: 'AI Guardian Active', icon: '🧠' },
+  { dot: '#10B981', label: '99.9% Uptime', icon: null },
+  { dot: '#3B82F6', label: '50+ Countries', icon: null },
+  { dot: '#A855F7', label: 'Military Grade Encryption', icon: null },
 ];
 
 /* ─── Entrance animation factory ─────────────────────────────────────────────── */
@@ -300,7 +301,7 @@ export default function HeroSection() {
               grandparents. Wherever life takes them.
             </motion.p>
 
-            {/* 4. CTA buttons */}
+            {/* 4. CTA buttons — Row 1 */}
             <motion.div {...fadeUp(0.4)} className="flex flex-wrap gap-3 mt-8">
               {/* Primary — gold */}
               <motion.a
@@ -347,6 +348,124 @@ export default function HeroSection() {
               </motion.button>
             </motion.div>
 
+            {/* 4b. CTA buttons — Row 2 */}
+            <motion.div {...fadeUp(0.45)} className="flex flex-wrap gap-3 mt-3">
+              {/* WhatsApp CTA */}
+              <motion.a
+                href="https://wa.me/message/gravity"
+                target="_blank"
+                rel="noopener noreferrer"
+                whileHover={{ scale: 1.04, y: -1 }}
+                whileTap={{ scale: 0.96 }}
+                className="inline-flex items-center gap-2 py-2.5 px-5 rounded-2xl text-sm font-semibold transition-all duration-200"
+                style={{
+                  backgroundColor: isDark ? 'rgba(37,211,102,0.12)' : 'rgba(37,211,102,0.10)',
+                  border: '1px solid rgba(37,211,102,0.3)',
+                  color: '#25D366',
+                  fontFamily: "'Inter', sans-serif",
+                }}
+              >
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z"/>
+                </svg>
+                Chat on WhatsApp
+              </motion.a>
+
+              {/* Book Demo */}
+              <motion.a
+                href="#demo"
+                onClick={(e) => { e.preventDefault(); const el = document.querySelector('#demo'); if (el) el.scrollIntoView({ behavior: 'smooth' }); }}
+                whileHover={{ scale: 1.04, y: -1 }}
+                whileTap={{ scale: 0.96 }}
+                className="inline-flex items-center gap-2 py-2.5 px-5 rounded-2xl text-sm font-semibold transition-all duration-200 cursor-pointer"
+                style={{
+                  backgroundColor: isDark ? 'rgba(255,255,255,0.04)' : 'rgba(255,255,255,0.8)',
+                  border: '1px solid var(--border-strong)',
+                  color: 'var(--text-primary)',
+                  backdropFilter: 'blur(12px)',
+                  fontFamily: "'Inter', sans-serif",
+                }}
+              >
+                <svg width="13" height="13" viewBox="0 0 16 16" fill="none">
+                  <rect x="1" y="2" width="14" height="12" rx="2" stroke="currentColor" strokeWidth="1.4" />
+                  <path d="M1 6H15" stroke="currentColor" strokeWidth="1.4" />
+                  <path d="M5 1V3M11 1V3" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />
+                </svg>
+                Book a Demo
+              </motion.a>
+
+              {/* Watch Demo */}
+              <motion.a
+                href="#how-it-works"
+                onClick={(e) => { e.preventDefault(); const el = document.querySelector('#how-it-works'); if (el) el.scrollIntoView({ behavior: 'smooth' }); }}
+                whileHover={{ scale: 1.04, y: -1 }}
+                whileTap={{ scale: 0.96 }}
+                className="inline-flex items-center gap-2 py-2.5 px-5 rounded-2xl text-sm font-semibold transition-all duration-200 cursor-pointer"
+                style={{
+                  backgroundColor: 'transparent',
+                  color: 'var(--text-muted)',
+                  fontFamily: "'Inter', sans-serif",
+                }}
+              >
+                <span
+                  className="w-5 h-5 rounded-full flex items-center justify-center shrink-0"
+                  style={{ backgroundColor: isDark ? 'rgba(240,237,232,0.1)' : 'rgba(15,17,23,0.08)' }}
+                >
+                  <svg viewBox="0 0 24 24" fill="currentColor" width="8" height="8" style={{ marginLeft: '1px' }}>
+                    <path d="M8 5v14l11-7z" />
+                  </svg>
+                </span>
+                Watch 2-min Demo
+              </motion.a>
+            </motion.div>
+
+            {/* 4c. App Store badges */}
+            <motion.div {...fadeUp(0.48)} className="flex flex-wrap gap-3 mt-4">
+              {/* App Store */}
+              <motion.a
+                href="#download"
+                whileHover={{ scale: 1.04, y: -1 }}
+                whileTap={{ scale: 0.96 }}
+                className="inline-flex items-center gap-2.5 px-4 py-2.5 rounded-xl text-sm transition-all duration-200"
+                style={{
+                  backgroundColor: isDark ? 'rgba(255,255,255,0.07)' : 'rgba(15,17,23,0.07)',
+                  border: isDark ? '1px solid rgba(255,255,255,0.12)' : '1px solid rgba(15,17,23,0.12)',
+                  color: 'var(--text-primary)',
+                  fontFamily: "'Inter', sans-serif",
+                }}
+              >
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style={{ flexShrink: 0 }}>
+                  <path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.8-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z"/>
+                </svg>
+                <div className="leading-tight">
+                  <div className="text-[8px] opacity-70">Download on the</div>
+                  <div className="text-xs font-semibold">App Store</div>
+                </div>
+              </motion.a>
+
+              {/* Google Play */}
+              <motion.a
+                href="#download"
+                whileHover={{ scale: 1.04, y: -1 }}
+                whileTap={{ scale: 0.96 }}
+                className="inline-flex items-center gap-2.5 px-4 py-2.5 rounded-xl text-sm transition-all duration-200"
+                style={{
+                  backgroundColor: isDark ? 'rgba(255,255,255,0.07)' : 'rgba(15,17,23,0.07)',
+                  border: isDark ? '1px solid rgba(255,255,255,0.12)' : '1px solid rgba(15,17,23,0.12)',
+                  color: 'var(--text-primary)',
+                  fontFamily: "'Inter', sans-serif",
+                }}
+              >
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style={{ flexShrink: 0 }}>
+                  <path d="M3.18 23.76c.32.18.68.24 1.04.18L15.66 12 12 8.34 3.18 23.76zm18.07-11.2l-2.84-1.66-3.23 3.1 3.23 3.1 2.87-1.68c.82-.48.82-1.38-.03-1.86zM1.05 1.28C.98 1.49.95 1.72.95 1.97V22c0 .25.03.49.1.7L12.34 12 1.05 1.28zm13.47 9.38l-10.85-10c-.12-.11-.25-.2-.4-.26L14.52 12l-3.23-3.1 3.23-2.24z"/>
+                </svg>
+                <div className="leading-tight">
+                  <div className="text-[8px] opacity-70">Get it on</div>
+                  <div className="text-xs font-semibold">Google Play</div>
+                </div>
+              </motion.a>
+            </motion.div>
+
             {/* 5. Social proof */}
             <motion.div {...fadeUp(0.5)} className="flex items-center gap-3 mt-6">
               {/* Overlapping avatars */}
@@ -384,7 +503,11 @@ export default function HeroSection() {
                     fontFamily: "'Inter', sans-serif",
                   }}
                 >
-                  <span className="w-1.5 h-1.5 rounded-full shrink-0" style={{ backgroundColor: s.dot }} />
+                  {s.icon ? (
+                    <span className="text-xs">{s.icon}</span>
+                  ) : (
+                    <span className="w-1.5 h-1.5 rounded-full shrink-0" style={{ backgroundColor: s.dot }} />
+                  )}
                   {s.label}
                 </span>
               ))}
@@ -686,30 +809,61 @@ export default function HeroSection() {
       </div>
 
       {/* ── Slide dot navigation ─────────────────────────────────────────────── */}
-      <div className="absolute bottom-10 left-1/2 -translate-x-1/2 z-20 flex items-center gap-2.5">
-        {HERO_SLIDES.map((_, i) => (
-          <button
-            key={i}
-            onClick={() => setActiveSlide(i)}
-            aria-label={`Slide ${i + 1}`}
-            className="relative h-1.5 rounded-full transition-all duration-500 focus:outline-none"
-            style={{
-              width: i === activeSlide ? 28 : 8,
-              background: i === activeSlide
-                ? 'var(--gold)'
-                : 'rgba(255,255,255,0.35)',
-            }}
+      <div className="absolute bottom-20 left-1/2 -translate-x-1/2 z-20 flex flex-col items-center gap-4">
+        <div className="flex items-center gap-2.5">
+          {HERO_SLIDES.map((_, i) => (
+            <button
+              key={i}
+              onClick={() => setActiveSlide(i)}
+              aria-label={`Slide ${i + 1}`}
+              className="relative h-1.5 rounded-full transition-all duration-500 focus:outline-none"
+              style={{
+                width: i === activeSlide ? 28 : 8,
+                background: i === activeSlide
+                  ? 'var(--gold)'
+                  : 'rgba(255,255,255,0.35)',
+              }}
+            >
+              {i === activeSlide && (
+                <motion.span
+                  className="absolute inset-0 rounded-full"
+                  style={{ background: 'var(--gold)', opacity: 0.4 }}
+                  animate={{ scaleX: [0, 1] }}
+                  transition={{ duration: 5, ease: 'linear' }}
+                />
+              )}
+            </button>
+          ))}
+        </div>
+
+        {/* Enterprise strip */}
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, delay: 1.0 }}
+          className="flex items-center gap-2 px-5 py-2 rounded-full"
+          style={{
+            backgroundColor: isDark ? 'rgba(0,0,0,0.35)' : 'rgba(255,255,255,0.35)',
+            backdropFilter: 'blur(16px)',
+            border: isDark ? '1px solid rgba(212,168,83,0.15)' : '1px solid rgba(184,114,10,0.15)',
+          }}
+        >
+          <svg width="11" height="11" viewBox="0 0 12 12" fill="none" style={{ color: 'var(--gold)', flexShrink: 0 }}>
+            <path d="M6 1L7.5 4.5L11 5.5L8.5 8L9 11.5L6 10L3 11.5L3.5 8L1 5.5L4.5 4.5Z" fill="currentColor" opacity="0.8" />
+          </svg>
+          <span
+            className="text-[10px] font-semibold tracking-wide"
+            style={{ color: isDark ? 'rgba(212,168,83,0.85)' : 'rgba(184,114,10,0.9)', fontFamily: "'Inter', sans-serif" }}
           >
-            {i === activeSlide && (
-              <motion.span
-                className="absolute inset-0 rounded-full"
-                style={{ background: 'var(--gold)', opacity: 0.4 }}
-                animate={{ scaleX: [0, 1] }}
-                transition={{ duration: 5, ease: 'linear' }}
-              />
-            )}
-          </button>
-        ))}
+            Enterprise Ready:
+          </span>
+          <span
+            className="text-[10px] font-medium"
+            style={{ color: isDark ? 'rgba(240,237,232,0.55)' : 'rgba(15,17,23,0.5)', fontFamily: "'Inter', sans-serif" }}
+          >
+            GDPR · SOC 2 · ISO 27001 · HIPAA
+          </span>
+        </motion.div>
       </div>
 
       {/* ── Bottom fade ──────────────────────────────────────────────────────── */}

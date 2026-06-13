@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { MessageCircle, X, Send, Sparkles } from 'lucide-react'
+import { MessageCircle, X, Send, Sparkles, Brain } from 'lucide-react'
 
 /* ─────────────── types ─────────────── */
 interface Message {
@@ -24,10 +24,12 @@ const WELCOME_MESSAGE: Message = {
 }
 
 const QUICK_SUGGESTIONS = [
-  'How does tracking work?',
-  'Is my data private?',
-  'Elderly care features',
-  'Pricing plans',
+  'Where is my child?',
+  'Is grandma safe?',
+  'Show family activity today',
+  'Any unusual behavior?',
+  'Emergency recommendations',
+  'Family safety score',
 ]
 
 /* ─────────────── typing indicator ─────────────── */
@@ -182,8 +184,9 @@ export default function AIAssistant() {
                 </div>
 
                 <div className="flex-1 min-w-0">
-                  <p className="font-bold text-sm text-white leading-tight font-display">
-                    Gravity AI
+                  <p className="font-bold text-sm text-white leading-tight font-display flex items-center gap-1.5">
+                    <Brain size={12} className="text-purple-300" />
+                    AI Guardian
                   </p>
                   <p className="text-xs flex items-center gap-1.5" style={{ color: '#10B981' }}>
                     <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 inline-block animate-pulse" />
@@ -345,6 +348,17 @@ export default function AIAssistant() {
                     {charCount}/{charLimit}
                   </span>
                 </div>
+              </div>
+
+              {/* Powered by footer */}
+              <div
+                className="flex items-center justify-center gap-1.5 pb-2.5"
+                style={{ borderTop: '1px solid rgba(255,255,255,0.04)', paddingTop: '8px', marginTop: '2px' }}
+              >
+                <Sparkles size={9} style={{ color: 'rgba(167,139,250,0.5)' }} />
+                <span className="text-[9px] font-body" style={{ color: 'rgba(148,163,184,0.35)' }}>
+                  Powered by Gravity AI Guardian
+                </span>
               </div>
             </div>
           </motion.div>

@@ -37,6 +37,21 @@ export default function sitemap(): MetadataRoute.Sitemap {
     { url: baseUrl + '/terms', lastModified: now, changeFrequency: 'yearly', priority: 0.4 },
     { url: baseUrl + '/cookies', lastModified: now, changeFrequency: 'yearly', priority: 0.3 },
     { url: baseUrl + '/status', lastModified: now, changeFrequency: 'daily', priority: 0.5 },
+    // New pages — product & feature hubs
+    { url: baseUrl + '/ai-guardian', lastModified: now, changeFrequency: 'monthly', priority: 0.8 },
+    { url: baseUrl + '/enterprise', lastModified: now, changeFrequency: 'monthly', priority: 0.8 },
+    { url: baseUrl + '/school-safety', lastModified: now, changeFrequency: 'monthly', priority: 0.8 },
+    { url: baseUrl + '/wearables', lastModified: now, changeFrequency: 'monthly', priority: 0.7 },
+    { url: baseUrl + '/smart-home', lastModified: now, changeFrequency: 'monthly', priority: 0.7 },
+    // SEO landing pages
+    { url: baseUrl + '/family-safety-app', lastModified: now, changeFrequency: 'monthly', priority: 0.9 },
+    { url: baseUrl + '/child-safety-app', lastModified: now, changeFrequency: 'monthly', priority: 0.9 },
+    { url: baseUrl + '/elderly-monitoring-app', lastModified: now, changeFrequency: 'monthly', priority: 0.9 },
+    { url: baseUrl + '/sos-emergency-app', lastModified: now, changeFrequency: 'monthly', priority: 0.9 },
+    { url: baseUrl + '/teen-driver-monitoring', lastModified: now, changeFrequency: 'monthly', priority: 0.8 },
+    { url: baseUrl + '/school-bus-tracking', lastModified: now, changeFrequency: 'monthly', priority: 0.8 },
+    { url: baseUrl + '/family-locator-app', lastModified: now, changeFrequency: 'monthly', priority: 0.9 },
+    { url: baseUrl + '/personal-safety-app', lastModified: now, changeFrequency: 'monthly', priority: 0.8 },
   ]
 
   /* ── Blog posts ─────────────────────────────────────────────────────────── */

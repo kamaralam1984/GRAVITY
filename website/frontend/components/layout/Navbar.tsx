@@ -19,7 +19,8 @@ const NAV_LINKS = [
   { label: 'Home',          href: '/',               scroll: '#hero'         },
   { label: 'Features',      href: '/features',       scroll: '#features'     },
   { label: 'How It Works',  href: '/',               scroll: '#how-it-works' },
-  { label: 'Elderly Care',  href: '/elderly-care',   scroll: '#elderly-care' },
+  { label: 'AI Guardian',   href: '/ai-guardian',    scroll: '#ai-guardian'  },
+  { label: 'Enterprise',    href: '/enterprise',     scroll: '#enterprise'   },
   { label: 'Pricing',       href: '/pricing',        scroll: '#pricing'      },
 ];
 

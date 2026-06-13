@@ -2,460 +2,592 @@
 
 import { useState, useRef } from 'react'
 import { motion, AnimatePresence, useInView } from 'framer-motion'
-import { PRICING_PLANS, REGIONAL_PRICING } from '@/lib/constants'
+import Link from 'next/link'
+import { REGIONAL_PRICING } from '@/lib/constants'
 
-/* ─────────────── Regional plan prices ─────────────── */
-const REGIONAL_PLAN_PRICES: Record<
-  string,
-  { free: string; family: string; care: string; 'family-plus': string; ultimate: string; enterprise: string; gateway: string }
-> = {
-  'Kenya / East Africa': {
-    free: 'Free',
-    family: 'KES 650/mo',
-    care: 'KES 1,050/mo',
-    'family-plus': 'KES 1,750/mo',
-    ultimate: 'KES 2,800/mo',
-    enterprise: 'Custom',
-    gateway: 'M-Pesa · Airtel Money',
-  },
+/* ─────────────── Regional prices (6 tiers) ─────────────── */
+type RegionalPriceRow = {
+  free: string
+  premium: string
+  familyPlus: string
+  elderCare: string
+  school: string
+  enterprise: string
+  gateway: string
+}
+
+const REGIONAL_PRICES: Record<string, RegionalPriceRow> = {
   India: {
     free: 'Free',
-    family: '₹199/mo',
-    care: '₹299/mo',
-    'family-plus': '₹499/mo',
-    ultimate: '₹799/mo',
+    premium: '₹299/mo',
+    familyPlus: '₹499/mo',
+    elderCare: '₹699/mo',
+    school: '₹999/mo',
     enterprise: 'Custom',
     gateway: 'UPI · Razorpay',
   },
+  'Kenya / East Africa': {
+    free: 'Free',
+    premium: 'KES 550/mo',
+    familyPlus: 'KES 950/mo',
+    elderCare: 'KES 1,350/mo',
+    school: 'KES 1,900/mo',
+    enterprise: 'Custom',
+    gateway: 'M-Pesa · Airtel Money',
+  },
   'UAE / MENA': {
     free: 'Free',
-    family: 'AED 10/mo',
-    care: 'AED 16/mo',
-    'family-plus': 'AED 27/mo',
-    ultimate: 'AED 43/mo',
+    premium: 'AED 11/mo',
+    familyPlus: 'AED 18/mo',
+    elderCare: 'AED 26/mo',
+    school: 'AED 37/mo',
     enterprise: 'Custom',
     gateway: 'Stripe · PayTabs',
   },
   'UK / Europe': {
     free: 'Free',
-    family: '£1.99/mo',
-    care: '£2.99/mo',
-    'family-plus': '£4.99/mo',
-    ultimate: '£7.99/mo',
+    premium: '£2.49/mo',
+    familyPlus: '£4.49/mo',
+    elderCare: '£5.99/mo',
+    school: '£8.99/mo',
     enterprise: 'Custom',
     gateway: 'Stripe · PayPal',
   },
   'USA / Canada': {
     free: 'Free',
-    family: '$2.49/mo',
-    care: '$3.49/mo',
-    'family-plus': '$5.99/mo',
-    ultimate: '$9.99/mo',
+    premium: '$2.99/mo',
+    familyPlus: '$5.99/mo',
+    elderCare: '$7.99/mo',
+    school: '$11.99/mo',
     enterprise: 'Custom',
     gateway: 'Stripe · Apple Pay',
   },
   'Rest of Africa': {
     free: 'Free',
-    family: '$1.99/mo',
-    care: '$2.99/mo',
-    'family-plus': '$4.99/mo',
-    ultimate: '$7.99/mo',
+    premium: '$1.99/mo',
+    familyPlus: '$3.99/mo',
+    elderCare: '$5.99/mo',
+    school: '$8.99/mo',
     enterprise: 'Custom',
     gateway: 'Flutterwave · Paystack',
   },
 }
 
-/* ─────────────── FAQ data ─────────────── */
-const FAQ_ITEMS = [
+/* ─────────────── Plan definitions ─────────────── */
+type PlanId = 'free' | 'premium' | 'familyPlus' | 'elderCare' | 'school' | 'enterprise'
+
+interface Plan {
+  id: PlanId
+  name: string
+  tagline: string
+  emoji: string
+  badge: string | null
+  badgeColor: string | null
+  features: string[]
+  cta: string
+  ctaHref: string
+  accentColor: string
+  accentRgb: string
+  isFeatured: boolean
+  isContact: boolean
+}
+
+const PLANS: Plan[] = [
   {
-    question: 'Is it really free?',
-    answer:
-      'Yes, completely free forever — no credit card, no hidden fees, no trial expiry. The Free plan gives you live location sharing for up to 3 members, SOS alerts, basic geofencing, and our check-in system.',
+    id: 'free',
+    name: 'Free',
+    tagline: 'For individuals',
+    emoji: '🆓',
+    badge: null,
+    badgeColor: null,
+    features: [
+      '3 family members',
+      'Live location tracking',
+      'Basic SOS alerts',
+      'Check-in system',
+      '7-day location history',
+    ],
+    cta: 'Start Free',
+    ctaHref: '/#download',
+    accentColor: '#6B7280',
+    accentRgb: '107,114,128',
+    isFeatured: false,
+    isContact: false,
   },
   {
-    question: 'Can I track without the person knowing?',
-    answer:
-      'No — and we designed it this way intentionally. Every member must accept an invitation and can see who is viewing their location. Gravity is built on mutual trust, not surveillance. Privacy hours let any member pause their location sharing.',
+    id: 'premium',
+    name: 'Premium',
+    tagline: 'For small families',
+    emoji: '👨‍👩‍👧',
+    badge: 'Popular',
+    badgeColor: '#4B80F0',
+    features: [
+      '6 family members',
+      'Geofencing (10 zones)',
+      'Journey sharing',
+      '30-day location history',
+      'Priority support',
+    ],
+    cta: 'Go Premium',
+    ctaHref: '/#download',
+    accentColor: '#4B80F0',
+    accentRgb: '75,128,240',
+    isFeatured: false,
+    isContact: false,
   },
   {
-    question: 'Does it work offline?',
-    answer:
-      'Gravity requires an internet connection for live tracking. However, the last known location is always cached and viewable offline. SOS alerts are also sent via SMS as a backup when data is unavailable.',
+    id: 'familyPlus',
+    name: 'Family Plus',
+    tagline: 'Best for families',
+    emoji: '⭐',
+    badge: 'MOST POPULAR',
+    badgeColor: '#D4A853',
+    features: [
+      '15 family members',
+      'Unlimited geofences',
+      'Family chat',
+      'Driving safety suite',
+      'AI safety alerts',
+      'Wearable sync',
+    ],
+    cta: 'Get Family Plus',
+    ctaHref: '/#download',
+    accentColor: '#D4A853',
+    accentRgb: '212,168,83',
+    isFeatured: true,
+    isContact: false,
   },
   {
-    question: 'What happens in an SOS emergency?',
-    answer:
-      'One tap instantly sends an emergency alert with the exact GPS location to every circle member simultaneously. A loud alarm sounds continuously until acknowledged. On Care and Bundle plans, SMS escalation and emergency services integration are available.',
+    id: 'elderCare',
+    name: 'Elder Care',
+    tagline: 'For families with seniors',
+    emoji: '❤️',
+    badge: 'Care Focused',
+    badgeColor: '#10B981',
+    features: [
+      'Everything in Family Plus',
+      'Fall detection',
+      'Medication tracking',
+      'Health monitoring',
+      'Wellness dashboard',
+      'Caregiver mode',
+    ],
+    cta: 'Start Elder Care',
+    ctaHref: '/#download',
+    accentColor: '#10B981',
+    accentRgb: '16,185,129',
+    isFeatured: false,
+    isContact: false,
+  },
+  {
+    id: 'school',
+    name: 'School Edition',
+    tagline: 'For educational institutions',
+    emoji: '🏫',
+    badge: 'Education',
+    badgeColor: '#8B5CF6',
+    features: [
+      '500 students',
+      'Bus route tracking',
+      'Pickup verification',
+      'Admin dashboard',
+      'Parent notifications',
+      'Emergency mode',
+    ],
+    cta: 'School Sales',
+    ctaHref: 'mailto:schools@trackalways.com',
+    accentColor: '#8B5CF6',
+    accentRgb: '139,92,246',
+    isFeatured: false,
+    isContact: true,
+  },
+  {
+    id: 'enterprise',
+    name: 'Enterprise',
+    tagline: 'For organizations',
+    emoji: '🏢',
+    badge: 'Custom',
+    badgeColor: '#64748B',
+    features: [
+      'Unlimited users',
+      'White-label platform',
+      'Full API access',
+      'SSO (SAML 2.0)',
+      '99.9% SLA guarantee',
+      'Dedicated support',
+    ],
+    cta: 'Contact Sales',
+    ctaHref: '/enterprise#contact',
+    accentColor: '#94A3B8',
+    accentRgb: '148,163,184',
+    isFeatured: false,
+    isContact: true,
   },
 ]
 
-/* ─────────────── Plan visual config ─────────────── */
-const PLAN_STYLE: Record<string, {
-  emoji: string
-  topBorderStyle: React.CSSProperties
-  checkColor: string
-  isFeatured: boolean
-  btnStyle: React.CSSProperties
-  btnHoverStyle: React.CSSProperties
-}> = {
-  free: {
-    emoji: '🆓',
-    topBorderStyle: { borderTop: '4px solid var(--border-strong, #374151)' },
-    checkColor: 'var(--text-muted, #6B7280)',
-    isFeatured: false,
-    btnStyle: {
-      background: 'transparent',
-      border: '1.5px solid var(--border-strong, #374151)',
-      color: 'var(--text-secondary, #9CA3AF)',
-    },
-    btnHoverStyle: {
-      borderColor: 'var(--primary, #4B80F0)',
-      color: 'var(--primary, #4B80F0)',
-    },
-  },
-  family: {
-    emoji: '👨‍👩‍👧‍👦',
-    topBorderStyle: { borderTop: '4px solid var(--primary, #4B80F0)' },
-    checkColor: 'var(--primary, #4B80F0)',
-    isFeatured: false,
-    btnStyle: {
-      background: 'var(--primary, #4B80F0)',
-      border: 'none',
-      color: '#fff',
-    },
-    btnHoverStyle: {
-      background: '#2563EB',
-    },
-  },
-  care: {
-    emoji: '❤️',
-    topBorderStyle: { borderTop: '4px solid var(--safe, #10B981)' },
-    checkColor: 'var(--safe, #10B981)',
-    isFeatured: false,
-    btnStyle: {
-      background: 'var(--safe, #10B981)',
-      border: 'none',
-      color: '#fff',
-    },
-    btnHoverStyle: {
-      background: '#059669',
-    },
-  },
-  'family-plus': {
-    emoji: '⭐',
-    topBorderStyle: { borderTop: '4px solid var(--gold, #D4A853)' },
-    checkColor: 'var(--gold, #D4A853)',
-    isFeatured: true,
-    btnStyle: {
-      background: 'linear-gradient(135deg, #D4A853, #F5C842)',
-      border: 'none',
-      color: '#1A0F05',
-      fontWeight: 700,
-    },
-    btnHoverStyle: {
-      background: 'linear-gradient(135deg, #C49642, #E5B832)',
-      boxShadow: '0 4px 20px rgba(212,168,83,0.45)',
-    },
-  },
-  ultimate: {
-    emoji: '🚀',
-    topBorderStyle: { borderTop: '4px solid #8B5CF6' },
-    checkColor: '#8B5CF6',
-    isFeatured: false,
-    btnStyle: {
-      background: 'linear-gradient(135deg, #8B5CF6, #6D28D9)',
-      border: 'none',
-      color: '#fff',
-      fontWeight: 700,
-    },
-    btnHoverStyle: {
-      background: 'linear-gradient(135deg, #7C3AED, #5B21B6)',
-      boxShadow: '0 4px 20px rgba(139,92,246,0.45)',
-    },
-  },
-  enterprise: {
-    emoji: '🏢',
-    topBorderStyle: { borderTop: '4px solid #64748B' },
-    checkColor: '#94A3B8',
-    isFeatured: false,
-    btnStyle: {
-      background: 'transparent',
-      border: '1.5px solid #64748B',
-      color: '#94A3B8',
-    },
-    btnHoverStyle: {
-      borderColor: '#94A3B8',
-      color: '#F8FAFC',
-    },
-  },
-}
+/* ─────────────── Comparison table data ─────────────── */
+const COMPARISON_ROWS = [
+  { feature: 'Family members', free: '3', premium: '6', familyPlus: '15', elderCare: '15', school: '500 students', enterprise: 'Unlimited' },
+  { feature: 'Live location tracking', free: true, premium: true, familyPlus: true, elderCare: true, school: true, enterprise: true },
+  { feature: 'SOS alerts', free: 'Basic', premium: 'Priority', familyPlus: 'Priority', elderCare: 'Priority', school: 'Emergency mode', enterprise: 'Custom' },
+  { feature: 'Geofencing', free: false, premium: '10 zones', familyPlus: 'Unlimited', elderCare: 'Unlimited', school: 'Campus zones', enterprise: 'Unlimited' },
+  { feature: 'Location history', free: '7 days', premium: '30 days', familyPlus: '90 days', elderCare: '90 days', school: '90 days', enterprise: 'Custom' },
+  { feature: 'Fall detection', free: false, premium: false, familyPlus: false, elderCare: true, school: false, enterprise: 'Optional' },
+  { feature: 'Driving safety', free: false, premium: false, familyPlus: true, elderCare: true, school: false, enterprise: 'Optional' },
+  { feature: 'White-label', free: false, premium: false, familyPlus: false, elderCare: false, school: false, enterprise: true },
+  { feature: 'API access', free: false, premium: false, familyPlus: false, elderCare: false, school: false, enterprise: true },
+  { feature: 'SLA guarantee', free: false, premium: false, familyPlus: false, elderCare: false, school: false, enterprise: '99.9%' },
+]
 
-/* ─── helpers ─────────────────────────────────────────────────── */
-
-/** Parse a regional price string like "₹199/mo" → number (199), or null for Free/Custom */
-function parseRegionalAmount(raw: string): number | null {
+/* ─────────────── Helpers ─────────────── */
+function parseAmount(raw: string): number | null {
   if (raw === 'Free' || raw === 'Custom') return null
   const m = raw.match(/[\d,]+/)
   return m ? parseFloat(m[0].replace(',', '')) : null
 }
 
-/** Apply -20% to a regional price string for annual billing. */
-function annualizeRegional(raw: string): string {
+function annualize(raw: string): string {
   if (raw === 'Free' || raw === 'Custom') return raw
-  const amount = parseRegionalAmount(raw)
+  const amount = parseAmount(raw)
   if (amount === null) return raw
-  // strip number, apply 20% off, rebuild string
   const discounted = Math.round(amount * 0.8)
   return raw.replace(/[\d,]+/, discounted.toLocaleString())
 }
 
-/* ─────────────── Price display ─────────────── */
-function PriceDisplay({
-  plan,
-  billingCycle,
-  region,
+function getPlanPrice(plan: Plan, region: string, cycle: 'monthly' | 'annual'): string {
+  const row = REGIONAL_PRICES[region]
+  if (!row) return plan.id === 'enterprise' ? 'Custom' : '—'
+  const raw = row[plan.id]
+  return cycle === 'annual' ? annualize(raw) : raw
+}
+
+/* ─────────────── Region selector ─────────────── */
+function RegionSelector({
+  selected,
+  setSelected,
 }: {
-  plan: (typeof PRICING_PLANS)[0]
-  billingCycle: 'monthly' | 'annual'
-  region: string
+  selected: string
+  setSelected: (r: string) => void
 }) {
-  const regional = REGIONAL_PLAN_PRICES[region]
-
-  /* Use regional prices for every named region (including USA/Canada) */
-  if (regional) {
-    const rawMonthly =
-      plan.id === 'free'         ? regional.free
-      : plan.id === 'family'     ? regional.family
-      : plan.id === 'care'       ? regional.care
-      : plan.id === 'family-plus' ? regional['family-plus']
-      : plan.id === 'ultimate'   ? regional.ultimate
-      : regional.enterprise
-
-    const price = billingCycle === 'annual' ? annualizeRegional(rawMonthly) : rawMonthly
-
-    return (
-      <AnimatePresence mode="wait">
-        <motion.div
-          key={`${region}-${plan.id}-${billingCycle}`}
-          initial={{ opacity: 0, y: 8 }}
-          animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, y: -8 }}
-          transition={{ duration: 0.22 }}
-          className="mt-4"
-        >
-          <div
-            className="text-3xl font-extrabold leading-tight"
-            style={{
-              fontFamily: 'var(--font-display, "Plus Jakarta Sans", sans-serif)',
-              color: 'var(--text-primary)',
-            }}
-          >
-            {price}
-            {price !== 'Free' && price !== 'Custom' && (
-              <span className="text-sm font-normal ml-1" style={{ color: 'var(--text-muted)' }}>
-                /{billingCycle === 'annual' ? 'mo*' : 'mo'}
-              </span>
-            )}
-          </div>
-          {billingCycle === 'annual' && price !== 'Free' && price !== 'Custom' && (
-            <p className="text-xs mt-1" style={{ color: '#10B981', fontWeight: 600 }}>
-              Save 20% vs monthly
-            </p>
-          )}
-          {plan.id !== 'free' && plan.id !== 'enterprise' && (
-            <p className="text-xs mt-0.5" style={{ color: 'var(--text-muted)' }}>
-              via {regional.gateway}
-            </p>
-          )}
-        </motion.div>
-      </AnimatePresence>
-    )
-  }
-
-  /* Fallback when no region is selected (shows INR) */
-  if (plan.id === 'enterprise') {
-    return (
-      <div className="mt-4">
-        <div
-          className="text-3xl font-extrabold leading-tight"
-          style={{
-            fontFamily: 'var(--font-display, "Plus Jakarta Sans", sans-serif)',
-            color: 'var(--text-primary)',
-          }}
-        >
-          Custom
-        </div>
-        <p className="text-xs mt-1.5" style={{ color: 'var(--text-muted)' }}>
-          Contact us for a quote
-        </p>
-      </div>
-    )
-  }
-
-  const price = billingCycle === 'monthly' ? plan.monthlyPrice : plan.annualPrice
+  const [open, setOpen] = useState(false)
+  const current = REGIONAL_PRICING.find((r) => r.region === selected)
 
   return (
-    <AnimatePresence mode="wait">
-      <motion.div
-        key={`${billingCycle}-${plan.id}`}
-        initial={{ opacity: 0, y: 8 }}
-        animate={{ opacity: 1, y: 0 }}
-        exit={{ opacity: 0, y: -8 }}
-        transition={{ duration: 0.22 }}
-        className="mt-4 flex items-end gap-1"
+    <div className="relative">
+      <button
+        onClick={() => setOpen((v) => !v)}
+        className="flex items-center gap-2 text-sm rounded-xl px-4 py-2.5 focus:outline-none transition-all min-w-[200px] justify-between"
+        style={{
+          background: 'var(--bg-surface)',
+          border: '1px solid var(--border)',
+          color: 'var(--text-primary)',
+          fontFamily: "'Inter', sans-serif",
+        }}
       >
+        <span>
+          {current?.flag} {selected}
+        </span>
         <span
-          className="text-4xl font-extrabold leading-tight"
           style={{
-            fontFamily: 'var(--font-display, "Plus Jakarta Sans", sans-serif)',
-            color: 'var(--text-primary)',
+            display: 'inline-block',
+            transform: open ? 'rotate(180deg)' : 'rotate(0deg)',
+            transition: 'transform 0.2s',
+            color: 'var(--text-muted)',
           }}
         >
-          {price === 0 ? 'Free' : `₹${price}`}
+          ▾
         </span>
-        {price !== 0 && (
-          <span className="text-sm mb-1.5" style={{ color: 'var(--text-muted)' }}>
-            /{billingCycle === 'monthly' ? 'mo' : 'yr'}
-          </span>
+      </button>
+
+      <AnimatePresence>
+        {open && (
+          <motion.div
+            initial={{ opacity: 0, y: -6, scale: 0.97 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: -6, scale: 0.97 }}
+            transition={{ duration: 0.15 }}
+            className="absolute top-full left-0 mt-2 w-full rounded-xl overflow-hidden z-50"
+            style={{
+              background: 'var(--bg-surface2)',
+              border: '1px solid var(--border)',
+              boxShadow: '0 8px 30px rgba(0,0,0,0.2)',
+            }}
+          >
+            {REGIONAL_PRICING.map((r) => (
+              <button
+                key={r.region}
+                onClick={() => { setSelected(r.region); setOpen(false) }}
+                className="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-left transition-colors"
+                style={{
+                  color: selected === r.region ? 'var(--gold)' : 'var(--text-secondary)',
+                  background: selected === r.region ? 'rgba(212,168,83,0.08)' : 'transparent',
+                  fontWeight: selected === r.region ? 600 : 400,
+                  fontFamily: "'Inter', sans-serif",
+                }}
+              >
+                <span>{r.flag}</span>
+                <span>{r.region}</span>
+              </button>
+            ))}
+          </motion.div>
         )}
-      </motion.div>
-    </AnimatePresence>
+      </AnimatePresence>
+
+      {open && <div className="fixed inset-0 z-40" onClick={() => setOpen(false)} />}
+    </div>
   )
 }
 
 /* ─────────────── Pricing card ─────────────── */
 function PricingCard({
   plan,
-  billingCycle,
+  cycle,
   region,
   index,
   inView,
 }: {
-  plan: (typeof PRICING_PLANS)[0]
-  billingCycle: 'monthly' | 'annual'
+  plan: Plan
+  cycle: 'monthly' | 'annual'
   region: string
   index: number
   inView: boolean
 }) {
   const [hovered, setHovered] = useState(false)
-  const style = PLAN_STYLE[plan.id]
+  const price = getPlanPrice(plan, region, cycle)
+  const regionalRow = REGIONAL_PRICES[region]
+  const gateway = regionalRow?.gateway ?? ''
+  const showGateway = !plan.isContact && plan.id !== 'free'
+  const showSave = cycle === 'annual' && price !== 'Free' && price !== 'Custom'
 
   return (
     <motion.div
       initial={{ opacity: 0, y: 32 }}
       animate={inView ? { opacity: 1, y: 0 } : {}}
-      transition={{ duration: 0.6, ease: 'easeOut', delay: 0.15 + index * 0.1 }}
-      whileHover={{ y: -6, scale: 1.01 }}
+      transition={{ duration: 0.6, ease: 'easeOut', delay: 0.1 + index * 0.08 }}
+      whileHover={{ y: plan.isFeatured ? -10 : -6 }}
       onHoverStart={() => setHovered(true)}
       onHoverEnd={() => setHovered(false)}
-      className="relative flex flex-col rounded-2xl transition-shadow duration-300"
+      className="relative flex flex-col rounded-2xl"
       style={{
         background: 'var(--bg-surface)',
-        border: style.isFeatured
-          ? '1.5px solid var(--gold, #D4A853)'
-          : '1px solid var(--border)',
-        boxShadow: style.isFeatured
+        border: plan.isFeatured
+          ? `2px solid ${plan.accentColor}`
+          : `1px solid var(--border)`,
+        boxShadow: plan.isFeatured
           ? hovered
-            ? '0 0 50px rgba(212,168,83,0.3), 0 20px 60px rgba(0,0,0,0.25)'
-            : '0 0 30px rgba(212,168,83,0.2), 0 10px 40px rgba(0,0,0,0.15)'
+            ? `0 0 60px rgba(${plan.accentRgb},0.35), 0 20px 60px rgba(0,0,0,0.25)`
+            : `0 0 40px rgba(${plan.accentRgb},0.2), 0 10px 40px rgba(0,0,0,0.15)`
           : hovered
-            ? '0 16px 48px rgba(0,0,0,0.2)'
-            : '0 2px 12px rgba(0,0,0,0.07)',
+          ? `0 0 30px rgba(${plan.accentRgb},0.15), 0 16px 48px rgba(0,0,0,0.18)`
+          : '0 2px 12px rgba(0,0,0,0.07)',
+        transition: 'box-shadow 0.3s',
+        ...(plan.isFeatured ? { transform: 'scale(1.02)' } : {}),
       }}
     >
-      {/* Top color accent border */}
-      <div style={style.topBorderStyle} />
+      {/* Top accent border */}
+      <div
+        style={{
+          height: '4px',
+          borderRadius: '16px 16px 0 0',
+          background: plan.isFeatured
+            ? `linear-gradient(90deg, ${plan.accentColor}, #F5C842)`
+            : plan.accentColor,
+        }}
+      />
 
-      {/* "Most Popular" badge for bundle */}
-      {style.isFeatured && (
-        <div className="absolute top-4 right-4 z-10">
+      {/* Popular ribbon */}
+      {plan.isFeatured && (
+        <div className="absolute -top-4 left-1/2 -translate-x-1/2 z-10">
           <span
-            className="text-[10px] font-bold px-3 py-1 rounded-full"
+            className="text-[10px] font-extrabold px-5 py-1.5 rounded-full uppercase tracking-widest"
             style={{
               background: 'linear-gradient(135deg, #D4A853, #F5C842)',
               color: '#1A0F05',
+              boxShadow: '0 4px 16px rgba(212,168,83,0.5)',
             }}
           >
-            Most Popular
+            MOST POPULAR
           </span>
         </div>
       )}
 
-      <div className="p-6 flex flex-col flex-1">
-        {/* Plan icon + name */}
-        <div className="flex items-center gap-3 mb-1">
-          <span className="text-2xl">{style.emoji}</span>
-          <h3
-            className="text-xl font-bold"
+      {/* Badge (top-right) for non-featured */}
+      {plan.badge && !plan.isFeatured && plan.badgeColor && (
+        <div className="absolute top-4 right-4">
+          <span
+            className="text-[10px] font-bold px-2.5 py-1 rounded-full"
             style={{
-              fontFamily: 'var(--font-display, "Plus Jakarta Sans", sans-serif)',
-              color: 'var(--text-primary)',
+              background: `rgba(${plan.accentRgb},0.12)`,
+              color: plan.accentColor,
+              border: `1px solid rgba(${plan.accentRgb},0.3)`,
             }}
           >
-            {plan.name}
-          </h3>
+            {plan.badge}
+          </span>
+        </div>
+      )}
+
+      <div className="p-6 flex flex-col flex-1 pt-7">
+        {/* Icon + name */}
+        <div className="flex items-center gap-3 mb-1">
+          <span className="text-2xl">{plan.emoji}</span>
+          <div>
+            <h3
+              className="text-lg font-bold leading-tight"
+              style={{
+                fontFamily: "'Plus Jakarta Sans', sans-serif",
+                color: 'var(--text-primary)',
+              }}
+            >
+              {plan.name}
+            </h3>
+            <p
+              className="text-xs"
+              style={{ color: 'var(--text-muted)', fontFamily: "'Inter', sans-serif" }}
+            >
+              {plan.tagline}
+            </p>
+          </div>
         </div>
 
         {/* Price */}
-        <PriceDisplay plan={plan} billingCycle={billingCycle} region={region} />
-
-        {plan.monthlyPrice > 0 && plan.id !== 'enterprise' && !REGIONAL_PLAN_PRICES[region] && (
-          <p className="text-xs mt-0.5" style={{ color: 'var(--text-muted)' }}>
-            per {billingCycle === 'monthly' ? 'month' : 'year'}, billed {billingCycle}
-          </p>
-        )}
-        {plan.id === 'free' && (
-          <p className="text-xs mt-0.5 font-medium" style={{ color: 'var(--text-muted)' }}>
-            Free Forever
-          </p>
-        )}
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={`${region}-${plan.id}-${cycle}`}
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -8 }}
+            transition={{ duration: 0.2 }}
+            className="mt-4"
+          >
+            <div
+              className="font-extrabold leading-none"
+              style={{
+                fontFamily: "'Plus Jakarta Sans', sans-serif",
+                color: plan.isFeatured ? plan.accentColor : 'var(--text-primary)',
+                fontSize: price === 'Custom' ? '28px' : '30px',
+              }}
+            >
+              {price}
+              {price !== 'Free' && price !== 'Custom' && (
+                <span
+                  className="text-sm font-normal ml-1"
+                  style={{ color: 'var(--text-muted)' }}
+                >
+                  /{cycle === 'annual' ? 'mo*' : 'mo'}
+                </span>
+              )}
+            </div>
+            {showSave && (
+              <p className="text-xs mt-1 font-semibold" style={{ color: '#10B981' }}>
+                Save 20% vs monthly
+              </p>
+            )}
+            {showGateway && (
+              <p className="text-xs mt-0.5" style={{ color: 'var(--text-muted)', fontFamily: "'Inter', sans-serif" }}>
+                via {gateway}
+              </p>
+            )}
+            {plan.id === 'enterprise' && (
+              <p className="text-xs mt-0.5" style={{ color: 'var(--text-muted)', fontFamily: "'Inter', sans-serif" }}>
+                Contact us for a quote
+              </p>
+            )}
+          </motion.div>
+        </AnimatePresence>
 
         {/* Divider */}
         <div className="my-5" style={{ borderTop: '1px solid var(--border)' }} />
 
-        {/* Feature list */}
+        {/* Features */}
         <ul className="flex-1 flex flex-col gap-2.5 mb-6">
           {plan.features.map((feat) => (
             <li key={feat} className="flex items-start gap-2.5 text-sm">
               <span
-                className="flex-shrink-0 mt-0.5 text-base leading-none"
-                style={{ color: style.checkColor }}
+                className="flex-shrink-0 mt-0.5 font-bold"
+                style={{ color: plan.accentColor }}
               >
                 ✓
               </span>
-              <span style={{ color: 'var(--text-secondary)' }}>{feat}</span>
+              <span
+                style={{ color: 'var(--text-secondary)', fontFamily: "'Inter', sans-serif" }}
+              >
+                {feat}
+              </span>
             </li>
           ))}
         </ul>
 
         {/* CTA button */}
-        <motion.button
+        <motion.a
+          href={plan.ctaHref}
           whileTap={{ scale: 0.97 }}
-          className="w-full py-3 rounded-xl text-sm font-semibold transition-all duration-200 focus:outline-none"
+          className="w-full py-3 rounded-xl text-sm font-bold text-center block transition-all duration-200 focus:outline-none"
           style={{
-            fontFamily: 'var(--font-display, "Plus Jakarta Sans", sans-serif)',
-            ...style.btnStyle,
-            ...(hovered ? style.btnHoverStyle : {}),
+            fontFamily: "'Plus Jakarta Sans', sans-serif",
+            ...(plan.isFeatured
+              ? {
+                  background: 'linear-gradient(135deg, #D4A853, #F5C842)',
+                  color: '#1A0F05',
+                  boxShadow: hovered ? '0 4px 20px rgba(212,168,83,0.5)' : '0 2px 10px rgba(212,168,83,0.3)',
+                }
+              : plan.isContact
+              ? {
+                  background: 'transparent',
+                  border: `1.5px solid ${plan.accentColor}`,
+                  color: plan.accentColor,
+                }
+              : {
+                  background: `rgba(${plan.accentRgb},0.12)`,
+                  border: `1.5px solid rgba(${plan.accentRgb},0.35)`,
+                  color: plan.accentColor,
+                  ...(hovered ? { background: `rgba(${plan.accentRgb},0.2)` } : {}),
+                }),
           }}
         >
           {plan.cta}
-        </motion.button>
+        </motion.a>
       </div>
     </motion.div>
   )
 }
 
-/* ─────────────── Accordion FAQ item ─────────────── */
-function AccordionItem({ question, answer }: { question: string; answer: string }) {
+/* ─────────────── FAQ ─────────────── */
+const PRICING_FAQ = [
+  {
+    question: 'Is it really free?',
+    answer:
+      'Yes, completely free forever — no credit card, no hidden fees, no trial expiry. The Free plan gives you live location sharing for up to 3 members, SOS alerts, and check-ins.',
+  },
+  {
+    question: 'Can I track without the person knowing?',
+    answer:
+      'No — and we designed it this way intentionally. Every member must accept an invitation and can see who is viewing their location. Privacy hours let any member pause their location sharing.',
+  },
+  {
+    question: 'Does it work offline?',
+    answer:
+      'Gravity requires an internet connection for live tracking. However, the last known location is always cached and viewable offline. SOS alerts are also sent via SMS as a backup.',
+  },
+  {
+    question: 'What happens in an SOS emergency?',
+    answer:
+      'One tap instantly sends an emergency alert with the exact GPS location to every circle member simultaneously. A loud alarm sounds continuously until acknowledged.',
+  },
+  {
+    question: 'Can I switch plans later?',
+    answer:
+      'Yes — upgrade or downgrade at any time. When you upgrade, the new plan activates immediately with prorated billing for the remainder of your cycle.',
+  },
+]
+
+function FAQItem({ question, answer }: { question: string; answer: string }) {
   const [open, setOpen] = useState(false)
 
   return (
     <div
-      className="rounded-xl overflow-hidden transition-colors duration-200"
-      style={{
-        background: 'var(--bg-surface)',
-        border: '1px solid var(--border)',
-      }}
+      className="rounded-xl overflow-hidden"
+      style={{ background: 'var(--bg-surface)', border: '1px solid var(--border)' }}
     >
       <button
         onClick={() => setOpen((v) => !v)}
@@ -463,19 +595,16 @@ function AccordionItem({ question, answer }: { question: string; answer: string 
       >
         <span
           className="font-semibold text-sm md:text-base pr-4"
-          style={{ color: 'var(--text-primary)' }}
+          style={{ color: 'var(--text-primary)', fontFamily: "'Plus Jakarta Sans', sans-serif" }}
         >
           {question}
         </span>
         <div
           className="flex-shrink-0 w-7 h-7 rounded-full flex items-center justify-center transition-all duration-200"
           style={{
-            border: open
-              ? '1.5px solid var(--gold, #D4A853)'
-              : '1px solid var(--border-strong)',
+            border: open ? '1.5px solid var(--gold)' : '1px solid var(--border-strong)',
             background: open ? 'rgba(212,168,83,0.12)' : 'transparent',
-            color: open ? 'var(--gold, #D4A853)' : 'var(--text-muted)',
-            fontSize: '16px',
+            color: open ? 'var(--gold)' : 'var(--text-muted)',
             fontWeight: 700,
           }}
         >
@@ -498,6 +627,7 @@ function AccordionItem({ question, answer }: { question: string; answer: string 
               style={{
                 borderTop: '1px solid var(--border)',
                 color: 'var(--text-secondary)',
+                fontFamily: "'Inter', sans-serif",
               }}
             >
               {answer}
@@ -509,90 +639,18 @@ function AccordionItem({ question, answer }: { question: string; answer: string 
   )
 }
 
-/* ─────────────── Region selector dropdown ─────────────── */
-function RegionSelector({
-  selectedRegion,
-  setSelectedRegion,
-}: {
-  selectedRegion: string
-  setSelectedRegion: (r: string) => void
-}) {
-  const [open, setOpen] = useState(false)
-  const current = REGIONAL_PRICING.find((r) => r.region === selectedRegion)
-
-  return (
-    <div className="relative">
-      <button
-        onClick={() => setOpen((v) => !v)}
-        className="flex items-center gap-2 text-sm rounded-xl px-4 py-2.5 focus:outline-none transition-all min-w-[200px] justify-between"
-        style={{
-          background: 'var(--bg-surface)',
-          border: '1px solid var(--border)',
-          color: 'var(--text-primary)',
-        }}
-      >
-        <span>
-          {current?.flag} {selectedRegion}
-        </span>
-        <span
-          className="text-xs transition-transform duration-200"
-          style={{
-            display: 'inline-block',
-            transform: open ? 'rotate(180deg)' : 'rotate(0deg)',
-            color: 'var(--text-muted)',
-          }}
-        >
-          ▾
-        </span>
-      </button>
-
-      <AnimatePresence>
-        {open && (
-          <motion.div
-            initial={{ opacity: 0, y: -6, scale: 0.97 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: -6, scale: 0.97 }}
-            transition={{ duration: 0.16 }}
-            className="absolute top-full left-0 mt-2 w-full rounded-xl overflow-hidden z-50"
-            style={{
-              background: 'var(--bg-surface2)',
-              border: '1px solid var(--border)',
-              boxShadow: 'var(--shadow-lg)',
-            }}
-          >
-            {REGIONAL_PRICING.map((r) => (
-              <button
-                key={r.region}
-                onClick={() => {
-                  setSelectedRegion(r.region)
-                  setOpen(false)
-                }}
-                className="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-left transition-colors duration-100"
-                style={{
-                  color: selectedRegion === r.region ? 'var(--gold, #D4A853)' : 'var(--text-secondary)',
-                  background: selectedRegion === r.region ? 'rgba(212,168,83,0.08)' : 'transparent',
-                  fontWeight: selectedRegion === r.region ? 600 : 400,
-                }}
-              >
-                <span>{r.flag}</span>
-                <span>{r.region}</span>
-              </button>
-            ))}
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      {open && (
-        <div className="fixed inset-0 z-40" onClick={() => setOpen(false)} />
-      )}
-    </div>
-  )
+/* ─────────────── Comparison table cell ─────────────── */
+function CompCell({ value }: { value: string | boolean | undefined }) {
+  if (value === true) return <span style={{ color: '#10B981', fontSize: '16px' }}>✓</span>
+  if (value === false || value === undefined) return <span style={{ color: 'var(--text-muted)', fontSize: '14px' }}>—</span>
+  return <span style={{ color: 'var(--text-secondary)', fontSize: '13px', fontFamily: "'Inter', sans-serif" }}>{value}</span>
 }
 
 /* ─────────────── Main section ─────────────── */
 export default function PricingSection() {
-  const [billingCycle, setBillingCycle] = useState<'monthly' | 'annual'>('monthly')
-  const [selectedRegion, setSelectedRegion] = useState('USA / Canada')
+  const [cycle, setCycle] = useState<'monthly' | 'annual'>('monthly')
+  const [region, setRegion] = useState('USA / Canada')
+  const [showTable, setShowTable] = useState(false)
 
   const ref = useRef<HTMLElement>(null)
   const inView = useInView(ref, { once: true, margin: '-60px' })
@@ -604,17 +662,18 @@ export default function PricingSection() {
       className="py-24 relative overflow-hidden"
       style={{ background: 'var(--bg-surface)' }}
     >
-      {/* Warm ambient glows */}
+      {/* Ambient gold glow */}
       <div
         className="absolute pointer-events-none"
         style={{
           top: 0,
           left: '50%',
           transform: 'translateX(-50%)',
-          width: '900px',
-          height: '450px',
-          background: 'radial-gradient(ellipse, rgba(212,168,83,0.14) 0%, rgba(184,114,10,0.05) 55%, transparent 75%)',
-          filter: 'blur(50px)',
+          width: '1000px',
+          height: '500px',
+          background:
+            'radial-gradient(ellipse, rgba(212,168,83,0.13) 0%, rgba(184,114,10,0.04) 55%, transparent 75%)',
+          filter: 'blur(60px)',
         }}
       />
 
@@ -627,11 +686,10 @@ export default function PricingSection() {
           transition={{ duration: 0.6, ease: 'easeOut' }}
           className="text-center mb-10"
         >
-          {/* Badge */}
           <span
             className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-xs font-semibold uppercase tracking-widest mb-5"
             style={{
-              color: 'var(--gold, #D4A853)',
+              color: 'var(--gold)',
               border: '1px solid rgba(212,168,83,0.35)',
               background: 'rgba(212,168,83,0.07)',
             }}
@@ -641,9 +699,9 @@ export default function PricingSection() {
           </span>
 
           <h2
-            className="text-4xl md:text-5xl font-extrabold leading-tight mt-2"
+            className="text-4xl md:text-5xl font-extrabold leading-tight"
             style={{
-              fontFamily: 'var(--font-display, "Plus Jakarta Sans", sans-serif)',
+              fontFamily: "'Plus Jakarta Sans', sans-serif",
               color: 'var(--text-primary)',
             }}
           >
@@ -656,50 +714,55 @@ export default function PricingSection() {
                 backgroundClip: 'text',
               }}
             >
-              Family Plan
+              Safety Plan
             </span>
           </h2>
 
-          <p className="mt-4 max-w-xl mx-auto text-base" style={{ color: 'var(--text-secondary)' }}>
+          <p
+            className="mt-4 max-w-xl mx-auto text-base"
+            style={{ color: 'var(--text-secondary)', fontFamily: "'Inter', sans-serif" }}
+          >
             Start free. Upgrade when your family needs more. Cancel anytime.
           </p>
-          <p className="mt-1 text-xs" style={{ color: 'var(--text-muted)' }}>
-            Pricing in INR for India users. USD for international.
+          <p className="mt-1 text-xs" style={{ color: 'var(--text-muted)', fontFamily: "'Inter', sans-serif" }}>
+            <span style={{ color: 'var(--gold)' }}>₹</span> Prices shown for India.{' '}
+            <Link href="#pricing" className="underline underline-offset-2 hover:opacity-80">
+              See regional pricing →
+            </Link>
           </p>
         </motion.div>
 
-        {/* ── Controls row: billing toggle + region ── */}
+        {/* ── Controls: billing toggle + region ── */}
         <motion.div
           initial={{ opacity: 0, y: 16 }}
           animate={inView ? { opacity: 1, y: 0 } : {}}
           transition={{ duration: 0.6, ease: 'easeOut', delay: 0.1 }}
           className="flex flex-wrap items-center justify-center gap-4 mb-14"
         >
-          {/* Monthly / Annual pill toggle */}
+          {/* Billing toggle */}
           <div
             className="flex items-center gap-1 rounded-full p-1"
-            style={{
-              background: 'var(--bg-surface)',
-              border: '1px solid var(--border)',
-            }}
+            style={{ background: 'var(--bg-surface2)', border: '1px solid var(--border)' }}
           >
-            {(['monthly', 'annual'] as const).map((cycle) => (
+            {(['monthly', 'annual'] as const).map((c) => (
               <button
-                key={cycle}
-                onClick={() => setBillingCycle(cycle)}
+                key={c}
+                onClick={() => setCycle(c)}
                 className="relative px-5 py-2 rounded-full text-sm font-semibold transition-all duration-200 flex items-center gap-2 focus:outline-none"
                 style={{
-                  background: billingCycle === cycle ? 'var(--gold, #D4A853)' : 'transparent',
-                  color: billingCycle === cycle ? '#1A0F05' : 'var(--text-secondary)',
+                  background:
+                    cycle === c ? 'linear-gradient(135deg, #D4A853, #F5C842)' : 'transparent',
+                  color: cycle === c ? '#1A0F05' : 'var(--text-secondary)',
+                  fontFamily: "'Plus Jakarta Sans', sans-serif",
                 }}
               >
-                {cycle === 'monthly' ? 'Monthly' : 'Annual'}
-                {cycle === 'annual' && (
+                {c === 'monthly' ? 'Monthly' : 'Annual'}
+                {c === 'annual' && (
                   <span
                     className="text-[10px] px-1.5 py-0.5 rounded-full font-bold"
                     style={{
-                      background: billingCycle === 'annual' ? 'rgba(0,0,0,0.2)' : 'rgba(16,185,129,0.15)',
-                      color: billingCycle === 'annual' ? '#1A0F05' : '#10B981',
+                      background: cycle === 'annual' ? 'rgba(0,0,0,0.2)' : 'rgba(16,185,129,0.15)',
+                      color: cycle === 'annual' ? '#1A0F05' : '#10B981',
                     }}
                   >
                     -20%
@@ -709,64 +772,186 @@ export default function PricingSection() {
             ))}
           </div>
 
-          {/* Region selector */}
-          <RegionSelector selectedRegion={selectedRegion} setSelectedRegion={setSelectedRegion} />
+          <RegionSelector selected={region} setSelected={setRegion} />
         </motion.div>
 
-        {/* ── Pricing cards ── */}
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 items-stretch overflow-visible">
-          {PRICING_PLANS.map((plan, i) => (
+        {/* ── Pricing cards grid ── */}
+        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6 items-stretch overflow-visible pb-4">
+          {PLANS.map((plan, i) => (
             <PricingCard
               key={plan.id}
               plan={plan}
-              billingCycle={billingCycle}
-              region={selectedRegion}
+              cycle={cycle}
+              region={region}
               index={i}
               inView={inView}
             />
           ))}
         </div>
 
-        {/* Guarantee note */}
+        {/* Annual note + guarantee */}
         <motion.div
           initial={{ opacity: 0 }}
           animate={inView ? { opacity: 1 } : {}}
-          transition={{ duration: 0.6, delay: 0.65 }}
+          transition={{ duration: 0.6, delay: 0.6 }}
           className="text-center mt-8 flex flex-col gap-1"
         >
-          <p className="text-sm" style={{ color: 'var(--text-muted)' }}>
-            <span style={{ color: 'var(--safe, #10B981)', fontWeight: 600 }}>30-day money-back guarantee</span>
+          <p className="text-sm" style={{ color: 'var(--text-muted)', fontFamily: "'Inter', sans-serif" }}>
+            <span style={{ color: '#10B981', fontWeight: 600 }}>30-day money-back guarantee</span>
             {' '}· No credit card required for free plan · Cancel anytime
           </p>
-          {billingCycle === 'annual' && (
-            <p className="text-xs" style={{ color: 'var(--text-muted)' }}>
+          {cycle === 'annual' && (
+            <p className="text-xs" style={{ color: 'var(--text-muted)', fontFamily: "'Inter', sans-serif" }}>
               * Annual price shown per month — billed once per year (20% savings)
             </p>
           )}
         </motion.div>
 
-        {/* ── FAQ Accordion ── */}
+        {/* ── Enterprise CTA strip ── */}
         <motion.div
           initial={{ opacity: 0, y: 24 }}
           animate={inView ? { opacity: 1, y: 0 } : {}}
-          transition={{ duration: 0.6, ease: 'easeOut', delay: 0.7 }}
+          transition={{ duration: 0.6, delay: 0.7 }}
+          className="mt-16 rounded-2xl p-8 flex flex-col md:flex-row items-center justify-between gap-6"
+          style={{
+            background: 'linear-gradient(135deg, rgba(75,128,240,0.08) 0%, rgba(139,92,246,0.06) 100%)',
+            border: '1px solid rgba(75,128,240,0.2)',
+          }}
+        >
+          <div>
+            <h3
+              className="text-xl font-bold mb-1"
+              style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", color: 'var(--text-primary)' }}
+            >
+              Need more than 500 users?
+            </h3>
+            <p
+              className="text-sm"
+              style={{ color: 'var(--text-secondary)', fontFamily: "'Inter', sans-serif" }}
+            >
+              Gravity Enterprise offers white-label, SSO, dedicated infrastructure, and custom SLAs for schools, hospitals, NGOs, and corporations.
+            </p>
+          </div>
+          <Link
+            href="/enterprise"
+            className="flex-shrink-0 inline-flex items-center gap-2 px-8 py-3.5 rounded-xl text-sm font-bold transition-all duration-200 hover:scale-105 active:scale-95"
+            style={{
+              background: 'linear-gradient(135deg, #4B80F0, #818CF8)',
+              color: '#fff',
+              fontFamily: "'Plus Jakarta Sans', sans-serif",
+              boxShadow: '0 4px 20px rgba(75,128,240,0.35)',
+            }}
+          >
+            Explore Enterprise →
+          </Link>
+        </motion.div>
+
+        {/* ── Feature comparison table (collapsible) ── */}
+        <motion.div
+          initial={{ opacity: 0, y: 24 }}
+          animate={inView ? { opacity: 1, y: 0 } : {}}
+          transition={{ duration: 0.6, delay: 0.75 }}
+          className="mt-16"
+        >
+          <button
+            onClick={() => setShowTable((v) => !v)}
+            className="flex items-center gap-3 mx-auto mb-6 text-sm font-semibold focus:outline-none"
+            style={{ color: 'var(--gold)', fontFamily: "'Plus Jakarta Sans', sans-serif" }}
+          >
+            <span>{showTable ? 'Hide' : 'Show'} Full Feature Comparison</span>
+            <span
+              style={{
+                display: 'inline-block',
+                transform: showTable ? 'rotate(180deg)' : 'rotate(0deg)',
+                transition: 'transform 0.25s',
+              }}
+            >
+              ▾
+            </span>
+          </button>
+
+          <AnimatePresence>
+            {showTable && (
+              <motion.div
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: 'auto' }}
+                exit={{ opacity: 0, height: 0 }}
+                transition={{ duration: 0.4, ease: 'easeInOut' }}
+                className="overflow-hidden"
+              >
+                <div className="overflow-x-auto rounded-2xl" style={{ border: '1px solid var(--border)' }}>
+                  <table className="w-full min-w-[700px]">
+                    <thead>
+                      <tr style={{ background: 'var(--bg-surface2)', borderBottom: '1px solid var(--border)' }}>
+                        <th
+                          className="text-left px-5 py-4 text-sm font-bold"
+                          style={{ color: 'var(--text-primary)', fontFamily: "'Plus Jakarta Sans', sans-serif" }}
+                        >
+                          Feature
+                        </th>
+                        {PLANS.map((p) => (
+                          <th
+                            key={p.id}
+                            className="text-center px-4 py-4 text-xs font-bold uppercase tracking-wide"
+                            style={{ color: p.isFeatured ? p.accentColor : 'var(--text-muted)', fontFamily: "'Plus Jakarta Sans', sans-serif" }}
+                          >
+                            {p.name}
+                          </th>
+                        ))}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {COMPARISON_ROWS.map((row, i) => (
+                        <tr
+                          key={row.feature}
+                          style={{
+                            borderBottom: i < COMPARISON_ROWS.length - 1 ? '1px solid var(--border)' : 'none',
+                            background: i % 2 === 0 ? 'var(--bg-surface)' : 'var(--bg-surface2)',
+                          }}
+                        >
+                          <td
+                            className="px-5 py-3.5 text-sm"
+                            style={{ color: 'var(--text-secondary)', fontFamily: "'Inter', sans-serif" }}
+                          >
+                            {row.feature}
+                          </td>
+                          {PLANS.map((p) => (
+                            <td key={p.id} className="px-4 py-3.5 text-center">
+                              <CompCell value={row[p.id as keyof typeof row] as string | boolean} />
+                            </td>
+                          ))}
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </motion.div>
+
+        {/* ── FAQ ── */}
+        <motion.div
+          initial={{ opacity: 0, y: 24 }}
+          animate={inView ? { opacity: 1, y: 0 } : {}}
+          transition={{ duration: 0.6, ease: 'easeOut', delay: 0.8 }}
           className="mt-24"
         >
           <h3
             className="text-2xl font-bold text-center mb-2"
-            style={{
-              fontFamily: 'var(--font-display, "Plus Jakarta Sans", sans-serif)',
-              color: 'var(--text-primary)',
-            }}
+            style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", color: 'var(--text-primary)' }}
           >
             Frequently Asked Questions
           </h3>
-          <p className="text-sm text-center mb-10" style={{ color: 'var(--text-muted)' }}>
+          <p
+            className="text-sm text-center mb-10"
+            style={{ color: 'var(--text-muted)', fontFamily: "'Inter', sans-serif" }}
+          >
             Everything you need to know before getting started.
           </p>
           <div className="max-w-3xl mx-auto flex flex-col gap-3">
-            {FAQ_ITEMS.map((item) => (
-              <AccordionItem key={item.question} question={item.question} answer={item.answer} />
+            {PRICING_FAQ.map((item) => (
+              <FAQItem key={item.question} question={item.question} answer={item.answer} />
             ))}
           </div>
         </motion.div>
