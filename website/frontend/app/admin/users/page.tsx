@@ -52,15 +52,18 @@ function Modal({ title, onClose, children, width = 440 }: { title: string; onClo
           borderRadius: 18, zIndex: 210,
           boxShadow: '0 24px 64px rgba(0,0,0,0.4)',
           overflow: 'hidden',
+        maxHeight: 'calc(100vh - 48px)',
+        display: 'flex',
+        flexDirection: 'column',
         }}
       >
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '18px 22px 14px', borderBottom: '1px solid var(--border)' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '18px 22px 14px', borderBottom: '1px solid var(--border)', flexShrink: 0 }}>
           <h3 style={{ margin: 0, fontFamily: 'Plus Jakarta Sans, sans-serif', fontWeight: 700, fontSize: 17, color: 'var(--text-primary)' }}>{title}</h3>
           <button onClick={onClose} style={{ background: 'transparent', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', padding: 4, borderRadius: 6 }}>
             <X size={18} />
           </button>
         </div>
-        <div style={{ padding: '20px 22px 22px' }}>{children}</div>
+        <div style={{ padding: '20px 22px 22px', overflowY: 'auto', flex: 1 }}>{children}</div>
       </motion.div>
     </>
   )
