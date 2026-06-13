@@ -1,0 +1,27 @@
+version: "3.9"
+
+# Development override — hot reload for both services
+# Usage: docker compose -f docker-compose.yml -f docker-compose.dev.yml up
+
+services:
+
+  backend:
+    build:
+      context: ./website/backend
+    volumes:
+      - ./website/backend:/app
+      - gravity_db:/app/data
+    command: uvicorn main:app --host 0.0.0.0 --port 8000 --reload
+
+  frontend:
+    build:
+      context: ./website/frontend
+      args:
+        NEXT_PUBLIC_API_URL: http://localhost:8000
+    volumes:
+      - ./website/frontend:/app
+      - /app/node_modules
+      - /app/.next
+    command: npm run dev
+    environment:
+      NODE_ENV: development

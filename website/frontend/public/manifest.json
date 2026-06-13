@@ -1,0 +1,13 @@
+{
+  "name": "Gravity — Family Safety",
+  "short_name": "Gravity",
+  "description": "Family safety platform with real-time location sharing and SOS alerts",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0B0D13",
+  "theme_color": "#D4A853",
+  "orientation": "portrait",
+  "icons": [
+    { "src": "/favicon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }
+  ]
+}

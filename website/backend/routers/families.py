@@ -1,0 +1,72 @@
+"""Family circle management."""
+from fastapi import APIRouter, HTTPException, Depends
+from sqlalchemy.orm import Session
+from sqlalchemy import func
+from pydantic import BaseModel
+from typing import Optional, List
+from database import get_db
+import models, secrets
+from auth import get_current_user
+
+router = APIRouter()
+
+class FamilyCreate(BaseModel):
+    name: str
+
+class FamilyResponse(BaseModel):
+    id: int
+    name: str
+    plan: str
+    invite_code: str
+    created_at: Optional[str]
+
+@router.post("/create")
+def create_family(data: FamilyCreate, user: models.User = Depends(get_current_user), db: Session = Depends(get_db)):
+    family = models.Family(name=data.name, owner_id=user.id, invite_code=secrets.token_urlsafe(6))
+    db.add(family)
+    db.commit()
+    db.refresh(family)
+    # Add owner as first member
+    member = models.FamilyMember(family_id=family.id, user_id=user.id, role="owner")
+    db.add(member)
+    # Add free subscription
+    sub = models.Subscription(family_id=family.id, plan="free", price_inr=0, status="active")
+    db.add(sub)
+    db.commit()
+    return {"id": family.id, "name": family.name, "invite_code": family.invite_code, "plan": family.plan}
+
+@router.post("/join/{invite_code}")
+def join_family(invite_code: str, user: models.User = Depends(get_current_user), db: Session = Depends(get_db)):
+    family = db.query(models.Family).filter(models.Family.invite_code == invite_code).first()
+    if not family:
+        raise HTTPException(status_code=404, detail="Invalid invite code")
+    existing = db.query(models.FamilyMember).filter(models.FamilyMember.family_id == family.id, models.FamilyMember.user_id == user.id).first()
+    if existing:
+        raise HTTPException(status_code=400, detail="Already a member")
+    member = models.FamilyMember(family_id=family.id, user_id=user.id, role="member")
+    db.add(member)
+    db.commit()
+    return {"message": "Joined family", "family_name": family.name}
+
+@router.get("/my")
+def my_families(user: models.User = Depends(get_current_user), db: Session = Depends(get_db)):
+    memberships = db.query(models.FamilyMember).filter(models.FamilyMember.user_id == user.id).all()
+    result = []
+    for m in memberships:
+        family = db.query(models.Family).filter(models.Family.id == m.family_id).first()
+        if family:
+            members = db.query(models.FamilyMember).filter(models.FamilyMember.family_id == family.id).all()
+            result.append({"id": family.id, "name": family.name, "plan": family.plan, "role": m.role, "member_count": len(members)})
+    return result
+
+@router.get("/{family_id}/members")
+def get_members(family_id: int, db: Session = Depends(get_db)):
+    members = db.query(models.FamilyMember).filter(models.FamilyMember.family_id == family_id).all()
+    result = []
+    for m in members:
+        user = db.query(models.User).filter(models.User.id == m.user_id).first()
+        if user:
+            loc = db.query(models.Location).filter(models.Location.user_id == user.id).order_by(models.Location.recorded_at.desc()).first()
+            device = db.query(models.Device).filter(models.Device.user_id == user.id).first()
+            result.append({"user_id": user.id, "name": user.name, "role": m.role, "last_location": loc.place_name if loc else None, "lat": loc.lat if loc else None, "lng": loc.lng if loc else None, "battery": device.battery_level if device else None, "is_online": device.is_online if device else False})
+    return result
