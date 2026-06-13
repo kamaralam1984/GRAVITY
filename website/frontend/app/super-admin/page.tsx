@@ -5,6 +5,11 @@ import { motion, AnimatePresence, useInView } from 'framer-motion'
 import { useAuth } from '@/lib/useAuth'
 import PanelBackground from '@/components/effects/PanelBackground'
 import ThemeToggle from '@/components/ui/ThemeToggle'
+import { LiveOperationsSection, AICopilotSection, PlatformStatusSection, ChildrenSection, ElderlySection, CaregiversSection, UserVerificationSection, EmergencySection, MissingPersonsSection, IncidentReportsSection, RiskMonitoringSection, SafetyScoresSection } from '@/components/super-admin/s1-overview-people-safety'
+import { SchoolManagementSection, SchoolBusTrackingSection, AttendanceSection, PickupVerificationSection, ChildAlertsSection, ChildAnalyticsSection, MedicationSection, FallDetectionSection, WellnessReportsSection, CaregiverConsoleSection, ElderAnalyticsSection } from '@/components/super-admin/s2-child-elder'
+import { DriverScoresSection, SpeedViolationsSection, TeenDrivingSection, RiskDetectionSection, AIDrivingCoachSection, AIGuardianSection, SafetyPredictionsSection, AIReportsSection, AIChatLogsSection, AIModelsSection, AIConfigSection } from '@/components/super-admin/s3-driving-ai'
+import { EmailCampaignsSection, SMSCampaignsSection, AnnouncementsSection, SmartWatchesSection, GPSTrackersSection, CamerasSection, SmartHomeSection, DeviceHealthSection, InvoicesSection, FinancialReportsSection, WhiteLabelSection, SchoolsEnterpriseSection, HospitalsSection, NGOsSection, EnterpriseAnalyticsSection } from '@/components/super-admin/s4-comms-devices-business-enterprise'
+import { FamilyAnalyticsSection, SafetyAnalyticsSection, DeviceAnalyticsSection, RevenueAnalyticsSection, PredictiveInsightsSection, FeedbackSection, ContactRequestsSection, KnowledgeBaseSection, CustomerSuccessSection, LoginActivitySection, ThreatDetectionSection, PermissionsSection, ComplianceCenterSection, RolesSection, TeamsSection, AccessControlSection, WebhooksSection, IntegrationsSection, SDKAccessSection, APIAnalyticsSection, DBHealthSection, QueueMonitoringSection, ErrorLogsSection, BackupsSection, BrandingSection, SMTPSection, SMSGatewaySection, PushConfigSection, MapsAPISection, AISettingsSection, PlatformConfigSection } from '@/components/super-admin/s5-intelligence-platform'
 import {
   Crown,
   Home,
@@ -57,31 +62,33 @@ import {
   FileText,
   Building2,
   Key,
+  CheckSquare,
+  Car,
+  Tag,
 } from 'lucide-react'
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
 type NavSection =
-  | 'command'
-  | 'users'
-  | 'families'
-  | 'devices'
-  | 'admins'
-  | 'sos'
-  | 'revenue'
-  | 'subscriptions'
-  | 'plans'
-  | 'geofences'
-  | 'notifications'
-  | 'support'
-  | 'health'
-  | 'analytics'
-  | 'security'
-  | 'audit'
-  | 'enterprise'
-  | 'whitelabel'
-  | 'api'
-  | 'settings'
+  | 'command' | 'live-ops' | 'ai-copilot' | 'platform-status'
+  | 'users' | 'families' | 'children' | 'elderly' | 'caregivers' | 'user-verification'
+  | 'geofences' | 'journeys' | 'check-ins' | 'location-history' | 'location-intel'
+  | 'sos' | 'emergency' | 'missing-persons' | 'incidents' | 'risk-monitoring' | 'safety-scores'
+  | 'schools' | 'school-bus' | 'attendance' | 'pickup' | 'child-alerts' | 'child-analytics'
+  | 'health' | 'medication' | 'fall-detection' | 'wellness' | 'caregiver-console' | 'elder-analytics'
+  | 'driving' | 'driver-scores' | 'speed-violations' | 'teen-driving' | 'risk-detection' | 'ai-coach'
+  | 'ai-guardian' | 'ai-safety-pred' | 'ai-reports' | 'ai-chat-logs' | 'ai-models' | 'ai-config'
+  | 'notifications' | 'family-chat' | 'email-campaigns' | 'sms-campaigns' | 'announcements'
+  | 'devices' | 'smart-watches' | 'gps-trackers' | 'cameras' | 'smart-home' | 'device-health'
+  | 'revenue' | 'payments' | 'subscriptions' | 'plans' | 'coupons' | 'invoices' | 'financial-reports'
+  | 'enterprise' | 'white-label' | 'schools-ent' | 'hospitals' | 'ngos' | 'enterprise-analytics'
+  | 'analytics' | 'family-analytics' | 'safety-analytics' | 'device-analytics' | 'revenue-analytics' | 'predictive-insights'
+  | 'support' | 'feedback' | 'contact-requests' | 'knowledge-base' | 'customer-success'
+  | 'security' | 'audit' | 'login-activity' | 'threat-detection' | 'permissions' | 'compliance'
+  | 'admins' | 'roles' | 'teams' | 'access-control'
+  | 'api' | 'webhooks' | 'integrations' | 'sdk-access' | 'api-analytics'
+  | 'whitelabel' | 'db-health' | 'queue-monitoring' | 'error-logs' | 'backups'
+  | 'settings' | 'branding' | 'smtp' | 'sms-gateway' | 'push-config' | 'maps-api' | 'ai-settings' | 'platform-config'
 
 // ─── Mock Data ────────────────────────────────────────────────────────────────
 
@@ -460,37 +467,168 @@ const NAV = [
 
 // Grouped nav for Linear-style sidebar (same pattern as admin)
 const NAV_GROUPS_SA = [
-  // Core
+  // Overview
   [
     { id: 'command' as NavSection, label: 'Command Center', icon: Home },
+    { id: 'live-ops' as NavSection, label: 'Live Operations', icon: Activity },
+    { id: 'ai-copilot' as NavSection, label: 'AI Copilot', icon: Zap },
+    { id: 'platform-status' as NavSection, label: 'Platform Status', icon: Server },
+  ],
+  // People
+  [
     { id: 'users' as NavSection, label: 'All Users', icon: Users },
     { id: 'families' as NavSection, label: 'Families', icon: Users2 },
-    { id: 'devices' as NavSection, label: 'Devices', icon: Smartphone },
-    { id: 'admins' as NavSection, label: 'Admins & Mods', icon: Shield },
+    { id: 'children' as NavSection, label: 'Children', icon: Users2 },
+    { id: 'elderly' as NavSection, label: 'Elderly', icon: Activity },
+    { id: 'caregivers' as NavSection, label: 'Caregivers', icon: Shield },
+    { id: 'user-verification' as NavSection, label: 'User Verification', icon: UserCheck },
   ],
-  // Operations
+  // Tracking
+  [
+    { id: 'geofences' as NavSection, label: 'Geofences', icon: MapPin },
+    { id: 'location-history' as NavSection, label: 'Location History', icon: Clock },
+    { id: 'location-intel' as NavSection, label: 'Location Intelligence', icon: BarChart2 },
+  ],
+  // Safety
   [
     { id: 'sos' as NavSection, label: 'SOS Alerts', icon: AlertTriangle },
-    { id: 'geofences' as NavSection, label: 'Geofences', icon: MapPin },
-    { id: 'notifications' as NavSection, label: 'Notifications', icon: Bell },
-    { id: 'support' as NavSection, label: 'Support Tickets', icon: MessageSquare },
+    { id: 'emergency' as NavSection, label: 'Emergency Cases', icon: AlertCircle },
+    { id: 'missing-persons' as NavSection, label: 'Missing Persons', icon: UserCheck },
+    { id: 'incidents' as NavSection, label: 'Incident Reports', icon: FileText },
+    { id: 'risk-monitoring' as NavSection, label: 'Risk Monitoring', icon: Shield },
+    { id: 'safety-scores' as NavSection, label: 'Safety Scores', icon: BarChart2 },
   ],
-  // Revenue
+  // Child Safety
+  [
+    { id: 'schools' as NavSection, label: 'School Management', icon: Building2 },
+    { id: 'school-bus' as NavSection, label: 'School Bus', icon: Smartphone },
+    { id: 'attendance' as NavSection, label: 'Attendance', icon: CheckSquare },
+    { id: 'pickup' as NavSection, label: 'Pickup Verification', icon: UserCheck },
+    { id: 'child-alerts' as NavSection, label: 'Child Alerts', icon: Bell },
+    { id: 'child-analytics' as NavSection, label: 'Child Analytics', icon: BarChart2 },
+  ],
+  // Elder Care
+  [
+    { id: 'health' as NavSection, label: 'Health Monitoring', icon: Activity },
+    { id: 'medication' as NavSection, label: 'Medication', icon: Activity },
+    { id: 'fall-detection' as NavSection, label: 'Fall Detection', icon: AlertTriangle },
+    { id: 'wellness' as NavSection, label: 'Wellness Reports', icon: FileText },
+    { id: 'caregiver-console' as NavSection, label: 'Caregiver Console', icon: Shield },
+    { id: 'elder-analytics' as NavSection, label: 'Elder Analytics', icon: BarChart2 },
+  ],
+  // Driving Intelligence
+  [
+    { id: 'driving' as NavSection, label: 'Driving Events', icon: Car },
+    { id: 'driver-scores' as NavSection, label: 'Driver Scores', icon: BarChart2 },
+    { id: 'speed-violations' as NavSection, label: 'Speed Violations', icon: AlertTriangle },
+    { id: 'teen-driving' as NavSection, label: 'Teen Driving', icon: Users },
+    { id: 'risk-detection' as NavSection, label: 'Risk Detection', icon: Shield },
+    { id: 'ai-coach' as NavSection, label: 'AI Driving Coach', icon: Zap },
+  ],
+  // AI Center
+  [
+    { id: 'ai-guardian' as NavSection, label: 'AI Guardian', icon: Zap },
+    { id: 'ai-safety-pred' as NavSection, label: 'Safety Predictions', icon: Shield },
+    { id: 'ai-reports' as NavSection, label: 'AI Reports', icon: FileText },
+    { id: 'ai-chat-logs' as NavSection, label: 'AI Chat Logs', icon: MessageSquare },
+    { id: 'ai-models' as NavSection, label: 'AI Models', icon: Cpu },
+    { id: 'ai-config' as NavSection, label: 'AI Configuration', icon: Settings },
+  ],
+  // Communications
+  [
+    { id: 'notifications' as NavSection, label: 'Notifications', icon: Bell },
+    { id: 'family-chat' as NavSection, label: 'Family Chat', icon: MessageSquare },
+    { id: 'email-campaigns' as NavSection, label: 'Email Campaigns', icon: Mail },
+    { id: 'sms-campaigns' as NavSection, label: 'SMS Campaigns', icon: MessageSquare },
+    { id: 'announcements' as NavSection, label: 'Announcements', icon: Bell },
+  ],
+  // Devices & IoT
+  [
+    { id: 'devices' as NavSection, label: 'Devices', icon: Smartphone },
+    { id: 'smart-watches' as NavSection, label: 'Smart Watches', icon: Smartphone },
+    { id: 'gps-trackers' as NavSection, label: 'GPS Trackers', icon: MapPin },
+    { id: 'cameras' as NavSection, label: 'Cameras', icon: Smartphone },
+    { id: 'smart-home' as NavSection, label: 'Smart Home', icon: Building2 },
+    { id: 'device-health' as NavSection, label: 'Device Health', icon: Activity },
+  ],
+  // Business
   [
     { id: 'revenue' as NavSection, label: 'Revenue', icon: DollarSign },
+    { id: 'payments' as NavSection, label: 'Payments', icon: CreditCard },
     { id: 'subscriptions' as NavSection, label: 'Subscriptions', icon: CreditCard },
     { id: 'plans' as NavSection, label: 'Plans', icon: Zap },
-    { id: 'enterprise' as NavSection, label: 'Enterprise', icon: Building2 },
-    { id: 'whitelabel' as NavSection, label: 'White Label', icon: Globe },
+    { id: 'coupons' as NavSection, label: 'Coupons', icon: Tag },
+    { id: 'invoices' as NavSection, label: 'Invoices', icon: FileText },
+    { id: 'financial-reports' as NavSection, label: 'Financial Reports', icon: BarChart2 },
   ],
-  // System
+  // Enterprise
   [
-    { id: 'health' as NavSection, label: 'System Health', icon: Activity },
-    { id: 'analytics' as NavSection, label: 'Analytics', icon: BarChart2 },
+    { id: 'enterprise' as NavSection, label: 'Enterprise Accounts', icon: Building2 },
+    { id: 'white-label' as NavSection, label: 'White Label', icon: Globe },
+    { id: 'schools-ent' as NavSection, label: 'Schools', icon: Building2 },
+    { id: 'hospitals' as NavSection, label: 'Hospitals', icon: Activity },
+    { id: 'ngos' as NavSection, label: 'NGOs', icon: Users },
+    { id: 'enterprise-analytics' as NavSection, label: 'Enterprise Analytics', icon: BarChart2 },
+  ],
+  // Intelligence
+  [
+    { id: 'analytics' as NavSection, label: 'User Analytics', icon: BarChart2 },
+    { id: 'family-analytics' as NavSection, label: 'Family Analytics', icon: Users2 },
+    { id: 'safety-analytics' as NavSection, label: 'Safety Analytics', icon: Shield },
+    { id: 'device-analytics' as NavSection, label: 'Device Analytics', icon: Smartphone },
+    { id: 'revenue-analytics' as NavSection, label: 'Revenue Analytics', icon: DollarSign },
+    { id: 'predictive-insights' as NavSection, label: 'Predictive Insights', icon: Zap },
+  ],
+  // Support
+  [
+    { id: 'support' as NavSection, label: 'Tickets', icon: MessageSquare },
+    { id: 'feedback' as NavSection, label: 'Feedback', icon: MessageSquare },
+    { id: 'contact-requests' as NavSection, label: 'Contact Requests', icon: Mail },
+    { id: 'knowledge-base' as NavSection, label: 'Knowledge Base', icon: FileText },
+    { id: 'customer-success' as NavSection, label: 'Customer Success', icon: UserCheck },
+  ],
+  // Security
+  [
     { id: 'security' as NavSection, label: 'Security Logs', icon: Lock },
     { id: 'audit' as NavSection, label: 'Audit Logs', icon: FileText },
+    { id: 'login-activity' as NavSection, label: 'Login Activity', icon: Activity },
+    { id: 'threat-detection' as NavSection, label: 'Threat Detection', icon: Shield },
+    { id: 'permissions' as NavSection, label: 'Permissions', icon: Key },
+    { id: 'compliance' as NavSection, label: 'Compliance Center', icon: Shield },
+  ],
+  // Administration
+  [
+    { id: 'admins' as NavSection, label: 'Admins & Mods', icon: Shield },
+    { id: 'roles' as NavSection, label: 'Roles', icon: Key },
+    { id: 'teams' as NavSection, label: 'Teams', icon: Users },
+    { id: 'access-control' as NavSection, label: 'Access Control', icon: Lock },
+  ],
+  // Developer Hub
+  [
     { id: 'api' as NavSection, label: 'API & Keys', icon: Key },
-    { id: 'settings' as NavSection, label: 'Settings', icon: Settings },
+    { id: 'webhooks' as NavSection, label: 'Webhooks', icon: Wifi },
+    { id: 'integrations' as NavSection, label: 'Integrations', icon: Zap },
+    { id: 'sdk-access' as NavSection, label: 'SDK Access', icon: Key },
+    { id: 'api-analytics' as NavSection, label: 'API Analytics', icon: BarChart2 },
+  ],
+  // Infrastructure
+  [
+    { id: 'health' as NavSection, label: 'System Health', icon: Server },
+    { id: 'db-health' as NavSection, label: 'Database Health', icon: Database },
+    { id: 'queue-monitoring' as NavSection, label: 'Queue Monitoring', icon: Activity },
+    { id: 'error-logs' as NavSection, label: 'Error Logs', icon: AlertTriangle },
+    { id: 'backups' as NavSection, label: 'Backups', icon: HardDrive },
+  ],
+  // Platform Settings
+  [
+    { id: 'settings' as NavSection, label: 'General Settings', icon: Settings },
+    { id: 'branding' as NavSection, label: 'Branding', icon: Globe },
+    { id: 'smtp' as NavSection, label: 'SMTP', icon: Mail },
+    { id: 'sms-gateway' as NavSection, label: 'SMS Gateway', icon: MessageSquare },
+    { id: 'push-config' as NavSection, label: 'Push Notifications', icon: Bell },
+    { id: 'maps-api' as NavSection, label: 'Maps API', icon: MapPin },
+    { id: 'ai-settings' as NavSection, label: 'AI Settings', icon: Zap },
+    { id: 'platform-config' as NavSection, label: 'Platform Config', icon: Settings },
   ],
 ]
 
@@ -2946,6 +3084,96 @@ export default function SuperAdminPage() {
       case 'whitelabel': return <WhiteLabel />
       case 'api': return <APIKeys />
       case 'settings': return <AppSettings />
+      // ── New Enterprise OS sections ──
+      case 'live-ops': return <LiveOperationsSection />
+      case 'ai-copilot': return <AICopilotSection />
+      case 'platform-status': return <PlatformStatusSection />
+      case 'children': return <ChildrenSection />
+      case 'elderly': return <ElderlySection />
+      case 'caregivers': return <CaregiversSection />
+      case 'user-verification': return <UserVerificationSection />
+      case 'emergency': return <EmergencySection />
+      case 'missing-persons': return <MissingPersonsSection />
+      case 'incidents': return <IncidentReportsSection />
+      case 'risk-monitoring': return <RiskMonitoringSection />
+      case 'safety-scores': return <SafetyScoresSection />
+      case 'schools': return <SchoolManagementSection />
+      case 'school-bus': return <SchoolBusTrackingSection />
+      case 'attendance': return <AttendanceSection />
+      case 'pickup': return <PickupVerificationSection />
+      case 'child-alerts': return <ChildAlertsSection />
+      case 'child-analytics': return <ChildAnalyticsSection />
+      case 'medication': return <MedicationSection />
+      case 'fall-detection': return <FallDetectionSection />
+      case 'wellness': return <WellnessReportsSection />
+      case 'caregiver-console': return <CaregiverConsoleSection />
+      case 'elder-analytics': return <ElderAnalyticsSection />
+      case 'driver-scores': return <DriverScoresSection />
+      case 'speed-violations': return <SpeedViolationsSection />
+      case 'teen-driving': return <TeenDrivingSection />
+      case 'risk-detection': return <RiskDetectionSection />
+      case 'ai-coach': return <AIDrivingCoachSection />
+      case 'ai-guardian': return <AIGuardianSection />
+      case 'ai-safety-pred': return <SafetyPredictionsSection />
+      case 'ai-reports': return <AIReportsSection />
+      case 'ai-chat-logs': return <AIChatLogsSection />
+      case 'ai-models': return <AIModelsSection />
+      case 'ai-config': return <AIConfigSection />
+      case 'email-campaigns': return <EmailCampaignsSection />
+      case 'sms-campaigns': return <SMSCampaignsSection />
+      case 'announcements': return <AnnouncementsSection />
+      case 'smart-watches': return <SmartWatchesSection />
+      case 'gps-trackers': return <GPSTrackersSection />
+      case 'cameras': return <CamerasSection />
+      case 'smart-home': return <SmartHomeSection />
+      case 'device-health': return <DeviceHealthSection />
+      case 'invoices': return <InvoicesSection />
+      case 'financial-reports': return <FinancialReportsSection />
+      case 'white-label': return <WhiteLabelSection />
+      case 'schools-ent': return <SchoolsEnterpriseSection />
+      case 'hospitals': return <HospitalsSection />
+      case 'ngos': return <NGOsSection />
+      case 'enterprise-analytics': return <EnterpriseAnalyticsSection />
+      case 'family-analytics': return <FamilyAnalyticsSection />
+      case 'safety-analytics': return <SafetyAnalyticsSection />
+      case 'device-analytics': return <DeviceAnalyticsSection />
+      case 'revenue-analytics': return <RevenueAnalyticsSection />
+      case 'predictive-insights': return <PredictiveInsightsSection />
+      case 'feedback': return <FeedbackSection />
+      case 'contact-requests': return <ContactRequestsSection />
+      case 'knowledge-base': return <KnowledgeBaseSection />
+      case 'customer-success': return <CustomerSuccessSection />
+      case 'login-activity': return <LoginActivitySection />
+      case 'threat-detection': return <ThreatDetectionSection />
+      case 'permissions': return <PermissionsSection />
+      case 'compliance': return <ComplianceCenterSection />
+      case 'roles': return <RolesSection />
+      case 'teams': return <TeamsSection />
+      case 'access-control': return <AccessControlSection />
+      case 'webhooks': return <WebhooksSection />
+      case 'integrations': return <IntegrationsSection />
+      case 'sdk-access': return <SDKAccessSection />
+      case 'api-analytics': return <APIAnalyticsSection />
+      case 'db-health': return <DBHealthSection />
+      case 'queue-monitoring': return <QueueMonitoringSection />
+      case 'error-logs': return <ErrorLogsSection />
+      case 'backups': return <BackupsSection />
+      case 'branding': return <BrandingSection />
+      case 'smtp': return <SMTPSection />
+      case 'sms-gateway': return <SMSGatewaySection />
+      case 'push-config': return <PushConfigSection />
+      case 'maps-api': return <MapsAPISection />
+      case 'ai-settings': return <AISettingsSection />
+      case 'platform-config': return <PlatformConfigSection />
+      // Fallback cases for nav items handled by existing sections
+      case 'journeys': return <Geofences />
+      case 'check-ins': return <Geofences />
+      case 'location-history': return <Analytics />
+      case 'location-intel': return <Analytics />
+      case 'driving': return <AdminsMods />
+      case 'family-chat': return <Notifications />
+      case 'payments': return <Revenue />
+      case 'coupons': return <Plans />
       default: return <CommandCenter />
     }
   }
