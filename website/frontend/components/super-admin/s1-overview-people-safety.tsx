@@ -9,7 +9,7 @@ import {
   TrendingUp, TrendingDown, Minus, MessageSquare, Send,
   Cpu, Database, Server, Wifi, Package, Globe, ArrowRight,
   UserCheck, UserX, AlertCircle, FileText, BarChart2, Map,
-  ChevronDown, ChevronUp, Flag, Siren
+  ChevronDown, ChevronUp, Flag, Siren, Mail
 } from 'lucide-react'
 
 // ─── shared helpers ───────────────────────────────────────────────────────────
@@ -619,25 +619,7 @@ export function PlatformStatusSection() {
   )
 }
 
-// ─── 4. ChildrenSection ───────────────────────────────────────────────────────
-
-const childrenData = [
-  { name: 'Aarav Sharma', age: 9, school: 'DPS Mumbai', parent: 'Priya Sharma', device: 'GravityWatch Pro', status: 'Safe', location: 'School', lastSeen: '2 min ago' },
-  { name: 'Diya Mehta', age: 7, school: 'Ryan International, Delhi', parent: 'Arjun Mehta', device: 'GravityTag', status: 'Safe', location: 'Home', lastSeen: '5 min ago' },
-  { name: 'Ishaan Reddy', age: 11, school: 'Greenwood HS, Hyderabad', parent: 'Kavya Reddy', device: 'GravityWatch', status: 'Alert', location: 'Unknown', lastSeen: '1 hr ago' },
-  { name: 'Anika Gupta', age: 8, school: 'Podar International, Pune', parent: 'Rahul Gupta', device: 'GravityWatch Pro', status: 'Safe', location: 'School', lastSeen: '1 min ago' },
-  { name: 'Vivaan Iyer', age: 10, school: 'Kendriya Vidyalaya, Chennai', parent: 'Sneha Iyer', device: 'GravityTag', status: 'Offline', location: 'Last: Home', lastSeen: '3 hr ago' },
-  { name: 'Mia Singh', age: 6, school: 'The Orchid School, Bangalore', parent: 'Vikram Singh', device: 'GravityWatch', status: 'Safe', location: 'School', lastSeen: '8 min ago' },
-  { name: 'Arnav Nair', age: 12, school: 'Bharatiya Vidya Bhavan, Mumbai', parent: 'Meera Nair', device: 'GravityWatch Pro', status: 'Safe', location: 'Tuition', lastSeen: '4 min ago' },
-  { name: 'Zara Kumar', age: 9, school: 'DPS Kolkata', parent: 'Aditya Kumar', device: 'GravityTag', status: 'Alert', location: 'Outside Geofence', lastSeen: '30 min ago' },
-  { name: 'Riya Verma', age: 7, school: 'Heritage School, Delhi', parent: 'Pooja Verma', device: 'GravityWatch', status: 'Safe', location: 'Home', lastSeen: '12 min ago' },
-  { name: 'Kabir Babu', age: 11, school: 'Silver Oaks, Hyderabad', parent: 'Suresh Babu', device: 'GravityWatch Pro', status: 'Offline', location: 'Last: School', lastSeen: '2 hr ago' },
-  { name: 'Saanvi Desai', age: 8, school: 'Udgam School, Ahmedabad', parent: 'Anita Desai', device: 'GravityTag', status: 'Safe', location: 'Home', lastSeen: '6 min ago' },
-  { name: 'Yash Shankar', age: 10, school: 'PM Shri School, Jaipur', parent: 'Ravi Shankar', device: 'GravityWatch', status: 'Safe', location: 'School', lastSeen: '3 min ago' },
-  { name: 'Tara Pillai', age: 6, school: 'GEMS School, Kochi', parent: 'Divya Pillai', device: 'GravityWatch Pro', status: 'Safe', location: 'School', lastSeen: '9 min ago' },
-  { name: 'Dev Joshi', age: 12, school: 'Symbiosis, Pune', parent: 'Neha Joshi', device: 'GravityTag', status: 'Safe', location: 'Library', lastSeen: '15 min ago' },
-  { name: 'Aish Yadav', age: 9, school: 'City Montessori, Lucknow', parent: 'Ramesh Yadav', device: 'GravityWatch', status: 'Alert', location: 'Unknown', lastSeen: '45 min ago' },
-]
+// ─── 4. ChildrenSection ─────────────────────────────────────────────
 
 const childStatusColor: Record<string, string> = {
   Safe: '#10B981',
@@ -645,30 +627,55 @@ const childStatusColor: Record<string, string> = {
   Offline: '#6B7280',
 }
 
+interface ChildRow {
+  id: number
+  name: string
+  family_name: string
+  parent_name: string
+  device_count: number
+  device: string
+  status: 'Safe' | 'Offline' | 'Alert'
+  is_active: boolean
+  joined_at: string | null
+}
+
 export function ChildrenSection() {
   const [search, setSearch] = useState('')
   const [statusFilter, setStatusFilter] = useState('All')
   const [hoveredRow, setHoveredRow] = useState<number | null>(null)
+  const [children, setChildren] = useState<ChildRow[]>([])
+  const [total, setTotal] = useState(0)
+  const [loading, setLoading] = useState(true)
+  const [stats, setStats] = useState({ safe: 0, offline: 0, alert: 0 })
+  const searchTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
-  const filtered = childrenData.filter(c => {
-    const matchStatus = statusFilter === 'All' || c.status === statusFilter
-    const matchSearch = search === '' ||
-      c.name.toLowerCase().includes(search.toLowerCase()) ||
-      c.school.toLowerCase().includes(search.toLowerCase()) ||
-      c.parent.toLowerCase().includes(search.toLowerCase())
-    return matchStatus && matchSearch
-  })
+  useEffect(() => {
+    const token = localStorage.getItem('gv_token') || ''
+    setLoading(true)
+    const tid = setTimeout(() => {
+      fetch('/admin-api/children?limit=50&search=' + encodeURIComponent(search), {
+        headers: { Authorization: 'Bearer ' + token }
+      })
+        .then(r => r.json())
+        .then(d => {
+          setChildren(d.children || [])
+          setTotal(d.total || 0)
+          setStats({ safe: d.safe_count || 0, offline: d.offline_count || 0, alert: d.alert_count || 0 })
+          setLoading(false)
+        })
+        .catch(() => setLoading(false))
+    }, 300)
+    searchTimerRef.current = tid
+    return () => clearTimeout(tid)
+  }, [search])
 
-  const countAll = childrenData.length
-  const countSafe = childrenData.filter(c => c.status === 'Safe').length
-  const countAlert = childrenData.filter(c => c.status === 'Alert').length
-  const countOffline = childrenData.filter(c => c.status === 'Offline').length
+  const filtered = statusFilter === 'All' ? children : children.filter(c => c.status === statusFilter)
 
   const filterCounts: Record<string, number> = {
-    All: countAll,
-    Safe: countSafe,
-    Alert: countAlert,
-    Offline: countOffline,
+    All: total,
+    Safe: stats.safe,
+    Alert: stats.alert,
+    Offline: stats.offline,
   }
 
   return (
@@ -682,40 +689,40 @@ export function ChildrenSection() {
         <div style={{ background: 'var(--bg-surface)', border: '1px solid var(--border)', borderRadius: 12, padding: 20 }}>
           <div style={{ marginBottom: 10 }}><Users size={18} color="var(--gold)" /></div>
           <div style={{ fontSize: 12, color: 'var(--text-muted)', fontWeight: 500, marginBottom: 8 }}>Total Children</div>
-          <div style={{ fontSize: 28, fontWeight: 800, color: 'var(--text-primary)' }}>1,24,891</div>
+          <div style={{ fontSize: 28, fontWeight: 800, color: 'var(--text-primary)' }}>{total.toLocaleString()}</div>
           <div style={{ fontSize: 12, color: '#10B981', marginTop: 6, display: 'flex', alignItems: 'center', gap: 4 }}>
-            <TrendingUp size={12} /><span>+2,340 this week</span>
+            <TrendingUp size={12} /><span>Registered on platform</span>
           </div>
         </div>
         <div style={{ background: 'var(--bg-surface)', border: '1px solid var(--border)', borderRadius: 12, padding: 20 }}>
           <div style={{ marginBottom: 10 }}><Shield size={18} color="#10B981" /></div>
           <div style={{ fontSize: 12, color: 'var(--text-muted)', fontWeight: 500, marginBottom: 8 }}>Safe Now</div>
-          <div style={{ fontSize: 28, fontWeight: 800, color: 'var(--text-primary)' }}>1,21,340</div>
+          <div style={{ fontSize: 28, fontWeight: 800, color: 'var(--text-primary)' }}>{stats.safe.toLocaleString()}</div>
           <div style={{ fontSize: 12, color: '#10B981', marginTop: 6, display: 'flex', alignItems: 'center', gap: 4 }}>
-            <TrendingUp size={12} /><span>97.2% safety rate</span>
-          </div>
-        </div>
-        <div style={{ background: 'var(--bg-surface)', border: '1px solid var(--border)', borderRadius: 12, padding: 20 }}>
-          <div style={{ marginBottom: 10 }}><Activity size={18} color="#3B82F6" /></div>
-          <div style={{ fontSize: 12, color: 'var(--text-muted)', fontWeight: 500, marginBottom: 8 }}>In School Hours</div>
-          <div style={{ fontSize: 28, fontWeight: 800, color: 'var(--text-primary)' }}>89,234</div>
-          <div style={{ fontSize: 12, color: '#3B82F6', marginTop: 6, display: 'flex', alignItems: 'center', gap: 4 }}>
-            <TrendingUp size={12} /><span>Active school tracking</span>
+            <TrendingUp size={12} /><span>Currently safe</span>
           </div>
         </div>
         <div style={{ background: 'var(--bg-surface)', border: '1px solid var(--border)', borderRadius: 12, padding: 20 }}>
           <div style={{ marginBottom: 10 }}><AlertTriangle size={18} color="#EF4444" /></div>
           <div style={{ fontSize: 12, color: 'var(--text-muted)', fontWeight: 500, marginBottom: 8 }}>Alerts Today</div>
-          <div style={{ fontSize: 28, fontWeight: 800, color: 'var(--text-primary)' }}>47</div>
+          <div style={{ fontSize: 28, fontWeight: 800, color: 'var(--text-primary)' }}>{stats.alert.toLocaleString()}</div>
           <div style={{ fontSize: 12, color: '#EF4444', marginTop: 6, display: 'flex', alignItems: 'center', gap: 4 }}>
-            <TrendingDown size={12} /><span>12 unresolved</span>
+            <TrendingDown size={12} /><span>Need attention</span>
+          </div>
+        </div>
+        <div style={{ background: 'var(--bg-surface)', border: '1px solid var(--border)', borderRadius: 12, padding: 20 }}>
+          <div style={{ marginBottom: 10 }}><Activity size={18} color="#6B7280" /></div>
+          <div style={{ fontSize: 12, color: 'var(--text-muted)', fontWeight: 500, marginBottom: 8 }}>Offline</div>
+          <div style={{ fontSize: 28, fontWeight: 800, color: 'var(--text-primary)' }}>{stats.offline.toLocaleString()}</div>
+          <div style={{ fontSize: 12, color: '#6B7280', marginTop: 6, display: 'flex', alignItems: 'center', gap: 4 }}>
+            <Minus size={12} /><span>Device offline</span>
           </div>
         </div>
       </div>
 
       <div style={{ background: 'var(--bg-surface)', border: '1px solid var(--border)', borderRadius: 12, overflow: 'hidden' }}>
         <div style={{ padding: '12px 20px', borderBottom: '1px solid var(--border)', display: 'flex', gap: 10, flexWrap: 'wrap' as const, alignItems: 'center' }}>
-          <SearchBar value={search} onChange={setSearch} placeholder="Search by name, school, parent..." />
+          <SearchBar value={search} onChange={setSearch} placeholder="Search by name, family, parent..." />
           {(['All', 'Safe', 'Alert', 'Offline'] as const).map(s => (
             <FilterBtn key={s} active={statusFilter === s} onClick={() => setStatusFilter(s)}>
               <span style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
@@ -753,14 +760,18 @@ export function ChildrenSection() {
           </button>
         </div>
         <div style={{ overflowX: 'auto' }}>
-          <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: 900 }}>
+          <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: 800 }}>
             <thead>
               <tr style={{ borderBottom: '1px solid var(--border)', background: 'var(--bg-surface2)' }}>
-                <TH>Name</TH><TH>Age</TH><TH>School</TH><TH>Parent</TH><TH>Device</TH><TH>Status</TH><TH>Location</TH><TH>Last Seen</TH><TH>Actions</TH>
+                <TH>Name</TH><TH>Family</TH><TH>Parent</TH><TH>Device</TH><TH>Status</TH><TH>Joined</TH><TH>Actions</TH>
               </tr>
             </thead>
             <tbody>
-              {filtered.map((c, i) => {
+              {loading ? (
+                <tr><td colSpan={7} style={{ padding: 40, textAlign: 'center', color: 'var(--text-muted)' }}>Loading...</td></tr>
+              ) : filtered.length === 0 ? (
+                <tr><td colSpan={7} style={{ padding: 40, textAlign: 'center', color: 'var(--text-muted)' }}>No children found</td></tr>
+              ) : filtered.map((c, i) => {
                 const isAlert = c.status === 'Alert'
                 const isOffline = c.status === 'Offline'
                 const borderLeft = isAlert
@@ -768,9 +779,10 @@ export function ChildrenSection() {
                   : isOffline
                   ? '3px solid #6B7280'
                   : '3px solid transparent'
+                const joinedDate = c.joined_at ? new Date(c.joined_at).toLocaleDateString('en-IN') : '—'
                 return (
                   <tr
-                    key={i}
+                    key={c.id}
                     onMouseEnter={() => setHoveredRow(i)}
                     onMouseLeave={() => setHoveredRow(null)}
                     style={{
@@ -800,17 +812,11 @@ export function ChildrenSection() {
                         <span style={{ fontWeight: 600, fontSize: 13, color: 'var(--text-primary)' }}>{c.name}</span>
                       </div>
                     </td>
-                    <TD muted>{c.age} yrs</TD>
-                    <td style={{ padding: '12px 20px', fontSize: 12, color: 'var(--text-muted)', maxWidth: 160, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' as const }}>{c.school}</td>
-                    <TD>{c.parent}</TD>
+                    <TD muted>{c.family_name}</TD>
+                    <TD>{c.parent_name}</TD>
                     <TD muted>{c.device}</TD>
-                    <TD>{badge(c.status, childStatusColor[c.status])}</TD>
-                    <td style={{ padding: '12px 20px', fontSize: 12, color: 'var(--text-secondary)' }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-                        <MapPin size={11} color="var(--text-muted)" />{c.location}
-                      </div>
-                    </td>
-                    <TD muted>{c.lastSeen}</TD>
+                    <TD>{badge(c.status, childStatusColor[c.status] ?? '#6B7280')}</TD>
+                    <TD muted>{joinedDate}</TD>
                     <td style={{ padding: '12px 20px' }}>
                       <button style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)' }}>
                         <Eye size={14} />
@@ -831,13 +837,7 @@ export function ChildrenSection() {
           fontSize: 12,
           color: 'var(--text-muted)',
         }}>
-          <span>Showing {filtered.length} of 1,24,891 children</span>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            <button style={{ background: 'var(--bg-surface2)', border: '1px solid var(--border)', borderRadius: 4, padding: '3px 8px', fontSize: 12, color: 'var(--text-secondary)', cursor: 'pointer' }}>Prev</button>
-            <span style={{ fontWeight: 600, color: 'var(--text-primary)' }}>Page 1</span>
-            <span>of 8,326</span>
-            <button style={{ background: 'var(--bg-surface2)', border: '1px solid var(--border)', borderRadius: 4, padding: '3px 8px', fontSize: 12, color: 'var(--text-secondary)', cursor: 'pointer' }}>Next</button>
-          </div>
+          <span>Showing {filtered.length} of {total.toLocaleString()} children</span>
         </div>
       </div>
     </div>
@@ -846,43 +846,73 @@ export function ChildrenSection() {
 
 // ─── 5. ElderlySection ───────────────────────────────────────────────────────
 
-const elderlyData = [
-  { name: 'Kamla Devi Sharma', age: 74, caregiver: 'Priya Sharma', health: 'Stable', lastCheckin: '10 min ago', device: 'GravityWatch Pro', location: 'Home, Mumbai' },
-  { name: 'Mohan Lal Mehta', age: 81, caregiver: 'Arjun Mehta', health: 'At Risk', lastCheckin: '2 hr ago', device: 'GravityTag', location: 'Hospital, Delhi' },
-  { name: 'Savitri Reddy', age: 68, caregiver: 'Kavya Reddy', health: 'Stable', lastCheckin: '25 min ago', device: 'GravityWatch', location: 'Home, Hyderabad' },
-  { name: 'Ramchandra Gupta', age: 78, caregiver: 'Rahul Gupta', health: 'Critical', lastCheckin: '4 hr ago', device: 'GravityWatch Pro', location: 'ICU, Pune' },
-  { name: 'Vimla Iyer', age: 72, caregiver: 'Sneha Iyer', health: 'Stable', lastCheckin: '18 min ago', device: 'GravityWatch', location: 'Home, Chennai' },
-  { name: 'Baldev Singh', age: 85, caregiver: 'Vikram Singh', health: 'At Risk', lastCheckin: '1 hr ago', device: 'GravityWatch Pro', location: 'Clinic, Bangalore' },
-  { name: 'Janaki Nair', age: 70, caregiver: 'Meera Nair', health: 'Stable', lastCheckin: '5 min ago', device: 'GravityTag', location: 'Home, Mumbai' },
-  { name: 'Suresh Prasad Kumar', age: 76, caregiver: 'Aditya Kumar', health: 'Stable', lastCheckin: '40 min ago', device: 'GravityWatch', location: 'Park, Kolkata' },
-  { name: 'Indira Verma', age: 79, caregiver: 'Pooja Verma', health: 'At Risk', lastCheckin: '3 hr ago', device: 'GravityWatch Pro', location: 'Home, Delhi' },
-  { name: 'Dhanraj Yadav', age: 83, caregiver: 'Ramesh Yadav', health: 'Critical', lastCheckin: '5 hr ago', device: 'GravityWatch', location: 'Hospital, Lucknow' },
-]
-
-const healthColor: Record<string, string> = {
-  Stable: '#10B981',
-  'At Risk': '#F59E0B',
-  Critical: '#EF4444',
+interface ElderlyMember {
+  id: number
+  name: string
+  caregiver: string
+  health: 'Stable' | 'At Risk' | 'Critical'
+  heart_rate: number
+  steps: number
+  last_checkin: string | null
+  device: string
+  is_active: boolean
 }
 
 export function ElderlySection() {
   const [search, setSearch] = useState('')
   const [healthFilter, setHealthFilter] = useState('All')
   const [hoveredRow, setHoveredRow] = useState<number | null>(null)
+  const [elderly, setElderly] = useState<ElderlyMember[]>([])
+  const [total, setTotal] = useState(0)
+  const [loading, setLoading] = useState(true)
+  const [stats, setStats] = useState({ stable: 0, atRisk: 0, critical: 0 })
 
-  const filtered = elderlyData.filter(e => {
+  const healthColor: Record<string, string> = {
+    Stable: '#10B981',
+    'At Risk': '#F59E0B',
+    Critical: '#EF4444',
+  }
+
+  useEffect(() => {
+    const token = localStorage.getItem('gv_token') || ''
+    setLoading(true)
+    const timer = setTimeout(() => {
+      fetch('/admin-api/elderly?limit=50&search=' + encodeURIComponent(search), {
+        headers: { Authorization: 'Bearer ' + token },
+      })
+        .then(r => r.json())
+        .then(d => {
+          setElderly(d.elderly || [])
+          setTotal(d.total || 0)
+          setStats({
+            stable: d.stable_count || 0,
+            atRisk: d.at_risk_count || 0,
+            critical: d.critical_count || 0,
+          })
+          setLoading(false)
+        })
+        .catch(() => setLoading(false))
+    }, 300)
+    return () => clearTimeout(timer)
+  }, [search])
+
+  const filtered = elderly.filter(e => {
     const matchHealth = healthFilter === 'All' || e.health === healthFilter
-    const matchSearch = search === '' ||
-      e.name.toLowerCase().includes(search.toLowerCase()) ||
-      e.caregiver.toLowerCase().includes(search.toLowerCase())
-    return matchHealth && matchSearch
+    return matchHealth
   })
 
   const filterCounts: Record<string, number> = {
-    All: elderlyData.length,
-    Stable: elderlyData.filter(e => e.health === 'Stable').length,
-    'At Risk': elderlyData.filter(e => e.health === 'At Risk').length,
-    Critical: elderlyData.filter(e => e.health === 'Critical').length,
+    All: total,
+    Stable: stats.stable,
+    'At Risk': stats.atRisk,
+    Critical: stats.critical,
+  }
+
+  const formatCheckin = (val: string | null) => {
+    if (!val) return '—'
+    const d = new Date(val)
+    if (isNaN(d.getTime())) return val
+    return d.toLocaleString('en-IN', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })
   }
 
   return (
@@ -896,33 +926,33 @@ export function ElderlySection() {
         <div style={{ background: 'var(--bg-surface)', border: '1px solid var(--border)', borderRadius: 12, padding: 20 }}>
           <div style={{ marginBottom: 10 }}><Heart size={18} color="var(--gold)" /></div>
           <div style={{ fontSize: 12, color: 'var(--text-muted)', fontWeight: 500, marginBottom: 8 }}>Total Elderly</div>
-          <div style={{ fontSize: 28, fontWeight: 800, color: 'var(--text-primary)' }}>23,450</div>
+          <div style={{ fontSize: 28, fontWeight: 800, color: 'var(--text-primary)' }}>{loading ? '…' : total.toLocaleString()}</div>
           <div style={{ fontSize: 12, color: '#10B981', marginTop: 6, display: 'flex', alignItems: 'center', gap: 4 }}>
-            <TrendingUp size={12} /><span>+320 this month</span>
+            <TrendingUp size={12} /><span>All registered</span>
           </div>
         </div>
         <div style={{ background: 'var(--bg-surface)', border: '1px solid var(--border)', borderRadius: 12, padding: 20 }}>
           <div style={{ marginBottom: 10 }}><Activity size={18} color="#10B981" /></div>
-          <div style={{ fontSize: 12, color: 'var(--text-muted)', fontWeight: 500, marginBottom: 8 }}>Active Monitoring</div>
-          <div style={{ fontSize: 28, fontWeight: 800, color: 'var(--text-primary)' }}>21,100</div>
+          <div style={{ fontSize: 12, color: 'var(--text-muted)', fontWeight: 500, marginBottom: 8 }}>Stable</div>
+          <div style={{ fontSize: 28, fontWeight: 800, color: 'var(--text-primary)' }}>{loading ? '…' : stats.stable.toLocaleString()}</div>
           <div style={{ fontSize: 12, color: '#10B981', marginTop: 6, display: 'flex', alignItems: 'center', gap: 4 }}>
-            <TrendingUp size={12} /><span>90% coverage</span>
+            <CheckCircle size={12} /><span>Good health</span>
           </div>
         </div>
         <div style={{ background: 'var(--bg-surface)', border: '1px solid var(--border)', borderRadius: 12, padding: 20 }}>
-          <div style={{ marginBottom: 10 }}><AlertTriangle size={18} color="#EF4444" /></div>
-          <div style={{ fontSize: 12, color: 'var(--text-muted)', fontWeight: 500, marginBottom: 8 }}>Fall Alerts Today</div>
-          <div style={{ fontSize: 28, fontWeight: 800, color: 'var(--text-primary)' }}>8</div>
-          <div style={{ fontSize: 12, color: '#EF4444', marginTop: 6, display: 'flex', alignItems: 'center', gap: 4 }}>
-            <TrendingDown size={12} /><span>3 unresolved</span>
-          </div>
-        </div>
-        <div style={{ background: 'var(--bg-surface)', border: '1px solid var(--border)', borderRadius: 12, padding: 20 }}>
-          <div style={{ marginBottom: 10 }}><Bell size={18} color="#F59E0B" /></div>
-          <div style={{ fontSize: 12, color: 'var(--text-muted)', fontWeight: 500, marginBottom: 8 }}>Medication Due</div>
-          <div style={{ fontSize: 28, fontWeight: 800, color: 'var(--text-primary)' }}>1,234</div>
+          <div style={{ marginBottom: 10 }}><AlertTriangle size={18} color="#F59E0B" /></div>
+          <div style={{ fontSize: 12, color: 'var(--text-muted)', fontWeight: 500, marginBottom: 8 }}>At Risk</div>
+          <div style={{ fontSize: 28, fontWeight: 800, color: 'var(--text-primary)' }}>{loading ? '…' : stats.atRisk.toLocaleString()}</div>
           <div style={{ fontSize: 12, color: '#F59E0B', marginTop: 6, display: 'flex', alignItems: 'center', gap: 4 }}>
-            <Clock size={12} /><span>Next 2 hours</span>
+            <AlertCircle size={12} /><span>Needs attention</span>
+          </div>
+        </div>
+        <div style={{ background: 'var(--bg-surface)', border: '1px solid var(--border)', borderRadius: 12, padding: 20 }}>
+          <div style={{ marginBottom: 10 }}><Siren size={18} color="#EF4444" /></div>
+          <div style={{ fontSize: 12, color: 'var(--text-muted)', fontWeight: 500, marginBottom: 8 }}>Critical</div>
+          <div style={{ fontSize: 28, fontWeight: 800, color: 'var(--text-primary)' }}>{loading ? '…' : stats.critical.toLocaleString()}</div>
+          <div style={{ fontSize: 12, color: '#EF4444', marginTop: 6, display: 'flex', alignItems: 'center', gap: 4 }}>
+            <TrendingDown size={12} /><span>Urgent care</span>
           </div>
         </div>
       </div>
@@ -950,14 +980,26 @@ export function ElderlySection() {
           ))}
         </div>
         <div style={{ overflowX: 'auto' }}>
-          <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: 800 }}>
+          <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: 900 }}>
             <thead>
               <tr style={{ borderBottom: '1px solid var(--border)', background: 'var(--bg-surface2)' }}>
-                <TH>Name</TH><TH>Age</TH><TH>Caregiver</TH><TH>Health Status</TH><TH>Last Check-in</TH><TH>Device</TH><TH>Location</TH><TH>Actions</TH>
+                <TH>Name</TH><TH>Caregiver</TH><TH>Health Status</TH><TH>Heart Rate</TH><TH>Steps</TH><TH>Last Check-in</TH><TH>Device</TH><TH>Actions</TH>
               </tr>
             </thead>
             <tbody>
-              {filtered.map((e, i) => {
+              {loading ? (
+                <tr>
+                  <td colSpan={8} style={{ padding: '40px 20px', textAlign: 'center', color: 'var(--text-muted)', fontSize: 13 }}>
+                    Loading elderly members…
+                  </td>
+                </tr>
+              ) : filtered.length === 0 ? (
+                <tr>
+                  <td colSpan={8} style={{ padding: '40px 20px', textAlign: 'center', color: 'var(--text-muted)', fontSize: 13 }}>
+                    No elderly members found
+                  </td>
+                </tr>
+              ) : filtered.map((e, i) => {
                 const isCritical = e.health === 'Critical'
                 const isAtRisk = e.health === 'At Risk'
                 const avatarBg = isCritical ? '#EF444420' : isAtRisk ? '#F59E0B20' : '#10B98120'
@@ -967,10 +1009,10 @@ export function ElderlySection() {
                   : isAtRisk
                   ? '3px solid #F59E0B'
                   : '3px solid transparent'
-                const rowBg = isCritical ? '#EF44440a' : isAtRisk ? '#F59E0B08' : 'transparent'
+                const rowBg = isCritical ? '#EF44440a' : 'transparent'
                 return (
                   <tr
-                    key={i}
+                    key={e.id}
                     onMouseEnter={() => setHoveredRow(i)}
                     onMouseLeave={() => setHoveredRow(null)}
                     style={{
@@ -1000,16 +1042,12 @@ export function ElderlySection() {
                         <span style={{ fontWeight: 600, fontSize: 13, color: 'var(--text-primary)' }}>{e.name}</span>
                       </div>
                     </td>
-                    <TD muted>{e.age} yrs</TD>
                     <TD>{e.caregiver}</TD>
                     <TD>{badge(e.health, healthColor[e.health])}</TD>
-                    <TD muted>{e.lastCheckin}</TD>
+                    <TD muted>{e.heart_rate ? `${e.heart_rate} bpm` : '—'}</TD>
+                    <TD muted>{e.steps != null ? e.steps.toLocaleString() : '—'}</TD>
+                    <TD muted>{formatCheckin(e.last_checkin)}</TD>
                     <TD muted>{e.device}</TD>
-                    <td style={{ padding: '12px 20px', fontSize: 12, color: 'var(--text-secondary)' }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-                        <MapPin size={11} color="var(--text-muted)" />{e.location}
-                      </div>
-                    </td>
                     <td style={{ padding: '12px 20px' }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                         <button style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)' }}>
@@ -1040,10 +1078,18 @@ export function ElderlySection() {
         <div style={{
           padding: '12px 20px',
           borderTop: '1px solid var(--border)',
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
           fontSize: 12,
           color: 'var(--text-muted)',
         }}>
-          Showing {filtered.length} of 23,450 elderly members
+          <span>Showing {filtered.length} of {total.toLocaleString()} elderly members</span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <button style={{ background: 'var(--bg-surface2)', border: '1px solid var(--border)', borderRadius: 4, padding: '3px 8px', fontSize: 12, color: 'var(--text-secondary)', cursor: 'pointer' }}>Prev</button>
+            <span style={{ fontWeight: 600, color: 'var(--text-primary)' }}>Page 1</span>
+            <button style={{ background: 'var(--bg-surface2)', border: '1px solid var(--border)', borderRadius: 4, padding: '3px 8px', fontSize: 12, color: 'var(--text-secondary)', cursor: 'pointer' }}>Next</button>
+          </div>
         </div>
       </div>
     </div>
@@ -1052,57 +1098,60 @@ export function ElderlySection() {
 
 // ─── 6. CaregiversSection ─────────────────────────────────────────────────────
 
-const caregiversData = [
-  { name: 'Priya Sharma', phone: '+91 98201 12345', elders: 2, status: 'Active', lastActive: '2 min ago', rating: 4.9 },
-  { name: 'Kavya Reddy', phone: '+91 94401 55678', elders: 3, status: 'Active', lastActive: '15 min ago', rating: 4.7 },
-  { name: 'Sneha Iyer', phone: '+91 93301 88901', elders: 2, status: 'Active', lastActive: '5 min ago', rating: 4.8 },
-  { name: 'Meera Nair', phone: '+91 99201 22334', elders: 1, status: 'Active', lastActive: '30 min ago', rating: 4.6 },
-  { name: 'Pooja Verma', phone: '+91 87501 44567', elders: 3, status: 'Inactive', lastActive: '6 hr ago', rating: 3.9 },
-  { name: 'Neha Joshi', phone: '+91 96401 77890', elders: 2, status: 'Active', lastActive: '1 hr ago', rating: 4.5 },
-  { name: 'Anita Desai', phone: '+91 92301 11223', elders: 4, status: 'Active', lastActive: '8 min ago', rating: 4.9 },
-  { name: 'Sunita Rao', phone: '+91 91401 33456', elders: 1, status: 'Active', lastActive: '20 min ago', rating: 4.3 },
-  { name: 'Divya Pillai', phone: '+91 88201 66789', elders: 2, status: 'Inactive', lastActive: '2 days ago', rating: 3.5 },
-  { name: 'Preethi Varma', phone: '+91 97801 99012', elders: 3, status: 'Active', lastActive: '45 min ago', rating: 4.7 },
-]
-
-const Stars = ({ rating }: { rating: number }) => {
-  const full = Math.floor(rating)
-  return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: 3 }}>
-      {[1, 2, 3, 4, 5].map(n => (
-        <Star
-          key={n}
-          size={11}
-          color={n <= full ? 'var(--gold)' : 'var(--border)'}
-          fill={n <= full ? 'var(--gold)' : 'none'}
-        />
-      ))}
-      <span style={{ fontSize: 11, color: 'var(--text-muted)', marginLeft: 2 }}>{rating}</span>
-    </div>
-  )
+interface CaregiverRow {
+  id: number
+  name: string
+  phone: string
+  email: string
+  elders_monitored: number
+  family_members: number
+  status: 'Active' | 'Inactive'
+  is_active: boolean
+  joined_at: string | null
 }
 
 export function CaregiversSection() {
   const [search, setSearch] = useState('')
   const [statusFilter, setStatusFilter] = useState('All')
   const [hoveredRow, setHoveredRow] = useState<number | null>(null)
+  const [caregivers, setCaregivers] = useState<CaregiverRow[]>([])
+  const [total, setTotal] = useState(0)
+  const [loading, setLoading] = useState(true)
+  const [stats, setStats] = useState({ active: 0, inactive: 0 })
 
-  const filtered = caregiversData.filter(c => {
-    const matchStatus = statusFilter === 'All' || c.status === statusFilter
-    const matchSearch = search === '' ||
-      c.name.toLowerCase().includes(search.toLowerCase()) ||
-      c.phone.includes(search)
-    return matchStatus && matchSearch
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      const token = localStorage.getItem('gv_token') || ''
+      fetch('/admin-api/caregivers?limit=50&search=' + encodeURIComponent(search), {
+        headers: { Authorization: `Bearer ${token}` },
+      })
+        .then(r => r.json())
+        .then(data => {
+          const list: CaregiverRow[] = data.caregivers || []
+          setCaregivers(list)
+          setTotal(data.total ?? list.length)
+          setStats({
+            active: data.active_count ?? list.filter(c => c.is_active).length,
+            inactive: data.inactive_count ?? list.filter(c => !c.is_active).length,
+          })
+        })
+        .catch(() => {})
+        .finally(() => setLoading(false))
+    }, 300)
+    return () => clearTimeout(timer)
+  }, [search])
+
+  const filtered = caregivers.filter(c => {
+    if (statusFilter === 'All') return true
+    return c.status === statusFilter
   })
 
-  const countAll = caregiversData.length
-  const countActive = caregiversData.filter(c => c.status === 'Active').length
-  const countInactive = caregiversData.filter(c => c.status === 'Inactive').length
+  const avgMonitored = caregivers.reduce((s, c) => s + c.elders_monitored, 0) / Math.max(caregivers.length, 1)
 
   const filterCounts: Record<string, number> = {
-    All: countAll,
-    Active: countActive,
-    Inactive: countInactive,
+    All: total,
+    Active: stats.active,
+    Inactive: stats.inactive,
   }
 
   const getInitials = (name: string) => {
@@ -1124,6 +1173,13 @@ export function CaregiversSection() {
     flexShrink: 0,
   } as React.CSSProperties)
 
+  const formatJoined = (val: string | null) => {
+    if (!val) return '—'
+    const d = new Date(val)
+    if (isNaN(d.getTime())) return val
+    return d.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })
+  }
+
   return (
     <div>
       <SectionHeader
@@ -1132,10 +1188,33 @@ export function CaregiversSection() {
       />
 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 16, marginBottom: 24 }}>
-        <StatCard label="Total Caregivers" value="18,920" sub="+140 this month" icon={Users} />
-        <StatCard label="Active Today" value="14,230" sub="75.2% active rate" icon={Activity} iconColor="#10B981" />
-        <StatCard label="Avg Elders / Caregiver" value="2.4" sub="Ideal range: 2–3" icon={Heart} iconColor="#F59E0B" />
-        <StatCard label="Response Rate" value="96.8%" sub="+0.4% this week" icon={CheckCircle} iconColor="#10B981" />
+        <StatCard
+          label="Total Caregivers"
+          value={loading ? '…' : total.toLocaleString()}
+          sub="All registered"
+          icon={Users}
+        />
+        <StatCard
+          label="Active Today"
+          value={loading ? '…' : stats.active.toLocaleString()}
+          sub="Currently active"
+          icon={Activity}
+          iconColor="#10B981"
+        />
+        <StatCard
+          label="Avg Monitored"
+          value={loading ? '…' : avgMonitored.toFixed(1)}
+          sub="Elders per caregiver"
+          icon={Heart}
+          iconColor="#F59E0B"
+        />
+        <StatCard
+          label="Response Rate"
+          value="96.8%"
+          sub="+0.4% this week"
+          icon={CheckCircle}
+          iconColor="#10B981"
+        />
       </div>
 
       <div style={{ background: 'var(--bg-surface)', border: '1px solid var(--border)', borderRadius: 12, overflow: 'hidden' }}>
@@ -1156,7 +1235,7 @@ export function CaregiversSection() {
                 lineHeight: '16px',
                 display: 'inline-block',
                 minWidth: 18,
-                textAlign: 'center',
+                textAlign: 'center' as const,
               }}>{filterCounts[s]}</span>
             </FilterBtn>
           ))}
@@ -1183,21 +1262,34 @@ export function CaregiversSection() {
 
         {/* Table */}
         <div style={{ overflowX: 'auto' }}>
-          <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: 800 }}>
+          <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: 860 }}>
             <thead>
               <tr style={{ borderBottom: '1px solid var(--border)', background: 'var(--bg-surface2)' }}>
-                <TH>Name</TH><TH>Phone</TH><TH>Assigned Elders</TH><TH>Status</TH><TH>Last Active</TH><TH>Rating</TH><TH>Actions</TH>
+                <TH>Name</TH><TH>Phone</TH><TH>Family Members</TH><TH>Elders Monitored</TH><TH>Status</TH><TH>Joined</TH><TH>Actions</TH>
               </tr>
             </thead>
             <tbody>
-              {filtered.map((c, i) => {
-                const isActive = c.status === 'Active'
+              {loading ? (
+                <tr>
+                  <td colSpan={7} style={{ padding: '40px 20px', textAlign: 'center', color: 'var(--text-muted)', fontSize: 13 }}>
+                    Loading caregivers…
+                  </td>
+                </tr>
+              ) : filtered.length === 0 ? (
+                <tr>
+                  <td colSpan={7} style={{ padding: '40px 20px', textAlign: 'center', color: 'var(--text-muted)', fontSize: 13 }}>
+                    No caregivers found
+                  </td>
+                </tr>
+              ) : filtered.map((c, i) => {
+                const isActive = c.is_active
                 const avatarBg = isActive ? '#10B98120' : '#6B728020'
                 const avatarColor = isActive ? '#10B981' : '#6B7280'
                 const isHovered = hoveredRow === i
+                const workloadColor = c.elders_monitored >= 5 ? '#EF4444' : c.elders_monitored >= 3 ? '#F59E0B' : '#10B981'
                 return (
                   <tr
-                    key={i}
+                    key={c.id}
                     onMouseEnter={() => setHoveredRow(i)}
                     onMouseLeave={() => setHoveredRow(null)}
                     style={{
@@ -1233,25 +1325,28 @@ export function CaregiversSection() {
 
                     <TD muted>{c.phone}</TD>
 
-                    {/* Elders with workload bar */}
+                    {/* Family Members */}
+                    <td style={{ padding: '12px 20px' }}>
+                      <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)' }}>{c.family_members}</span>
+                    </td>
+
+                    {/* Elders Monitored with workload bar */}
                     <td style={{ padding: '12px 20px' }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                        <span style={{ fontSize: 14, fontWeight: 700, color: 'var(--text-primary)' }}>{c.elders}</span>
-                        <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>elders</span>
-                        <div style={{ width: 40, height: 4, borderRadius: 2, background: 'var(--border)', overflow: 'hidden' }}>
+                        <span style={{ fontSize: 14, fontWeight: 700, color: 'var(--text-primary)' }}>{c.elders_monitored}</span>
+                        <div style={{ width: 40, height: 4, borderRadius: 2, background: 'var(--border)', overflow: 'hidden', flexShrink: 0 }}>
                           <div style={{
-                            width: `${(c.elders / 5) * 100}%`,
+                            width: `${Math.min((c.elders_monitored / 5) * 100, 100)}%`,
                             height: '100%',
                             borderRadius: 2,
-                            background: c.elders >= 4 ? '#F59E0B' : '#10B981',
+                            background: workloadColor,
                           }} />
                         </div>
                       </div>
                     </td>
 
                     <TD>{badge(c.status, isActive ? '#10B981' : '#6B7280')}</TD>
-                    <TD muted>{c.lastActive}</TD>
-                    <td style={{ padding: '12px 20px' }}><Stars rating={c.rating} /></td>
+                    <TD muted>{formatJoined(c.joined_at)}</TD>
 
                     {/* Actions */}
                     <td style={{ padding: '12px 20px' }}>
@@ -1262,8 +1357,8 @@ export function CaregiversSection() {
                         <button title="Message" style={actionBtn('#10B981')}>
                           <MessageSquare size={13} color="#10B981" />
                         </button>
-                        <button title="Call" style={actionBtn('#F59E0B')}>
-                          <Phone size={13} color="#F59E0B" />
+                        <button title="Contact" style={actionBtn('#F59E0B')}>
+                          <Mail size={13} color="#F59E0B" />
                         </button>
                       </div>
                     </td>
@@ -1284,11 +1379,10 @@ export function CaregiversSection() {
           fontSize: 12,
           color: 'var(--text-muted)',
         }}>
-          <span>Showing <strong style={{ color: 'var(--text-primary)' }}>{filtered.length}</strong> of <strong style={{ color: 'var(--text-primary)' }}>18,920</strong> caregivers</span>
+          <span>Showing <strong style={{ color: 'var(--text-primary)' }}>{filtered.length}</strong> of <strong style={{ color: 'var(--text-primary)' }}>{total.toLocaleString()}</strong> caregivers</span>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
             <button style={{ background: 'var(--bg-surface2)', border: '1px solid var(--border)', borderRadius: 4, padding: '3px 8px', fontSize: 12, color: 'var(--text-secondary)', cursor: 'pointer' }}>Prev</button>
             <span style={{ fontWeight: 600, color: 'var(--text-primary)' }}>Page 1</span>
-            <span>of 1,261</span>
             <button style={{ background: 'var(--bg-surface2)', border: '1px solid var(--border)', borderRadius: 4, padding: '3px 8px', fontSize: 12, color: 'var(--text-secondary)', cursor: 'pointer' }}>Next</button>
           </div>
         </div>
@@ -1299,65 +1393,76 @@ export function CaregiversSection() {
 
 // ─── 7. UserVerificationSection ───────────────────────────────────────────────
 
-const verificationData = [
-  { user: 'Priya Sharma', submitted: '13 Jun 2026', type: 'Aadhaar', status: 'Pending', reviewer: 'Auto', id: 1 },
-  { user: 'Arjun Mehta', submitted: '13 Jun 2026', type: 'PAN', status: 'Verified', reviewer: 'Rohan K', id: 2 },
-  { user: 'Kavya Reddy', submitted: '12 Jun 2026', type: 'Phone', status: 'Verified', reviewer: 'Auto', id: 3 },
-  { user: 'Rahul Gupta', submitted: '12 Jun 2026', type: 'Aadhaar', status: 'Rejected', reviewer: 'Sneha V', id: 4 },
-  { user: 'Sneha Iyer', submitted: '12 Jun 2026', type: 'PAN', status: 'Pending', reviewer: 'Auto', id: 5 },
-  { user: 'Vikram Singh', submitted: '11 Jun 2026', type: 'Aadhaar', status: 'Verified', reviewer: 'Rohan K', id: 6 },
-  { user: 'Meera Nair', submitted: '11 Jun 2026', type: 'Phone', status: 'Verified', reviewer: 'Auto', id: 7 },
-  { user: 'Aditya Kumar', submitted: '11 Jun 2026', type: 'Aadhaar', status: 'Pending', reviewer: 'Auto', id: 8 },
-  { user: 'Pooja Verma', submitted: '10 Jun 2026', type: 'PAN', status: 'Rejected', reviewer: 'Sneha V', id: 9 },
-  { user: 'Suresh Babu', submitted: '10 Jun 2026', type: 'Aadhaar', status: 'Verified', reviewer: 'Auto', id: 10 },
-  { user: 'Anita Desai', submitted: '09 Jun 2026', type: 'Phone', status: 'Pending', reviewer: 'Auto', id: 11 },
-  { user: 'Ravi Shankar', submitted: '09 Jun 2026', type: 'Aadhaar', status: 'Verified', reviewer: 'Rohan K', id: 12 },
-  { user: 'Divya Pillai', submitted: '13 Jun 2026', type: 'Aadhaar', status: 'Submitted', reviewer: '—', id: 13 },
-  { user: 'Ramesh Yadav', submitted: '08 Jun 2026', type: 'PAN', status: 'Expired', reviewer: 'Auto', id: 14 },
-]
-
-const verifStatusColor: Record<string, string> = {
-  Pending: '#F59E0B',
-  Verified: '#10B981',
-  Rejected: '#EF4444',
-  Submitted: '#3B82F6',
-  Expired: '#9CA3AF',
-}
-
-const verifRowLeft: Record<string, string> = {
-  Pending: '3px solid #F59E0B',
-  Submitted: '3px solid #3B82F6',
-  Expired: '3px solid #9CA3AF',
+interface VerificationRow {
+  id: number
+  user: string
+  email: string
+  phone: string
+  submitted: string
+  type: 'Phone' | 'Email'
+  status: 'Verified' | 'Pending' | 'Rejected'
+  is_active: boolean
 }
 
 export function UserVerificationSection() {
+  const verifStatusColor: Record<string, string> = {
+    Pending: '#F59E0B',
+    Verified: '#10B981',
+    Rejected: '#EF4444',
+  }
+
   const [search, setSearch] = useState('')
   const [typeFilter, setTypeFilter] = useState('All')
   const [statusFilter, setStatusFilter] = useState('All')
   const [hoveredRow, setHoveredRow] = useState<number | null>(null)
+  const [verifications, setVerifications] = useState<VerificationRow[]>([])
+  const [total, setTotal] = useState(0)
+  const [loading, setLoading] = useState(true)
+  const [stats, setStats] = useState({ pending: 0, verified: 0, rejected: 0 })
 
-  const filtered = verificationData.filter(v => {
-    const matchType = typeFilter === 'All' || v.type === typeFilter
-    const matchStatus = statusFilter === 'All' || v.status === statusFilter
-    const matchSearch = search === '' || v.user.toLowerCase().includes(search.toLowerCase())
-    return matchType && matchStatus && matchSearch
-  })
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      const token = localStorage.getItem('gv_token') || ''
+      fetch(
+        '/admin-api/verification?limit=50&search=' +
+          encodeURIComponent(search) +
+          '&status_filter=' +
+          encodeURIComponent(statusFilter) +
+          '&type_filter=' +
+          encodeURIComponent(typeFilter),
+        { headers: { Authorization: `Bearer ${token}` } }
+      )
+        .then(r => r.json())
+        .then(data => {
+          const list: VerificationRow[] = data.verifications || []
+          setVerifications(list)
+          setTotal(data.total ?? list.length)
+          setStats({
+            pending: data.pending_count ?? list.filter(v => v.status === 'Pending').length,
+            verified: data.verified_count ?? list.filter(v => v.status === 'Verified').length,
+            rejected: data.rejected_count ?? list.filter(v => v.status === 'Rejected').length,
+          })
+        })
+        .catch(() => {})
+        .finally(() => setLoading(false))
+    }, 300)
+    return () => clearTimeout(timer)
+  }, [search, statusFilter, typeFilter])
 
   const typeFilterCounts: Record<string, number> = {
-    All: verificationData.length,
-    Aadhaar: verificationData.filter(v => v.type === 'Aadhaar').length,
-    PAN: verificationData.filter(v => v.type === 'PAN').length,
-    Phone: verificationData.filter(v => v.type === 'Phone').length,
+    All: verifications.length,
+    Phone: verifications.filter(v => v.type === 'Phone').length,
+    Email: verifications.filter(v => v.type === 'Email').length,
   }
 
   const statusFilterCounts: Record<string, number> = {
-    All: verificationData.length,
-    Submitted: verificationData.filter(v => v.status === 'Submitted').length,
-    Pending: verificationData.filter(v => v.status === 'Pending').length,
-    Verified: verificationData.filter(v => v.status === 'Verified').length,
-    Rejected: verificationData.filter(v => v.status === 'Rejected').length,
-    Expired: verificationData.filter(v => v.status === 'Expired').length,
+    All: verifications.length,
+    Pending: verifications.filter(v => v.status === 'Pending').length,
+    Verified: verifications.filter(v => v.status === 'Verified').length,
+    Rejected: verifications.filter(v => v.status === 'Rejected').length,
   }
+
+  const autoVerified = total - stats.pending - stats.rejected
 
   const countBadge = (count: number, active: boolean) => (
     <span style={{
@@ -1378,28 +1483,54 @@ export function UserVerificationSection() {
   return (
     <div>
       <SectionHeader
-        title="User Verification (KYC)"
-        subtitle="Identity verification queue — Aadhaar, PAN, phone"
+        title="User Verification"
+        subtitle="Phone and email verification queue"
       />
 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 16, marginBottom: 24 }}>
-        <StatCard label="Pending Review" value="234" sub="Avg wait: 4h 12m" subColor="#F59E0B" icon={Clock} iconColor="#F59E0B" />
-        <StatCard label="Verified Today" value="89" sub="+23 vs yesterday (+35%)" icon={UserCheck} iconColor="#10B981" />
-        <StatCard label="Rejected Today" value="12" sub="5.2% rejection rate" subColor="#EF4444" icon={UserX} iconColor="#EF4444" />
-        <StatCard label="Auto-approved" value="456" sub="Aadhaar API — 73% of total" icon={Zap} iconColor="#3B82F6" />
+        <StatCard
+          label="Pending Review"
+          value={loading ? '…' : stats.pending.toLocaleString()}
+          sub="Awaiting verification"
+          subColor="#F59E0B"
+          icon={Clock}
+          iconColor="#F59E0B"
+        />
+        <StatCard
+          label="Verified"
+          value={loading ? '…' : stats.verified.toLocaleString()}
+          sub="Successfully verified"
+          icon={UserCheck}
+          iconColor="#10B981"
+        />
+        <StatCard
+          label="Rejected"
+          value={loading ? '…' : stats.rejected.toLocaleString()}
+          sub="Verification failed"
+          subColor="#EF4444"
+          icon={UserX}
+          iconColor="#EF4444"
+        />
+        <StatCard
+          label="Auto-verified"
+          value={loading ? '…' : Math.max(0, autoVerified).toLocaleString()}
+          sub="System auto-approved"
+          icon={Zap}
+          iconColor="#3B82F6"
+        />
       </div>
 
       <div style={{ background: 'var(--bg-surface)', border: '1px solid var(--border)', borderRadius: 12, overflow: 'hidden' }}>
         {/* Toolbar */}
         <div style={{ padding: '12px 20px', borderBottom: '1px solid var(--border)', display: 'flex', gap: 10, flexWrap: 'wrap' as const, alignItems: 'center' }}>
           <SearchBar value={search} onChange={setSearch} placeholder="Search users..." />
-          {(['All', 'Aadhaar', 'PAN', 'Phone'] as const).map(t => (
+          {(['All', 'Phone', 'Email'] as const).map(t => (
             <FilterBtn key={t} active={typeFilter === t} onClick={() => setTypeFilter(t)}>
               {t}{countBadge(typeFilterCounts[t], typeFilter === t)}
             </FilterBtn>
           ))}
           <div style={{ width: 1, background: 'var(--border)', alignSelf: 'stretch' }} />
-          {(['All', 'Submitted', 'Pending', 'Verified', 'Rejected', 'Expired'] as const).map(s => (
+          {(['All', 'Pending', 'Verified', 'Rejected'] as const).map(s => (
             <FilterBtn key={s} active={statusFilter === s} onClick={() => setStatusFilter(s)}>
               {s}{countBadge(statusFilterCounts[s], statusFilter === s)}
             </FilterBtn>
@@ -1426,47 +1557,60 @@ export function UserVerificationSection() {
 
         {/* Table */}
         <div style={{ overflowX: 'auto' }}>
-          <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: 700 }}>
+          <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: 800 }}>
             <thead>
               <tr style={{ borderBottom: '1px solid var(--border)', background: 'var(--bg-surface2)' }}>
-                <TH>User</TH><TH>Submitted</TH><TH>Type</TH><TH>Status</TH><TH>Reviewer</TH><TH>Actions</TH>
+                <TH>User</TH><TH>Email</TH><TH>Phone</TH><TH>Submitted</TH><TH>Type</TH><TH>Status</TH><TH>Actions</TH>
               </tr>
             </thead>
             <tbody>
-              {filtered.map((v, i) => {
-                const isHovered = hoveredRow === i
-                const leftBorder = verifRowLeft[v.status]
-                const isExpired = v.status === 'Expired'
+              {loading ? (
+                <tr>
+                  <td colSpan={7} style={{ padding: '40px 20px', textAlign: 'center', color: 'var(--text-muted)', fontSize: 13 }}>
+                    Loading verifications…
+                  </td>
+                </tr>
+              ) : verifications.length === 0 ? (
+                <tr>
+                  <td colSpan={7} style={{ padding: '40px 20px', textAlign: 'center', color: 'var(--text-muted)', fontSize: 13 }}>
+                    No verifications found
+                  </td>
+                </tr>
+              ) : verifications.map((v, i) => {
+                const isPending = v.status === 'Pending'
+                const isRejected = v.status === 'Rejected'
+                const borderLeft = isPending
+                  ? '3px solid #F59E0B'
+                  : isRejected
+                  ? '3px solid #EF4444'
+                  : 'none'
                 return (
                   <tr
-                    key={i}
+                    key={v.id}
                     onMouseEnter={() => setHoveredRow(i)}
                     onMouseLeave={() => setHoveredRow(null)}
                     style={{
                       borderBottom: '1px solid var(--border)',
-                      borderLeft: leftBorder || 'none',
-                      background: isHovered ? 'var(--bg-surface2)' : 'transparent',
-                      opacity: isExpired ? 0.8 : 1,
-                      transition: 'background 0.15s, opacity 0.15s',
+                      borderLeft,
+                      background: hoveredRow === i ? 'var(--bg-surface2)' : 'transparent',
+                      transition: 'background 0.15s',
                     }}
                   >
                     <TD><span style={{ fontWeight: 600 }}>{v.user}</span></TD>
+                    <TD muted>{v.email}</TD>
+                    <TD muted>{v.phone}</TD>
                     <TD muted>{v.submitted}</TD>
                     <TD>
                       <span style={{ background: 'var(--bg-surface2)', border: '1px solid var(--border)', fontSize: 11, fontWeight: 600, padding: '2px 8px', borderRadius: 6, color: 'var(--text-secondary)' }}>{v.type}</span>
                     </TD>
                     <TD>{badge(v.status, verifStatusColor[v.status] ?? '#6B7280')}</TD>
-                    <TD muted>{v.reviewer}</TD>
                     <td style={{ padding: '12px 20px' }}>
                       <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
-                        {v.status === 'Pending' && (
+                        {isPending && (
                           <>
                             <button style={{ background: '#10B98120', color: '#10B981', border: '1px solid #10B98133', fontSize: 11, fontWeight: 600, padding: '3px 8px', borderRadius: 6, cursor: 'pointer' }}>Approve</button>
                             <button style={{ background: '#EF444420', color: '#EF4444', border: '1px solid #EF444433', fontSize: 11, fontWeight: 600, padding: '3px 8px', borderRadius: 6, cursor: 'pointer' }}>Reject</button>
                           </>
-                        )}
-                        {v.status === 'Submitted' && (
-                          <button style={{ background: '#3B82F620', color: '#3B82F6', border: '1px solid #3B82F633', fontSize: 11, fontWeight: 600, padding: '3px 8px', borderRadius: 6, cursor: 'pointer' }}>Review</button>
                         )}
                         <button style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)' }}>
                           <Eye size={13} />
@@ -1490,7 +1634,7 @@ export function UserVerificationSection() {
           fontSize: 12,
           color: 'var(--text-muted)',
         }}>
-          <span>Showing <strong style={{ color: 'var(--text-secondary)' }}>{filtered.length}</strong> of <strong style={{ color: 'var(--text-secondary)' }}>791</strong> verifications</span>
+          <span>Showing <strong style={{ color: 'var(--text-secondary)' }}>{verifications.length}</strong> of <strong style={{ color: 'var(--text-secondary)' }}>{total.toLocaleString()}</strong> verifications</span>
           <div style={{ display: 'flex', gap: 6 }}>
             <button style={{ background: 'var(--bg-surface2)', border: '1px solid var(--border)', borderRadius: 6, padding: '3px 10px', fontSize: 12, color: 'var(--text-muted)', cursor: 'pointer' }}>Prev</button>
             <button style={{ background: 'var(--bg-surface2)', border: '1px solid var(--border)', borderRadius: 6, padding: '3px 10px', fontSize: 12, color: 'var(--text-muted)', cursor: 'pointer' }}>Next</button>

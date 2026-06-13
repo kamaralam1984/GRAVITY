@@ -651,6 +651,14 @@ export default function SuperAdminPage() {
   const [sosData, setSosData] = useState<any[]>([])
   const [usersLoading, setUsersLoading] = useState(false)
 
+  // ── Families state ──
+  const [familiesData, setFamiliesData] = useState<any[]>([])
+  const [familiesTotal, setFamiliesTotal] = useState(0)
+  const [familiesLoading, setFamiliesLoading] = useState(false)
+  const [familiesPlanDist, setFamiliesPlanDist] = useState({ free: 0, premium: 0, family: 0 })
+  const [familiesPlanFilter, setFamiliesPlanFilter] = useState('')
+  const [familiesSearch, setFamiliesSearch] = useState('')
+
   function getAuthToken(): string {
     if (typeof document === 'undefined') return ''
     return (
@@ -674,6 +682,30 @@ export default function SuperAdminPage() {
       .catch(() => {})
       .finally(() => setUsersLoading(false))
   }
+
+  useEffect(() => {
+    if (active !== 'families') return
+    const token = getAuthToken()
+    if (!token) return
+    setFamiliesLoading(true)
+    const planQuery = familiesPlanFilter ? `&plan=${encodeURIComponent(familiesPlanFilter)}` : ''
+    fetch(`/admin-api/families?limit=20${planQuery}`, { headers: { Authorization: 'Bearer ' + token } })
+      .then((r) => r.json())
+      .then((d) => {
+        setFamiliesData(d.families || [])
+        setFamiliesTotal(d.total || 0)
+      })
+      .catch(() => {})
+      .finally(() => setFamiliesLoading(false))
+
+    fetch('/admin-api/analytics', { headers: { Authorization: 'Bearer ' + token } })
+      .then((r) => r.json())
+      .then((d) => {
+        const pd = d.plan_distribution || {}
+        setFamiliesPlanDist({ free: pd.free || 0, premium: pd.premium || 0, family: pd.family || 0 })
+      })
+      .catch(() => {})
+  }, [active, familiesPlanFilter])
 
   useEffect(() => {
     const token = getAuthToken()
@@ -2190,31 +2222,36 @@ export default function SuperAdminPage() {
   }
 
   const Families = () => {
-    const [familySearch, setFamilySearch] = useState('')
+    const totalPlanCount = familiesPlanDist.free + familiesPlanDist.premium + familiesPlanDist.family
+    const pct = (n: number) => totalPlanCount > 0 ? Math.round((n / totalPlanCount) * 100) + '%' : '—'
     const familyStats = [
-      { label: 'Total Families', value: '892,341', color: 'var(--gold)', icon: Users, trend: '+12.3% this month' },
-      { label: 'Free Plan', value: '45%', color: '#6B7280', icon: Activity, trend: '+2.1% this week' },
-      { label: 'Premium', value: '35%', color: '#3B82F6', icon: TrendingUp, trend: '+4.2% premium' },
-      { label: 'Family+', value: '20%', color: '#10B981', icon: Crown, trend: '+3.8% this month' },
+      { label: 'Total Families', value: familiesLoading ? '…' : familiesTotal.toLocaleString(), color: 'var(--gold)', icon: Users },
+      { label: 'Free Plan', value: familiesLoading ? '…' : pct(familiesPlanDist.free), color: '#6B7280', icon: Activity },
+      { label: 'Premium', value: familiesLoading ? '…' : pct(familiesPlanDist.premium), color: '#3B82F6', icon: TrendingUp },
+      { label: 'Family+', value: familiesLoading ? '…' : pct(familiesPlanDist.family), color: '#10B981', icon: Crown },
     ]
-    const families = [
-      { name: 'Sharma Family', owner: 'Rajesh Sharma', members: 5, plan: 'Family+', created: '12 Jan 2024' },
-      { name: 'Mehta Household', owner: 'Sunil Mehta', members: 4, plan: 'Premium', created: '5 Feb 2024' },
-      { name: 'Iyer Circle', owner: 'Venkat Iyer', members: 6, plan: 'Family+', created: '20 Mar 2024' },
-      { name: 'Patel Group', owner: 'Hiren Patel', members: 3, plan: 'Free', created: '3 Apr 2024' },
-      { name: 'Gupta Family', owner: 'Deepak Gupta', members: 5, plan: 'Premium', created: '18 Apr 2024' },
-      { name: 'Nair Household', owner: 'Pradeep Nair', members: 4, plan: 'Free', created: '2 May 2024' },
-      { name: 'Reddy Circle', owner: 'Suresh Reddy', members: 7, plan: 'Family+', created: '15 May 2024' },
-      { name: 'Joshi Family', owner: 'Ankit Joshi', members: 3, plan: 'Premium', created: '28 May 2024' },
-    ]
-    const filteredFamilies = families.filter(f =>
-      f.name.toLowerCase().includes(familySearch.toLowerCase()) ||
-      f.owner.toLowerCase().includes(familySearch.toLowerCase())
+    const filteredFamilies = familiesData.filter((f) =>
+      !familiesSearch || (f.name || '').toLowerCase().includes(familiesSearch.toLowerCase())
     )
     const planColor = (plan: string) => {
-      if (plan === 'Family+') return '#10B981'
-      if (plan === 'Premium') return '#3B82F6'
+      const p = (plan || '').toLowerCase()
+      if (p === 'family' || p === 'family+') return '#10B981'
+      if (p === 'premium') return '#3B82F6'
       return '#6B7280'
+    }
+    const planLabel = (plan: string) => {
+      const p = (plan || '').toLowerCase()
+      if (p === 'family') return 'Family+'
+      if (p === 'premium') return 'Premium'
+      return 'Free'
+    }
+    const formatDate = (raw: string | null) => {
+      if (!raw) return '—'
+      try {
+        return new Date(raw).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })
+      } catch {
+        return raw
+      }
     }
     return (
       <div>
@@ -2231,7 +2268,6 @@ export default function SuperAdminPage() {
                 </div>
                 <div style={{ fontSize: 22, fontWeight: 800, color: 'var(--text-primary)', fontFamily: 'Plus Jakarta Sans, sans-serif', marginBottom: 4 }}>{s.value}</div>
                 <div style={{ width: 32, height: 3, borderRadius: 99, background: s.color, marginBottom: 6 }} />
-                <div style={{ fontSize: 11, color: '#10B981' }}>{s.trend}</div>
               </GlassCard>
             )
           })}
@@ -2241,17 +2277,21 @@ export default function SuperAdminPage() {
             <Search size={14} style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)', pointerEvents: 'none' }} />
             <input
               type="text"
-              placeholder="Search families or owners..."
-              value={familySearch}
-              onChange={e => setFamilySearch(e.target.value)}
+              placeholder="Search families..."
+              value={familiesSearch}
+              onChange={(e) => setFamiliesSearch(e.target.value)}
               style={{ width: '100%', padding: '8px 12px 8px 32px', borderRadius: 6, border: '1px solid var(--border)', background: 'var(--bg-surface2)', color: 'var(--text-primary)', fontSize: 13, outline: 'none', boxSizing: 'border-box' }}
             />
           </div>
-          <select style={{ padding: '8px 12px', borderRadius: 10, border: '1px solid var(--border)', background: 'var(--bg-surface2)', color: 'var(--text-primary)', fontSize: 13, outline: 'none', cursor: 'pointer' }}>
-            <option style={{ background: '#1a1030' }}>All Plans</option>
-            <option style={{ background: '#1a1030' }}>Free</option>
-            <option style={{ background: '#1a1030' }}>Premium</option>
-            <option style={{ background: '#1a1030' }}>Family+</option>
+          <select
+            value={familiesPlanFilter}
+            onChange={(e) => setFamiliesPlanFilter(e.target.value)}
+            style={{ padding: '8px 12px', borderRadius: 10, border: '1px solid var(--border)', background: 'var(--bg-surface2)', color: 'var(--text-primary)', fontSize: 13, outline: 'none', cursor: 'pointer' }}
+          >
+            <option value="" style={{ background: '#1a1030' }}>All Plans</option>
+            <option value="free" style={{ background: '#1a1030' }}>Free</option>
+            <option value="premium" style={{ background: '#1a1030' }}>Premium</option>
+            <option value="family" style={{ background: '#1a1030' }}>Family+</option>
           </select>
           <button style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '8px 14px', borderRadius: 10, border: '1px solid var(--border)', background: 'var(--bg-surface2)', color: 'var(--text-primary)', cursor: 'pointer', fontSize: 13, fontWeight: 600 }}>
             <Download size={14} /> Export
@@ -2265,32 +2305,42 @@ export default function SuperAdminPage() {
             <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
               <thead>
                 <tr style={{ borderBottom: '1px solid var(--border)', background: 'var(--bg-surface2)' }}>
-                  {['Family Name', 'Owner', 'Members', 'Plan', 'Created', 'Actions'].map((h) => (
+                  {['Family Name', 'Members', 'Plan', 'Created', 'Monthly Spend', 'Actions'].map((h) => (
                     <th key={h} style={{ padding: '10px 16px', textAlign: 'left', fontSize: 11, fontWeight: 700, color: 'var(--text-muted)', letterSpacing: '0.06em', textTransform: 'uppercase', whiteSpace: 'nowrap' }}>{h}</th>
                   ))}
                 </tr>
               </thead>
               <tbody>
-                {filteredFamilies.map((f, i) => (
-                  <motion.tr key={i} initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.04 }}
+                {familiesLoading ? (
+                  <tr>
+                    <td colSpan={6} style={{ padding: '32px 16px', textAlign: 'center', color: 'var(--text-muted)', fontSize: 13 }}>Loading...</td>
+                  </tr>
+                ) : filteredFamilies.length === 0 ? (
+                  <tr>
+                    <td colSpan={6} style={{ padding: '32px 16px', textAlign: 'center', color: 'var(--text-muted)', fontSize: 13 }}>No families found</td>
+                  </tr>
+                ) : filteredFamilies.map((f, i) => (
+                  <motion.tr key={f.id ?? i} initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.04 }}
                     style={{ borderBottom: '1px solid var(--border)', height: 40 }}
                     onMouseEnter={(e) => (e.currentTarget.style.background = 'var(--bg-surface2)')}
                     onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
                   >
                     <td style={{ padding: '12px 16px', color: 'var(--text-primary)', fontWeight: 500 }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                        <div style={{ width: 28, height: 28, borderRadius: '50%', background: 'var(--gold)', color: '#000', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, fontWeight: 800, flexShrink: 0 }}>
-                          {f.name.charAt(0)}
+                        <div style={{ width: 28, height: 28, borderRadius: '50%', background: 'rgba(212,175,55,0.2)', color: 'var(--gold)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, fontWeight: 800, flexShrink: 0 }}>
+                          {(f.name || '?').charAt(0).toUpperCase()}
                         </div>
-                        {f.name}
+                        {f.name || '—'}
                       </div>
                     </td>
-                    <td style={{ padding: '12px 16px', color: 'var(--text-secondary)' }}>{f.owner}</td>
-                    <td style={{ padding: '12px 16px', color: 'var(--text-secondary)', fontWeight: 600 }}>{f.members}</td>
+                    <td style={{ padding: '12px 16px', color: 'var(--text-secondary)', fontWeight: 600 }}>{f.member_count ?? '—'}</td>
                     <td style={{ padding: '12px 16px' }}>
-                      <span style={{ background: `${planColor(f.plan)}20`, color: planColor(f.plan), fontSize: 11, fontWeight: 700, padding: '2px 8px', borderRadius: 99, border: `1px solid ${planColor(f.plan)}44` }}>{f.plan}</span>
+                      <span style={{ background: `${planColor(f.plan)}20`, color: planColor(f.plan), fontSize: 11, fontWeight: 700, padding: '2px 8px', borderRadius: 99, border: `1px solid ${planColor(f.plan)}44` }}>{planLabel(f.plan)}</span>
                     </td>
-                    <td style={{ padding: '12px 16px', color: 'var(--text-muted)', whiteSpace: 'nowrap' }}>{f.created}</td>
+                    <td style={{ padding: '12px 16px', color: 'var(--text-muted)', whiteSpace: 'nowrap' }}>{formatDate(f.created_at)}</td>
+                    <td style={{ padding: '12px 16px', color: 'var(--text-secondary)', fontWeight: 600 }}>
+                      {typeof f.monthly_spend === 'number' ? `₹${f.monthly_spend.toLocaleString('en-IN')}` : '—'}
+                    </td>
                     <td style={{ padding: '12px 16px' }}>
                       <div style={{ display: 'flex', gap: 6 }}>
                         {[{ icon: Eye, color: '#60A5FA', tip: 'View' }, { icon: Edit, color: '#F59E0B', tip: 'Edit' }, { icon: Trash2, color: '#EF4444', tip: 'Delete' }].map(({ icon: Icon, color, tip }) => (
@@ -2307,7 +2357,7 @@ export default function SuperAdminPage() {
           </div>
           <div style={{ padding: '12px 16px', borderTop: '1px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
             <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>
-              Showing <span style={{ color: 'var(--text-primary)', fontWeight: 600 }}>{filteredFamilies.length}</span> of <span style={{ color: 'var(--text-primary)', fontWeight: 600 }}>892,341</span> families
+              Showing <span style={{ color: 'var(--text-primary)', fontWeight: 600 }}>{filteredFamilies.length}</span> of <span style={{ color: 'var(--text-primary)', fontWeight: 600 }}>{familiesTotal.toLocaleString()}</span> families
             </span>
             <div style={{ display: 'flex', gap: 6 }}>
               {['Prev', '1', '2', '3', 'Next'].map((p) => (
