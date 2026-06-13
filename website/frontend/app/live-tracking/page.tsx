@@ -32,6 +32,7 @@ interface FamilyMember {
   is_online?: boolean
   recorded_at?: string | null
   timestamp?: string
+  status?: 'safe' | 'sos' | 'unknown'
 }
 
 /* ─── avatar helper ──────────────────────────────────────────── */
@@ -118,10 +119,44 @@ function MemberCard({ m, selected, onClick }: { m: FamilyMember; selected: boole
   )
 }
 
+/* ─── Tile layer toggle (Dark / Light) ───────────────────────── */
+// Uses a module-level ref so MapView and TileToggleButton share the same instance.
+const sharedLeafletRef: { current: any } = { current: null }
+
+function TileToggleButton() {
+  const [isDark, setIsDark] = useState(true)
+
+  const toggle = () => {
+    const ref = sharedLeafletRef.current
+    if (!ref) return
+    const { map, darkTile, lightTile } = ref
+    if (isDark) {
+      map.removeLayer(darkTile)
+      lightTile.addTo(map)
+    } else {
+      map.removeLayer(lightTile)
+      darkTile.addTo(map)
+    }
+    sharedLeafletRef.current.isDark = !isDark
+    setIsDark((v) => !v)
+  }
+
+  return (
+    <button
+      onClick={toggle}
+      className="flex items-center gap-1 hover:text-white transition-colors px-2 py-0.5 rounded-lg"
+      style={{ background: 'rgba(212,168,83,0.1)', border: '1px solid rgba(212,168,83,0.25)', color: '#D4A853' }}
+      title="Switch map style"
+    >
+      {isDark ? '☀ Light' : '🌙 Dark'}
+    </button>
+  )
+}
+
 /* ─── MapPlaceholder (Leaflet loads client-side only) ────────── */
 function MapView({ members, selected }: { members: FamilyMember[]; selected: FamilyMember | null }) {
   const mapRef = useRef<HTMLDivElement>(null)
-  const leafletRef = useRef<any>(null)
+  const leafletRef = sharedLeafletRef          // shared so TileToggleButton can access the map
   const markersRef = useRef<Record<string, any>>({})
 
   useEffect(() => {
@@ -137,12 +172,23 @@ function MapView({ members, selected }: { members: FamilyMember[]; selected: Fam
       })
 
       if (!mapRef.current) return
-      const map = L.map(mapRef.current, { zoomControl: true }).setView([28.6139, 77.209], 12)
-      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        attribution: '© OpenStreetMap',
-        maxZoom: 19,
-      }).addTo(map)
-      leafletRef.current = { map, L }
+      const map = L.map(mapRef.current, {
+        zoomControl: false,
+        attributionControl: false,
+        scrollWheelZoom: true,
+      }).setView([28.6139, 77.209], 12)
+
+      const darkTile = L.tileLayer(
+        'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',
+        { subdomains: 'abcd', maxZoom: 20 },
+      )
+      const lightTile = L.tileLayer(
+        'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png',
+        { subdomains: 'abcd', maxZoom: 20 },
+      )
+      darkTile.addTo(map)
+
+      leafletRef.current = { map, L, darkTile, lightTile, isDark: true }
     })
   }, [])
 
@@ -264,6 +310,7 @@ function LiveTrackingInner() {
               is_online: true,
               timestamp: msg.timestamp,
               recorded_at: msg.timestamp,
+              status: msg.status ?? 'safe',
             }
             if (idx >= 0) {
               const next = [...prev]
@@ -369,6 +416,7 @@ function LiveTrackingInner() {
                     <RefreshCw className="w-3 h-3" />
                     Refresh
                   </button>
+                  <TileToggleButton />
                 </div>
               </div>
 
@@ -509,6 +557,28 @@ function LiveTrackingInner() {
       <style>{`
         @keyframes pulse { 0%,100%{opacity:1}50%{opacity:0.4} }
         .leaflet-container { background: #111420 !important; }
+
+        /* ── remove Leaflet attribution ── */
+        .leaflet-control-attribution { display: none !important; }
+        .leaflet-control-container .leaflet-bottom { display: none !important; }
+
+        /* ── premium marker glow ── */
+        .leaflet-marker-icon div {
+          transition: box-shadow 0.2s ease;
+        }
+        .leaflet-marker-icon:hover div,
+        .leaflet-marker-icon.selected div {
+          box-shadow: 0 0 0 4px rgba(212,168,83,0.35),
+                      0 0 20px rgba(212,168,83,0.6),
+                      0 4px 16px rgba(0,0,0,0.5) !important;
+        }
+        .leaflet-marker-pane .leaflet-marker-icon div {
+          animation: markerPulse 2.5s ease-in-out infinite;
+        }
+        @keyframes markerPulse {
+          0%, 100% { box-shadow: 0 2px 12px rgba(212,168,83,0.6); }
+          50%       { box-shadow: 0 2px 24px rgba(212,168,83,0.9), 0 0 0 6px rgba(212,168,83,0.15); }
+        }
       `}</style>
     </>
   )
