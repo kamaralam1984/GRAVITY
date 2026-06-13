@@ -29,7 +29,7 @@ const MapView = dynamic(() => import('@/components/sections/MapView'), {
 
 /* ── Vehicle emoji ───────────────────────────────────────────── */
 const V: Record<VehicleType, string> = {
-  car:'🚗', bus:'🚌', walk:'🚶', bike:'🚲', auto:'🛺', tempo:'🚛',
+  car:'🚗', bus:'🚌', walk:'🚶', bike:'🚲', auto:'🛺', tempo:'🚛', train:'🚆', metro:'🚇',
 }
 
 /* ── Journey data ────────────────────────────────────────────── */
