@@ -9,16 +9,17 @@
 2. [Tech Stack](#2-tech-stack)
 3. [Project Structure](#3-project-structure)
 4. [Frontend — Public Website](#4-frontend--public-website)
-5. [Frontend — Admin Panel](#5-frontend--admin-panel)
-6. [Backend API](#6-backend-api)
-7. [Database — All Tables](#7-database--all-tables)
-8. [API Endpoints — Complete List](#8-api-endpoints--complete-list)
-9. [Authentication System](#9-authentication-system)
-10. [Frontend API Client](#10-frontend-api-client)
-11. [Design System](#11-design-system)
-12. [How to Run](#12-how-to-run)
-13. [Admin Credentials](#13-admin-credentials)
-14. [Seed Data](#14-seed-data)
+5. [Frontend — Role-Based Dashboards](#5-frontend--role-based-dashboards)
+6. [Frontend — Admin Panel](#6-frontend--admin-panel)
+7. [Backend API](#7-backend-api)
+8. [Database — All Tables](#8-database--all-tables)
+9. [API Endpoints — Complete List](#9-api-endpoints--complete-list)
+10. [Authentication System](#10-authentication-system)
+11. [Frontend API Client](#11-frontend-api-client)
+12. [Design System](#12-design-system)
+13. [How to Run](#13-how-to-run)
+14. [Credentials — All Roles](#14-credentials--all-roles)
+15. [Seed Data](#15-seed-data)
 
 ---
 
@@ -30,9 +31,12 @@
 | Service | URL |
 |---|---|
 | Website | http://localhost:3020 |
+| User Dashboard | http://localhost:3020/dashboard |
+| Moderator Panel | http://localhost:3020/moderator |
+| Super Admin Panel | http://localhost:3020/super-admin |
+| Admin Panel (legacy) | http://localhost:3020/admin |
 | Backend API | http://localhost:8000 |
 | API Swagger Docs | http://localhost:8000/docs |
-| Admin Panel | http://localhost:3020/admin |
 
 ---
 
@@ -71,12 +75,18 @@
 
 ```
 TRACKALWAYS GRAVITY 2.0/
-├── SYSTEM_INFO.md              ← This file
+├── SYSTEM_INFO.md                    ← This file
 └── website/
-    ├── frontend/               ← Next.js 14 app
-    │   ├── app/                ← App Router pages
-    │   │   ├── layout.tsx      ← Root layout + SEO metadata
-    │   │   ├── page.tsx        ← Homepage
+    ├── frontend/                     ← Next.js 14 app
+    │   ├── middleware.ts             ← Route protection (role-based auth)
+    │   ├── app/                      ← App Router pages
+    │   │   ├── layout.tsx            ← Root layout + SEO metadata
+    │   │   ├── page.tsx              ← Homepage
+    │   │   ├── login/                ← Unified login (all roles)
+    │   │   ├── dashboard/            ← User dashboard (premium)
+    │   │   ├── moderator/            ← Moderator panel
+    │   │   ├── super-admin/          ← Super Admin command center
+    │   │   ├── parent/               ← Parent tracking dashboard
     │   │   ├── about/
     │   │   ├── features/
     │   │   ├── pricing/
@@ -93,9 +103,9 @@ TRACKALWAYS GRAVITY 2.0/
     │   │   ├── terms/
     │   │   ├── cookies/
     │   │   ├── status/
-    │   │   └── admin/          ← Admin panel (17 pages)
-    │   │       ├── layout.tsx  ← Sidebar + header + JWT auth
-    │   │       ├── page.tsx    ← Dashboard
+    │   │   └── admin/                ← Legacy Admin panel (17 pages)
+    │   │       ├── layout.tsx        ← Sidebar + header + JWT auth
+    │   │       ├── page.tsx          ← Dashboard
     │   │       ├── login/
     │   │       ├── families/
     │   │       ├── devices/
@@ -125,54 +135,58 @@ TRACKALWAYS GRAVITY 2.0/
     │   │   │   ├── ElderlyCareSection.tsx
     │   │   │   ├── TestimonialsSection.tsx
     │   │   │   ├── PricingSection.tsx
-    │   │   │   └── DownloadCTA.tsx
+    │   │   │   ├── DownloadCTA.tsx
+    │   │   │   ├── MapView.tsx       ← Interactive Leaflet map (family pins + vehicles)
+    │   │   │   └── ParentChildSection.tsx ← Homepage parent/child feature section
     │   │   └── effects/
     │   │       ├── AIAssistant.tsx
     │   │       ├── ParticleField.tsx
     │   │       └── SOSButton.tsx
     │   ├── lib/
-    │   │   ├── api.ts          ← Typed API client (all endpoints)
-    │   │   ├── useAdminData.ts ← React hooks for admin data
+    │   │   ├── api.ts                ← Typed API client (all endpoints)
+    │   │   ├── auth.ts               ← Auth utils (setAuth, getUser, getRoleRedirect)
+    │   │   ├── useAuth.ts            ← useAuth() React hook
+    │   │   ├── useAdminData.ts       ← React hooks for admin data
+    │   │   ├── mapData.ts            ← MAP_MEMBERS, VehicleType, Gender types
     │   │   ├── animations.ts
     │   │   ├── constants.ts
-    │   │   ├── mapData.ts
     │   │   └── utils.ts
     │   ├── public/
-    │   │   ├── favicon.svg     ← Gold G logo favicon
-    │   │   ├── logo.svg        ← Full wordmark
-    │   │   ├── og-image.svg    ← 1200×630 social share image
-    │   │   └── manifest.json   ← PWA manifest
-    │   ├── .env.local          ← NEXT_PUBLIC_API_URL=http://localhost:8000
+    │   │   ├── favicon.svg           ← Gold G logo favicon
+    │   │   ├── logo.svg              ← Full wordmark
+    │   │   ├── og-image.svg          ← 1200×630 social share image
+    │   │   └── manifest.json         ← PWA manifest
+    │   ├── .env.local
     │   ├── next.config.js
     │   ├── tailwind.config.ts
     │   └── package.json
     │
-    └── backend/                ← FastAPI backend
-        ├── main.py             ← App entry, all routers registered
-        ├── database.py         ← SQLAlchemy engine + SessionLocal
-        ├── models.py           ← All 18 ORM table models
-        ├── auth.py             ← JWT + bcrypt utilities
-        ├── seed.py             ← Database seeding script
-        ├── .env                ← DATABASE_URL, SECRET_KEY, etc.
-        ├── gravity.db          ← SQLite database file
+    └── backend/                      ← FastAPI backend
+        ├── main.py                   ← App entry, all routers registered
+        ├── database.py               ← SQLAlchemy engine + SessionLocal
+        ├── models.py                 ← All 18 ORM table models
+        ├── auth.py                   ← JWT + bcrypt utilities
+        ├── seed.py                   ← Database seeding script
+        ├── .env                      ← DATABASE_URL, SECRET_KEY, etc.
+        ├── gravity.db                ← SQLite database file
         ├── requirements.txt
-        ├── venv/               ← Python virtual environment
+        ├── venv/                     ← Python virtual environment
         └── routers/
-            ├── auth.py         ← /auth/* user registration/login
-            ├── admin_router.py ← /admin-api/* admin endpoints
-            ├── families.py     ← /families/* family circles
-            ├── devices.py      ← /devices/* device management
-            ├── location.py     ← /location/* GPS tracking
-            ├── geofences.py    ← /geofences/* safe zones
-            ├── sos_router.py   ← /sos/* emergency alerts
-            ├── check_ins.py    ← /check-ins/* check-in system
-            ├── journeys.py     ← /journeys/* route sharing
-            ├── chat.py         ← /chat/* family messaging
-            ├── driving.py      ← /driving/* driving safety
-            ├── health.py       ← /health/* health tracking
-            ├── notifications.py← /notifications/* push alerts
-            ├── plans.py        ← /plans/* subscription billing
-            └── ai.py           ← /ai/* Anthropic AI chat
+            ├── auth.py               ← /auth/* user + unified login
+            ├── admin_router.py       ← /admin-api/* admin endpoints
+            ├── families.py           ← /families/* family circles
+            ├── devices.py            ← /devices/* device management
+            ├── location.py           ← /location/* GPS tracking
+            ├── geofences.py          ← /geofences/* safe zones
+            ├── sos_router.py         ← /sos/* emergency alerts
+            ├── check_ins.py          ← /check-ins/* check-in system
+            ├── journeys.py           ← /journeys/* route sharing
+            ├── chat.py               ← /chat/* family messaging
+            ├── driving.py            ← /driving/* driving safety
+            ├── health.py             ← /health/* health tracking
+            ├── notifications.py      ← /notifications/* push alerts
+            ├── plans.py              ← /plans/* subscription billing
+            └── ai.py                 ← /ai/* Anthropic AI chat
 ```
 
 ---
@@ -206,10 +220,11 @@ TRACKALWAYS GRAVITY 2.0/
 | Section | Component | Features |
 |---|---|---|
 | Hero | `HeroSection.tsx` | Background image slider (4 slides), auto-advance 5s, Ken Burns zoom, dot nav |
-| Stats | `StatsSection.tsx` | 4 animated stat cards with SVG progress rings (halved size) |
+| Stats | `StatsSection.tsx` | 4 animated stat cards with SVG progress rings |
 | Features | `FeaturesSection.tsx` | 15 feature cards in CSS bento grid (SOS wide, Map extra-wide) |
 | Live Map Demo | `LiveMapDemoSection.tsx` | Interactive Leaflet map with family member pins |
 | How It Works | `HowItWorksSection.tsx` | 4-step process with animations |
+| Parent / Child | `ParentChildSection.tsx` | Phone mockup with Parent/Child tab switcher |
 | Elderly Care | `ElderlyCareSection.tsx` | Senior-focused features |
 | Testimonials | `TestimonialsSection.tsx` | Customer reviews |
 | Pricing | `PricingSection.tsx` | 3 plans with monthly/annual toggle |
@@ -228,13 +243,81 @@ TRACKALWAYS GRAVITY 2.0/
 10. AI Insights
 11. Wellness Check
 12. Med Reminders
-13. Family Chat (NEW — indigo)
-14. Driving Safety (NEW — sky blue)
-15. Family Moments (NEW — pink)
+13. Family Chat (indigo)
+14. Driving Safety (sky blue)
+15. Family Moments (pink)
 
 ---
 
-## 5. FRONTEND — ADMIN PANEL
+## 5. FRONTEND — ROLE-BASED DASHBOARDS
+
+All dashboards share one login page (`/login`) but redirect to separate panels based on role.
+
+### Login Page (`/login`)
+- **File:** `app/login/page.tsx`
+- **Tabs:** Email | Phone OTP | Social (Google + Apple)
+- **Background:** StarfieldCanvas + FloatingOrb effects
+- **On success:** Calls `setAuth()` → sets cookies → redirects via `getRoleRedirect(role)`
+- **Endpoint:** `POST /auth/login/unified`
+
+### Role → Route Mapping
+
+| Role | Dashboard URL | Accent Color |
+|---|---|---|
+| `user` | `/dashboard` | Gold `#D4A853` |
+| `moderator` | `/moderator` | Amber `#F59E0B` |
+| `admin` | `/admin` | Blue `#3B82F6` |
+| `super_admin` | `/super-admin` | Purple `#8B5CF6` |
+
+### User Dashboard (`/dashboard`)
+- **File:** `app/dashboard/page.tsx`
+- **Design:** Premium dark glass UI — deep navy `#050D1A` background, gold accents
+- **Layout:**
+  - **Header:** Gold G logo, "All Safe" pulsing pill, notification bell with dropdown, user avatar
+  - **Left:** Leaflet map (Carto Voyager tiles, 420px height) + active member overlay + horizontal member strip
+  - **Right panel (300px):** 3 gold pill tabs — Family / Alerts / Profile
+- **Family Tab:** 5 expandable member cards (color-coded glow, live pulse dot, mini stat grid, journey timeline, Call/SOS/Map buttons)
+- **Alerts Tab:** Color-coded severity alerts (safe/warning/sos/info) with left accent bar, dismissable
+- **Profile Tab:** Gold user identity card, 4 toggle settings (Location/Notifications/SOS Auto-Call/Battery), sign out button
+- **Member Strip:** Per-member color glow cards with photo, vehicle emoji badge, battery bar
+- **Mobile:** Bottom tab bar with gold active underline, Map/Family/Alerts/Profile
+
+### Moderator Panel (`/moderator`)
+- **File:** `app/moderator/page.tsx`
+- **Accent:** Amber `#F59E0B`
+- **Layout:** Left sidebar + main content area
+- **Sections:** Overview / Tickets / Reports / Content / Announcements / Analytics
+
+### Super Admin Panel (`/super-admin`)
+- **File:** `app/super-admin/page.tsx`
+- **Accent:** Purple `#8B5CF6`, crown 👑 icon
+- **Sections:** 8 sidebar sections including Command Center
+- **Hero stats:** 2.8M users, ₹48.7L MRR, 99.97% uptime
+
+### Parent Dashboard (`/parent`)
+- **File:** `app/parent/page.tsx`
+- **Layout:** Full Leaflet map (left) + panel (right)
+- **Tabs:** Live Map / Children / Alerts / Settings
+- **Children Panel:** Expandable child cards with journey timeline
+
+### Middleware (Route Protection)
+- **File:** `middleware.ts`
+- **Protected routes:**
+
+```
+/super-admin  → requires: super_admin
+/admin        → requires: admin, super_admin
+/moderator    → requires: moderator, admin, super_admin
+/dashboard    → requires: user, moderator, admin, super_admin
+```
+
+- **Unauthenticated:** redirects → `/login?next=<path>`
+- **Wrong role:** redirects → `getRoleRedirect(role)` (their own dashboard)
+- **Cookies read:** `gv_token` (auth check), `gv_user` (role check)
+
+---
+
+## 6. FRONTEND — ADMIN PANEL
 
 **Base Route:** `/admin`
 **Auth:** JWT token stored in `localStorage.gravity_admin_token`
@@ -263,30 +346,9 @@ TRACKALWAYS GRAVITY 2.0/
 | `/admin/plans` | Plans & Revenue | ✅ Real MRR/plan stats |
 | `/admin/settings` | Settings | Team, API keys, security tabs |
 
-### Admin Sidebar Navigation
-
-```
-Dashboard          (LayoutDashboard icon)
-Families           (Users icon)
-Devices            (Smartphone icon)
-Locations          (MapPin icon)
-Geofences          (Circle icon)
-SOS Alerts         (AlertTriangle icon)
-Check-Ins          (CheckSquare icon)
-Journeys           (Route icon)
-Family Chat        (MessageCircle icon)  [NEW badge]
-Driving Safety     (Car icon)            [NEW badge]
-Health             (Heart icon)          [NEW badge]
-Elderly Care       (ActivitySquare icon)
-Analytics          (BarChart2 icon)
-Notifications      (Bell icon)
-Plans              (CreditCard icon)
-Settings           (Settings icon)
-```
-
 ---
 
-## 6. BACKEND API
+## 7. BACKEND API
 
 ### Server
 - **Framework:** FastAPI 0.111.0
@@ -301,7 +363,7 @@ Settings           (Settings icon)
 | Module | Prefix | Purpose |
 |---|---|---|
 | `admin_router.py` | `/admin-api` | Admin dashboard, families, devices, SOS, analytics |
-| `auth.py` | `/auth` | User register, login, profile |
+| `auth.py` | `/auth` | User register, login, unified login, profile |
 | `families.py` | `/families` | Family circle CRUD, invite codes |
 | `devices.py` | `/devices` | Device registration, battery updates |
 | `location.py` | `/location` | GPS updates, history, live family view |
@@ -318,7 +380,7 @@ Settings           (Settings icon)
 
 ---
 
-## 7. DATABASE — ALL TABLES
+## 8. DATABASE — ALL TABLES
 
 Database file: `backend/gravity.db` (SQLite)
 
@@ -331,9 +393,12 @@ Database file: `backend/gravity.db` (SQLite)
 | name | String | Display name |
 | avatar_url | String | Profile photo URL |
 | password_hash | String | bcrypt hashed password |
+| role | VARCHAR DEFAULT 'user' | user / moderator (added via ALTER TABLE) |
 | is_active | Boolean | Account status |
 | created_at | DateTime | Registration timestamp |
 | updated_at | DateTime | Last update |
+
+> **Note:** `role` column was added via migration: `ALTER TABLE users ADD COLUMN role VARCHAR DEFAULT 'user'`
 
 ### Table 2: families
 | Column | Type | Description |
@@ -569,28 +634,35 @@ Database file: `backend/gravity.db` (SQLite)
 
 ---
 
-## 8. API ENDPOINTS — COMPLETE LIST
+## 9. API ENDPOINTS — COMPLETE LIST
 
 ### Admin API (`/admin-api`)
 ```
-POST   /admin-api/login              Admin login → JWT token
-GET    /admin-api/dashboard          Dashboard stats (families, devices, SOS, MRR)
-GET    /admin-api/families           List all families (paginated, filter by plan)
-GET    /admin-api/devices            List all devices (filter: online/offline/low_battery)
-GET    /admin-api/sos-alerts         List SOS alerts (filter by status)
+POST   /admin-api/login                    Admin login → JWT token
+GET    /admin-api/dashboard                Dashboard stats (families, devices, SOS, MRR)
+GET    /admin-api/families                 List all families (paginated, filter by plan)
+GET    /admin-api/devices                  List all devices (filter: online/offline/low_battery)
+GET    /admin-api/sos-alerts               List SOS alerts (filter by status)
 PATCH  /admin-api/sos-alerts/{id}/resolve  Resolve an alert
-GET    /admin-api/notifications      List all notifications
-POST   /admin-api/notifications/send Send a broadcast notification
-GET    /admin-api/analytics          Analytics overview data
+GET    /admin-api/notifications            List all notifications
+POST   /admin-api/notifications/send       Send a broadcast notification
+GET    /admin-api/analytics                Analytics overview data
 ```
 
 ### User Auth (`/auth`)
 ```
-POST   /auth/register     Register new user
-POST   /auth/login        Login (form-data) → JWT
-POST   /auth/login/json   Login (JSON body) → JWT
-GET    /auth/me           Get current user profile
+POST   /auth/register          Register new user
+POST   /auth/login             Login (form-data) → JWT
+POST   /auth/login/json        Login (JSON body) → JWT
+POST   /auth/login/unified     Unified login — checks users table first, then admin_users
+                               Returns: { access_token, token_type, user: { ...fields, role } }
+GET    /auth/me                Get current user profile
 ```
+
+**Unified Login Logic (`/auth/login/unified`):**
+1. Check `users` table → role from `users.role` field (user / moderator)
+2. Fallback → check `admin_users` table → role from `admin_users.role` (admin / super_admin)
+3. Returns `role` in response, which frontend uses for redirect
 
 ### Families (`/families`)
 ```
@@ -610,7 +682,7 @@ DELETE /devices/{id}              Remove/revoke a device
 
 ### Location (`/location`)
 ```
-POST   /location/update           Update current GPS location
+POST   /location/update            Update current GPS location
 GET    /location/history/{user_id} Location history (last N points)
 GET    /location/live/{family_id}  Live locations of all family members
 ```
@@ -626,10 +698,10 @@ DELETE /geofences/{id}        Delete a zone
 
 ### SOS Alerts (`/sos`)
 ```
-POST   /sos/trigger            Trigger emergency SOS
-GET    /sos/active             Get all active alerts
-PATCH  /sos/{id}/resolve       Mark alert as resolved
-GET    /sos/history/{family_id} SOS history for a family
+POST   /sos/trigger              Trigger emergency SOS
+GET    /sos/active               Get all active alerts
+PATCH  /sos/{id}/resolve         Mark alert as resolved
+GET    /sos/history/{family_id}  SOS history for a family
 ```
 
 ### Check-Ins (`/check-ins`)
@@ -642,9 +714,9 @@ GET    /check-ins/stats             Aggregate stats
 
 ### Journeys (`/journeys`)
 ```
-POST   /journeys/start         Start a new journey (notifies family)
-POST   /journeys/point         Add GPS point to active journey
-PATCH  /journeys/{id}/complete Mark journey complete (safe arrival)
+POST   /journeys/start          Start a new journey (notifies family)
+POST   /journeys/point          Add GPS point to active journey
+PATCH  /journeys/{id}/complete  Mark journey complete (safe arrival)
 GET    /journeys/active         All active journeys
 GET    /journeys/stats          Journey aggregate stats
 ```
@@ -667,11 +739,11 @@ GET    /driving/stats    Driving safety statistics
 
 ### Health (`/health`)
 ```
-POST   /health/record           Save daily health record
-GET    /health/records/{user_id} Get health history
-POST   /health/medication        Add medication reminder
-GET    /health/medications/{id}  Get user's medications
-GET    /health/stats             Health tracking statistics
+POST   /health/record             Save daily health record
+GET    /health/records/{user_id}  Get health history
+POST   /health/medication         Add medication reminder
+GET    /health/medications/{id}   Get user's medications
+GET    /health/stats              Health tracking statistics
 ```
 
 ### Notifications (`/notifications`)
@@ -696,101 +768,113 @@ POST   /ai/routine       AI routine check analysis
 
 ---
 
-## 9. AUTHENTICATION SYSTEM
+## 10. AUTHENTICATION SYSTEM
 
-### User Authentication
-- **Method:** JWT (JSON Web Tokens)
-- **Library:** python-jose + bcrypt
-- **Token expiry:** 7 days (10,080 minutes)
-- **Storage:** `localStorage.gravity_user_token`
-- **Header:** `Authorization: Bearer <token>`
+### Unified Auth Flow (Current)
 
-### Admin Authentication
-- **Login endpoint:** `POST /admin-api/login`
-- **Token payload:** `{ admin_id, role, exp }`
-- **Storage:** `localStorage.gravity_admin_token`
-- **Legacy flag:** `localStorage.gravity_admin_auth = "true"` (backward compat)
-- **Logout:** Clears both keys via `clearAdminAuth()`
+```
+1. POST /auth/login/unified { email, password }
+   ↓
+2. Backend: check users table → fallback admin_users
+   ↓
+3. Response: { access_token, user: { id, name, email, role, ... } }
+   ↓
+4. Frontend: setAuth(token, user)
+   → localStorage: gv_token, gv_user
+   → cookies: gv_token (7 days), gv_user (7 days)
+   ↓
+5. getRoleRedirect(role) → /dashboard | /moderator | /admin | /super-admin
+   ↓
+6. middleware.ts: reads gv_token + gv_user cookies on every protected route
+   → wrong role → redirected to correct dashboard
+```
 
-### Password Hashing
+### Auth Library (`lib/auth.ts`)
+
+```typescript
+export type UserRole = 'user' | 'moderator' | 'admin' | 'super_admin'
+
+export interface AuthUser {
+  id: number; name: string; email: string
+  phone?: string; role: UserRole; is_active: boolean
+}
+
+export function setAuth(token: string, user: AuthUser): void  // localStorage + cookies
+export function getToken(): string | null
+export function getUser(): AuthUser | null
+export function getRole(): UserRole | null
+export function clearAuth(): void
+export function isAuthenticated(): boolean
+export function getRoleRedirect(role: UserRole): string
+// user→/dashboard, moderator→/moderator, admin→/admin, super_admin→/super-admin
+```
+
+### useAuth Hook (`lib/useAuth.ts`)
+
+```typescript
+const { user, role, isAuthenticated, logout } = useAuth()
+// Hydrates from localStorage on mount
+// logout(): clearAuth() + clear cookies + router.push('/login')
+```
+
+### Storage Keys
+| Key | Storage | Purpose |
+|---|---|---|
+| `gv_token` | localStorage + cookie | JWT token |
+| `gv_user` | localStorage + cookie | JSON stringified AuthUser |
+| `gravity_admin_token` | localStorage | Legacy admin panel token |
+
+### Cookie Config
+- `gv_token`: `max-age=604800` (7 days), `path=/`, `SameSite=Lax`
+- `gv_user`: same, stores URL-encoded JSON of AuthUser
+
+### Password Hashing (Backend)
 ```python
-# Hash
-bcrypt.hashpw(password.encode(), bcrypt.gensalt()).decode()
-
-# Verify
-bcrypt.checkpw(plain.encode(), hashed.encode())
-```
-
-### JWT Token Flow
-```
-1. POST /admin-api/login { email, password }
-   ↓
-2. Backend: verify bcrypt hash → create JWT
-   ↓
-3. Response: { access_token, token_type, admin }
-   ↓
-4. Frontend: localStorage.setItem("gravity_admin_token", token)
-   ↓
-5. Subsequent requests: Authorization: Bearer <token>
-   ↓
-6. Backend: decode JWT → get admin_id → fetch AdminUser from DB
+bcrypt.hashpw(password.encode(), bcrypt.gensalt()).decode()  # Hash
+bcrypt.checkpw(plain.encode(), hashed.encode())               # Verify
 ```
 
 ---
 
-## 10. FRONTEND API CLIENT
+## 11. FRONTEND API CLIENT
 
 File: `frontend/lib/api.ts`
 
 All API calls go through a central typed client with automatic token injection.
 
 ```typescript
-// Base URL from environment
 const BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000"
 
-// Usage examples:
 import { adminApi, authApi, familiesApi, sosApi } from '@/lib/api'
 
-// Admin login
 const result = await adminApi.login(email, password)
-
-// Dashboard stats
-const stats = await adminApi.dashboard()
-
-// Fetch families
-const { families, total } = await adminApi.families(0, 20, 'premium')
-
-// Trigger SOS
+const stats  = await adminApi.dashboard()
+const { families } = await adminApi.families(0, 20, 'premium')
 await sosApi.trigger(familyId, lat, lng, placeName)
-
-// Send chat message
 await chatApi.send(familyId, "I'm safe!")
-
-// Health record
 await healthApi.saveRecord({ date: "2025-06-12", steps: 8000, sleep_hours: 7.5 })
 ```
 
 ### Available API Modules
-| Module | Import | Endpoints |
-|---|---|---|
-| `adminApi` | `from '@/lib/api'` | login, dashboard, families, devices, sosAlerts, resolveSOS, notifications, analytics |
-| `authApi` | `from '@/lib/api'` | register, login, me |
-| `familiesApi` | `from '@/lib/api'` | create, join, my, members |
-| `devicesApi` | `from '@/lib/api'` | register, updateBattery, my, revoke |
-| `locationApi` | `from '@/lib/api'` | update, history, liveFamilyLocations |
-| `geofencesApi` | `from '@/lib/api'` | create, family, logEvent, events |
-| `sosApi` | `from '@/lib/api'` | trigger, active, resolve, history |
-| `chatApi` | `from '@/lib/api'` | send, messages, report, delete, stats |
-| `healthApi` | `from '@/lib/api'` | saveRecord, records, addMedication, medications, stats |
-| `journeysApi` | `from '@/lib/api'` | start, addPoint, complete, active, stats |
-| `plansApi` | `from '@/lib/api'` | list, subscribe, stats |
-| `drivingApi` | `from '@/lib/api'` | logEvent, events, stats |
+| Module | Endpoints |
+|---|---|
+| `adminApi` | login, dashboard, families, devices, sosAlerts, resolveSOS, notifications, analytics |
+| `authApi` | register, login, me |
+| `familiesApi` | create, join, my, members |
+| `devicesApi` | register, updateBattery, my, revoke |
+| `locationApi` | update, history, liveFamilyLocations |
+| `geofencesApi` | create, family, logEvent, events |
+| `sosApi` | trigger, active, resolve, history |
+| `chatApi` | send, messages, report, delete, stats |
+| `healthApi` | saveRecord, records, addMedication, medications, stats |
+| `journeysApi` | start, addPoint, complete, active, stats |
+| `plansApi` | list, subscribe, stats |
+| `drivingApi` | logEvent, events, stats |
 
 ### React Hooks (`lib/useAdminData.ts`)
 ```typescript
 import { useDashboard, useFamilies, useDevices, useSosAlerts } from '@/lib/useAdminData'
 
-// In any admin component:
 const { data, loading, error, refetch } = useDashboard()
 const { families, total, loading, setPlan } = useFamilies()
 const { devices, total, setStatus } = useDevices()
@@ -799,7 +883,7 @@ const { alerts, resolve } = useSosAlerts('active')
 
 ---
 
-## 11. DESIGN SYSTEM
+## 12. DESIGN SYSTEM
 
 ### CSS Variables (globals.css)
 
@@ -820,18 +904,54 @@ const { alerts, resolve } = useSosAlerts('active')
 --sos:          #EF4444   /* Red emergency */
 ```
 
-**Light Mode:**
+**Dashboard Premium Palette:**
 ```css
---bg:           #F9F7F4
---gold:         #B8720A
---primary:      #1A56DB
---safe:         #047857
+background:  #050D1A → #080F20 → #060C18  (gradient)
+gold:        #D4A853  (logo, active tabs, toggles)
+emerald:     #10B981  (safe status, live indicators)
+glass card:  rgba(8,16,32,0.85) + backdrop-blur(24px)
+member colors:
+  Mom:     #3B82F6  (blue)
+  Dad:     #10B981  (green)
+  Priya:   #F59E0B  (amber)
+  Anya:    #8B5CF6  (purple)
+  Grandpa: #EF4444  (red)
 ```
 
-### Tailwind Config
-- Custom colors mapped to CSS variables
-- Dark mode via `.dark` class on `<html>`
-- Responsive breakpoints: sm(640), md(768), lg(1024), xl(1280)
+**Light Mode:**
+```css
+--bg:    #F9F7F4
+--gold:  #B8720A
+--primary: #1A56DB
+--safe:  #047857
+```
+
+### Map — Tile Layer
+- **Provider:** Carto Voyager (colorful, roads clearly visible)
+- **URL:** `https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png`
+- **Attribution:** CartoDB + OpenStreetMap
+
+### Map Members (`lib/mapData.ts`)
+
+```typescript
+type VehicleType = 'car' | 'bus' | 'walk' | 'bike' | 'auto' | 'tempo'
+type Gender = 'male' | 'female'
+
+interface MapMember {
+  id, name, photo, location, lat, lng
+  vehicle: VehicleType
+  vehicleLat?, vehicleLng?   // vehicle marker position on road
+  speed, battery, color
+  gender: Gender
+}
+
+// 5 members:
+Mom      → walk, blue   (#3B82F6), female
+Dad      → car,  green  (#10B981), male
+Priya    → bus,  amber  (#F59E0B), female
+Anya     → auto, purple (#8B5CF6), female
+Grandpa  → tempo, red  (#EF4444), male
+```
 
 ### Key CSS Utility Classes
 ```css
@@ -845,11 +965,12 @@ const { alerts, resolve } = useSosAlerts('active')
 - Page entrance: `initial={{ opacity: 0, y: 32 }} animate={{ opacity: 1, y: 0 }}`
 - Hover lift: `whileHover={{ y: -4, scale: 1.02 }}`
 - Stagger children: `transition={{ delay: index * 0.07 }}`
-- In-view trigger: `whileInView={{ opacity: 1 }} viewport={{ once: true }}`
+- Spring toggle: `type:'spring', stiffness:500, damping:30`
+- Live pulse: `animate={{ scale:[1,1.4,1], opacity:[1,0.4,1] }} repeat:Infinity`
 
 ---
 
-## 12. HOW TO RUN
+## 13. HOW TO RUN
 
 ### First Time Setup
 ```bash
@@ -861,7 +982,10 @@ venv/bin/pip install -r requirements.txt
 # 2. Seed database with mock data
 venv/bin/python3 seed.py
 
-# 3. Install frontend dependencies
+# 3. Add role column if missing (run once)
+sqlite3 gravity.db "ALTER TABLE users ADD COLUMN role VARCHAR DEFAULT 'user';"
+
+# 4. Install frontend dependencies
 cd "../frontend"
 npm install
 ```
@@ -875,6 +999,15 @@ venv/bin/uvicorn main:app --reload --host 0.0.0.0 --port 8000
 # Terminal 2 — Frontend (port 3020)
 cd "website/frontend"
 npm run dev
+```
+
+### Kill / Restart Servers
+```bash
+# Kill frontend
+fuser -k 3020/tcp
+
+# Kill backend
+pkill -f uvicorn
 ```
 
 ### Environment Files
@@ -892,19 +1025,41 @@ ANTHROPIC_API_KEY=<your-key-here>
 **`frontend/.env.local`**
 ```
 NEXT_PUBLIC_API_URL=http://localhost:8000
+NEXT_PUBLIC_APP_URL=http://localhost:3020
+NEXT_PUBLIC_WS_URL=ws://localhost:8000
+INTERNAL_API_URL=http://127.0.0.1:8000       ← IMPORTANT: used by next.config.js rewrites
+NEXT_PUBLIC_RAZORPAY_KEY_ID=rzp_test_tXD8cP6NSHvKbR
 ```
+
+> **Note:** `INTERNAL_API_URL` must be set to avoid ECONNREFUSED on port 8001. The `next.config.js` rewrites default to `INTERNAL_API_URL || 'http://127.0.0.1:8001'`.
 
 ### Reset Database
 ```bash
 cd "website/backend"
 rm gravity.db
 venv/bin/python3 seed.py
+sqlite3 gravity.db "ALTER TABLE users ADD COLUMN role VARCHAR DEFAULT 'user';"
 ```
 
 ---
 
-## 13. ADMIN CREDENTIALS
+## 14. CREDENTIALS — ALL ROLES
 
+### Unified Login URL
+`http://localhost:3020/login` — all roles login here, auto-redirected to their panel
+
+### Role-Based Credentials
+
+| Role | Email | Password | Dashboard |
+|---|---|---|---|
+| `user` | priya.sharma@gmail.com | Password@123 | `/dashboard` |
+| `moderator` | *(set manually in DB)* | *(set manually)* | `/moderator` |
+| `admin` | kamaralamjdu@gmail.com | K12345678 | `/admin` |
+| `super_admin` | kamaralamjdu@gmail.com | K12345678 | `/super-admin` |
+
+> Admin/Super Admin credentials are in the `admin_users` table. User/Moderator credentials are in the `users` table (with `role` field).
+
+### Legacy Admin Panel (direct)
 | Field | Value |
 |---|---|
 | **Email** | kamaralamjdu@gmail.com |
@@ -912,23 +1067,23 @@ venv/bin/python3 seed.py
 | **Role** | super_admin |
 | **Login URL** | http://localhost:3020/admin/login |
 
-### Test User Credentials (seeded)
-| Name | Email | Password |
-|---|---|---|
-| Priya Sharma | priya.sharma@gmail.com | Password@123 |
-| Rahul Sharma | rahul.sharma@gmail.com | Password@123 |
-| Rajesh Mehta | rajesh.mehta@gmail.com | Password@123 |
-| Arjun Iyer | arjun.iyer@gmail.com | Password@123 |
+### Test User Credentials (seeded in `users` table)
+| Name | Email | Password | Role |
+|---|---|---|---|
+| Priya Sharma | priya.sharma@gmail.com | Password@123 | user |
+| Rahul Sharma | rahul.sharma@gmail.com | Password@123 | user |
+| Rajesh Mehta | rajesh.mehta@gmail.com | Password@123 | user |
+| Arjun Iyer | arjun.iyer@gmail.com | Password@123 | user |
 
 ---
 
-## 14. SEED DATA
+## 15. SEED DATA
 
 Running `seed.py` creates the following mock data:
 
 | Entity | Count | Details |
 |---|---|---|
-| Admin Users | 1 | kamaralamjdu@gmail.com |
+| Admin Users | 1 | kamaralamjdu@gmail.com (super_admin) |
 | App Users | 15 | Indian names, Gmail accounts |
 | Families | 7 | Mix of Free/Premium/Family plans |
 | Family Members | 15 | Linked to families |
@@ -960,14 +1115,19 @@ Running `seed.py` creates the following mock data:
 ## QUICK REFERENCE CHEAT SHEET
 
 ```
-WEBSITE:    http://localhost:3020
-ADMIN:      http://localhost:3020/admin
-API:        http://localhost:8000
-API DOCS:   http://localhost:8000/docs
+WEBSITE:       http://localhost:3020
+DASHBOARD:     http://localhost:3020/dashboard
+MODERATOR:     http://localhost:3020/moderator
+SUPER ADMIN:   http://localhost:3020/super-admin
+LEGACY ADMIN:  http://localhost:3020/admin
+LOGIN:         http://localhost:3020/login
+API:           http://localhost:8000
+API DOCS:      http://localhost:8000/docs
 
-ADMIN LOGIN:
-  Email:    kamaralamjdu@gmail.com
-  Password: K12345678
+LOGIN (all roles):
+  URL:      http://localhost:3020/login
+  User:     priya.sharma@gmail.com / Password@123
+  Admin:    kamaralamjdu@gmail.com / K12345678
 
 START BACKEND:
   cd website/backend
@@ -975,16 +1135,23 @@ START BACKEND:
 
 START FRONTEND:
   cd website/frontend
-  npm run dev
+  npm run dev    (runs on port 3020)
+
+KILL SERVERS:
+  fuser -k 3020/tcp   (frontend)
+  pkill -f uvicorn    (backend)
 
 RESET DATABASE:
-  cd website/backend && rm gravity.db && venv/bin/python3 seed.py
+  cd website/backend
+  rm gravity.db
+  venv/bin/python3 seed.py
+  sqlite3 gravity.db "ALTER TABLE users ADD COLUMN role VARCHAR DEFAULT 'user';"
 
 API TEST:
   curl http://localhost:8000/
-  curl -X POST http://localhost:8000/admin-api/login \
+  curl -X POST http://localhost:8000/auth/login/unified \
     -H "Content-Type: application/json" \
-    -d '{"email":"kamaralamjdu@gmail.com","password":"K12345678"}'
+    -d '{"email":"priya.sharma@gmail.com","password":"Password@123"}'
 ```
 
 ---
