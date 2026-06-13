@@ -18,8 +18,14 @@ const SocialProofSection     = dynamic(() => import('@/components/sections/Socia
 const InteractiveProductDemo = dynamic(() => import('@/components/sections/InteractiveProductDemo'), { loading: () => <div className="min-h-[600px]" /> })
 const AIGuardianSection      = dynamic(() => import('@/components/sections/AIGuardianSection'),      { loading: () => <div className="min-h-[600px]" /> })
 const ROISection             = dynamic(() => import('@/components/sections/ROISection'),             { loading: () => <div className="min-h-[500px]" /> })
-const EnterpriseTrustSection = dynamic(() => import('@/components/sections/EnterpriseTrustSection'), { loading: () => <div className="min-h-[600px]" /> })
-const ParentChildSection     = dynamic(() => import('@/components/sections/ParentChildSection'),     { loading: () => <div className="min-h-[700px]" /> })
+const EnterpriseTrustSection  = dynamic(() => import('@/components/sections/EnterpriseTrustSection'),  { loading: () => <div className="min-h-[600px]" /> })
+const ParentChildSection      = dynamic(() => import('@/components/sections/ParentChildSection'),      { loading: () => <div className="min-h-[700px]" /> })
+// Gravity 4.0 new sections
+const CustomerLogosSection    = dynamic(() => import('@/components/sections/CustomerLogosSection'),    { loading: () => <div className="min-h-[300px]" /> })
+const CaseStudiesSection      = dynamic(() => import('@/components/sections/CaseStudiesSection'),      { loading: () => <div className="min-h-[700px]" /> })
+const TrustBadgesSection      = dynamic(() => import('@/components/sections/TrustBadgesSection'),      { loading: () => <div className="min-h-[600px]" /> })
+const VideoWalkthroughSection = dynamic(() => import('@/components/sections/VideoWalkthroughSection'), { loading: () => <div className="min-h-[600px]" /> })
+const WhatsAppCTASection      = dynamic(() => import('@/components/sections/WhatsAppCTASection'),      { loading: () => <div className="min-h-[300px]" /> })
 import JsonLd from '@/components/seo/JsonLd'
 import {
   buildOrganizationSchema,
@@ -89,6 +95,26 @@ export default function HomePage() {
 
       <div id="enterprise">
         <EnterpriseTrustSection />
+      </div>
+
+      <div id="customer-logos">
+        <CustomerLogosSection />
+      </div>
+
+      <div id="case-studies">
+        <CaseStudiesSection />
+      </div>
+
+      <div id="trust-badges">
+        <TrustBadgesSection />
+      </div>
+
+      <div id="video-walkthrough">
+        <VideoWalkthroughSection />
+      </div>
+
+      <div id="whatsapp-cta">
+        <WhatsAppCTASection />
       </div>
 
       <div id="download">

@@ -4,27 +4,15 @@ import { useRef } from 'react'
 import Link from 'next/link'
 import { motion, useInView } from 'framer-motion'
 import {
-  Shield,
-  Bell,
-  Lock,
-  ChevronRight,
-  CheckCircle,
-  Mic,
-  Camera,
-  Lightbulb,
-  Home,
-  Wifi,
-  Eye,
-  AlertCircle,
-  Zap,
-  ArrowRight,
+  Home, Shield, Lock, Camera, Bell, Wifi, ChevronRight,
+  CheckCircle, Zap, Eye, Users, Clock, MapPin, ArrowRight,
 } from 'lucide-react'
 import Navbar from '@/components/layout/Navbar'
 import Footer from '@/components/layout/Footer'
 
-/* ── Variants ─────────────────────────────────────────────────────────────── */
+/* ── Variants ───────────────────────────────────────────────────────────────── */
 const fadeUp = {
-  hidden: { opacity: 0, y: 32 },
+  hidden: { opacity: 0, y: 28 },
   visible: { opacity: 1, y: 0, transition: { duration: 0.55, ease: 'easeOut' } },
 }
 const stagger = {
@@ -32,129 +20,162 @@ const stagger = {
   visible: { transition: { staggerChildren: 0.09 } },
 }
 
-/* ── Integrations ──────────────────────────────────────────────────────────── */
-const INTEGRATIONS = [
-  {
-    name: 'Amazon Alexa',
-    icon: '🔵',
-    color: '#00CAFF',
-    description: 'Voice family status',
-    features: ['"Hey Alexa, where is everyone?"', 'Voice-triggered family check-ins', 'Arrival announcements', 'SOS voice command'],
-  },
-  {
-    name: 'Google Home',
-    icon: '🏠',
-    color: '#4285F4',
-    description: 'Family presence detection',
-    features: ['Arrival automation triggers', 'Multi-user presence detection', 'Broadcast family alerts', 'Routine integrations'],
-  },
-  {
-    name: 'Apple HomeKit',
-    icon: '🍎',
-    color: '#A0AEC0',
-    description: 'Home security sync',
-    features: ['Arrival/departure scenes', 'Home security sync', 'Siri voice commands', 'Privacy-first architecture'],
-  },
-  {
-    name: 'Smart Cameras',
-    icon: '📹',
-    color: '#10B981',
-    description: 'AI motion alerts',
-    features: ['AI motion detection', 'Family face recognition', 'Stranger alerts', 'Video clip to family on SOS'],
-  },
-  {
-    name: 'Smart Locks',
-    icon: '🔒',
-    color: '#F59E0B',
-    description: 'Auto-lock automation',
-    features: ['Auto-lock when everyone leaves', 'Remote unlock from app', 'Access log for family', 'Guest codes management'],
-  },
-  {
-    name: 'Smart Lights',
-    icon: '💡',
-    color: '#8B5CF6',
-    description: 'Welcome home automation',
-    features: ['Welcome home scene', 'SOS strobe mode (red)', 'Presence simulation', 'Bedtime routines'],
-  },
-]
-
-/* ── Automation flows ──────────────────────────────────────────────────────── */
-const FLOWS = [
-  {
-    title: 'Coming Home',
-    color: '#10B981',
-    steps: [
-      { icon: '📍', label: 'Mom arrives within 500m' },
-      { icon: '🔓', label: 'Smart lock unlocks' },
-      { icon: '💡', label: 'Lights turn on' },
-      { icon: '🔊', label: 'Alexa: "Welcome home, family notified"' },
-    ],
-  },
-  {
-    title: 'Last to Leave',
-    color: '#F59E0B',
-    steps: [
-      { icon: '🚪', label: 'Last family member leaves' },
-      { icon: '📹', label: 'Cameras arm automatically' },
-      { icon: '🔒', label: 'Smart lock locks' },
-      { icon: '📱', label: 'Family gets "Home secured" notification' },
-    ],
-  },
-  {
-    title: 'SOS at Home',
-    color: '#EF4444',
-    steps: [
-      { icon: '🆘', label: 'SOS pressed inside home' },
-      { icon: '🚨', label: 'Outdoor lights strobe red' },
-      { icon: '📹', label: 'Cameras start recording' },
-      { icon: '📱', label: 'Contacts receive live video clip' },
-    ],
-  },
-]
-
-/* ── Voice commands ───────────────────────────────────────────────────────── */
-const VOICE_DEMOS = [
-  {
-    q: '"Where is Priya?"',
-    a: '"Priya is at school, expected home at 4:30 PM"',
-    platform: 'Alexa',
-    color: '#00CAFF',
-  },
-  {
-    q: '"Is everyone home?"',
-    a: '"Dad is home. Mom and kids are still out."',
-    platform: 'Google',
-    color: '#4285F4',
-  },
-  {
-    q: '"Lock the front door"',
-    a: '"Front door locked. All family members are outside."',
-    platform: 'Siri',
-    color: '#A0AEC0',
-  },
-]
-
-/* ── Privacy points ───────────────────────────────────────────────────────── */
-const PRIVACY = [
-  { icon: <Eye size={18} />, text: 'All processing on-device' },
-  { icon: <Shield size={18} />, text: 'No third-party data sharing' },
-  { icon: <Camera size={18} />, text: 'Camera footage stays local' },
-  { icon: <Lock size={18} />, text: 'You control all permissions' },
-]
-
-/* ── Section wrapper ──────────────────────────────────────────────────────── */
-function Section({ children, bg = 'var(--bg)' }: { children: React.ReactNode; bg?: string }) {
+function Section({ children, id, bg = '#0B0D13' }: { children: React.ReactNode; id?: string; bg?: string }) {
   const ref = useRef(null)
-  const inView = useInView(ref, { once: true, margin: '-80px' })
+  const inView = useInView(ref, { once: true, margin: '-60px' })
   return (
     <motion.section
-      ref={ref} initial="hidden" animate={inView ? 'visible' : 'hidden'}
+      id={id}
+      ref={ref}
+      initial="hidden"
+      animate={inView ? 'visible' : 'hidden'}
+      variants={stagger}
       style={{ background: bg, padding: '80px 0' }}
     >
       <div style={{ maxWidth: 1100, margin: '0 auto', padding: '0 24px' }}>{children}</div>
     </motion.section>
   )
 }
+
+/* ── Platform data ──────────────────────────────────────────────────────────── */
+const PLATFORMS = [
+  {
+    name: 'Amazon Alexa',
+    logo: '🔵',
+    color: '#00CAFF',
+    tagline: '"Hey Alexa, where is my family?"',
+    badge: 'Alexa Skill',
+    badgeColor: '#00CAFF',
+    features: [
+      'Ask where any family member is by name',
+      'Voice-triggered family check-ins',
+      '"Alexa, is Rohan home yet?" answered instantly',
+      'SOS alert via voice command',
+    ],
+  },
+  {
+    name: 'Google Home',
+    logo: '🏠',
+    color: '#4285F4',
+    tagline: '"Hey Google, is everyone home?"',
+    badge: 'Works with Google Home',
+    badgeColor: '#4285F4',
+    features: [
+      'Arrival and departure presence detection',
+      'Broadcast family alerts to all speakers',
+      'Trigger home automations on family events',
+      'Chromecast family map display',
+    ],
+  },
+  {
+    name: 'Home Assistant',
+    logo: '⚙️',
+    color: '#18BCEF',
+    tagline: 'Open-source. Your data, your rules.',
+    badge: 'MQTT & REST API',
+    badgeColor: '#18BCEF',
+    features: [
+      'Full MQTT integration for all events',
+      'Custom automations via YAML/blueprints',
+      'Lovelace card for family map',
+      'Webhook triggers for location events',
+    ],
+  },
+  {
+    name: 'Apple HomeKit',
+    logo: '🍎',
+    color: '#A0AEC0',
+    tagline: 'Presence detection via iCloud',
+    badge: 'Coming Soon',
+    badgeColor: '#A0AEC0',
+    comingSoon: true,
+    features: [
+      'iCloud family presence detection',
+      'Siri voice commands for family status',
+      'Arrival/departure HomeKit scenes',
+      'Privacy-first on-device processing',
+    ],
+  },
+]
+
+/* ── Smart devices ──────────────────────────────────────────────────────────── */
+const DEVICES = [
+  {
+    icon: Lock, name: 'Smart Locks', color: '#F59E0B',
+    status: 'Locked',
+    statusColor: '#10B981',
+    description: 'Auto-unlock when family arrives, auto-lock when last person leaves.',
+    features: ['Auto-unlock on arrival', 'Full lock history', 'Remote unlock from app', 'Guest access codes'],
+  },
+  {
+    icon: Camera, name: 'Smart Cameras', color: '#3B82F6',
+    status: 'Recording',
+    statusColor: '#10B981',
+    description: 'Motion alerts linked to family locations — know who triggered the sensor.',
+    features: ['Location-linked motion alerts', 'Family face recognition', 'Arm/disarm with presence', 'SOS auto-record'],
+  },
+  {
+    icon: Bell, name: 'Smart Doorbell', color: '#8B5CF6',
+    status: 'Active',
+    statusColor: '#10B981',
+    description: 'Visitor notifications sent to the whole family when nobody is home.',
+    features: ['No-one-home visitor alerts', 'Family group notifications', '2-way audio from any device', 'Package detection alerts'],
+  },
+  {
+    icon: Wifi, name: 'Smart Sensors', color: '#10B981',
+    status: 'All Closed',
+    statusColor: '#10B981',
+    description: 'Door and window open/close alerts correlated with family presence.',
+    features: ['Door/window open alerts', 'Motion zone monitoring', 'Presence-aware notifications', 'Tamper detection'],
+  },
+]
+
+/* ── Automation rules ───────────────────────────────────────────────────────── */
+const AUTOMATIONS = [
+  {
+    trigger: 'When Sarah arrives home',
+    actions: ['Turn on lights', 'Send notification to family', 'Unlock front door', 'Play welcome message on Alexa'],
+    color: '#10B981',
+    icon: '🏠',
+  },
+  {
+    trigger: 'When last family member leaves',
+    actions: ['Lock all doors', 'Arm cameras', 'Turn off lights', 'Send "Home secured" to family'],
+    color: '#F59E0B',
+    icon: '🔒',
+  },
+  {
+    trigger: 'When child arrives at school',
+    actions: ['Send parent notification', 'Mark attendance confirmed', 'Update family map status', 'Log arrival time'],
+    color: '#3B82F6',
+    icon: '🎒',
+  },
+  {
+    trigger: 'When elderly SOS triggered',
+    actions: ['Notify all caregivers instantly', 'Unlock door for emergency access', 'Start camera recording', 'Call emergency services if no response'],
+    color: '#EF4444',
+    icon: '🆘',
+  },
+]
+
+/* ── Family presence ────────────────────────────────────────────────────────── */
+const FAMILY_STATUS = [
+  { name: 'Dad', initials: 'D', color: '#3B82F6', status: 'Home', location: 'Living Room', isHome: true },
+  { name: 'Mom', initials: 'M', color: '#10B981', status: 'Away', location: 'Office — Connaught Place', isHome: false },
+  { name: 'Rohan', initials: 'R', color: '#F59E0B', status: 'Away', location: 'School — DPS', isHome: false },
+]
+
+/* ── Timeline data ──────────────────────────────────────────────────────────── */
+const TIMELINE_HOURS = ['6am', '8am', '10am', '12pm', '2pm', '4pm', '6pm', '8pm', '10pm']
+const OCCUPANCY = [1, 3, 1, 1, 0, 0, 2, 3, 3] // number of people home at each hour
+
+/* ── Coming soon integrations ───────────────────────────────────────────────── */
+const COMING_SOON = [
+  { name: 'Ring', icon: '🔔', color: '#F97316' },
+  { name: 'Nest', icon: '🌡️', color: '#4CAF50' },
+  { name: 'Philips Hue', icon: '💡', color: '#E040FB' },
+  { name: 'Yale Lock', icon: '🔑', color: '#2196F3' },
+]
 
 /* ═══════════════════════════════════════════════════════════════════════════
    PAGE
@@ -167,79 +188,69 @@ export default function SmartHomePage() {
     <>
       <Navbar />
 
-      {/* ── HERO ──────────────────────────────────────────────────────────── */}
+      {/* ── HERO ──────────────────────────────────────────────────────────────── */}
       <section
         ref={heroRef}
         style={{
           background: 'linear-gradient(135deg, #0a1020 0%, #0d1830 45%, #0a1a14 100%)',
-          minHeight: '90vh',
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-          position: 'relative', overflow: 'hidden', padding: '100px 24px 80px',
+          minHeight: '90vh', display: 'flex', alignItems: 'center', justifyContent: 'center',
+          position: 'relative', overflow: 'hidden', padding: '120px 24px 80px',
         }}
       >
-        {/* Home silhouette SVG with glowing connection lines */}
-        <svg
-          style={{ position: 'absolute', bottom: 0, left: '50%', transform: 'translateX(-50%)', width: '100%', maxWidth: 900, opacity: 0.06, pointerEvents: 'none' }}
-          viewBox="0 0 900 300"
-          preserveAspectRatio="xMidYMax slice"
-        >
-          {/* House silhouette */}
-          <polygon points="450,20 200,180 700,180" fill="white" />
-          <rect x="220" y="180" width="460" height="120" fill="white" />
-          <rect x="360" y="220" width="80" height="80" fill="#0a1020" />
-          <rect x="250" y="200" width="60" height="60" fill="#0a1020" />
-          <rect x="580" y="200" width="60" height="60" fill="#0a1020" />
-          {/* Connection lines to devices */}
-          <line x1="450" y1="100" x2="100" y2="50" stroke="white" strokeWidth="1.5" strokeDasharray="6,4" />
-          <line x1="450" y1="100" x2="800" y2="50" stroke="white" strokeWidth="1.5" strokeDasharray="6,4" />
-          <line x1="450" y1="100" x2="820" y2="200" stroke="white" strokeWidth="1.5" strokeDasharray="6,4" />
-          <line x1="450" y1="100" x2="80" y2="200" stroke="white" strokeWidth="1.5" strokeDasharray="6,4" />
-          {/* Device nodes */}
-          <circle cx="100" cy="50" r="14" fill="white" />
-          <circle cx="800" cy="50" r="14" fill="white" />
-          <circle cx="820" cy="200" r="14" fill="white" />
-          <circle cx="80" cy="200" r="14" fill="white" />
+        {/* House silhouette */}
+        <svg style={{ position: 'absolute', bottom: 0, left: '50%', transform: 'translateX(-50%)', width: '100%', maxWidth: 1000, opacity: 0.05, pointerEvents: 'none' }}
+          viewBox="0 0 1000 320" preserveAspectRatio="xMidYMax slice">
+          <polygon points="500,20 180,200 820,200" fill="white" />
+          <rect x="200" y="200" width="600" height="120" fill="white" />
+          <rect x="410" y="240" width="90" height="80" fill="#0a1020" />
+          <rect x="250" y="218" width="70" height="70" fill="#0a1020" />
+          <rect x="670" y="218" width="70" height="70" fill="#0a1020" />
+          {/* Connection lines to device dots */}
+          <line x1="500" y1="110" x2="80" y2="60" stroke="white" strokeWidth="1.5" strokeDasharray="8,5" />
+          <line x1="500" y1="110" x2="920" y2="60" stroke="white" strokeWidth="1.5" strokeDasharray="8,5" />
+          <line x1="500" y1="110" x2="940" y2="240" stroke="white" strokeWidth="1.5" strokeDasharray="8,5" />
+          <line x1="500" y1="110" x2="60" y2="240" stroke="white" strokeWidth="1.5" strokeDasharray="8,5" />
+          <circle cx="80" cy="60" r="16" fill="white" />
+          <circle cx="920" cy="60" r="16" fill="white" />
+          <circle cx="940" cy="240" r="16" fill="white" />
+          <circle cx="60" cy="240" r="16" fill="white" />
         </svg>
 
         {/* Ambient glows */}
         <div style={{
-          position: 'absolute', top: '40%', left: '50%',
-          transform: 'translate(-50%, -50%)',
+          position: 'absolute', top: '40%', left: '50%', transform: 'translate(-50%, -50%)',
           width: 700, height: 700, borderRadius: '50%',
           background: 'radial-gradient(circle, rgba(16,185,129,0.07) 0%, rgba(59,130,246,0.04) 50%, transparent 70%)',
           pointerEvents: 'none',
         }} />
         <motion.div
-          animate={{ scale: [1, 1.08, 1], opacity: [0.4, 0.7, 0.4] }}
-          transition={{ duration: 7, repeat: Infinity, ease: 'easeInOut' }}
+          animate={{ scale: [1, 1.1, 1], opacity: [0.4, 0.7, 0.4] }}
+          transition={{ duration: 7, repeat: Infinity }}
           style={{
-            position: 'absolute', top: '15%', left: '12%',
-            width: 200, height: 200, borderRadius: '50%',
+            position: 'absolute', top: '15%', left: '10%',
+            width: 250, height: 250, borderRadius: '50%',
             background: 'radial-gradient(circle, rgba(0,202,255,0.06) 0%, transparent 70%)',
-            filter: 'blur(28px)', pointerEvents: 'none',
+            filter: 'blur(32px)', pointerEvents: 'none',
           }}
         />
         <motion.div
-          animate={{ scale: [1, 1.05, 1], opacity: [0.3, 0.6, 0.3] }}
-          transition={{ duration: 9, repeat: Infinity, ease: 'easeInOut', delay: 2 }}
+          animate={{ scale: [1, 1.08, 1], opacity: [0.3, 0.5, 0.3] }}
+          transition={{ duration: 9, repeat: Infinity, delay: 2 }}
           style={{
-            position: 'absolute', bottom: '15%', right: '10%',
-            width: 240, height: 240, borderRadius: '50%',
+            position: 'absolute', bottom: '15%', right: '8%',
+            width: 280, height: 280, borderRadius: '50%',
             background: 'radial-gradient(circle, rgba(245,158,11,0.05) 0%, transparent 70%)',
-            filter: 'blur(32px)', pointerEvents: 'none',
+            filter: 'blur(36px)', pointerEvents: 'none',
           }}
         />
 
         <div style={{ maxWidth: 1100, margin: '0 auto', textAlign: 'center', position: 'relative', zIndex: 1 }}>
           <motion.div
-            initial={{ opacity: 0, x: -20 }} animate={heroInView ? { opacity: 1, x: 0 } : {}}
+            initial={{ opacity: 0, x: -16 }} animate={heroInView ? { opacity: 1, x: 0 } : {}}
             transition={{ delay: 0.1 }} style={{ marginBottom: 32, textAlign: 'left' }}
           >
-            <Link href="/" style={{
-              color: 'rgba(255,255,255,0.5)', textDecoration: 'none',
-              fontSize: '0.9rem', display: 'inline-flex', alignItems: 'center', gap: 6,
-            }}>
-              ← Back to Gravity Home
+            <Link href="/" style={{ color: 'rgba(255,255,255,0.45)', textDecoration: 'none', fontSize: 14, display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+              ← Back to Home
             </Link>
           </motion.div>
 
@@ -250,7 +261,7 @@ export default function SmartHomePage() {
           >
             <motion.div
               animate={{ scale: [1, 1.07, 1] }}
-              transition={{ duration: 2.5, repeat: Infinity, ease: 'easeInOut' }}
+              transition={{ duration: 2.5, repeat: Infinity }}
               style={{
                 width: 96, height: 96, borderRadius: '50%',
                 background: 'rgba(16,185,129,0.15)', border: '1px solid rgba(16,185,129,0.35)',
@@ -262,440 +273,440 @@ export default function SmartHomePage() {
           </motion.div>
 
           <motion.div
-            initial={{ opacity: 0, y: 20 }} animate={heroInView ? { opacity: 1, y: 0 } : {}}
+            initial={{ opacity: 0, y: 16 }} animate={heroInView ? { opacity: 1, y: 0 } : {}}
             transition={{ delay: 0.3 }} style={{ marginBottom: 20 }}
           >
             <span style={{
               background: 'rgba(16,185,129,0.12)', border: '1px solid rgba(16,185,129,0.3)',
               color: '#34D399', borderRadius: 999, padding: '6px 18px',
-              fontSize: '0.82rem', fontWeight: 600, letterSpacing: '0.08em', textTransform: 'uppercase',
+              fontSize: 12, fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase',
             }}>
-              Smart Home Integration
+              Smart Home Ecosystem
             </span>
           </motion.div>
 
           <motion.h1
-            initial={{ opacity: 0, y: 30 }} animate={heroInView ? { opacity: 1, y: 0 } : {}}
+            initial={{ opacity: 0, y: 28 }} animate={heroInView ? { opacity: 1, y: 0 } : {}}
             transition={{ delay: 0.4 }}
-            style={{
-              fontFamily: 'var(--font-display)', fontSize: 'clamp(2.4rem, 6vw, 4rem)',
-              fontWeight: 800, color: '#FFFFFF', lineHeight: 1.1, marginBottom: 24,
-            }}
+            style={{ fontSize: 'clamp(2.4rem, 6vw, 4rem)', fontWeight: 900, color: '#FFFFFF', lineHeight: 1.1, marginBottom: 24, letterSpacing: '-0.02em' }}
           >
-            Your Home, Intelligently Safe
+            Gravity Smart Home —
+            <br />
+            <span style={{ background: 'linear-gradient(135deg, #34D399, #3B82F6)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
+              Your Home. Your Family. Connected.
+            </span>
           </motion.h1>
 
           <motion.p
             initial={{ opacity: 0, y: 20 }} animate={heroInView ? { opacity: 1, y: 0 } : {}}
             transition={{ delay: 0.5 }}
-            style={{
-              color: 'rgba(255,255,255,0.7)', fontSize: 'clamp(1rem, 2vw, 1.2rem)',
-              maxWidth: 640, margin: '0 auto 44px', lineHeight: 1.75,
-            }}
+            style={{ color: 'rgba(255,255,255,0.65)', fontSize: 'clamp(1rem, 2vw, 1.2rem)', maxWidth: 640, margin: '0 auto 44px', lineHeight: 1.75 }}
           >
-            Gravity connects with your entire smart home ecosystem to create an automated family safety network. Alexa, Google Home, smart locks, cameras — one connected safety layer.
+            Connect Alexa, Google Home, smart locks, cameras, and sensors into one intelligent family safety network. Your home knows when you're safe.
           </motion.p>
 
           <motion.div
             initial={{ opacity: 0, y: 20 }} animate={heroInView ? { opacity: 1, y: 0 } : {}}
             transition={{ delay: 0.6 }}
-            style={{ display: 'flex', gap: 16, justifyContent: 'center', flexWrap: 'wrap', marginBottom: 56 }}
+            style={{ display: 'flex', gap: 16, justifyContent: 'center', flexWrap: 'wrap', marginBottom: 48 }}
           >
-            <Link href="/" style={{
+            <Link href="/pricing" style={{
               background: 'linear-gradient(90deg, #10B981, #059669)',
               color: '#fff', padding: '14px 32px', borderRadius: 12,
-              textDecoration: 'none', fontWeight: 700, fontSize: '1rem',
+              textDecoration: 'none', fontWeight: 700, fontSize: 16,
               display: 'inline-flex', alignItems: 'center', gap: 8,
-              boxShadow: '0 0 28px rgba(16,185,129,0.35)',
+              boxShadow: '0 0 28px rgba(16,185,129,0.3)',
             }}>
               Connect Your Smart Home <ChevronRight size={18} />
             </Link>
             <a href="#automations" style={{
-              background: 'transparent', color: '#fff', padding: '14px 32px',
-              borderRadius: 12, textDecoration: 'none', fontWeight: 600,
-              fontSize: '1rem', border: '1px solid rgba(255,255,255,0.2)',
+              background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.15)',
+              color: '#fff', padding: '14px 32px', borderRadius: 12,
+              textDecoration: 'none', fontWeight: 600, fontSize: 16,
             }}>
               See Automations
             </a>
           </motion.div>
 
           <motion.div
-            initial={{ opacity: 0, y: 20 }} animate={heroInView ? { opacity: 1, y: 0 } : {}}
+            initial={{ opacity: 0 }} animate={heroInView ? { opacity: 1 } : {}}
             transition={{ delay: 0.7 }}
-            style={{ display: 'flex', gap: 14, justifyContent: 'center', flexWrap: 'wrap' }}
+            style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap' }}
           >
             {[
-              { icon: <Mic size={15} />, label: 'Voice Control' },
-              { icon: <Lock size={15} />, label: 'Smart Locks' },
-              { icon: <Camera size={15} />, label: 'AI Cameras' },
-              { icon: <Wifi size={15} />, label: '6 Platforms' },
+              { label: 'Alexa & Google', icon: '🔊' },
+              { label: 'Smart Locks', icon: '🔒' },
+              { label: 'AI Cameras', icon: '📹' },
+              { label: '4 Platforms', icon: '🏠' },
+              { label: 'Home Assistant', icon: '⚙️' },
             ].map((b) => (
               <div key={b.label} style={{
                 display: 'inline-flex', alignItems: 'center', gap: 7,
                 background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.12)',
                 borderRadius: 999, padding: '7px 16px',
-                color: 'rgba(255,255,255,0.75)', fontSize: '0.82rem', fontWeight: 500,
+                color: 'rgba(255,255,255,0.7)', fontSize: 13, fontWeight: 500,
               }}>
-                {b.icon} {b.label}
+                <span>{b.icon}</span> {b.label}
               </div>
             ))}
           </motion.div>
         </div>
       </section>
 
-      {/* ── INTEGRATIONS GRID ─────────────────────────────────────────────── */}
-      <Section bg="var(--bg-surface)">
-        <motion.div variants={stagger}>
-          <motion.div variants={fadeUp} style={{ textAlign: 'center', marginBottom: 52 }}>
-            <h2 style={{
-              fontFamily: 'var(--font-display)', fontSize: 'clamp(1.8rem, 4vw, 2.8rem)',
-              fontWeight: 700, color: 'var(--text-primary)', marginBottom: 16,
-            }}>
-              Works with Your Entire Smart Home
-            </h2>
-            <p style={{ color: 'var(--text-muted)', maxWidth: 580, margin: '0 auto', lineHeight: 1.75 }}>
-              Gravity integrates with every major smart home platform. No new hardware required — just connect to what you already have and transform it into a family safety network.
-            </p>
-          </motion.div>
-
-          <motion.div
-            variants={stagger}
-            style={{
-              display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
-              gap: 22,
-            }}
-          >
-            {INTEGRATIONS.map((item) => (
-              <motion.div
-                key={item.name}
-                variants={fadeUp}
-                whileHover={{ y: -5, transition: { duration: 0.2 } }}
-                style={{
-                  background: 'var(--bg)', border: `1px solid ${item.color}25`,
-                  borderTop: `3px solid ${item.color}`,
-                  borderRadius: 16, padding: '26px 22px',
-                }}
-              >
-                <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16 }}>
-                  <div style={{
-                    width: 50, height: 50, borderRadius: 12,
-                    background: `${item.color}14`,
-                    border: `1px solid ${item.color}30`,
-                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    fontSize: '1.5rem',
-                  }}>
-                    {item.icon}
-                  </div>
-                  <div>
-                    <h3 style={{
-                      fontFamily: 'var(--font-display)', fontWeight: 700,
-                      color: 'var(--text-primary)', fontSize: '0.95rem', marginBottom: 2,
-                    }}>
-                      {item.name}
-                    </h3>
-                    <span style={{ color: item.color, fontSize: '0.78rem', fontWeight: 600 }}>
-                      {item.description}
-                    </span>
-                  </div>
-                </div>
-                <ul style={{ margin: 0, padding: 0, listStyle: 'none', display: 'flex', flexDirection: 'column', gap: 8 }}>
-                  {item.features.map((feat) => (
-                    <li key={feat} style={{
-                      display: 'flex', alignItems: 'flex-start', gap: 8,
-                      color: 'var(--text-secondary)', fontSize: '0.85rem', lineHeight: 1.45,
-                    }}>
-                      <CheckCircle size={13} style={{ color: item.color, flexShrink: 0, marginTop: 2 }} />
-                      {feat}
-                    </li>
-                  ))}
-                </ul>
-              </motion.div>
-            ))}
-          </motion.div>
+      {/* ── ECOSYSTEM INTEGRATIONS ────────────────────────────────────────────── */}
+      <Section id="integrations" bg="rgba(255,255,255,0.02)">
+        <motion.div variants={fadeUp} style={{ textAlign: 'center', marginBottom: 52 }}>
+          <h2 style={{ fontSize: 'clamp(1.8rem, 4vw, 2.8rem)', fontWeight: 800, color: '#F1EDE4', letterSpacing: '-0.02em', marginBottom: 14 }}>
+            Ecosystem Integrations
+          </h2>
+          <p style={{ color: 'rgba(255,255,255,0.5)', maxWidth: 560, margin: '0 auto', lineHeight: 1.75 }}>
+            Four major smart home platforms. One connected family safety layer.
+          </p>
         </motion.div>
-      </Section>
 
-      {/* ── AUTOMATION FLOWS ──────────────────────────────────────────────── */}
-      <Section bg="var(--bg)">
-        <motion.div variants={stagger} id="automations">
-          <motion.div variants={fadeUp} style={{ textAlign: 'center', marginBottom: 56 }}>
-            <h2 style={{
-              fontFamily: 'var(--font-display)', fontSize: 'clamp(1.8rem, 4vw, 2.8rem)',
-              fontWeight: 700, color: 'var(--text-primary)', marginBottom: 16,
-            }}>
-              Intelligent Automation Flows
-            </h2>
-            <p style={{ color: 'var(--text-muted)', maxWidth: 560, margin: '0 auto', lineHeight: 1.7 }}>
-              Gravity's smart automations trigger across your entire home when family members arrive, leave, or press SOS. Everything works together — automatically.
-            </p>
-          </motion.div>
-
-          <div style={{
-            display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: 28,
-          }}>
-            {FLOWS.map((flow, fi) => (
-              <motion.div
-                key={flow.title}
-                variants={fadeUp}
-                style={{
-                  background: 'var(--bg-surface)', border: `1px solid ${flow.color}25`,
-                  borderRadius: 18, padding: '28px 24px', overflow: 'hidden',
-                  position: 'relative',
-                }}
-              >
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 24 }}>
+          {PLATFORMS.map((p) => (
+            <motion.div
+              key={p.name}
+              variants={fadeUp}
+              whileHover={{ y: -5, transition: { duration: 0.2 } }}
+              style={{
+                background: '#0B0D13', border: `1px solid ${p.color}25`,
+                borderTop: `3px solid ${p.color}`,
+                borderRadius: 18, padding: '28px 24px',
+                position: 'relative', overflow: 'hidden',
+              }}
+            >
+              {p.comingSoon && (
                 <div style={{
-                  position: 'absolute', top: 0, right: 0, width: 120, height: 120,
-                  borderRadius: '0 18px 0 100%',
-                  background: `${flow.color}08`,
-                  pointerEvents: 'none',
-                }} />
-
-                <div style={{
-                  display: 'inline-flex', alignItems: 'center', gap: 8,
-                  background: `${flow.color}14`, border: `1px solid ${flow.color}30`,
-                  borderRadius: 999, padding: '5px 14px',
-                  fontSize: '0.78rem', fontWeight: 700, color: flow.color,
-                  marginBottom: 22, textTransform: 'uppercase', letterSpacing: '0.06em',
+                  position: 'absolute', top: 16, right: 16,
+                  background: 'rgba(160,174,192,0.12)', border: '1px solid rgba(160,174,192,0.25)',
+                  borderRadius: 999, padding: '3px 10px',
+                  fontSize: 11, fontWeight: 700, color: '#A0AEC0', letterSpacing: '0.06em',
                 }}>
-                  <Zap size={12} />
-                  {flow.title}
+                  COMING SOON
                 </div>
+              )}
 
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
-                  {flow.steps.map((step, si) => (
-                    <div key={si}>
-                      <motion.div
-                        initial={{ opacity: 0, x: -16 }}
-                        whileInView={{ opacity: 1, x: 0 }}
-                        transition={{ delay: fi * 0.1 + si * 0.08, duration: 0.4 }}
-                        viewport={{ once: true }}
-                        style={{
-                          display: 'flex', alignItems: 'center', gap: 12,
-                          padding: '12px 0',
-                        }}
-                      >
-                        <div style={{
-                          width: 40, height: 40, borderRadius: 10,
-                          background: `${flow.color}12`,
-                          border: `1px solid ${flow.color}25`,
-                          display: 'flex', alignItems: 'center', justifyContent: 'center',
-                          fontSize: '1.1rem', flexShrink: 0,
-                        }}>
-                          {step.icon}
-                        </div>
-                        <span style={{ color: 'var(--text-secondary)', fontSize: '0.88rem', lineHeight: 1.4 }}>
-                          {step.label}
-                        </span>
-                      </motion.div>
-                      {si < flow.steps.length - 1 && (
-                        <div style={{
-                          display: 'flex', alignItems: 'center',
-                          paddingLeft: 19, paddingBottom: 2,
-                        }}>
-                          <ArrowRight size={14} style={{ color: flow.color, opacity: 0.5 }} />
-                        </div>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              </motion.div>
-            ))}
-          </div>
-        </motion.div>
-      </Section>
-
-      {/* ── VOICE COMMANDS ────────────────────────────────────────────────── */}
-      <Section bg="var(--bg-surface)">
-        <motion.div variants={stagger}>
-          <motion.div variants={fadeUp} style={{ textAlign: 'center', marginBottom: 52 }}>
-            <h2 style={{
-              fontFamily: 'var(--font-display)', fontSize: 'clamp(1.8rem, 4vw, 2.8rem)',
-              fontWeight: 700, color: 'var(--text-primary)', marginBottom: 16,
-            }}>
-              Ask Your Smart Speaker Anything
-            </h2>
-            <p style={{ color: 'var(--text-muted)', maxWidth: 540, margin: '0 auto', lineHeight: 1.7 }}>
-              Gravity connects your family's location data directly to your voice assistant. Ask where everyone is — just like that.
-            </p>
-          </motion.div>
-
-          <motion.div
-            variants={stagger}
-            style={{ maxWidth: 700, margin: '0 auto', display: 'flex', flexDirection: 'column', gap: 20 }}
-          >
-            {VOICE_DEMOS.map((demo, i) => (
-              <motion.div
-                key={i}
-                variants={fadeUp}
-                style={{
-                  background: 'var(--bg)', border: '1px solid var(--border)',
-                  borderRadius: 16, padding: '24px 24px', overflow: 'hidden',
-                }}
-              >
-                <div style={{ display: 'flex', alignItems: 'flex-start', gap: 14, marginBottom: 14 }}>
-                  <div style={{
-                    width: 36, height: 36, borderRadius: '50%',
-                    background: 'rgba(99,102,241,0.12)', border: '1px solid rgba(99,102,241,0.25)',
-                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    color: '#818CF8', flexShrink: 0,
-                  }}>
-                    <Mic size={16} />
-                  </div>
-                  <div>
-                    <div style={{ color: 'var(--text-muted)', fontSize: '0.75rem', marginBottom: 4, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em' }}>
-                      You say
-                    </div>
-                    <div style={{ color: 'var(--text-primary)', fontWeight: 600, fontSize: '0.95rem' }}>
-                      {demo.q}
-                    </div>
-                  </div>
-                </div>
-
+              <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 16 }}>
                 <div style={{
-                  display: 'flex', alignItems: 'flex-start', gap: 14,
-                  background: `${demo.color}08`, border: `1px solid ${demo.color}20`,
-                  borderRadius: 12, padding: '14px 16px',
+                  width: 52, height: 52, borderRadius: 14,
+                  background: `${p.color}14`, border: `1px solid ${p.color}30`,
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  fontSize: 26,
                 }}>
-                  <div style={{
-                    width: 36, height: 36, borderRadius: '50%',
-                    background: `${demo.color}18`, border: `1px solid ${demo.color}30`,
-                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    color: demo.color, flexShrink: 0, fontSize: '1rem',
-                  }}>
-                    🔊
-                  </div>
-                  <div>
-                    <div style={{ color: demo.color, fontSize: '0.75rem', marginBottom: 4, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em' }}>
-                      {demo.platform} responds
-                    </div>
-                    <div style={{ color: 'var(--text-secondary)', fontSize: '0.92rem', lineHeight: 1.5 }}>
-                      {demo.a}
-                    </div>
-                  </div>
+                  {p.logo}
                 </div>
-              </motion.div>
-            ))}
-          </motion.div>
-        </motion.div>
-      </Section>
+                <div>
+                  <h3 style={{ fontWeight: 700, color: '#F1EDE4', fontSize: 16, marginBottom: 4 }}>{p.name}</h3>
+                  <span style={{
+                    fontSize: 11, fontWeight: 700, color: p.badgeColor,
+                    background: `${p.badgeColor}15`, border: `1px solid ${p.badgeColor}30`,
+                    borderRadius: 999, padding: '2px 9px',
+                  }}>{p.badge}</span>
+                </div>
+              </div>
 
-      {/* ── PRIVACY FIRST ─────────────────────────────────────────────────── */}
-      <Section bg="var(--bg)">
-        <motion.div variants={stagger}>
-          <motion.div
-            variants={fadeUp}
-            style={{
-              display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(340px, 1fr))',
-              gap: 56, alignItems: 'center',
-            }}
-          >
-            <div>
-              <span style={{
-                background: 'rgba(16,185,129,0.1)', border: '1px solid rgba(16,185,129,0.3)',
-                color: '#10B981', borderRadius: 999, padding: '5px 14px',
-                fontSize: '0.8rem', fontWeight: 600, letterSpacing: '0.08em', textTransform: 'uppercase',
-                display: 'inline-block', marginBottom: 20,
+              <p style={{
+                fontSize: 14, fontStyle: 'italic', color: p.color,
+                fontWeight: 600, marginBottom: 16, lineHeight: 1.4,
               }}>
-                Privacy First
-              </span>
-              <h2 style={{
-                fontFamily: 'var(--font-display)', fontSize: 'clamp(1.8rem, 3.5vw, 2.4rem)',
-                fontWeight: 700, color: 'var(--text-primary)', marginBottom: 16, lineHeight: 1.2,
-              }}>
-                Your Home Data Stays Private
-              </h2>
-              <p style={{ color: 'var(--text-muted)', lineHeight: 1.75, marginBottom: 28 }}>
-                Smart home integration does not mean giving up your privacy. Every connection Gravity makes to your smart home is end-to-end encrypted, processed on your devices, and never shared with third parties.
+                {p.tagline}
               </p>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 14, marginBottom: 28 }}>
-                {PRIVACY.map((item) => (
-                  <div key={item.text} style={{
-                    display: 'flex', alignItems: 'center', gap: 14,
-                    background: 'var(--bg-surface)', border: '1px solid var(--border)',
-                    borderRadius: 12, padding: '14px 18px',
-                  }}>
-                    <span style={{ color: '#10B981' }}>{item.icon}</span>
-                    <span style={{ color: 'var(--text-secondary)', fontSize: '0.95rem' }}>{item.text}</span>
-                  </div>
-                ))}
-              </div>
-              <div style={{
-                background: 'rgba(16,185,129,0.06)', border: '1px solid rgba(16,185,129,0.2)',
-                borderRadius: 12, padding: '14px 18px',
-                display: 'flex', alignItems: 'center', gap: 10,
-              }}>
-                <Shield size={16} style={{ color: '#10B981', flexShrink: 0 }} />
-                <span style={{ color: 'var(--text-secondary)', fontSize: '0.88rem' }}>
-                  End-to-end encrypted connection to all smart devices
-                </span>
-              </div>
-            </div>
 
-            {/* Visual */}
-            <div style={{ display: 'flex', justifyContent: 'center' }}>
-              <motion.div
-                animate={{ y: [0, -10, 0] }}
-                transition={{ duration: 5, repeat: Infinity, ease: 'easeInOut' }}
-                style={{
-                  background: 'var(--bg-surface)', border: '1px solid var(--border)',
-                  borderRadius: 22, padding: '32px', width: '100%', maxWidth: 360,
-                }}
-              >
-                <div style={{ textAlign: 'center', marginBottom: 24 }}>
-                  <div style={{
-                    width: 64, height: 64, borderRadius: '50%',
-                    background: 'rgba(16,185,129,0.12)', border: '1px solid rgba(16,185,129,0.3)',
-                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    margin: '0 auto 12px',
-                  }}>
-                    <Shield size={28} style={{ color: '#10B981' }} />
-                  </div>
-                  <div style={{ fontWeight: 700, color: 'var(--text-primary)', fontSize: '0.95rem' }}>
-                    Privacy Dashboard
-                  </div>
-                  <div style={{ color: 'var(--text-muted)', fontSize: '0.78rem', marginTop: 4 }}>
-                    All systems normal
-                  </div>
-                </div>
-
-                {[
-                  { label: 'Data encryption', status: 'Active', color: '#10B981' },
-                  { label: 'Local processing', status: 'Enabled', color: '#10B981' },
-                  { label: 'Third-party sharing', status: 'Blocked', color: '#EF4444' },
-                  { label: 'Camera data', status: 'Local only', color: '#10B981' },
-                  { label: 'Voice recordings', status: 'Not stored', color: '#10B981' },
-                ].map((row) => (
-                  <div key={row.label} style={{
-                    display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-                    padding: '10px 0', borderBottom: '1px solid var(--border)',
-                  }}>
-                    <span style={{ color: 'var(--text-secondary)', fontSize: '0.85rem' }}>{row.label}</span>
-                    <span style={{
-                      background: `${row.color}15`, color: row.color,
-                      borderRadius: 999, padding: '2px 10px',
-                      fontSize: '0.75rem', fontWeight: 700,
-                    }}>
-                      {row.status}
-                    </span>
-                  </div>
+              <ul style={{ margin: 0, padding: 0, listStyle: 'none', display: 'flex', flexDirection: 'column', gap: 8 }}>
+                {p.features.map((feat) => (
+                  <li key={feat} style={{ display: 'flex', alignItems: 'flex-start', gap: 9, fontSize: 14, color: 'rgba(255,255,255,0.6)', lineHeight: 1.45 }}>
+                    <CheckCircle size={13} style={{ color: p.color, flexShrink: 0, marginTop: 2 }} />
+                    {feat}
+                  </li>
                 ))}
-              </motion.div>
-            </div>
-          </motion.div>
-        </motion.div>
+              </ul>
+            </motion.div>
+          ))}
+        </div>
       </Section>
 
-      {/* ── CTA ────────────────────────────────────────────────────────────── */}
+      {/* ── SMART DEVICES ─────────────────────────────────────────────────────── */}
+      <Section id="devices" bg="#0B0D13">
+        <motion.div variants={fadeUp} style={{ textAlign: 'center', marginBottom: 52 }}>
+          <h2 style={{ fontSize: 'clamp(1.8rem, 4vw, 2.8rem)', fontWeight: 800, color: '#F1EDE4', letterSpacing: '-0.02em', marginBottom: 14 }}>
+            Connected Smart Devices
+          </h2>
+          <p style={{ color: 'rgba(255,255,255,0.5)', maxWidth: 540, margin: '0 auto', lineHeight: 1.75 }}>
+            Every device in your home becomes part of the family safety network — with intelligent triggers and alerts.
+          </p>
+        </motion.div>
+
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: 20 }}>
+          {DEVICES.map(({ icon: Icon, name, color, status, statusColor, description, features }) => (
+            <motion.div
+              key={name}
+              variants={fadeUp}
+              whileHover={{ y: -4, transition: { duration: 0.2 } }}
+              style={{
+                background: 'rgba(255,255,255,0.04)', border: `1px solid ${color}20`,
+                borderRadius: 18, padding: '24px',
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
+                <div style={{
+                  width: 44, height: 44, borderRadius: 12,
+                  background: `${color}15`, border: `1px solid ${color}30`,
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                }}>
+                  <Icon size={20} style={{ color }} />
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                  <span style={{ width: 7, height: 7, borderRadius: '50%', background: statusColor, display: 'inline-block' }} />
+                  <span style={{ fontSize: 12, fontWeight: 700, color: statusColor }}>{status}</span>
+                </div>
+              </div>
+              <h3 style={{ fontSize: 16, fontWeight: 700, color: '#F1EDE4', marginBottom: 8 }}>{name}</h3>
+              <p style={{ fontSize: 14, color: 'rgba(255,255,255,0.5)', lineHeight: 1.6, marginBottom: 16 }}>{description}</p>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 7 }}>
+                {features.map((f) => (
+                  <div key={f} style={{ display: 'flex', alignItems: 'flex-start', gap: 8 }}>
+                    <CheckCircle size={12} style={{ color, flexShrink: 0, marginTop: 2 }} />
+                    <span style={{ fontSize: 13, color: 'rgba(255,255,255,0.55)' }}>{f}</span>
+                  </div>
+                ))}
+              </div>
+            </motion.div>
+          ))}
+        </div>
+      </Section>
+
+      {/* ── AUTOMATION RULES ──────────────────────────────────────────────────── */}
+      <Section id="automations" bg="rgba(255,255,255,0.015)">
+        <motion.div variants={fadeUp} style={{ textAlign: 'center', marginBottom: 52 }}>
+          <h2 style={{ fontSize: 'clamp(1.8rem, 4vw, 2.8rem)', fontWeight: 800, color: '#F1EDE4', letterSpacing: '-0.02em', marginBottom: 14 }}>
+            Smart Automation Rules
+          </h2>
+          <p style={{ color: 'rgba(255,255,255,0.5)', maxWidth: 540, margin: '0 auto', lineHeight: 1.75 }}>
+            Build powerful IF/THEN rules that connect your family's movements with your home's devices — automatically.
+          </p>
+        </motion.div>
+
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 24 }}>
+          {AUTOMATIONS.map(({ trigger, actions, color, icon }) => (
+            <motion.div
+              key={trigger}
+              variants={fadeUp}
+              style={{
+                background: '#0B0D13', border: `1px solid ${color}20`,
+                borderRadius: 18, padding: '26px 22px',
+              }}
+            >
+              {/* IF */}
+              <div style={{ marginBottom: 16 }}>
+                <span style={{
+                  fontSize: 10, fontWeight: 700, color, letterSpacing: '0.1em',
+                  background: `${color}15`, border: `1px solid ${color}25`,
+                  borderRadius: 999, padding: '3px 10px',
+                }}>IF</span>
+                <div style={{
+                  display: 'flex', alignItems: 'center', gap: 10,
+                  marginTop: 12, padding: '12px 14px', borderRadius: 10,
+                  background: `${color}08`, border: `1px solid ${color}20`,
+                }}>
+                  <span style={{ fontSize: 20 }}>{icon}</span>
+                  <p style={{ fontSize: 14, fontWeight: 600, color: '#F1EDE4', lineHeight: 1.4 }}>{trigger}</p>
+                </div>
+              </div>
+
+              {/* Arrow */}
+              <div style={{ display: 'flex', alignItems: 'center', paddingLeft: 8, marginBottom: 12 }}>
+                <ArrowRight size={16} style={{ color, opacity: 0.6 }} />
+              </div>
+
+              {/* THEN */}
+              <div>
+                <span style={{
+                  fontSize: 10, fontWeight: 700, color, letterSpacing: '0.1em',
+                  background: `${color}15`, border: `1px solid ${color}25`,
+                  borderRadius: 999, padding: '3px 10px',
+                }}>THEN</span>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginTop: 10 }}>
+                  {actions.map((action, i) => (
+                    <div key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: 8 }}>
+                      <Zap size={12} style={{ color, flexShrink: 0, marginTop: 2 }} />
+                      <span style={{ fontSize: 13, color: 'rgba(255,255,255,0.6)', lineHeight: 1.4 }}>{action}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </motion.div>
+          ))}
+        </div>
+      </Section>
+
+      {/* ── PRESENCE DETECTION ────────────────────────────────────────────────── */}
+      <Section id="presence" bg="#0B0D13">
+        <motion.div variants={fadeUp} style={{ textAlign: 'center', marginBottom: 52 }}>
+          <h2 style={{ fontSize: 'clamp(1.8rem, 4vw, 2.8rem)', fontWeight: 800, color: '#F1EDE4', letterSpacing: '-0.02em', marginBottom: 14 }}>
+            Family Presence Detection
+          </h2>
+          <p style={{ color: 'rgba(255,255,255,0.5)', maxWidth: 540, margin: '0 auto', lineHeight: 1.75 }}>
+            Your smart home always knows who's home — and uses that intelligence to keep everyone safe.
+          </p>
+        </motion.div>
+
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(340px, 1fr))', gap: 28 }}>
+          {/* Family status grid */}
+          <motion.div variants={fadeUp} style={{
+            background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.1)',
+            borderRadius: 22, padding: '28px',
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 24 }}>
+              <Users size={18} style={{ color: '#10B981' }} />
+              <p style={{ fontSize: 13, fontWeight: 700, color: 'rgba(255,255,255,0.45)', letterSpacing: '0.08em' }}>FAMILY STATUS RIGHT NOW</p>
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+              {FAMILY_STATUS.map(({ name, initials, color, status, location, isHome }) => (
+                <div key={name} style={{
+                  display: 'flex', alignItems: 'center', gap: 14,
+                  padding: '14px 16px', borderRadius: 12,
+                  background: isHome ? 'rgba(16,185,129,0.06)' : 'rgba(255,255,255,0.03)',
+                  border: isHome ? '1px solid rgba(16,185,129,0.2)' : '1px solid rgba(255,255,255,0.07)',
+                }}>
+                  <div style={{
+                    width: 44, height: 44, borderRadius: '50%', flexShrink: 0,
+                    background: `${color}20`, border: `2px solid ${color}50`,
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    fontSize: 17, fontWeight: 700, color,
+                  }}>
+                    {initials}
+                  </div>
+                  <div style={{ flex: 1 }}>
+                    <p style={{ fontSize: 15, fontWeight: 700, color: '#F1EDE4', marginBottom: 3 }}>{name}</p>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                      <MapPin size={11} style={{ color: isHome ? '#10B981' : 'rgba(255,255,255,0.35)' }} />
+                      <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.45)' }}>{location}</p>
+                    </div>
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                    <span style={{
+                      width: 8, height: 8, borderRadius: '50%',
+                      background: isHome ? '#10B981' : '#6B7280', display: 'inline-block',
+                    }} />
+                    <span style={{ fontSize: 13, fontWeight: 600, color: isHome ? '#10B981' : 'rgba(255,255,255,0.45)' }}>
+                      {status}
+                    </span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </motion.div>
+
+          {/* Occupancy timeline */}
+          <motion.div variants={fadeUp} style={{
+            background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.1)',
+            borderRadius: 22, padding: '28px',
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 24 }}>
+              <Clock size={18} style={{ color: '#3B82F6' }} />
+              <p style={{ fontSize: 13, fontWeight: 700, color: 'rgba(255,255,255,0.45)', letterSpacing: '0.08em' }}>HOME OCCUPANCY TODAY</p>
+            </div>
+
+            {/* Bar chart */}
+            <div style={{ display: 'flex', alignItems: 'flex-end', gap: 8, height: 100, marginBottom: 10 }}>
+              {TIMELINE_HOURS.map((hour, i) => {
+                const val = OCCUPANCY[i]
+                const pct = (val / 3) * 100
+                return (
+                  <div key={hour} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 }}>
+                    <motion.div
+                      initial={{ height: 0 }}
+                      whileInView={{ height: `${Math.max(pct, 4)}%` }}
+                      transition={{ duration: 0.8, ease: 'easeOut', delay: i * 0.05 }}
+                      viewport={{ once: true }}
+                      style={{
+                        width: '100%', borderRadius: '3px 3px 0 0',
+                        background: val === 3 ? '#10B981' : val >= 1 ? '#3B82F6' : 'rgba(255,255,255,0.08)',
+                        alignSelf: 'flex-end',
+                      }}
+                    />
+                  </div>
+                )
+              })}
+            </div>
+            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+              {TIMELINE_HOURS.map((hour) => (
+                <span key={hour} style={{ fontSize: 10, color: 'rgba(255,255,255,0.3)', textAlign: 'center', flex: 1 }}>{hour}</span>
+              ))}
+            </div>
+
+            {/* Legend */}
+            <div style={{ display: 'flex', gap: 16, marginTop: 20, flexWrap: 'wrap' }}>
+              {[
+                { color: '#10B981', label: 'Full family home' },
+                { color: '#3B82F6', label: 'Someone home' },
+                { color: 'rgba(255,255,255,0.15)', label: 'Empty' },
+              ].map(({ color, label }) => (
+                <div key={label} style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
+                  <span style={{ width: 10, height: 10, borderRadius: 2, background: color, display: 'inline-block' }} />
+                  <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.45)' }}>{label}</span>
+                </div>
+              ))}
+            </div>
+
+            {/* Current status pill */}
+            <div style={{
+              marginTop: 20, padding: '12px 16px', borderRadius: 10,
+              background: 'rgba(59,130,246,0.08)', border: '1px solid rgba(59,130,246,0.2)',
+            }}>
+              <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.6)', lineHeight: 1.5 }}>
+                <span style={{ color: '#3B82F6', fontWeight: 700 }}>Right now:</span> 1 of 3 family members home. Smart lock is armed, cameras are monitoring.
+              </p>
+            </div>
+          </motion.div>
+        </div>
+      </Section>
+
+      {/* ── COMING SOON ───────────────────────────────────────────────────────── */}
+      <Section id="coming-soon" bg="rgba(255,255,255,0.015)">
+        <motion.div variants={fadeUp} style={{ textAlign: 'center', marginBottom: 40 }}>
+          <h2 style={{ fontSize: 'clamp(1.6rem, 3.5vw, 2.4rem)', fontWeight: 800, color: '#F1EDE4', letterSpacing: '-0.02em', marginBottom: 14 }}>
+            More Integrations Coming Soon
+          </h2>
+          <p style={{ color: 'rgba(255,255,255,0.5)', maxWidth: 480, margin: '0 auto', lineHeight: 1.7 }}>
+            We're expanding the ecosystem. Vote for your favourite in the app.
+          </p>
+        </motion.div>
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 16, justifyContent: 'center' }}>
+          {COMING_SOON.map(({ name, icon, color }) => (
+            <motion.div
+              key={name}
+              variants={fadeUp}
+              style={{
+                display: 'inline-flex', alignItems: 'center', gap: 12,
+                background: '#0B0D13', border: `1px solid ${color}20`,
+                borderRadius: 14, padding: '14px 20px',
+              }}
+            >
+              <span style={{ fontSize: 22 }}>{icon}</span>
+              <span style={{ fontSize: 15, fontWeight: 600, color: '#F1EDE4' }}>{name}</span>
+              <span style={{
+                fontSize: 10, fontWeight: 700, color,
+                background: `${color}15`, border: `1px solid ${color}25`,
+                borderRadius: 999, padding: '3px 10px',
+              }}>COMING SOON</span>
+            </motion.div>
+          ))}
+        </div>
+      </Section>
+
+      {/* ── CTA ───────────────────────────────────────────────────────────────── */}
       <section style={{
         background: 'linear-gradient(135deg, #0a1020 0%, #0a1a14 100%)',
         padding: '96px 24px', textAlign: 'center',
         position: 'relative', overflow: 'hidden',
       }}>
         <div style={{
-          position: 'absolute', top: '50%', left: '50%',
-          transform: 'translate(-50%,-50%)',
+          position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%,-50%)',
           width: 600, height: 600, borderRadius: '50%',
-          background: 'radial-gradient(circle, rgba(16,185,129,0.07) 0%, transparent 65%)',
+          background: 'radial-gradient(circle, rgba(16,185,129,0.08) 0%, transparent 65%)',
           pointerEvents: 'none',
         }} />
         <div style={{ maxWidth: 680, margin: '0 auto', position: 'relative', zIndex: 1 }}>
@@ -707,34 +718,34 @@ export default function SmartHomePage() {
           }}>
             <Home size={32} style={{ color: '#34D399' }} />
           </div>
-          <h2 style={{
-            fontFamily: 'var(--font-display)', fontSize: 'clamp(1.8rem, 4vw, 2.8rem)',
-            fontWeight: 700, color: '#FFFFFF', marginBottom: 16,
-          }}>
+          <h2 style={{ fontSize: 'clamp(1.8rem, 4vw, 2.8rem)', fontWeight: 800, color: '#FFFFFF', marginBottom: 16, letterSpacing: '-0.02em' }}>
             Connect Your Smart Home
           </h2>
-          <p style={{ color: 'rgba(255,255,255,0.65)', maxWidth: 520, margin: '0 auto 40px', lineHeight: 1.75 }}>
-            Transform your smart home devices into a unified family safety network. Setup takes minutes. Privacy guaranteed. Start free today.
+          <p style={{ color: 'rgba(255,255,255,0.55)', maxWidth: 520, margin: '0 auto 16px', lineHeight: 1.75 }}>
+            Transform your smart home into a unified family safety network. Setup takes under 5 minutes.
+          </p>
+          <p style={{ color: '#D4A853', fontSize: 18, fontWeight: 800, marginBottom: 40 }}>
+            Premium Feature — Included in Family Plan
           </p>
           <div style={{ display: 'flex', gap: 16, justifyContent: 'center', flexWrap: 'wrap', marginBottom: 24 }}>
-            <Link href="/" style={{
+            <Link href="/pricing" style={{
               background: 'linear-gradient(90deg, #10B981, #059669)',
               color: '#fff', padding: '15px 36px', borderRadius: 12,
-              textDecoration: 'none', fontWeight: 700, fontSize: '1.05rem',
+              textDecoration: 'none', fontWeight: 700, fontSize: 16,
               display: 'inline-flex', alignItems: 'center', gap: 8,
-              boxShadow: '0 0 28px rgba(16,185,129,0.35)',
+              boxShadow: '0 0 28px rgba(16,185,129,0.3)',
             }}>
               Connect Your Smart Home <ChevronRight size={18} />
             </Link>
             <Link href="/pricing" style={{
               background: 'transparent', color: '#fff', padding: '15px 36px',
               borderRadius: 12, textDecoration: 'none', fontWeight: 600,
-              fontSize: '1.05rem', border: '1px solid rgba(255,255,255,0.2)',
+              fontSize: 16, border: '1px solid rgba(255,255,255,0.2)',
             }}>
               View Pricing
             </Link>
           </div>
-          <Link href="/" style={{ color: 'rgba(255,255,255,0.45)', fontSize: '0.88rem', textDecoration: 'none' }}>
+          <Link href="/" style={{ color: 'rgba(255,255,255,0.4)', fontSize: 14, textDecoration: 'none' }}>
             ← Back to Gravity Home
           </Link>
         </div>

@@ -6,12 +6,18 @@ import Link from 'next/link'
 import Navbar from '@/components/layout/Navbar'
 import Footer from '@/components/layout/Footer'
 
-/* ─────────────── Animation helpers ─────────────── */
-function fadeUp(delay: number) {
+/* ─────────────────────────────────────────────────────────────
+   Animation helpers
+───────────────────────────────────────────────────────────── */
+function fadeUp(delay = 0, duration = 0.7) {
   return {
-    initial: { opacity: 0, y: 30 },
+    initial: { opacity: 0, y: 32 },
     animate: { opacity: 1, y: 0 },
-    transition: { duration: 0.7, ease: [0.22, 1, 0.36, 1] as [number, number, number, number], delay },
+    transition: {
+      duration,
+      ease: [0.22, 1, 0.36, 1] as [number, number, number, number],
+      delay,
+    },
   }
 }
 
@@ -21,7 +27,9 @@ function useSection() {
   return { ref, inView }
 }
 
-/* ─────────────── DATA ─────────────── */
+/* ─────────────────────────────────────────────────────────────
+   DATA
+───────────────────────────────────────────────────────────── */
 const TRUST_STATS = [
   { value: '5,600+', label: 'Enterprise Clients' },
   { value: '127', label: 'Countries' },
@@ -29,190 +37,249 @@ const TRUST_STATS = [
   { value: '24/7', label: 'Priority Support' },
 ]
 
-const SEGMENTS = [
+const TARGET_MARKETS = [
   {
-    emoji: '🏫',
+    icon: '🎓',
     title: 'Schools & Universities',
-    subtitle: 'Student safety at scale',
-    features: [
-      'Student safety tracking',
-      'Bus route management',
-      'Parent notifications',
-      'Emergency evacuation mode',
-      'Admin dashboard',
-    ],
-    cta: 'School Edition Details',
+    desc: 'Student safety at scale — bus tracking, campus geofencing, parent notifications, and emergency evacuation coordination.',
     color: '#4B80F0',
-    colorRgb: '75,128,240',
+    rgb: '75,128,240',
   },
   {
-    emoji: '🏥',
-    title: 'Hospitals & Healthcare',
-    subtitle: 'HIPAA-ready patient & staff safety',
-    features: [
-      'Staff safety tracking',
-      'Patient family alerts',
-      'Asset tracking',
-      'Emergency response',
-      'HIPAA Ready',
-    ],
-    cta: 'Healthcare Solution',
+    icon: '🤝',
+    title: 'NGOs & Nonprofits',
+    desc: 'Field worker safety in remote or high-risk areas. Satellite fallback, multi-country deployment, and offline SOS.',
     color: '#10B981',
-    colorRgb: '16,185,129',
+    rgb: '16,185,129',
   },
   {
-    emoji: '🤝',
-    title: 'NGOs & Aid Organizations',
-    subtitle: 'Field safety in any terrain',
-    features: [
-      'Field worker safety',
-      'Remote area tracking',
-      'Emergency evacuation',
-      'Multi-country deployment',
-    ],
-    cta: 'NGO Package',
-    color: '#F59E0B',
-    colorRgb: '245,158,11',
+    icon: '🏥',
+    title: 'Hospitals & Clinics',
+    desc: 'HIPAA-ready staff and patient family safety. Asset tracking, emergency response, and shift-based monitoring.',
+    color: '#EF4444',
+    rgb: '239,68,68',
   },
   {
-    emoji: '🏢',
-    title: 'Corporations & HR',
-    subtitle: 'Duty of care for every employee',
-    features: [
-      'Business travel safety',
-      'Remote worker monitoring',
-      'Crisis management',
-      'Executive protection',
-    ],
-    cta: 'Corporate Safety',
+    icon: '🏢',
+    title: 'Corporate Companies',
+    desc: 'Duty of care for every employee — business travel safety, remote worker monitoring, and crisis management.',
     color: '#8B5CF6',
-    colorRgb: '139,92,246',
+    rgb: '139,92,246',
   },
   {
-    emoji: '🛡️',
-    title: 'Security & Law Enforcement',
-    subtitle: 'Real-time team coordination',
-    features: [
-      'Team coordination',
-      'Real-time tracking',
-      'Incident management',
-      'Full API integration',
-    ],
-    cta: 'Agency Solution',
+    icon: '🛡️',
+    title: 'Security Agencies',
+    desc: 'Real-time team coordination, incident management, and full API integration for security operations centers.',
     color: '#64748B',
-    colorRgb: '100,116,139',
+    rgb: '100,116,139',
+  },
+  {
+    icon: '🏛️',
+    title: 'Government Institutions',
+    desc: 'Sovereign data hosting, on-premise deployment options, and compliance with national security standards.',
+    color: '#D4A853',
+    rgb: '212,168,83',
   },
 ]
 
-const ENTERPRISE_FEATURES = [
-  {
-    icon: '🎨',
-    title: 'White-Label Platform',
-    description: 'Your brand, our technology',
-    items: [
-      'Custom domain & colors',
-      'Branded mobile app',
-      'Custom onboarding flow',
-      'App store listing under your brand',
-    ],
-    color: '#D4A853',
-  },
+const KEY_FEATURES = [
   {
     icon: '🏗️',
     title: 'Multi-Tenant Architecture',
-    description: 'Built for organizational scale',
-    items: [
-      'Isolated data per organization',
-      'Unlimited sub-organizations',
-      'Role-based access control',
-      'Custom permission sets',
-    ],
+    desc: 'Manage hundreds of organizations from a single control plane. Fully isolated data per tenant.',
     color: '#4B80F0',
+    rgb: '75,128,240',
   },
   {
-    icon: '⚡',
-    title: 'API Marketplace',
-    description: 'Integrate with anything',
-    items: [
-      'Full REST API access',
-      'WebSocket real-time events',
-      'Webhook notifications',
-      'SDK for iOS & Android',
-    ],
-    color: '#10B981',
-  },
-  {
-    icon: '🔒',
-    title: 'Enterprise Security',
-    description: 'Zero-trust by design',
-    items: [
-      'SSO (SAML 2.0, OAuth)',
-      'Audit logs (90-day retention)',
-      'SOC 2 Type II certified',
-      'GDPR & HIPAA compliant',
-    ],
-    color: '#EF4444',
-  },
-]
-
-const SUPPORT_PILLARS = [
-  {
-    icon: '⚡',
-    title: '90-Minute Onboarding',
-    description:
-      'Dedicated Customer Success Manager walks your team through live training, custom configuration, and a go-live checklist. From contract to deployed in one session.',
+    icon: '🎨',
+    title: 'White Label System',
+    desc: 'Custom branding, domain, colors, app name, and splash screen. Your identity, our engine.',
     color: '#D4A853',
+    rgb: '212,168,83',
   },
   {
-    icon: '💬',
-    title: '24/7 Priority Support',
-    description:
-      'Dedicated Slack channel shared with our engineering team. Guaranteed response under 1 hour. Named account manager who knows your deployment inside out.',
-    color: '#4B80F0',
+    icon: '🔑',
+    title: 'SSO Integration',
+    desc: 'SAML 2.0, LDAP, Active Directory, and OAuth 2.0 out of the box — no custom dev required.',
+    color: '#10B981',
+    rgb: '16,185,129',
+  },
+  {
+    icon: '👥',
+    title: 'Role-Based Access Control',
+    desc: '8 granular permission levels from Super Admin to Read-Only. Fine-grained data access policies.',
+    color: '#8B5CF6',
+    rgb: '139,92,246',
+  },
+  {
+    icon: '📋',
+    title: 'Audit Logs',
+    desc: 'Complete immutable activity trail. Who accessed what, when, from where. 365-day retention.',
+    color: '#F59E0B',
+    rgb: '245,158,11',
+  },
+  {
+    icon: '✅',
+    title: 'Compliance Dashboard',
+    desc: 'Live GDPR / ISO 27001 / SOC 2 status board. Automated compliance scoring and gap reports.',
+    color: '#EF4444',
+    rgb: '239,68,68',
+  },
+  {
+    icon: '⚡',
+    title: 'SLA Monitoring',
+    desc: '99.9% uptime guarantee with financial penalties for breach. Real-time status at status.gravity.app.',
+    color: '#06B6D4',
+    rgb: '6,182,212',
   },
   {
     icon: '📊',
     title: 'Advanced Reporting',
-    description:
-      'Custom dashboards built to your KPIs. Scheduled automated reports delivered to your inbox. Full data export API for BI tools like Tableau and Power BI.',
-    color: '#10B981',
+    desc: 'Custom report builder with scheduled delivery. Export to PDF, CSV, or push to BI tools via API.',
+    color: '#64748B',
+    rgb: '100,116,139',
   },
 ]
 
-const COMPLIANCE_BADGES = [
-  { label: 'SOC 2 Type II', icon: '🛡️' },
-  { label: 'ISO 27001', icon: '📋' },
-  { label: 'GDPR Certified', icon: '🇪🇺' },
-  { label: 'HIPAA Ready', icon: '🏥' },
-  { label: 'CCPA', icon: '🔏' },
-  { label: 'ISO 9001', icon: '✅' },
+const WHITE_LABEL_MOCKUPS = [
+  {
+    title: 'Custom Logo & Identity',
+    desc: 'Upload your org logo, icon, and splash screen. App Store listing under your brand name.',
+    icon: '🖼️',
+    preview: null,
+  },
+  {
+    title: 'Custom Colors & Theme',
+    desc: 'Full CSS variable system — primary, accent, surface, and text colors all configurable.',
+    icon: '🎨',
+    preview: null,
+  },
+  {
+    title: 'Custom Domain & URL',
+    desc: 'Serve the dashboard from your own subdomain with SSL.',
+    icon: '🌐',
+    urlPreview: 'gravity.yourschool.edu',
+    preview: null,
+  },
 ]
 
-const CASE_STUDIES = [
+const WHITE_LABEL_AVAILABLE = [
+  'Custom app name',
+  'App icon & splash screen',
+  'Brand color palette',
+  'Custom email templates',
+  'Branded PDF reports',
+  'White-labeled App Store listing',
+  'Custom onboarding flow',
+  'Domain & SSL certificate',
+]
+
+const API_INTEGRATIONS = [
   {
-    org: 'DPS Group of Schools, India',
-    flag: '🇮🇳',
-    challenge: 'Tracking 12,000 students across 8 campuses with no unified safety system.',
-    stat1: { value: '94%', label: 'Reduction in late pickup incidents' },
-    stat2: { value: '+67%', label: 'Parent satisfaction score' },
+    name: 'School Management System',
+    desc: 'Sync student rosters, class schedules, and bus routes from your existing SIS.',
+    icon: '🎓',
     color: '#4B80F0',
   },
   {
-    org: 'Médecins Sans Frontières',
-    flag: '🌍',
-    challenge: 'Field worker safety across 5 active countries with limited connectivity.',
-    stat1: { value: '0', label: 'Unresponsive workers in 2024' },
-    stat2: { value: '-78%', label: 'Emergency response time' },
+    name: 'HR Platform',
+    desc: 'Auto-provision and deprovision employees from Workday, BambooHR, or SAP.',
+    icon: '👔',
+    color: '#8B5CF6',
+  },
+  {
+    name: 'Hospital System',
+    desc: 'Integrate with Epic, Cerner, or any FHIR-compliant EHR for staff safety data.',
+    icon: '🏥',
     color: '#EF4444',
   },
   {
-    org: 'Gulf Petrol Corp, UAE',
-    flag: '🇦🇪',
-    challenge: '3,200 remote oil field workers requiring real-time evacuation coordination.',
-    stat1: { value: '100%', label: 'Evacuation coverage rate' },
-    stat2: { value: '$4.2M', label: 'Insurance savings in year one' },
+    name: 'Security Dashboard',
+    desc: 'Push incidents to SIEM platforms — Splunk, Datadog, PagerDuty, and more.',
+    icon: '🛡️',
     color: '#D4A853',
   },
+]
+
+const PRICING_TIERS = [
+  {
+    name: 'Starter',
+    price: '₹25,000',
+    period: '/month',
+    users: 'Up to 500 users',
+    highlight: false,
+    features: [
+      'Core safety platform',
+      'Up to 5 admin seats',
+      'Standard mobile app',
+      'Email & chat support',
+      'Basic reporting',
+      '99.9% SLA',
+      'GDPR compliant',
+    ],
+    cta: 'Request Demo',
+    color: '#4B80F0',
+    rgb: '75,128,240',
+  },
+  {
+    name: 'Business',
+    price: '₹75,000',
+    period: '/month',
+    users: 'Up to 5,000 users',
+    highlight: true,
+    features: [
+      'Everything in Starter',
+      'White label branding',
+      'SSO (SAML 2.0 / LDAP)',
+      'Role-based access control',
+      'Audit logs (365 days)',
+      'API access + webhooks',
+      'Dedicated CSM',
+      'Custom report builder',
+      'Priority support (1h SLA)',
+    ],
+    cta: 'Most Popular — Request Demo',
+    color: '#D4A853',
+    rgb: '212,168,83',
+  },
+  {
+    name: 'Enterprise',
+    price: 'Custom',
+    period: '',
+    users: 'Unlimited users',
+    highlight: false,
+    features: [
+      'Everything in Business',
+      'Multi-tenant management',
+      'On-premise deployment',
+      'Custom integrations',
+      'Dedicated infrastructure',
+      '99.95% SLA',
+      'SOC 2 Type II report',
+      'HIPAA / ISO 27001',
+      '24/7 phone support',
+      'Quarterly pen testing',
+    ],
+    cta: 'Contact Enterprise Sales',
+    color: '#10B981',
+    rgb: '16,185,129',
+  },
+]
+
+const TRUST_BADGES = [
+  { label: 'ISO 27001', icon: '📋', sub: 'Certified' },
+  { label: 'SOC 2 Type II', icon: '🛡️', sub: 'Compliant' },
+  { label: 'GDPR', icon: '🇪🇺', sub: 'Compliant' },
+  { label: '99.9% SLA', icon: '⚡', sub: 'Guaranteed' },
+]
+
+const ENTERPRISE_LOGOS = [
+  { name: 'DPS Schools', abbr: 'DPS', flag: '🇮🇳' },
+  { name: 'Gulf Petrol Corp', abbr: 'GPC', flag: '🇦🇪' },
+  { name: 'MSF Field Ops', abbr: 'MSF', flag: '🌍' },
+  { name: 'CitiSecure', abbr: 'CSC', flag: '🇸🇬' },
+  { name: 'MedCare Group', abbr: 'MCG', flag: '🇬🇧' },
+  { name: 'SafeGov', abbr: 'SGV', flag: '🇮🇳' },
 ]
 
 const FAQ_ITEMS = [
@@ -222,41 +289,83 @@ const FAQ_ITEMS = [
   },
   {
     q: 'Can we white-label the app?',
-    a: 'Yes, full white-labeling including custom domain, app store listings under your brand, custom UI themes, and branded onboarding flow. Our design team assists with brand alignment.',
+    a: 'Yes, full white-labeling including custom domain, App Store listings under your brand, custom UI themes, and branded onboarding flow. Our design team assists with brand alignment at no extra cost.',
   },
   {
     q: 'Is Gravity GDPR compliant?',
-    a: 'Yes, Gravity is fully GDPR compliant. We offer Data Processing Agreements (DPAs), right to erasure, data portability, and EU-based data hosting options for European clients.',
+    a: 'Yes. We offer Data Processing Agreements (DPAs), right to erasure, data portability, and EU-based data hosting options. Our DPO is available for compliance discussions.',
   },
   {
     q: 'How long does implementation take?',
-    a: 'Standard enterprise deployment takes 5–10 business days. White-label deployment including custom app store listing takes 4–6 weeks. Our CSM team guides every step.',
+    a: 'Standard enterprise deployment takes 5–10 business days. White-label deployment including custom App Store listing takes 4–6 weeks. Our CSM guides every step.',
   },
   {
     q: 'Do you offer an SLA?',
-    a: 'Enterprise clients receive a 99.9% uptime SLA with financial penalties for breaches. We also offer 99.95% SLA for mission-critical deployments with dedicated infrastructure.',
+    a: 'Enterprise clients receive a 99.9% uptime SLA with financial penalties for breaches. Mission-critical deployments can negotiate 99.95% with dedicated infrastructure.',
+  },
+  {
+    q: 'What SSO protocols are supported?',
+    a: 'We support SAML 2.0, OAuth 2.0, OpenID Connect, LDAP, and Active Directory. Custom IdP configurations are available for Business and Enterprise tiers.',
   },
 ]
 
-/* ─────────────── HERO ─────────────── */
+/* ─────────────────────────────────────────────────────────────
+   FLOATING BUILDING ICONS
+───────────────────────────────────────────────────────────── */
+function FloatingBuildings() {
+  const buildings = [
+    { icon: '🏢', x: 8, y: 20, size: 32, delay: 0 },
+    { icon: '🏛️', x: 85, y: 15, size: 28, delay: 0.4 },
+    { icon: '🏥', x: 5, y: 65, size: 26, delay: 0.8 },
+    { icon: '🎓', x: 90, y: 60, size: 30, delay: 0.2 },
+    { icon: '🏗️', x: 15, y: 80, size: 22, delay: 1.0 },
+    { icon: '🛡️', x: 82, y: 82, size: 24, delay: 0.6 },
+  ]
+
+  return (
+    <div className="absolute inset-0 overflow-hidden pointer-events-none">
+      {buildings.map((b, i) => (
+        <motion.div
+          key={i}
+          className="absolute select-none"
+          style={{ left: `${b.x}%`, top: `${b.y}%`, fontSize: b.size, opacity: 0.12 }}
+          animate={{ y: [0, -14, 0], rotate: [-2, 2, -2] }}
+          transition={{
+            duration: 5 + i * 0.7,
+            repeat: Infinity,
+            ease: 'easeInOut',
+            delay: b.delay,
+          }}
+        >
+          {b.icon}
+        </motion.div>
+      ))}
+    </div>
+  )
+}
+
+/* ─────────────────────────────────────────────────────────────
+   HERO
+───────────────────────────────────────────────────────────── */
 function HeroSection() {
   return (
     <section className="relative min-h-screen flex items-center justify-center overflow-hidden pt-20 pb-16">
-      {/* Background */}
       <div className="absolute inset-0" style={{ background: 'var(--bg)' }} />
+      {/* Radial glow top */}
       <div
         className="absolute pointer-events-none"
         style={{
-          top: '50%',
+          top: '30%',
           left: '50%',
           transform: 'translate(-50%, -60%)',
-          width: '1000px',
-          height: '600px',
+          width: '1100px',
+          height: '650px',
           background:
-            'radial-gradient(ellipse, rgba(75,128,240,0.18) 0%, rgba(75,128,240,0.06) 45%, transparent 70%)',
-          filter: 'blur(60px)',
+            'radial-gradient(ellipse, rgba(75,128,240,0.16) 0%, rgba(212,168,83,0.07) 50%, transparent 70%)',
+          filter: 'blur(70px)',
         }}
       />
+      {/* Radial glow bottom */}
       <div
         className="absolute pointer-events-none"
         style={{
@@ -264,12 +373,22 @@ function HeroSection() {
           left: '50%',
           transform: 'translateX(-50%)',
           width: '700px',
-          height: '300px',
-          background:
-            'radial-gradient(ellipse, rgba(212,168,83,0.1) 0%, transparent 70%)',
+          height: '320px',
+          background: 'radial-gradient(ellipse, rgba(212,168,83,0.08) 0%, transparent 70%)',
           filter: 'blur(60px)',
         }}
       />
+      {/* Grid overlay */}
+      <div
+        className="absolute inset-0 pointer-events-none"
+        style={{
+          backgroundImage:
+            'linear-gradient(rgba(255,255,255,0.025) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.025) 1px, transparent 1px)',
+          backgroundSize: '60px 60px',
+        }}
+      />
+
+      <FloatingBuildings />
 
       <div className="relative z-10 max-w-5xl mx-auto px-6 text-center">
         {/* Badge */}
@@ -280,14 +399,10 @@ function HeroSection() {
               color: '#4B80F0',
               border: '1px solid rgba(75,128,240,0.4)',
               background: 'rgba(75,128,240,0.08)',
-              fontFamily: "'Inter', sans-serif",
             }}
           >
-            <span
-              className="w-1.5 h-1.5 rounded-full"
-              style={{ background: '#4B80F0' }}
-            />
-            ENTERPRISE
+            <span className="w-1.5 h-1.5 rounded-full animate-pulse" style={{ background: '#4B80F0' }} />
+            GRAVITY ENTERPRISE
           </span>
         </motion.div>
 
@@ -295,44 +410,32 @@ function HeroSection() {
         <motion.h1
           {...fadeUp(0.1)}
           className="text-5xl md:text-6xl lg:text-7xl font-extrabold leading-[1.04] tracking-tight"
-          style={{
-            fontFamily: "'Plus Jakarta Sans', sans-serif",
-            color: 'var(--text-primary)',
-          }}
+          style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", color: 'var(--text-primary)' }}
         >
-          The{' '}
+          Safety Intelligence{' '}
           <span
             style={{
-              background: 'linear-gradient(90deg, #4B80F0, #818CF8)',
+              background: 'linear-gradient(90deg, #D4A853, #F5C842)',
               WebkitBackgroundClip: 'text',
               WebkitTextFillColor: 'transparent',
               backgroundClip: 'text',
             }}
           >
-            Enterprise-Grade
+            for Organizations
           </span>
-          <br />
-          Family Safety Platform
         </motion.h1>
 
-        {/* Subtitle */}
         <motion.p
           {...fadeUp(0.2)}
           className="mt-6 max-w-2xl mx-auto text-xl leading-relaxed"
-          style={{
-            fontFamily: "'Inter', sans-serif",
-            color: 'var(--text-secondary)',
-          }}
+          style={{ fontFamily: "'Inter', sans-serif", color: 'var(--text-secondary)' }}
         >
           Deploy Gravity across your entire organization — schools, hospitals, NGOs, or corporations.
-          SOC 2 certified. GDPR compliant. 99.9% SLA guaranteed.
+          Multi-tenant architecture, white-label ready, SOC 2 certified, and 99.9% SLA guaranteed.
         </motion.p>
 
         {/* CTAs */}
-        <motion.div
-          {...fadeUp(0.3)}
-          className="flex flex-wrap justify-center gap-4 mt-10"
-        >
+        <motion.div {...fadeUp(0.3)} className="flex flex-wrap justify-center gap-4 mt-10">
           <a
             href="#contact"
             className="inline-flex items-center gap-2 px-8 py-4 rounded-xl text-base font-bold transition-all duration-200 hover:scale-105 active:scale-95"
@@ -343,11 +446,10 @@ function HeroSection() {
               boxShadow: '0 4px 24px rgba(212,168,83,0.35)',
             }}
           >
-            Request Demo
-            <span>→</span>
+            Book Enterprise Demo <span>→</span>
           </a>
           <a
-            href="#contact"
+            href="#brochure"
             className="inline-flex items-center gap-2 px-8 py-4 rounded-xl text-base font-semibold transition-all duration-200 hover:scale-105 active:scale-95"
             style={{
               background: 'rgba(255,255,255,0.04)',
@@ -357,15 +459,14 @@ function HeroSection() {
               fontFamily: "'Plus Jakarta Sans', sans-serif",
             }}
           >
-            Download Enterprise Brief
-            <span style={{ fontSize: '12px' }}>↓</span>
+            Download Enterprise Brochure <span style={{ fontSize: '12px' }}>↓</span>
           </a>
         </motion.div>
 
         {/* Trust stats */}
         <motion.div
           {...fadeUp(0.45)}
-          className="flex flex-wrap justify-center gap-x-10 gap-y-5 mt-14"
+          className="flex flex-wrap justify-center gap-x-10 gap-y-6 mt-14"
         >
           {TRUST_STATS.map((stat) => (
             <div key={stat.label} className="flex flex-col items-center gap-1">
@@ -390,16 +491,38 @@ function HeroSection() {
             </div>
           ))}
         </motion.div>
+
+        {/* Trust badges row */}
+        <motion.div
+          {...fadeUp(0.55)}
+          className="flex flex-wrap justify-center gap-3 mt-10"
+        >
+          {TRUST_BADGES.map((b) => (
+            <div
+              key={b.label}
+              className="flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold"
+              style={{
+                background: 'rgba(255,255,255,0.04)',
+                border: '1px solid var(--border)',
+                color: 'var(--text-secondary)',
+              }}
+            >
+              <span>{b.icon}</span>
+              <span>{b.label}</span>
+              <span style={{ color: '#10B981', fontWeight: 700 }}>✓</span>
+            </div>
+          ))}
+        </motion.div>
       </div>
     </section>
   )
 }
 
-/* ─────────────── WHO IS IT FOR ─────────────── */
-function SegmentsSection() {
+/* ─────────────────────────────────────────────────────────────
+   TARGET MARKETS — 6 cards with Request Demo button
+───────────────────────────────────────────────────────────── */
+function TargetMarketsSection() {
   const { ref, inView } = useSection()
-  const [active, setActive] = useState(0)
-  const seg = SEGMENTS[active]
 
   return (
     <section ref={ref} className="py-24" style={{ background: 'var(--bg-surface)' }}>
@@ -408,170 +531,93 @@ function SegmentsSection() {
           initial={{ opacity: 0, y: 24 }}
           animate={inView ? { opacity: 1, y: 0 } : {}}
           transition={{ duration: 0.6 }}
-          className="text-center mb-12"
+          className="text-center mb-14"
         >
           <span
-            className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-xs font-semibold uppercase tracking-widest mb-5"
-            style={{
-              color: '#4B80F0',
-              border: '1px solid rgba(75,128,240,0.35)',
-              background: 'rgba(75,128,240,0.07)',
-            }}
+            className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-xs font-bold uppercase tracking-widest mb-5"
+            style={{ color: '#4B80F0', border: '1px solid rgba(75,128,240,0.35)', background: 'rgba(75,128,240,0.07)' }}
           >
             Who Is It For
           </span>
           <h2
             className="text-4xl md:text-5xl font-extrabold"
-            style={{
-              fontFamily: "'Plus Jakarta Sans', sans-serif",
-              color: 'var(--text-primary)',
-            }}
+            style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", color: 'var(--text-primary)' }}
           >
             Built for Every Organization
           </h2>
           <p
-            className="mt-4 max-w-xl mx-auto"
+            className="mt-4 max-w-xl mx-auto text-base"
             style={{ color: 'var(--text-secondary)', fontFamily: "'Inter', sans-serif" }}
           >
-            From a single school campus to a global NGO — Gravity Enterprise adapts to your structure.
+            From a single school campus to a global corporation — Gravity Enterprise adapts to your structure.
           </p>
         </motion.div>
 
-        {/* Tab row */}
-        <motion.div
-          initial={{ opacity: 0, y: 16 }}
-          animate={inView ? { opacity: 1, y: 0 } : {}}
-          transition={{ duration: 0.6, delay: 0.1 }}
-          className="flex flex-wrap justify-center gap-3 mb-10"
-        >
-          {SEGMENTS.map((s, i) => (
-            <button
-              key={s.title}
-              onClick={() => setActive(i)}
-              className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold transition-all duration-200 focus:outline-none"
+        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {TARGET_MARKETS.map((market, i) => (
+            <motion.div
+              key={market.title}
+              initial={{ opacity: 0, y: 32 }}
+              animate={inView ? { opacity: 1, y: 0 } : {}}
+              transition={{ duration: 0.6, ease: 'easeOut', delay: 0.05 + i * 0.09 }}
+              className="rounded-2xl p-7 flex flex-col gap-5 group cursor-pointer"
               style={{
-                background: active === i ? `rgba(${s.colorRgb},0.12)` : 'var(--bg-surface2)',
-                border: active === i ? `1.5px solid ${s.color}` : '1.5px solid var(--border)',
-                color: active === i ? s.color : 'var(--text-secondary)',
-                fontFamily: "'Plus Jakarta Sans', sans-serif",
+                background: 'var(--bg-surface2)',
+                border: `1px solid rgba(${market.rgb},0.15)`,
+                borderTop: `3px solid ${market.color}`,
+                transition: 'box-shadow 0.3s ease, border-color 0.3s ease',
               }}
+              whileHover={{ scale: 1.015, boxShadow: `0 8px 40px rgba(${market.rgb},0.15)` }}
             >
-              <span>{s.emoji}</span>
-              <span className="hidden sm:block">{s.title.split(' ')[0]}</span>
-              <span className="sm:hidden">{s.emoji}</span>
-            </button>
-          ))}
-        </motion.div>
-
-        {/* Detail panel */}
-        <AnimatePresence mode="wait">
-          <motion.div
-            key={active}
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -10 }}
-            transition={{ duration: 0.4, ease: 'easeOut' }}
-            className="rounded-3xl p-8 md:p-12 grid md:grid-cols-2 gap-10 items-center"
-            style={{
-              background: 'var(--bg-surface2)',
-              border: `1.5px solid rgba(${seg.colorRgb},0.25)`,
-              boxShadow: `0 0 60px rgba(${seg.colorRgb},0.1)`,
-            }}
-          >
-            <div>
-              <div className="flex items-center gap-4 mb-6">
-                <span className="text-5xl">{seg.emoji}</span>
-                <div>
-                  <h3
-                    className="text-2xl font-bold"
-                    style={{
-                      fontFamily: "'Plus Jakarta Sans', sans-serif",
-                      color: 'var(--text-primary)',
-                    }}
-                  >
-                    {seg.title}
-                  </h3>
-                  <p style={{ color: seg.color, fontFamily: "'Inter', sans-serif", fontSize: '14px' }}>
-                    {seg.subtitle}
-                  </p>
+              {/* Icon + title */}
+              <div className="flex items-center gap-4">
+                <div
+                  className="w-14 h-14 rounded-2xl flex items-center justify-center text-2xl flex-shrink-0"
+                  style={{ background: `rgba(${market.rgb},0.1)` }}
+                >
+                  {market.icon}
                 </div>
+                <h3
+                  className="text-lg font-bold"
+                  style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", color: 'var(--text-primary)' }}
+                >
+                  {market.title}
+                </h3>
               </div>
 
-              <ul className="flex flex-col gap-3 mb-8">
-                {seg.features.map((f) => (
-                  <li key={f} className="flex items-center gap-3 text-sm">
-                    <span
-                      className="w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0 text-xs font-bold"
-                      style={{ background: `rgba(${seg.colorRgb},0.15)`, color: seg.color }}
-                    >
-                      ✓
-                    </span>
-                    <span style={{ color: 'var(--text-secondary)', fontFamily: "'Inter', sans-serif" }}>
-                      {f}
-                    </span>
-                  </li>
-                ))}
-              </ul>
+              {/* Description */}
+              <p
+                className="text-sm leading-relaxed flex-1"
+                style={{ color: 'var(--text-secondary)', fontFamily: "'Inter', sans-serif" }}
+              >
+                {market.desc}
+              </p>
 
+              {/* Request Demo button */}
               <a
                 href="#contact"
-                className="inline-flex items-center gap-2 px-6 py-3 rounded-xl text-sm font-bold transition-all duration-200 hover:scale-105 active:scale-95"
+                className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl text-sm font-bold transition-all duration-200 hover:scale-105 active:scale-95"
                 style={{
-                  background: `rgba(${seg.colorRgb},0.15)`,
-                  border: `1.5px solid rgba(${seg.colorRgb},0.4)`,
-                  color: seg.color,
+                  background: `rgba(${market.rgb},0.12)`,
+                  border: `1.5px solid rgba(${market.rgb},0.35)`,
+                  color: market.color,
                   fontFamily: "'Plus Jakarta Sans', sans-serif",
                 }}
               >
-                {seg.cta} →
+                Request Demo →
               </a>
-            </div>
-
-            <div
-              className="rounded-2xl p-8 flex flex-col gap-4"
-              style={{
-                background: 'var(--bg-surface)',
-                border: '1px solid var(--border)',
-              }}
-            >
-              <p
-                className="text-xs font-bold uppercase tracking-widest mb-2"
-                style={{ color: seg.color, fontFamily: "'Inter', sans-serif" }}
-              >
-                Why organizations choose us
-              </p>
-              {[
-                'Fastest deployment in the industry',
-                'No per-device hardware costs',
-                'Works on any smartphone',
-                'Fully customizable to your workflow',
-                'Dedicated implementation engineer',
-              ].map((item) => (
-                <div key={item} className="flex items-center gap-3">
-                  <div
-                    className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0"
-                    style={{ background: `rgba(${seg.colorRgb},0.1)` }}
-                  >
-                    <span style={{ color: seg.color, fontSize: '14px' }}>→</span>
-                  </div>
-                  <span
-                    className="text-sm"
-                    style={{ color: 'var(--text-secondary)', fontFamily: "'Inter', sans-serif" }}
-                  >
-                    {item}
-                  </span>
-                </div>
-              ))}
-            </div>
-          </motion.div>
-        </AnimatePresence>
+            </motion.div>
+          ))}
+        </div>
       </div>
     </section>
   )
 }
 
-/* ─────────────── ENTERPRISE FEATURES 2x2 ─────────────── */
-function EnterpriseFeaturesSection() {
+/* ─────────────────────────────────────────────────────────────
+   KEY FEATURES — 8 glassmorphism cards
+───────────────────────────────────────────────────────────── */
+function KeyFeaturesSection() {
   const { ref, inView } = useSection()
 
   return (
@@ -584,12 +630,8 @@ function EnterpriseFeaturesSection() {
           className="text-center mb-14"
         >
           <span
-            className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-xs font-semibold uppercase tracking-widest mb-5"
-            style={{
-              color: 'var(--gold)',
-              border: '1px solid rgba(212,168,83,0.35)',
-              background: 'rgba(212,168,83,0.07)',
-            }}
+            className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-xs font-bold uppercase tracking-widest mb-5"
+            style={{ color: 'var(--gold)', border: '1px solid rgba(212,168,83,0.35)', background: 'rgba(212,168,83,0.07)' }}
           >
             Platform Capabilities
           </span>
@@ -609,57 +651,55 @@ function EnterpriseFeaturesSection() {
               Nothing You Don&apos;t
             </span>
           </h2>
+          <p
+            className="mt-4 max-w-xl mx-auto text-base"
+            style={{ color: 'var(--text-secondary)', fontFamily: "'Inter', sans-serif" }}
+          >
+            Eight core platform pillars that enterprise organizations demand — all included.
+          </p>
         </motion.div>
 
-        <div className="grid md:grid-cols-2 gap-6">
-          {ENTERPRISE_FEATURES.map((feat, i) => (
+        <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-5">
+          {KEY_FEATURES.map((feat, i) => (
             <motion.div
               key={feat.title}
-              initial={{ opacity: 0, y: 32 }}
+              initial={{ opacity: 0, y: 28 }}
               animate={inView ? { opacity: 1, y: 0 } : {}}
-              transition={{ duration: 0.6, ease: 'easeOut', delay: 0.1 + i * 0.1 }}
-              className="rounded-2xl p-8"
+              transition={{ duration: 0.55, ease: 'easeOut', delay: 0.04 + i * 0.07 }}
+              className="rounded-2xl p-6 flex flex-col gap-4"
               style={{
-                background: 'var(--bg-surface)',
-                border: `1px solid rgba(${feat.color === '#D4A853' ? '212,168,83' : feat.color === '#4B80F0' ? '75,128,240' : feat.color === '#10B981' ? '16,185,129' : '239,68,68'},0.2)`,
-                borderTop: `4px solid ${feat.color}`,
+                background: 'rgba(255,255,255,0.03)',
+                backdropFilter: 'blur(16px)',
+                border: `1px solid rgba(${feat.rgb},0.18)`,
+                borderTop: `3px solid ${feat.color}`,
+                boxShadow: `0 4px 24px rgba(${feat.rgb},0.08)`,
               }}
+              whileHover={{ scale: 1.02, boxShadow: `0 8px 40px rgba(${feat.rgb},0.18)` }}
             >
-              <div className="flex items-center gap-4 mb-6">
-                <div
-                  className="w-14 h-14 rounded-2xl flex items-center justify-center text-2xl"
-                  style={{ background: 'var(--bg-surface2)' }}
-                >
-                  {feat.icon}
-                </div>
-                <div>
-                  <h3
-                    className="text-xl font-bold"
-                    style={{
-                      fontFamily: "'Plus Jakarta Sans', sans-serif",
-                      color: 'var(--text-primary)',
-                    }}
-                  >
-                    {feat.title}
-                  </h3>
-                  <p
-                    className="text-sm"
-                    style={{ color: feat.color, fontFamily: "'Inter', sans-serif" }}
-                  >
-                    {feat.description}
-                  </p>
-                </div>
+              <div
+                className="w-12 h-12 rounded-xl flex items-center justify-center text-xl"
+                style={{ background: `rgba(${feat.rgb},0.1)` }}
+              >
+                {feat.icon}
               </div>
-              <ul className="flex flex-col gap-3">
-                {feat.items.map((item) => (
-                  <li key={item} className="flex items-center gap-3 text-sm">
-                    <span style={{ color: feat.color, flexShrink: 0, fontWeight: 700 }}>✓</span>
-                    <span style={{ color: 'var(--text-secondary)', fontFamily: "'Inter', sans-serif" }}>
-                      {item}
-                    </span>
-                  </li>
-                ))}
-              </ul>
+              <h3
+                className="text-base font-bold"
+                style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", color: 'var(--text-primary)' }}
+              >
+                {feat.title}
+              </h3>
+              <p
+                className="text-xs leading-relaxed"
+                style={{ color: 'var(--text-secondary)', fontFamily: "'Inter', sans-serif" }}
+              >
+                {feat.desc}
+              </p>
+              <div
+                className="mt-auto text-xs font-bold"
+                style={{ color: feat.color }}
+              >
+                Included ✓
+              </div>
             </motion.div>
           ))}
         </div>
@@ -668,8 +708,10 @@ function EnterpriseFeaturesSection() {
   )
 }
 
-/* ─────────────── IMPLEMENTATION & SUPPORT ─────────────── */
-function SupportSection() {
+/* ─────────────────────────────────────────────────────────────
+   WHITE LABEL SECTION
+───────────────────────────────────────────────────────────── */
+function WhiteLabelSection() {
   const { ref, inView } = useSection()
 
   return (
@@ -679,152 +721,152 @@ function SupportSection() {
           initial={{ opacity: 0, y: 24 }}
           animate={inView ? { opacity: 1, y: 0 } : {}}
           transition={{ duration: 0.6 }}
-          className="text-center mb-14"
+          className="text-center mb-16"
         >
           <span
-            className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-xs font-semibold uppercase tracking-widest mb-5"
-            style={{
-              color: '#4B80F0',
-              border: '1px solid rgba(75,128,240,0.35)',
-              background: 'rgba(75,128,240,0.07)',
-            }}
+            className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-xs font-bold uppercase tracking-widest mb-5"
+            style={{ color: '#D4A853', border: '1px solid rgba(212,168,83,0.35)', background: 'rgba(212,168,83,0.07)' }}
           >
-            Implementation & Support
+            White Label
           </span>
           <h2
             className="text-4xl md:text-5xl font-extrabold"
             style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", color: 'var(--text-primary)' }}
           >
-            We Deploy With You,
-            <br />
-            Not Just For You
+            Your Brand.{' '}
+            <span
+              style={{
+                background: 'linear-gradient(90deg, #D4A853, #F5C842)',
+                WebkitBackgroundClip: 'text',
+                WebkitTextFillColor: 'transparent',
+                backgroundClip: 'text',
+              }}
+            >
+              Our Technology.
+            </span>
           </h2>
+          <p
+            className="mt-4 max-w-xl mx-auto text-base"
+            style={{ color: 'var(--text-secondary)', fontFamily: "'Inter', sans-serif" }}
+          >
+            Deliver a fully branded safety experience — your logo, your colors, your domain. Powered by Gravity under the hood.
+          </p>
         </motion.div>
 
-        <div className="grid md:grid-cols-3 gap-6">
-          {SUPPORT_PILLARS.map((pillar, i) => (
+        {/* 3 mockup cards */}
+        <div className="grid md:grid-cols-3 gap-6 mb-12">
+          {WHITE_LABEL_MOCKUPS.map((card, i) => (
             <motion.div
-              key={pillar.title}
+              key={card.title}
               initial={{ opacity: 0, y: 32 }}
               animate={inView ? { opacity: 1, y: 0 } : {}}
-              transition={{ duration: 0.6, ease: 'easeOut', delay: 0.1 + i * 0.12 }}
-              className="rounded-2xl p-8 flex flex-col gap-4"
+              transition={{ duration: 0.6, ease: 'easeOut', delay: 0.1 + i * 0.1 }}
+              className="rounded-2xl p-8 flex flex-col gap-5"
               style={{
-                background: 'var(--bg-surface2)',
-                border: '1px solid var(--border)',
+                background: 'rgba(255,255,255,0.03)',
+                backdropFilter: 'blur(20px)',
+                border: '1px solid rgba(212,168,83,0.2)',
+                boxShadow: '0 4px 30px rgba(212,168,83,0.08)',
               }}
+              whileHover={{ scale: 1.02 }}
             >
               <div
                 className="w-14 h-14 rounded-2xl flex items-center justify-center text-2xl"
-                style={{ background: `rgba(${pillar.color === '#D4A853' ? '212,168,83' : pillar.color === '#4B80F0' ? '75,128,240' : '16,185,129'},0.12)` }}
+                style={{ background: 'rgba(212,168,83,0.1)' }}
               >
-                {pillar.icon}
+                {card.icon}
               </div>
               <h3
-                className="text-xl font-bold"
+                className="text-lg font-bold"
                 style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", color: 'var(--text-primary)' }}
               >
-                {pillar.title}
+                {card.title}
               </h3>
               <p
                 className="text-sm leading-relaxed"
                 style={{ color: 'var(--text-secondary)', fontFamily: "'Inter', sans-serif" }}
               >
-                {pillar.description}
+                {card.desc}
               </p>
+              {card.urlPreview && (
+                <div
+                  className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-mono"
+                  style={{
+                    background: 'rgba(212,168,83,0.06)',
+                    border: '1px solid rgba(212,168,83,0.25)',
+                    color: '#D4A853',
+                  }}
+                >
+                  <span style={{ color: '#10B981', fontSize: '10px' }}>●</span>
+                  https://{card.urlPreview}
+                </div>
+              )}
             </motion.div>
           ))}
         </div>
-      </div>
-    </section>
-  )
-}
 
-/* ─────────────── COMPLIANCE BADGES ─────────────── */
-function ComplianceSection() {
-  const { ref, inView } = useSection()
-
-  return (
-    <section ref={ref} className="py-20" style={{ background: 'var(--bg)' }}>
-      <div className="max-w-7xl mx-auto px-6">
+        {/* Available items */}
         <motion.div
           initial={{ opacity: 0, y: 24 }}
           animate={inView ? { opacity: 1, y: 0 } : {}}
-          transition={{ duration: 0.6 }}
-          className="text-center mb-12"
+          transition={{ duration: 0.6, delay: 0.4 }}
+          className="rounded-2xl p-8"
+          style={{
+            background: 'var(--bg-surface2)',
+            border: '1px solid rgba(212,168,83,0.2)',
+          }}
         >
-          <h2
-            className="text-2xl md:text-3xl font-extrabold"
-            style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", color: 'var(--text-primary)' }}
-          >
-            Certified. Compliant. Trusted.
-          </h2>
           <p
-            className="mt-3 text-sm"
-            style={{ color: 'var(--text-muted)', fontFamily: "'Inter', sans-serif" }}
+            className="text-xs font-bold uppercase tracking-widest mb-6"
+            style={{ color: '#D4A853', fontFamily: "'Inter', sans-serif" }}
           >
-            Gravity meets the most rigorous security and privacy standards in the world.
+            What You Can Customize
           </p>
+          <div className="grid sm:grid-cols-2 md:grid-cols-4 gap-3">
+            {WHITE_LABEL_AVAILABLE.map((item) => (
+              <div key={item} className="flex items-center gap-3">
+                <span style={{ color: '#D4A853', fontWeight: 700, flexShrink: 0 }}>✓</span>
+                <span
+                  className="text-sm"
+                  style={{ color: 'var(--text-secondary)', fontFamily: "'Inter', sans-serif" }}
+                >
+                  {item}
+                </span>
+              </div>
+            ))}
+          </div>
         </motion.div>
-
-        <div className="flex flex-wrap justify-center gap-4">
-          {COMPLIANCE_BADGES.map((badge, i) => (
-            <motion.div
-              key={badge.label}
-              initial={{ opacity: 0, scale: 0.9 }}
-              animate={inView ? { opacity: 1, scale: 1 } : {}}
-              transition={{ duration: 0.5, delay: 0.05 + i * 0.07 }}
-              className="flex items-center gap-3 px-6 py-4 rounded-2xl"
-              style={{
-                background: 'var(--bg-surface)',
-                border: '1px solid var(--border-strong)',
-              }}
-            >
-              <span className="text-2xl">{badge.icon}</span>
-              <span
-                className="font-bold text-sm"
-                style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", color: 'var(--text-primary)' }}
-              >
-                {badge.label}
-              </span>
-              <span style={{ color: '#10B981', fontSize: '16px' }}>✓</span>
-            </motion.div>
-          ))}
-        </div>
       </div>
     </section>
   )
 }
 
-/* ─────────────── CASE STUDIES ─────────────── */
-function CaseStudiesSection() {
+/* ─────────────────────────────────────────────────────────────
+   API MARKETPLACE
+───────────────────────────────────────────────────────────── */
+function ApiMarketplaceSection() {
   const { ref, inView } = useSection()
 
   return (
-    <section ref={ref} className="py-24" style={{ background: 'var(--bg-surface)' }}>
+    <section ref={ref} className="py-24" style={{ background: 'var(--bg)' }}>
       <div className="max-w-7xl mx-auto px-6">
         <motion.div
           initial={{ opacity: 0, y: 24 }}
           animate={inView ? { opacity: 1, y: 0 } : {}}
           transition={{ duration: 0.6 }}
-          className="text-center mb-14"
+          className="text-center mb-16"
         >
           <span
-            className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-xs font-semibold uppercase tracking-widest mb-5"
-            style={{
-              color: '#10B981',
-              border: '1px solid rgba(16,185,129,0.35)',
-              background: 'rgba(16,185,129,0.07)',
-            }}
+            className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-xs font-bold uppercase tracking-widest mb-5"
+            style={{ color: '#10B981', border: '1px solid rgba(16,185,129,0.35)', background: 'rgba(16,185,129,0.07)' }}
           >
-            Case Studies
+            Developer Platform
           </span>
           <h2
             className="text-4xl md:text-5xl font-extrabold"
             style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", color: 'var(--text-primary)' }}
           >
-            Real Organizations.
-            <br />
+            Gravity{' '}
             <span
               style={{
                 background: 'linear-gradient(90deg, #10B981, #34D399)',
@@ -833,78 +875,251 @@ function CaseStudiesSection() {
                 backgroundClip: 'text',
               }}
             >
-              Measurable Results.
+              API Marketplace
             </span>
           </h2>
+          <p
+            className="mt-4 max-w-xl mx-auto text-base"
+            style={{ color: 'var(--text-secondary)', fontFamily: "'Inter', sans-serif" }}
+          >
+            Connect Gravity to your existing tech stack. 50+ integrations available out of the box.
+          </p>
         </motion.div>
 
-        <div className="grid md:grid-cols-3 gap-6">
-          {CASE_STUDIES.map((cs, i) => (
+        {/* API types row */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={inView ? { opacity: 1, y: 0 } : {}}
+          transition={{ duration: 0.6, delay: 0.1 }}
+          className="flex flex-wrap justify-center gap-4 mb-12"
+        >
+          {[
+            { label: 'REST API', sub: 'Full CRUD access', icon: '⚡' },
+            { label: 'WebSocket API', sub: 'Real-time streams', icon: '🔄' },
+            { label: 'Webhook Events', sub: 'Push notifications', icon: '🔔' },
+            { label: '50+ Integrations', sub: 'Pre-built connectors', icon: '🔌' },
+          ].map((item, i) => (
             <motion.div
-              key={cs.org}
+              key={item.label}
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={inView ? { opacity: 1, scale: 1 } : {}}
+              transition={{ duration: 0.5, delay: 0.12 + i * 0.07 }}
+              className="flex items-center gap-3 px-6 py-4 rounded-2xl"
+              style={{
+                background: 'rgba(16,185,129,0.06)',
+                border: '1px solid rgba(16,185,129,0.2)',
+              }}
+            >
+              <span className="text-xl">{item.icon}</span>
+              <div>
+                <div
+                  className="text-sm font-bold"
+                  style={{ color: 'var(--text-primary)', fontFamily: "'Plus Jakarta Sans', sans-serif" }}
+                >
+                  {item.label}
+                </div>
+                <div
+                  className="text-xs"
+                  style={{ color: 'var(--text-muted)', fontFamily: "'Inter', sans-serif" }}
+                >
+                  {item.sub}
+                </div>
+              </div>
+            </motion.div>
+          ))}
+        </motion.div>
+
+        {/* 4 popular use-case cards */}
+        <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-5 mb-10">
+          {API_INTEGRATIONS.map((int, i) => (
+            <motion.div
+              key={int.name}
+              initial={{ opacity: 0, y: 28 }}
+              animate={inView ? { opacity: 1, y: 0 } : {}}
+              transition={{ duration: 0.55, ease: 'easeOut', delay: 0.2 + i * 0.09 }}
+              className="rounded-2xl p-6 flex flex-col gap-4"
+              style={{
+                background: 'var(--bg-surface)',
+                border: '1px solid var(--border)',
+                borderTop: `3px solid ${int.color}`,
+              }}
+              whileHover={{ scale: 1.02 }}
+            >
+              <div
+                className="w-12 h-12 rounded-xl flex items-center justify-center text-xl"
+                style={{ background: `rgba(${int.color === '#4B80F0' ? '75,128,240' : int.color === '#8B5CF6' ? '139,92,246' : int.color === '#EF4444' ? '239,68,68' : '212,168,83'},0.1)` }}
+              >
+                {int.icon}
+              </div>
+              <h3
+                className="text-sm font-bold"
+                style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", color: 'var(--text-primary)' }}
+              >
+                {int.name}
+              </h3>
+              <p
+                className="text-xs leading-relaxed"
+                style={{ color: 'var(--text-secondary)', fontFamily: "'Inter', sans-serif" }}
+              >
+                {int.desc}
+              </p>
+            </motion.div>
+          ))}
+        </div>
+
+        {/* Swagger docs CTA */}
+        <motion.div
+          initial={{ opacity: 0, y: 16 }}
+          animate={inView ? { opacity: 1, y: 0 } : {}}
+          transition={{ duration: 0.6, delay: 0.5 }}
+          className="text-center"
+        >
+          <Link
+            href="/api-docs"
+            className="inline-flex items-center gap-2 px-7 py-3.5 rounded-xl text-sm font-bold transition-all duration-200 hover:scale-105 active:scale-95"
+            style={{
+              background: 'rgba(16,185,129,0.1)',
+              border: '1.5px solid rgba(16,185,129,0.35)',
+              color: '#10B981',
+              fontFamily: "'Plus Jakarta Sans', sans-serif",
+            }}
+          >
+            View Swagger API Docs →
+          </Link>
+        </motion.div>
+      </div>
+    </section>
+  )
+}
+
+/* ─────────────────────────────────────────────────────────────
+   PRICING — 3 enterprise tiers
+───────────────────────────────────────────────────────────── */
+function PricingSection() {
+  const { ref, inView } = useSection()
+
+  return (
+    <section ref={ref} className="py-24" style={{ background: 'var(--bg-surface)' }}>
+      <div className="max-w-7xl mx-auto px-6">
+        <motion.div
+          initial={{ opacity: 0, y: 24 }}
+          animate={inView ? { opacity: 1, y: 0 } : {}}
+          transition={{ duration: 0.6 }}
+          className="text-center mb-14"
+        >
+          <span
+            className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-xs font-bold uppercase tracking-widest mb-5"
+            style={{ color: '#D4A853', border: '1px solid rgba(212,168,83,0.35)', background: 'rgba(212,168,83,0.07)' }}
+          >
+            Enterprise Pricing
+          </span>
+          <h2
+            className="text-4xl md:text-5xl font-extrabold"
+            style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", color: 'var(--text-primary)' }}
+          >
+            Transparent. Scalable. Fair.
+          </h2>
+          <p
+            className="mt-4 max-w-xl mx-auto text-base"
+            style={{ color: 'var(--text-secondary)', fontFamily: "'Inter', sans-serif" }}
+          >
+            Annual contracts. All plans include onboarding, training, and priority support.
+          </p>
+        </motion.div>
+
+        <div className="grid md:grid-cols-3 gap-6 items-start">
+          {PRICING_TIERS.map((tier, i) => (
+            <motion.div
+              key={tier.name}
               initial={{ opacity: 0, y: 32 }}
               animate={inView ? { opacity: 1, y: 0 } : {}}
               transition={{ duration: 0.6, ease: 'easeOut', delay: 0.1 + i * 0.12 }}
-              className="rounded-2xl p-8 flex flex-col gap-5"
+              className="rounded-2xl p-8 flex flex-col gap-6 relative"
               style={{
-                background: 'var(--bg-surface2)',
-                border: `1.5px solid rgba(${cs.color === '#4B80F0' ? '75,128,240' : cs.color === '#EF4444' ? '239,68,68' : '212,168,83'},0.2)`,
-                borderTop: `4px solid ${cs.color}`,
+                background: tier.highlight
+                  ? 'linear-gradient(145deg, rgba(212,168,83,0.08) 0%, rgba(245,200,66,0.04) 100%)'
+                  : 'var(--bg-surface2)',
+                border: tier.highlight
+                  ? '2px solid rgba(212,168,83,0.5)'
+                  : `1px solid rgba(${tier.rgb},0.2)`,
+                boxShadow: tier.highlight ? '0 8px 48px rgba(212,168,83,0.15)' : 'none',
               }}
             >
-              <div className="flex items-center gap-3">
-                <span className="text-2xl">{cs.flag}</span>
-                <h3
-                  className="font-bold text-base"
-                  style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", color: 'var(--text-primary)' }}
+              {/* Popular badge */}
+              {tier.highlight && (
+                <div
+                  className="absolute -top-3.5 left-1/2 -translate-x-1/2 px-4 py-1 rounded-full text-xs font-bold uppercase tracking-widest"
+                  style={{
+                    background: 'linear-gradient(90deg, #D4A853, #F5C842)',
+                    color: '#1A0F05',
+                    fontFamily: "'Plus Jakarta Sans', sans-serif",
+                  }}
                 >
-                  {cs.org}
-                </h3>
-              </div>
+                  Most Popular
+                </div>
+              )}
 
-              <div
-                className="rounded-xl p-4"
-                style={{ background: 'var(--bg-surface)', border: '1px solid var(--border)' }}
-              >
+              {/* Tier header */}
+              <div>
+                <h3
+                  className="text-lg font-bold mb-1"
+                  style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", color: tier.color }}
+                >
+                  {tier.name}
+                </h3>
+                <div className="flex items-baseline gap-1">
+                  <span
+                    className="text-4xl font-extrabold"
+                    style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", color: 'var(--text-primary)' }}
+                  >
+                    {tier.price}
+                  </span>
+                  {tier.period && (
+                    <span style={{ color: 'var(--text-muted)', fontFamily: "'Inter', sans-serif" }}>
+                      {tier.period}
+                    </span>
+                  )}
+                </div>
                 <p
-                  className="text-xs font-bold uppercase tracking-wide mb-2"
+                  className="text-sm mt-1"
                   style={{ color: 'var(--text-muted)', fontFamily: "'Inter', sans-serif" }}
                 >
-                  Challenge
-                </p>
-                <p
-                  className="text-sm leading-relaxed"
-                  style={{ color: 'var(--text-secondary)', fontFamily: "'Inter', sans-serif" }}
-                >
-                  {cs.challenge}
+                  {tier.users}
                 </p>
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
-                {[cs.stat1, cs.stat2].map((stat) => (
-                  <div
-                    key={stat.label}
-                    className="rounded-xl p-4 text-center"
-                    style={{ background: 'var(--bg-surface)', border: '1px solid var(--border)' }}
-                  >
-                    <div
-                      className="text-2xl font-extrabold mb-1"
-                      style={{
-                        fontFamily: "'Plus Jakarta Sans', sans-serif",
-                        color: cs.color,
-                      }}
-                    >
-                      {stat.value}
-                    </div>
-                    <div
-                      className="text-xs"
-                      style={{ color: 'var(--text-muted)', fontFamily: "'Inter', sans-serif" }}
-                    >
-                      {stat.label}
-                    </div>
-                  </div>
+              {/* Feature list */}
+              <ul className="flex flex-col gap-2.5">
+                {tier.features.map((f) => (
+                  <li key={f} className="flex items-start gap-3 text-sm">
+                    <span style={{ color: tier.color, fontWeight: 700, flexShrink: 0, marginTop: 1 }}>✓</span>
+                    <span style={{ color: 'var(--text-secondary)', fontFamily: "'Inter', sans-serif" }}>{f}</span>
+                  </li>
                 ))}
-              </div>
+              </ul>
+
+              {/* CTA */}
+              <a
+                href="#contact"
+                className="inline-flex items-center justify-center gap-2 px-6 py-3.5 rounded-xl text-sm font-bold transition-all duration-200 hover:scale-105 active:scale-95 mt-auto"
+                style={
+                  tier.highlight
+                    ? {
+                        background: 'linear-gradient(135deg, #D4A853, #F5C842)',
+                        color: '#1A0F05',
+                        fontFamily: "'Plus Jakarta Sans', sans-serif",
+                        boxShadow: '0 4px 20px rgba(212,168,83,0.35)',
+                      }
+                    : {
+                        background: `rgba(${tier.rgb},0.1)`,
+                        border: `1.5px solid rgba(${tier.rgb},0.35)`,
+                        color: tier.color,
+                        fontFamily: "'Plus Jakarta Sans', sans-serif",
+                      }
+                }
+              >
+                {tier.cta}
+              </a>
             </motion.div>
           ))}
         </div>
@@ -913,7 +1128,107 @@ function CaseStudiesSection() {
   )
 }
 
-/* ─────────────── CONTACT FORM ─────────────── */
+/* ─────────────────────────────────────────────────────────────
+   ENTERPRISE CUSTOMER LOGOS
+───────────────────────────────────────────────────────────── */
+function LogosSection() {
+  const { ref, inView } = useSection()
+
+  return (
+    <section ref={ref} className="py-16" style={{ background: 'var(--bg)' }}>
+      <div className="max-w-5xl mx-auto px-6">
+        <motion.p
+          initial={{ opacity: 0 }}
+          animate={inView ? { opacity: 1 } : {}}
+          transition={{ duration: 0.6 }}
+          className="text-center text-xs font-bold uppercase tracking-widest mb-8"
+          style={{ color: 'var(--text-muted)', fontFamily: "'Inter', sans-serif" }}
+        >
+          Trusted by Enterprise Organizations Worldwide
+        </motion.p>
+        <div className="flex flex-wrap justify-center items-center gap-4">
+          {ENTERPRISE_LOGOS.map((logo, i) => (
+            <motion.div
+              key={logo.name}
+              initial={{ opacity: 0, y: 12 }}
+              animate={inView ? { opacity: 1, y: 0 } : {}}
+              transition={{ duration: 0.5, delay: 0.05 + i * 0.07 }}
+              className="flex items-center gap-3 px-6 py-4 rounded-2xl"
+              style={{
+                background: 'var(--bg-surface)',
+                border: '1px solid var(--border)',
+              }}
+            >
+              <span className="text-lg">{logo.flag}</span>
+              <span
+                className="font-bold text-sm"
+                style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", color: 'var(--text-secondary)' }}
+              >
+                {logo.name}
+              </span>
+            </motion.div>
+          ))}
+        </div>
+      </div>
+    </section>
+  )
+}
+
+/* ─────────────────────────────────────────────────────────────
+   TRUST INDICATORS BAR
+───────────────────────────────────────────────────────────── */
+function TrustBar() {
+  const { ref, inView } = useSection()
+
+  return (
+    <section ref={ref} className="py-14" style={{ background: 'var(--bg-surface)' }}>
+      <div className="max-w-5xl mx-auto px-6">
+        <div className="flex flex-wrap justify-center gap-5">
+          {[
+            { badge: 'ISO 27001', icon: '📋', desc: 'Information Security Certified' },
+            { badge: 'SOC 2 Type II', icon: '🛡️', desc: 'Security Controls Audited' },
+            { badge: 'GDPR', icon: '🇪🇺', desc: 'EU Data Privacy Compliant' },
+            { badge: '99.9% SLA', icon: '⚡', desc: 'Uptime Guaranteed' },
+          ].map((item, i) => (
+            <motion.div
+              key={item.badge}
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={inView ? { opacity: 1, scale: 1 } : {}}
+              transition={{ duration: 0.5, delay: 0.05 + i * 0.08 }}
+              className="flex items-center gap-4 px-6 py-4 rounded-2xl"
+              style={{
+                background: 'var(--bg-surface2)',
+                border: '1px solid var(--border-strong)',
+                minWidth: '200px',
+              }}
+            >
+              <span className="text-2xl">{item.icon}</span>
+              <div>
+                <div
+                  className="font-bold text-sm"
+                  style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", color: 'var(--text-primary)' }}
+                >
+                  {item.badge}
+                </div>
+                <div
+                  className="text-xs"
+                  style={{ color: 'var(--text-muted)', fontFamily: "'Inter', sans-serif" }}
+                >
+                  {item.desc}
+                </div>
+              </div>
+              <span style={{ color: '#10B981', fontWeight: 700, marginLeft: 'auto' }}>✓</span>
+            </motion.div>
+          ))}
+        </div>
+      </div>
+    </section>
+  )
+}
+
+/* ─────────────────────────────────────────────────────────────
+   CONTACT FORM
+───────────────────────────────────────────────────────────── */
 function ContactSection() {
   const { ref, inView } = useSection()
   const [submitted, setSubmitted] = useState(false)
@@ -926,44 +1241,38 @@ function ContactSection() {
   return (
     <section id="contact" ref={ref} className="py-24" style={{ background: 'var(--bg)' }}>
       <div className="max-w-6xl mx-auto px-6">
-        <div className="grid md:grid-cols-2 gap-16 items-start">
+        <div className="grid md:grid-cols-2 gap-14 items-start">
           {/* Left */}
           <motion.div
             initial={{ opacity: 0, x: -24 }}
             animate={inView ? { opacity: 1, x: 0 } : {}}
-            transition={{ duration: 0.6, ease: 'easeOut' }}
+            transition={{ duration: 0.6 }}
           >
             <span
-              className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-xs font-semibold uppercase tracking-widest mb-6"
-              style={{
-                color: '#D4A853',
-                border: '1px solid rgba(212,168,83,0.35)',
-                background: 'rgba(212,168,83,0.07)',
-              }}
+              className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-xs font-bold uppercase tracking-widest mb-6"
+              style={{ color: '#D4A853', border: '1px solid rgba(212,168,83,0.35)', background: 'rgba(212,168,83,0.07)' }}
             >
               Get In Touch
             </span>
             <h2
-              className="text-4xl md:text-5xl font-extrabold leading-tight mb-6"
+              className="text-4xl md:text-5xl font-extrabold leading-tight mb-5"
               style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", color: 'var(--text-primary)' }}
             >
-              Talk to
-              <br />
-              Enterprise Sales
+              Talk to Enterprise Sales
             </h2>
             <p
               className="text-base leading-relaxed mb-10"
               style={{ color: 'var(--text-secondary)', fontFamily: "'Inter', sans-serif" }}
             >
               Whether you are exploring Gravity for the first time or ready to sign, our enterprise team
-              is here to help you find the right solution.
+              will help you find the right solution within 2 hours.
             </p>
-
             <div className="flex flex-col gap-5">
               {[
                 { icon: '⚡', text: 'Response within 2 hours' },
                 { icon: '💰', text: 'Custom pricing tailored to your scale' },
-                { icon: '🚀', text: 'Pilot program available at no cost' },
+                { icon: '🚀', text: '30-day pilot program at no cost' },
+                { icon: '🤝', text: 'Dedicated Customer Success Manager' },
               ].map((item) => (
                 <div key={item.text} className="flex items-center gap-4">
                   <div
@@ -973,7 +1282,7 @@ function ContactSection() {
                     {item.icon}
                   </div>
                   <span
-                    className="font-medium text-sm"
+                    className="text-sm font-medium"
                     style={{ color: 'var(--text-secondary)', fontFamily: "'Inter', sans-serif" }}
                   >
                     {item.text}
@@ -987,16 +1296,17 @@ function ContactSection() {
           <motion.div
             initial={{ opacity: 0, x: 24 }}
             animate={inView ? { opacity: 1, x: 0 } : {}}
-            transition={{ duration: 0.6, ease: 'easeOut', delay: 0.1 }}
+            transition={{ duration: 0.6, delay: 0.1 }}
             className="rounded-2xl p-8"
             style={{
-              background: 'var(--bg-surface)',
-              border: '1.5px solid rgba(212,168,83,0.2)',
+              background: 'rgba(255,255,255,0.03)',
+              backdropFilter: 'blur(20px)',
+              border: '1.5px solid rgba(212,168,83,0.22)',
               boxShadow: '0 0 50px rgba(212,168,83,0.08)',
             }}
           >
             {submitted ? (
-              <div className="text-center py-12">
+              <div className="text-center py-14">
                 <div className="text-5xl mb-4">🎉</div>
                 <h3
                   className="text-2xl font-bold mb-3"
@@ -1027,7 +1337,7 @@ function ContactSection() {
                         name={field.name}
                         placeholder={field.placeholder}
                         required
-                        className="rounded-xl px-4 py-3 text-sm outline-none transition-colors duration-200"
+                        className="rounded-xl px-4 py-3 text-sm outline-none"
                         style={{
                           background: 'var(--bg-surface2)',
                           border: '1px solid var(--border-strong)',
@@ -1038,7 +1348,6 @@ function ContactSection() {
                     </div>
                   ))}
                 </div>
-
                 <div className="grid grid-cols-2 gap-4">
                   <div className="flex flex-col gap-1.5">
                     <label
@@ -1087,11 +1396,10 @@ function ContactSection() {
                     </select>
                   </div>
                 </div>
-
                 <div className="grid grid-cols-2 gap-4">
                   {[
                     { label: 'Work Email', name: 'email', type: 'email', placeholder: 'you@company.com' },
-                    { label: 'Phone', name: 'phone', type: 'tel', placeholder: '+1 555 000 0000' },
+                    { label: 'Phone', name: 'phone', type: 'tel', placeholder: '+91 98765 43210' },
                   ].map((field) => (
                     <div key={field.name} className="flex flex-col gap-1.5">
                       <label
@@ -1116,18 +1424,17 @@ function ContactSection() {
                     </div>
                   ))}
                 </div>
-
                 <div className="flex flex-col gap-1.5">
                   <label
                     className="text-xs font-semibold uppercase tracking-wide"
                     style={{ color: 'var(--text-muted)', fontFamily: "'Inter', sans-serif" }}
                   >
-                    Tell us about your safety challenge
+                    Safety Challenge
                   </label>
                   <textarea
                     name="message"
                     rows={4}
-                    placeholder="Describe your organization's current safety challenges and what you're hoping to achieve with Gravity..."
+                    placeholder="Describe your organization's current safety challenges and what you want to achieve with Gravity..."
                     className="rounded-xl px-4 py-3 text-sm outline-none resize-none"
                     style={{
                       background: 'var(--bg-surface2)',
@@ -1137,12 +1444,11 @@ function ContactSection() {
                     }}
                   />
                 </div>
-
                 <motion.button
                   type="submit"
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.97 }}
-                  className="w-full py-4 rounded-xl font-bold text-base transition-all duration-200"
+                  className="w-full py-4 rounded-xl font-bold text-base"
                   style={{
                     background: 'linear-gradient(135deg, #D4A853, #F5C842)',
                     color: '#1A0F05',
@@ -1150,14 +1456,13 @@ function ContactSection() {
                     boxShadow: '0 4px 24px rgba(212,168,83,0.35)',
                   }}
                 >
-                  Request Enterprise Demo
+                  Book Enterprise Demo →
                 </motion.button>
-
                 <p
                   className="text-xs text-center"
                   style={{ color: 'var(--text-muted)', fontFamily: "'Inter', sans-serif" }}
                 >
-                  By submitting you agree to our Privacy Policy. We will never share your details.
+                  By submitting you agree to our Privacy Policy. We never share your details.
                 </p>
               </form>
             )}
@@ -1168,8 +1473,10 @@ function ContactSection() {
   )
 }
 
-/* ─────────────── FAQ ─────────────── */
-function FaqAccordionItem({ q, a }: { q: string; a: string }) {
+/* ─────────────────────────────────────────────────────────────
+   FAQ
+───────────────────────────────────────────────────────────── */
+function FaqItem({ q, a }: { q: string; a: string }) {
   const [open, setOpen] = useState(false)
 
   return (
@@ -1188,7 +1495,7 @@ function FaqAccordionItem({ q, a }: { q: string; a: string }) {
           {q}
         </span>
         <div
-          className="flex-shrink-0 w-7 h-7 rounded-full flex items-center justify-center transition-all duration-200"
+          className="flex-shrink-0 w-7 h-7 rounded-full flex items-center justify-center"
           style={{
             border: open ? '1.5px solid var(--gold)' : '1px solid var(--border-strong)',
             background: open ? 'rgba(212,168,83,0.12)' : 'transparent',
@@ -1199,7 +1506,6 @@ function FaqAccordionItem({ q, a }: { q: string; a: string }) {
           {open ? '−' : '+'}
         </div>
       </button>
-
       <AnimatePresence initial={false}>
         {open && (
           <motion.div
@@ -1207,7 +1513,7 @@ function FaqAccordionItem({ q, a }: { q: string; a: string }) {
             initial={{ height: 0, opacity: 0 }}
             animate={{ height: 'auto', opacity: 1 }}
             exit={{ height: 0, opacity: 0 }}
-            transition={{ duration: 0.32, ease: 'easeInOut' }}
+            transition={{ duration: 0.3, ease: 'easeInOut' }}
             className="overflow-hidden"
           >
             <p
@@ -1245,22 +1551,18 @@ function FaqSection() {
           >
             Enterprise FAQ
           </h2>
-          <p
-            className="mt-3 text-sm"
-            style={{ color: 'var(--text-muted)', fontFamily: "'Inter', sans-serif" }}
-          >
+          <p className="mt-3 text-sm" style={{ color: 'var(--text-muted)', fontFamily: "'Inter', sans-serif" }}>
             Common questions from enterprise buyers.
           </p>
         </motion.div>
-
         <motion.div
-          initial={{ opacity: 0, y: 24 }}
+          initial={{ opacity: 0, y: 20 }}
           animate={inView ? { opacity: 1, y: 0 } : {}}
           transition={{ duration: 0.6, delay: 0.15 }}
           className="flex flex-col gap-3"
         >
           {FAQ_ITEMS.map((item) => (
-            <FaqAccordionItem key={item.q} q={item.q} a={item.a} />
+            <FaqItem key={item.q} q={item.q} a={item.a} />
           ))}
         </motion.div>
       </div>
@@ -1268,19 +1570,97 @@ function FaqSection() {
   )
 }
 
-/* ─────────────── PAGE ─────────────── */
+/* ─────────────────────────────────────────────────────────────
+   BOTTOM CTA
+───────────────────────────────────────────────────────────── */
+function BottomCta() {
+  const { ref, inView } = useSection()
+
+  return (
+    <section id="brochure" ref={ref} className="py-24" style={{ background: 'var(--bg)' }}>
+      <div className="max-w-4xl mx-auto px-6 text-center">
+        <motion.div
+          initial={{ opacity: 0, y: 32 }}
+          animate={inView ? { opacity: 1, y: 0 } : {}}
+          transition={{ duration: 0.7 }}
+          className="rounded-3xl p-12 relative overflow-hidden"
+          style={{
+            background: 'linear-gradient(135deg, rgba(75,128,240,0.08) 0%, rgba(212,168,83,0.06) 100%)',
+            border: '1px solid rgba(212,168,83,0.25)',
+          }}
+        >
+          {/* Glow */}
+          <div
+            className="absolute inset-0 pointer-events-none"
+            style={{
+              background: 'radial-gradient(ellipse at center, rgba(212,168,83,0.12) 0%, transparent 70%)',
+            }}
+          />
+          <div className="relative z-10">
+            <h2
+              className="text-4xl md:text-5xl font-extrabold mb-5"
+              style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", color: 'var(--text-primary)' }}
+            >
+              Ready to Deploy?
+            </h2>
+            <p
+              className="text-lg mb-10 max-w-xl mx-auto"
+              style={{ color: 'var(--text-secondary)', fontFamily: "'Inter', sans-serif" }}
+            >
+              Join 5,600+ organizations already using Gravity to keep their people safe.
+            </p>
+            <div className="flex flex-wrap justify-center gap-4">
+              <a
+                href="#contact"
+                className="inline-flex items-center gap-2 px-8 py-4 rounded-xl text-base font-bold transition-all duration-200 hover:scale-105 active:scale-95"
+                style={{
+                  background: 'linear-gradient(135deg, #D4A853, #F5C842)',
+                  color: '#1A0F05',
+                  fontFamily: "'Plus Jakarta Sans', sans-serif",
+                  boxShadow: '0 4px 24px rgba(212,168,83,0.35)',
+                }}
+              >
+                Book Enterprise Demo →
+              </a>
+              <a
+                href="/gravity-enterprise-brochure.pdf"
+                download
+                className="inline-flex items-center gap-2 px-8 py-4 rounded-xl text-base font-semibold transition-all duration-200 hover:scale-105 active:scale-95"
+                style={{
+                  background: 'rgba(255,255,255,0.04)',
+                  border: '1.5px solid var(--border-strong)',
+                  color: 'var(--text-primary)',
+                  fontFamily: "'Plus Jakarta Sans', sans-serif",
+                }}
+              >
+                Download Enterprise Brochure ↓
+              </a>
+            </div>
+          </div>
+        </motion.div>
+      </div>
+    </section>
+  )
+}
+
+/* ─────────────────────────────────────────────────────────────
+   PAGE
+───────────────────────────────────────────────────────────── */
 export default function EnterprisePage() {
   return (
     <main style={{ background: 'var(--bg)', minHeight: '100vh' }}>
       <Navbar />
       <HeroSection />
-      <SegmentsSection />
-      <EnterpriseFeaturesSection />
-      <SupportSection />
-      <ComplianceSection />
-      <CaseStudiesSection />
+      <TargetMarketsSection />
+      <KeyFeaturesSection />
+      <WhiteLabelSection />
+      <ApiMarketplaceSection />
+      <PricingSection />
+      <TrustBar />
+      <LogosSection />
       <ContactSection />
       <FaqSection />
+      <BottomCta />
       <Footer />
     </main>
   )

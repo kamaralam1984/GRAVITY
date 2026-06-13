@@ -1,6 +1,6 @@
 'use client'
 
-import { useRef, useState, useEffect } from 'react'
+import { useRef, useState } from 'react'
 import Link from 'next/link'
 import { motion, useInView, AnimatePresence } from 'framer-motion'
 import {
@@ -8,36 +8,39 @@ import {
   Sparkles,
   ChevronRight,
   MapPin,
-  Eye,
-  Clock,
-  Car,
-  Shield,
   Activity,
   Mic,
   AlertTriangle,
   CheckCircle,
-  TrendingDown,
-  Download,
+  Car,
+  Heart,
+  Navigation,
+  Shield,
+  User,
+  Phone,
+  Clock,
+  TrendingUp,
+  Zap,
   Calendar,
-  MessageSquare,
-  Send,
+  Download,
+  Star,
 } from 'lucide-react'
 import Navbar from '@/components/layout/Navbar'
 import Footer from '@/components/layout/Footer'
+import AIGuardianDashboard from '@/components/sections/AIGuardianDashboard'
 
-/* ── Animation helpers ──────────────────────────────────────────────────────── */
+/* ── Animation variants ─────────────────────────────────────────────────────── */
 const fadeUp = {
   hidden: { opacity: 0, y: 32 },
   visible: { opacity: 1, y: 0, transition: { duration: 0.55, ease: 'easeOut' } },
 }
-
 const stagger = {
   hidden: {},
   visible: { transition: { staggerChildren: 0.1 } },
 }
 
-/* ── Neural network background ──────────────────────────────────────────────── */
-const NODES = [
+/* ── Neural network hero background ────────────────────────────────────────── */
+const HERO_NODES = [
   { cx: 80, cy: 60 }, { cx: 200, cy: 40 }, { cx: 320, cy: 80 }, { cx: 440, cy: 50 },
   { cx: 560, cy: 90 }, { cx: 680, cy: 45 }, { cx: 760, cy: 75 },
   { cx: 120, cy: 160 }, { cx: 260, cy: 140 }, { cx: 380, cy: 170 }, { cx: 500, cy: 145 },
@@ -45,8 +48,7 @@ const NODES = [
   { cx: 60, cy: 240 }, { cx: 180, cy: 220 }, { cx: 310, cy: 255 }, { cx: 440, cy: 230 },
   { cx: 570, cy: 250 }, { cx: 690, cy: 235 }, { cx: 780, cy: 260 },
 ]
-
-const EDGES = [
+const HERO_EDGES = [
   [0,1],[1,2],[2,3],[3,4],[4,5],[5,6],
   [0,7],[1,7],[1,8],[2,8],[2,9],[3,9],[3,10],[4,10],[4,11],[5,11],[5,12],[6,12],
   [7,13],[7,14],[8,14],[8,15],[9,15],[9,16],[10,16],[10,17],[11,17],[11,18],[12,18],[12,19],
@@ -60,42 +62,38 @@ function NeuralBackground() {
       fill="none"
       xmlns="http://www.w3.org/2000/svg"
       style={{
-        position: 'absolute',
-        inset: 0,
-        width: '100%',
-        height: '100%',
-        opacity: 0.18,
-        pointerEvents: 'none',
+        position: 'absolute', inset: 0, width: '100%', height: '100%',
+        opacity: 0.18, pointerEvents: 'none',
       }}
       preserveAspectRatio="xMidYMid slice"
     >
-      {EDGES.map(([a, b], i) => (
+      {HERO_EDGES.map(([a, b], i) => (
         <motion.line
           key={i}
-          x1={NODES[a].cx} y1={NODES[a].cy}
-          x2={NODES[b].cx} y2={NODES[b].cy}
-          stroke="url(#lineGrad)"
+          x1={HERO_NODES[a].cx} y1={HERO_NODES[a].cy}
+          x2={HERO_NODES[b].cx} y2={HERO_NODES[b].cy}
+          stroke="url(#heroLineGrad)"
           strokeWidth="0.8"
           initial={{ pathLength: 0, opacity: 0 }}
           animate={{ pathLength: 1, opacity: [0, 0.6, 0.3] }}
-          transition={{ duration: 2 + Math.random() * 2, delay: i * 0.06, repeat: Infinity, repeatType: 'reverse' }}
+          transition={{ duration: 2 + (i % 6) * 0.3, delay: i * 0.06, repeat: Infinity, repeatType: 'reverse' }}
         />
       ))}
-      {NODES.map((n, i) => (
+      {HERO_NODES.map((n, i) => (
         <motion.circle
           key={i}
           cx={n.cx} cy={n.cy} r="3"
-          fill="url(#dotGrad)"
+          fill="url(#heroDotGrad)"
           animate={{ r: [2, 4, 2], opacity: [0.4, 1, 0.4] }}
-          transition={{ duration: 2.5 + Math.random() * 2, delay: i * 0.12, repeat: Infinity }}
+          transition={{ duration: 2.5 + (i % 5) * 0.4, delay: i * 0.12, repeat: Infinity }}
         />
       ))}
       <defs>
-        <linearGradient id="lineGrad" x1="0" y1="0" x2="1" y2="0">
+        <linearGradient id="heroLineGrad" x1="0" y1="0" x2="1" y2="0">
           <stop offset="0%" stopColor="#D4A853" />
           <stop offset="100%" stopColor="#A78BFA" />
         </linearGradient>
-        <radialGradient id="dotGrad">
+        <radialGradient id="heroDotGrad">
           <stop offset="0%" stopColor="#D4A853" />
           <stop offset="100%" stopColor="#8B5CF6" />
         </radialGradient>
@@ -120,230 +118,292 @@ function Section({ children, bg = 'var(--bg)' }: { children: React.ReactNode; bg
   )
 }
 
-/* ── Phone mockup for Section 2 ─────────────────────────────────────────────── */
-function PhoneMockup() {
-  const [alertVisible, setAlertVisible] = useState(false)
-  useEffect(() => {
-    const t = setTimeout(() => setAlertVisible(true), 1200)
-    return () => clearTimeout(t)
-  }, [])
-
-  return (
-    <div
-      style={{
-        width: 260,
-        background: '#0d0f1a',
-        borderRadius: 28,
-        border: '2px solid rgba(255,255,255,0.1)',
-        boxShadow: '0 32px 80px rgba(0,0,0,0.6), 0 0 60px rgba(212,168,83,0.08)',
-        overflow: 'hidden',
-        margin: '0 auto',
-      }}
-    >
-      {/* Phone header bar */}
-      <div style={{ height: 28, background: '#060810', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        <div style={{ width: 60, height: 6, borderRadius: 3, background: 'rgba(255,255,255,0.1)' }} />
-      </div>
-
-      {/* App header */}
-      <div
-        style={{
-          padding: '10px 14px',
-          display: 'flex',
-          alignItems: 'center',
-          gap: 8,
-          background: 'rgba(212,168,83,0.06)',
-          borderBottom: '1px solid rgba(255,255,255,0.06)',
-        }}
-      >
-        <motion.div
-          animate={{ boxShadow: ['0 0 8px #10B981', '0 0 20px #10B981', '0 0 8px #10B981'] }}
-          transition={{ duration: 1.8, repeat: Infinity }}
-          style={{
-            width: 28, height: 28, borderRadius: '50%',
-            background: 'rgba(16,185,129,0.15)',
-            border: '1px solid rgba(16,185,129,0.4)',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-          }}
-        >
-          <Brain size={12} style={{ color: '#10B981' }} />
-        </motion.div>
-        <div>
-          <div style={{ fontSize: '0.7rem', fontWeight: 700, color: '#fff' }}>AI Guardian</div>
-          <div style={{ fontSize: '0.58rem', color: '#10B981', display: 'flex', alignItems: 'center', gap: 3 }}>
-            <span style={{ width: 4, height: 4, borderRadius: '50%', background: '#10B981', display: 'inline-block' }} />
-            Monitoring family
-          </div>
-        </div>
-      </div>
-
-      {/* Map area */}
-      <div style={{ position: 'relative', height: 130, background: '#0a1a2e', overflow: 'hidden' }}>
-        {/* Route SVG */}
-        <svg viewBox="0 0 260 130" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%' }}>
-          {/* Grid lines */}
-          {[30,60,90,120].map(y => (
-            <line key={y} x1="0" y1={y} x2="260" y2={y} stroke="rgba(255,255,255,0.04)" strokeWidth="1" />
-          ))}
-          {[52,104,156,208].map(x => (
-            <line key={x} x1={x} y1="0" x2={x} y2="130" stroke="rgba(255,255,255,0.04)" strokeWidth="1" />
-          ))}
-          {/* Normal route */}
-          <motion.path
-            d="M20,100 C60,80 80,70 120,60 C160,50 180,45 220,30"
-            stroke="rgba(16,185,129,0.5)" strokeWidth="2" fill="none" strokeDasharray="4,3"
-            initial={{ pathLength: 0 }} animate={{ pathLength: 1 }}
-            transition={{ duration: 2, ease: 'easeInOut' }}
-          />
-          {/* Deviation route */}
-          <motion.path
-            d="M120,60 C140,80 160,100 190,105"
-            stroke="#EF4444" strokeWidth="2.5" fill="none"
-            initial={{ pathLength: 0 }} animate={{ pathLength: 1 }}
-            transition={{ duration: 1.5, delay: 2.2, ease: 'easeInOut' }}
-          />
-          {/* Risk zone */}
-          <motion.circle
-            cx={175} cy={100} r={24}
-            fill="rgba(239,68,68,0.12)" stroke="rgba(239,68,68,0.4)" strokeWidth="1"
-            initial={{ opacity: 0, scale: 0 }} animate={{ opacity: 1, scale: 1 }}
-            transition={{ delay: 2.5, type: 'spring' }}
-          />
-          {/* Location dot */}
-          <motion.circle
-            cx={190} cy={105} r={4}
-            fill="#EF4444"
-            animate={{ r: [3, 5, 3], opacity: [1, 0.7, 1] }}
-            transition={{ duration: 1.2, repeat: Infinity }}
-          />
-          {/* School origin */}
-          <circle cx={20} cy={100} r={5} fill="#D4A853" />
-          <text x={26} y={97} fontSize="6" fill="rgba(255,255,255,0.5)">School</text>
-          {/* Destination */}
-          <circle cx={220} cy={30} r={4} fill="#10B981" />
-          <text x={200} y={25} fontSize="6" fill="rgba(255,255,255,0.5)">Home</text>
-        </svg>
-      </div>
-
-      {/* Alert card */}
-      <AnimatePresence>
-        {alertVisible && (
-          <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            style={{
-              margin: '10px 10px 0',
-              background: 'rgba(239,68,68,0.1)',
-              border: '1px solid rgba(239,68,68,0.35)',
-              borderRadius: 10,
-              padding: '8px 10px',
-            }}
-          >
-            <div style={{ display: 'flex', alignItems: 'center', gap: 5, marginBottom: 4 }}>
-              <AlertTriangle size={10} style={{ color: '#EF4444' }} />
-              <span style={{ fontSize: '0.62rem', fontWeight: 700, color: '#EF4444' }}>Route deviation detected</span>
-            </div>
-            <div style={{ fontSize: '0.6rem', color: 'rgba(255,255,255,0.65)', lineHeight: 1.5 }}>
-              Priya is 2.3km off expected route
-            </div>
-            <div style={{ marginTop: 5, display: 'flex', gap: 4 }}>
-              <span style={{ fontSize: '0.55rem', padding: '2px 6px', borderRadius: 4, background: 'rgba(239,68,68,0.2)', color: '#EF4444', fontWeight: 600 }}>
-                Risk Score: 87/100
-              </span>
-              <span style={{ fontSize: '0.55rem', padding: '2px 6px', borderRadius: 4, background: 'rgba(212,168,83,0.15)', color: '#D4A853' }}>
-                13:42 PM
-              </span>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      {/* Confidence */}
-      <div style={{ padding: '8px 10px 12px', display: 'flex', alignItems: 'center', gap: 6 }}>
-        <Activity size={9} style={{ color: '#A78BFA' }} />
-        <span style={{ fontSize: '0.58rem', color: 'rgba(255,255,255,0.4)' }}>AI Confidence: 94% · Updated 12s ago</span>
-      </div>
-    </div>
-  )
-}
-
-/* ── Circular gauge ─────────────────────────────────────────────────────────── */
-function CircularGauge({ score, max = 100, color, label }: { score: number; max?: number; color: string; label: string }) {
-  const r = 42
+/* ── Animated gauge (CSS/SVG — no external lib) ─────────────────────────────── */
+function PredictionGauge({
+  label, score, max = 100, color, icon, description,
+}: {
+  label: string; score: number; max?: number; color: string; icon: React.ReactNode; description: string
+}) {
+  const r = 44
   const c = 2 * Math.PI * r
   return (
-    <div style={{ textAlign: 'center' }}>
-      <div style={{ position: 'relative', width: 100, height: 100, margin: '0 auto 10px' }}>
-        <svg width="100" height="100" viewBox="0 0 100 100">
-          <circle cx="50" cy="50" r={r} fill="none" stroke="rgba(255,255,255,0.06)" strokeWidth="9" />
+    <motion.div
+      variants={fadeUp}
+      whileHover={{ y: -4 }}
+      style={{
+        background: 'var(--bg-surface)',
+        border: '1px solid var(--border)',
+        borderRadius: 16,
+        padding: '24px 18px',
+        textAlign: 'center',
+        cursor: 'default',
+        transition: 'border-color 0.2s',
+      }}
+    >
+      {/* Icon badge */}
+      <div style={{
+        width: 40, height: 40, borderRadius: 10,
+        background: `${color}15`, border: `1px solid ${color}35`,
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        color, margin: '0 auto 14px',
+      }}>
+        {icon}
+      </div>
+
+      {/* Circular gauge */}
+      <div style={{ position: 'relative', width: 96, height: 96, margin: '0 auto 14px' }}>
+        <svg width="96" height="96" viewBox="0 0 96 96">
+          <circle cx="48" cy="48" r={r} fill="none" stroke="rgba(255,255,255,0.06)" strokeWidth="8" />
           <motion.circle
-            cx="50" cy="50" r={r}
+            cx="48" cy="48" r={r}
             fill="none"
             stroke={color}
-            strokeWidth="9"
+            strokeWidth="8"
             strokeLinecap="round"
             strokeDasharray={`${c}`}
             initial={{ strokeDashoffset: c }}
             whileInView={{ strokeDashoffset: c * (1 - score / max) }}
             transition={{ duration: 1.6, ease: 'easeOut' }}
-            transform="rotate(-90 50 50)"
-            style={{ filter: `drop-shadow(0 0 5px ${color}80)` }}
+            transform="rotate(-90 48 48)"
+            style={{ filter: `drop-shadow(0 0 6px ${color}70)` }}
           />
         </svg>
         <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%,-50%)', textAlign: 'center' }}>
-          <div style={{ fontFamily: 'var(--font-display)', fontSize: '1.3rem', fontWeight: 800, color, lineHeight: 1 }}>{score}</div>
-          <div style={{ fontSize: '0.55rem', color: 'rgba(255,255,255,0.35)' }}>/{max}</div>
+          <div style={{ fontFamily: 'var(--font-display)', fontSize: '1.5rem', fontWeight: 800, color, lineHeight: 1 }}>
+            {score}
+          </div>
+          <div style={{ fontSize: '0.55rem', color: 'rgba(255,255,255,0.3)' }}>/{max}</div>
         </div>
       </div>
-      <div style={{ fontSize: '0.72rem', color: 'rgba(255,255,255,0.55)', fontWeight: 500 }}>{label}</div>
-    </div>
+
+      <h4 style={{ fontFamily: 'var(--font-display)', fontWeight: 700, color: 'var(--text-primary)', fontSize: '0.9rem', margin: '0 0 6px' }}>
+        {label}
+      </h4>
+      <p style={{ fontSize: '0.76rem', color: 'var(--text-muted)', lineHeight: 1.5, margin: 0 }}>
+        {description}
+      </p>
+    </motion.div>
   )
 }
 
-/* ── Chat message bubble ────────────────────────────────────────────────────── */
-function ChatBubble({ role, text, delay = 0 }: { role: 'user' | 'ai'; text: string; delay?: number }) {
+/* ── Weekly bar chart (pure SVG) ─────────────────────────────────────────────── */
+const WEEKLY_DATA = [
+  { day: 'Mon', score: 88, events: 3 },
+  { day: 'Tue', score: 92, events: 1 },
+  { day: 'Wed', score: 79, events: 5 },
+  { day: 'Thu', score: 95, events: 0 },
+  { day: 'Fri', score: 84, events: 2 },
+  { day: 'Sat', score: 91, events: 1 },
+  { day: 'Sun', score: 97, events: 0 },
+]
+
+function WeeklySafetyChart() {
+  const maxH = 140
+  return (
+    <svg viewBox="0 0 560 200" style={{ width: '100%', maxWidth: 560, overflow: 'visible' }}>
+      {/* Y axis guides */}
+      {[0, 25, 50, 75, 100].map((pct) => {
+        const y = 170 - (pct / 100) * maxH
+        return (
+          <g key={pct}>
+            <line x1="40" y1={y} x2="540" y2={y} stroke="rgba(255,255,255,0.04)" strokeWidth="1" />
+            <text x="32" y={y + 4} fontSize="9" fill="rgba(255,255,255,0.25)" textAnchor="end">{pct}</text>
+          </g>
+        )
+      })}
+
+      {/* Bars */}
+      {WEEKLY_DATA.map((d, i) => {
+        const x = 55 + i * 72
+        const barH = (d.score / 100) * maxH
+        const y = 170 - barH
+        const color = d.score >= 90 ? '#10B981' : d.score >= 80 ? '#D4A853' : '#EF4444'
+        return (
+          <g key={d.day}>
+            {/* Bar background */}
+            <rect x={x} y={170 - maxH} width="40" height={maxH} fill="rgba(255,255,255,0.03)" rx="5" />
+            {/* Animated bar */}
+            <motion.rect
+              x={x} y={170} width="40" height={0} fill={color} rx="5"
+              style={{ filter: `drop-shadow(0 0 6px ${color}60)` }}
+              animate={{ y, height: barH }}
+              transition={{ duration: 1.2, delay: i * 0.1, ease: 'easeOut' }}
+            />
+            {/* Score label */}
+            <motion.text
+              x={x + 20} y={y - 5}
+              fontSize="9" fill={color} textAnchor="middle" fontWeight="700"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.9 + i * 0.1 }}
+            >
+              {d.score}
+            </motion.text>
+            {/* Day label */}
+            <text x={x + 20} y="186" fontSize="10" fill="rgba(255,255,255,0.4)" textAnchor="middle">
+              {d.day}
+            </text>
+            {/* Event dots */}
+            {d.events > 0 && (
+              <motion.circle
+                cx={x + 20} cy={y - 16} r="3"
+                fill="#EF4444"
+                initial={{ scale: 0 }}
+                animate={{ scale: 1 }}
+                transition={{ delay: 1 + i * 0.1, type: 'spring' }}
+              />
+            )}
+          </g>
+        )
+      })}
+
+      {/* Trend line */}
+      <motion.polyline
+        points={WEEKLY_DATA.map((d, i) => `${55 + i * 72 + 20},${170 - (d.score / 100) * maxH}`).join(' ')}
+        fill="none"
+        stroke="rgba(167,139,250,0.4)"
+        strokeWidth="1.5"
+        strokeDasharray="4 3"
+        initial={{ pathLength: 0 }}
+        animate={{ pathLength: 1 }}
+        transition={{ duration: 2, delay: 0.5 }}
+      />
+    </svg>
+  )
+}
+
+/* ── Voice command card ──────────────────────────────────────────────────────── */
+function VoiceCommandCard({
+  command, response, icon, color, delay,
+}: {
+  command: string; response: string; icon: React.ReactNode; color: string; delay: number
+}) {
+  const [expanded, setExpanded] = useState(false)
   return (
     <motion.div
-      initial={{ opacity: 0, y: 12 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      transition={{ delay, duration: 0.4 }}
-      style={{ display: 'flex', justifyContent: role === 'user' ? 'flex-end' : 'flex-start', gap: 8, alignItems: 'flex-start' }}
+      variants={fadeUp}
+      onClick={() => setExpanded(!expanded)}
+      whileHover={{ y: -3 }}
+      style={{
+        background: 'var(--bg-surface)',
+        border: `1px solid ${expanded ? color + '40' : 'var(--border)'}`,
+        borderRadius: 14,
+        padding: '16px 18px',
+        cursor: 'pointer',
+        transition: 'border-color 0.2s',
+      }}
     >
-      {role === 'ai' && (
-        <motion.div
-          animate={{ scale: [1, 1.1, 1] }}
-          transition={{ duration: 2, repeat: Infinity }}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: expanded ? 10 : 0 }}>
+        <div
           style={{
-            width: 28, height: 28, borderRadius: '50%',
-            background: 'linear-gradient(135deg, #A78BFA, #EC4899)',
+            width: 34, height: 34, borderRadius: 8,
+            background: `${color}15`, border: `1px solid ${color}30`,
             display: 'flex', alignItems: 'center', justifyContent: 'center',
-            flexShrink: 0, marginTop: 2,
+            color, flexShrink: 0,
           }}
         >
-          <Brain size={12} style={{ color: '#fff' }} />
+          {icon}
+        </div>
+        <div style={{ flex: 1 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
+            <Mic size={11} style={{ color: '#D4A853' }} />
+            <span style={{ fontSize: '0.82rem', fontWeight: 600, color: 'var(--text-primary)' }}>
+              &ldquo;{command}&rdquo;
+            </span>
+          </div>
+        </div>
+        <motion.div
+          animate={{ rotate: expanded ? 180 : 0 }}
+          transition={{ duration: 0.2 }}
+        >
+          <ChevronRight size={14} style={{ color: 'rgba(255,255,255,0.3)' }} />
         </motion.div>
-      )}
-      <div
-        style={{
-          maxWidth: '76%',
-          padding: '10px 14px',
-          borderRadius: role === 'user' ? '12px 12px 4px 12px' : '12px 12px 12px 4px',
-          background: role === 'user' ? 'rgba(212,168,83,0.15)' : 'rgba(167,139,250,0.1)',
-          border: role === 'user' ? '1px solid rgba(212,168,83,0.28)' : '1px solid rgba(167,139,250,0.22)',
-          color: role === 'user' ? 'var(--gold)' : 'rgba(255,255,255,0.85)',
-          fontSize: '0.86rem',
-          lineHeight: 1.6,
-        }}
-      >
-        {text}
+      </div>
+
+      <AnimatePresence>
+        {expanded && (
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: 'auto', opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.2 }}
+          >
+            <div
+              style={{
+                padding: '10px 12px',
+                background: `${color}08`,
+                border: `1px solid ${color}20`,
+                borderRadius: 8,
+                marginTop: 4,
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'flex-start', gap: 6 }}>
+                <Brain size={11} style={{ color, flexShrink: 0, marginTop: 2 }} />
+                <span style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', lineHeight: 1.55 }}>
+                  {response}
+                </span>
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </motion.div>
+  )
+}
+
+/* ── Daily safety timeline item ─────────────────────────────────────────────── */
+function TimelineItem({
+  time, member, event, status, icon, delay,
+}: {
+  time: string; member: string; event: string; status: 'safe' | 'warning' | 'alert'; icon: React.ReactNode; delay: number
+}) {
+  const statusColor = status === 'safe' ? '#10B981' : status === 'warning' ? '#F59E0B' : '#EF4444'
+  return (
+    <motion.div
+      initial={{ opacity: 0, x: -16 }}
+      whileInView={{ opacity: 1, x: 0 }}
+      transition={{ delay, duration: 0.4 }}
+      style={{ display: 'flex', gap: 14, alignItems: 'flex-start', padding: '12px 0' }}
+    >
+      {/* Time + dot column */}
+      <div style={{ width: 52, flexShrink: 0, textAlign: 'right' }}>
+        <span style={{ fontSize: '0.7rem', color: 'rgba(255,255,255,0.35)', fontFamily: 'monospace' }}>{time}</span>
+      </div>
+      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 0 }}>
+        <div
+          style={{
+            width: 22, height: 22, borderRadius: '50%', flexShrink: 0,
+            background: `${statusColor}18`, border: `1.5px solid ${statusColor}50`,
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            color: statusColor,
+          }}
+        >
+          {icon}
+        </div>
+        <div style={{ width: 1, flex: 1, minHeight: 20, background: 'rgba(255,255,255,0.06)', marginTop: 3 }} />
+      </div>
+      <div style={{ flex: 1, paddingBottom: 8 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 7, marginBottom: 2 }}>
+          <span style={{ fontSize: '0.78rem', fontWeight: 700, color: 'var(--text-primary)' }}>{member}</span>
+          <span
+            style={{
+              fontSize: '0.6rem', fontWeight: 700, padding: '2px 7px',
+              borderRadius: 999, background: `${statusColor}15`,
+              border: `1px solid ${statusColor}35`, color: statusColor,
+            }}
+          >
+            {status.toUpperCase()}
+          </span>
+        </div>
+        <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', margin: 0, lineHeight: 1.5 }}>{event}</p>
       </div>
     </motion.div>
   )
 }
 
-/* ═══════════════════════════════════════════════════════════════════════════════
+/* ══════════════════════════════════════════════════════════════════════════════
    PAGE
-═══════════════════════════════════════════════════════════════════════════════ */
+══════════════════════════════════════════════════════════════════════════════ */
 export default function AIGuardianPage() {
   const heroRef = useRef(null)
   const heroInView = useInView(heroRef, { once: true })
@@ -353,22 +413,18 @@ export default function AIGuardianPage() {
       <Navbar />
 
       {/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-          SECTION 1 — HERO
+          HERO — Meet Your AI Safety Guardian
       ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
       <section
         ref={heroRef}
         style={{
           background: 'linear-gradient(160deg, #060810 0%, #0c0820 40%, #080c18 100%)',
-          minHeight: '94vh',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          position: 'relative',
-          overflow: 'hidden',
-          padding: '110px 24px 90px',
+          minHeight: '92vh',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          position: 'relative', overflow: 'hidden',
+          padding: '110px 24px 80px',
         }}
       >
-        {/* Neural network background */}
         <NeuralBackground />
 
         {/* Radial glow */}
@@ -404,7 +460,7 @@ export default function AIGuardianPage() {
           />
         ))}
 
-        <div style={{ maxWidth: 820, margin: '0 auto', textAlign: 'center', position: 'relative', zIndex: 1 }}>
+        <div style={{ maxWidth: 860, margin: '0 auto', textAlign: 'center', position: 'relative', zIndex: 1 }}>
           {/* Back link */}
           <motion.div
             initial={{ opacity: 0, x: -20 }}
@@ -420,7 +476,7 @@ export default function AIGuardianPage() {
             </Link>
           </motion.div>
 
-          {/* Eyebrow badge */}
+          {/* Badge */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={heroInView ? { opacity: 1, y: 0 } : {}}
@@ -440,44 +496,46 @@ export default function AIGuardianPage() {
                 display: 'inline-flex', alignItems: 'center', gap: 8,
               }}
             >
-              <motion.span
-                animate={{ scale: [1, 1.3, 1] }}
-                transition={{ duration: 1.4, repeat: Infinity }}
-              >
+              <motion.span animate={{ scale: [1, 1.3, 1] }} transition={{ duration: 1.4, repeat: Infinity }}>
                 <Brain size={13} />
               </motion.span>
-              Gravity AI Guardian
+              Gravity 4.0 AI Guardian Intelligence
             </motion.span>
           </motion.div>
 
-          {/* H1 */}
+          {/* H1 with animated gradient text */}
           <motion.h1
             initial={{ opacity: 0, y: 30 }}
             animate={heroInView ? { opacity: 1, y: 0 } : {}}
             transition={{ delay: 0.35 }}
             style={{
               fontFamily: 'var(--font-display)',
-              fontSize: 'clamp(2.6rem, 7vw, 4.6rem)',
+              fontSize: 'clamp(2.6rem, 7vw, 5rem)',
               fontWeight: 800,
               color: '#FFFFFF',
-              lineHeight: 1.08,
+              lineHeight: 1.06,
               marginBottom: 26,
             }}
           >
-            The AI That Keeps
+            Meet Your
             <br />
-            <span
+            <motion.span
+              animate={{
+                backgroundPosition: ['0% 50%', '100% 50%', '0% 50%'],
+              }}
+              transition={{ duration: 4, repeat: Infinity, ease: 'linear' }}
               style={{
-                background: 'linear-gradient(90deg, #D4A853, #A78BFA, #EC4899)',
+                background: 'linear-gradient(90deg, #D4A853, #A78BFA, #EC4899, #D4A853)',
+                backgroundSize: '200% auto',
                 WebkitBackgroundClip: 'text',
                 WebkitTextFillColor: 'transparent',
+                display: 'inline-block',
               }}
             >
-              Your Family Safe
-            </span>
+              AI Safety Guardian
+            </motion.span>
           </motion.h1>
 
-          {/* Subtext */}
           <motion.p
             initial={{ opacity: 0, y: 20 }}
             animate={heroInView ? { opacity: 1, y: 0 } : {}}
@@ -485,12 +543,12 @@ export default function AIGuardianPage() {
             style={{
               color: 'rgba(255,255,255,0.62)',
               fontSize: 'clamp(1rem, 2.2vw, 1.22rem)',
-              maxWidth: 640,
+              maxWidth: 660,
               margin: '0 auto 52px',
               lineHeight: 1.85,
             }}
           >
-            Gravity AI Guardian uses machine learning to predict safety risks, analyze family patterns, and alert you before emergencies happen — not after.
+            The world&apos;s first family AI that predicts safety risks, monitors loved ones in real-time, and speaks to you in plain language — so you can act before emergencies happen.
           </motion.p>
 
           {/* CTA buttons */}
@@ -498,40 +556,31 @@ export default function AIGuardianPage() {
             initial={{ opacity: 0, y: 20 }}
             animate={heroInView ? { opacity: 1, y: 0 } : {}}
             transition={{ delay: 0.58 }}
-            style={{ display: 'flex', gap: 16, justifyContent: 'center', flexWrap: 'wrap', marginBottom: 60 }}
+            style={{ display: 'flex', gap: 16, justifyContent: 'center', flexWrap: 'wrap', marginBottom: 52 }}
           >
             <Link
               href="/pricing"
               style={{
                 background: 'linear-gradient(90deg, var(--gold), #B8860B)',
-                color: '#0a0900',
-                padding: '15px 34px',
-                borderRadius: 12,
-                textDecoration: 'none',
-                fontWeight: 700,
-                fontSize: '1rem',
+                color: '#0a0900', padding: '15px 34px', borderRadius: 12,
+                textDecoration: 'none', fontWeight: 700, fontSize: '1rem',
                 display: 'inline-flex', alignItems: 'center', gap: 8,
                 boxShadow: '0 0 32px rgba(212,168,83,0.38)',
               }}
             >
-              Start Free Trial <ChevronRight size={18} />
+              Enable AI Guardian — ₹299/month <ChevronRight size={18} />
             </Link>
             <a
-              href="#how-it-works"
+              href="#dashboard"
               style={{
-                background: 'rgba(255,255,255,0.06)',
-                backdropFilter: 'blur(12px)',
-                color: '#fff',
-                padding: '15px 34px',
-                borderRadius: 12,
-                textDecoration: 'none',
-                fontWeight: 600,
-                fontSize: '1rem',
+                background: 'rgba(255,255,255,0.06)', backdropFilter: 'blur(12px)',
+                color: '#fff', padding: '15px 34px', borderRadius: 12,
+                textDecoration: 'none', fontWeight: 600, fontSize: '1rem',
                 border: '1px solid rgba(255,255,255,0.14)',
                 display: 'inline-flex', alignItems: 'center', gap: 8,
               }}
             >
-              See How It Works
+              See Live Dashboard
             </a>
           </motion.div>
 
@@ -543,9 +592,10 @@ export default function AIGuardianPage() {
             style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap' }}
           >
             {[
-              { icon: <Shield size={13} />, text: '94% Accuracy', color: '#10B981' },
-              { icon: <Activity size={13} />, text: 'Real-time Analysis', color: '#A78BFA' },
-              { icon: <Brain size={13} />, text: '24/7 Learning', color: '#D4A853' },
+              { icon: <Shield size={13} />, text: '94% Prediction Accuracy', color: '#10B981' },
+              { icon: <Activity size={13} />, text: 'Real-time Neural Analysis', color: '#A78BFA' },
+              { icon: <Brain size={13} />, text: '24/7 AI Learning', color: '#D4A853' },
+              { icon: <Zap size={13} />, text: '< 3s Alert Response', color: '#EC4899' },
             ].map((pill) => (
               <motion.div
                 key={pill.text}
@@ -553,15 +603,13 @@ export default function AIGuardianPage() {
                 transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut' }}
                 style={{
                   display: 'inline-flex', alignItems: 'center', gap: 7,
-                  background: 'rgba(255,255,255,0.05)',
-                  backdropFilter: 'blur(16px)',
+                  background: 'rgba(255,255,255,0.05)', backdropFilter: 'blur(16px)',
                   border: `1px solid ${pill.color}30`,
                   borderRadius: 999, padding: '8px 18px',
                   color: pill.color, fontSize: '0.82rem', fontWeight: 600,
                 }}
               >
-                {pill.icon}
-                {pill.text}
+                {pill.icon}{pill.text}
               </motion.div>
             ))}
           </motion.div>
@@ -569,200 +617,143 @@ export default function AIGuardianPage() {
       </section>
 
       {/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-          SECTION 2 — PREDICTIVE SAFETY ENGINE
+          DASHBOARD SECTION
       ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
-      <Section bg="var(--bg-surface)">
-        <motion.div variants={stagger}>
-          <motion.div variants={fadeUp} style={{ textAlign: 'center', marginBottom: 60 }}>
-            <h2
-              style={{
-                fontFamily: 'var(--font-display)',
-                fontSize: 'clamp(1.8rem, 4vw, 2.8rem)',
-                fontWeight: 700, color: 'var(--text-primary)', marginBottom: 16,
-              }}
-            >
-              Predictive Safety Engine
+      <section
+        id="dashboard"
+        style={{ background: 'var(--bg-surface)', padding: '88px 0' }}
+      >
+        <div style={{ maxWidth: 1200, margin: '0 auto', padding: '0 24px' }}>
+          <motion.div
+            initial={{ opacity: 0, y: 28 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.55 }}
+            style={{ textAlign: 'center', marginBottom: 52 }}
+          >
+            <h2 style={{
+              fontFamily: 'var(--font-display)', fontSize: 'clamp(1.8rem, 4vw, 2.8rem)',
+              fontWeight: 700, color: 'var(--text-primary)', marginBottom: 16,
+            }}>
+              AI Guardian Dashboard
             </h2>
-            <p style={{ color: 'var(--text-muted)', maxWidth: 580, margin: '0 auto', lineHeight: 1.75 }}>
-              Four intelligent layers that detect threats before they become emergencies — powered by machine learning trained on millions of family safety events.
+            <p style={{ color: 'var(--text-muted)', maxWidth: 560, margin: '0 auto', lineHeight: 1.75 }}>
+              Your family&apos;s complete safety intelligence — all in one live, interactive panel.
             </p>
           </motion.div>
-
-          <div
-            style={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))',
-              gap: 40,
-              alignItems: 'center',
-            }}
+          <motion.div
+            initial={{ opacity: 0, y: 32 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.1 }}
           >
-            {/* Left: feature cards */}
-            <motion.div variants={stagger} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-              {[
-                {
-                  emoji: '🗺️',
-                  title: 'Unsafe Route Detection',
-                  text: 'Gravity analyzes 50M+ routes daily. When your child takes an unusual path, you get an instant alert with the exact deviation marked on a map.',
-                  color: '#EF4444',
-                },
-                {
-                  emoji: '👁️',
-                  title: 'Suspicious Behavior Patterns',
-                  text: 'Our AI monitors movement irregularities — unexpected stops, unusual hours, speed anomalies — and cross-references with public safety data.',
-                  color: '#F59E0B',
-                },
-                {
-                  emoji: '⏰',
-                  title: 'Missed Routine Alerts',
-                  text: 'If your elderly parent doesn\'t take their morning walk or your teen doesn\'t arrive at school on time, AI detects it instantly.',
-                  color: '#3B82F6',
-                },
-                {
-                  emoji: '🚗',
-                  title: 'Driving Risk Prediction',
-                  text: 'Phone usage, harsh braking, drowsy patterns — AI catches dangerous driving before accidents happen.',
-                  color: '#10B981',
-                },
-              ].map((card, i) => (
-                <motion.div
-                  key={card.title}
-                  variants={fadeUp}
-                  whileHover={{ x: 4, borderColor: `${card.color}40` }}
-                  style={{
-                    background: 'var(--bg)',
-                    border: '1px solid var(--border)',
-                    borderRadius: 14, padding: '18px 20px',
-                    display: 'flex', gap: 14, alignItems: 'flex-start',
-                    transition: 'border-color 0.2s',
-                    cursor: 'default',
-                  }}
-                >
-                  <div
-                    style={{
-                      width: 44, height: 44, borderRadius: 12,
-                      background: `${card.color}15`,
-                      border: `1px solid ${card.color}30`,
-                      display: 'flex', alignItems: 'center', justifyContent: 'center',
-                      fontSize: '1.2rem', flexShrink: 0,
-                    }}
-                  >
-                    {card.emoji}
-                  </div>
-                  <div>
-                    <h3 style={{ fontFamily: 'var(--font-display)', fontWeight: 700, color: 'var(--text-primary)', fontSize: '0.95rem', marginBottom: 5 }}>
-                      {card.title}
-                    </h3>
-                    <p style={{ color: 'var(--text-muted)', fontSize: '0.84rem', lineHeight: 1.65, margin: 0 }}>
-                      {card.text}
-                    </p>
-                  </div>
-                </motion.div>
-              ))}
-            </motion.div>
-
-            {/* Right: phone mockup */}
-            <motion.div
-              variants={fadeUp}
-              style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}
-            >
-              <div style={{ position: 'relative' }}>
-                {/* Glow behind phone */}
-                <div
-                  style={{
-                    position: 'absolute', top: '50%', left: '50%',
-                    transform: 'translate(-50%,-50%)',
-                    width: 300, height: 300, borderRadius: '50%',
-                    background: 'radial-gradient(circle, rgba(239,68,68,0.1) 0%, transparent 65%)',
-                    pointerEvents: 'none',
-                  }}
-                />
-                <PhoneMockup />
-              </div>
-            </motion.div>
-          </div>
-        </motion.div>
-      </Section>
+            <AIGuardianDashboard />
+          </motion.div>
+        </div>
+      </section>
 
       {/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-          SECTION 3 — FAMILY INSIGHTS DASHBOARD
+          PREDICTIVE SAFETY ENGINE — 6 cards
       ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
       <Section bg="var(--bg)">
         <motion.div variants={stagger}>
-          <motion.div variants={fadeUp} style={{ textAlign: 'center', marginBottom: 56 }}>
-            <h2
-              style={{
-                fontFamily: 'var(--font-display)',
-                fontSize: 'clamp(1.8rem, 4vw, 2.8rem)',
-                fontWeight: 700, color: 'var(--text-primary)', marginBottom: 16,
-              }}
-            >
-              Family Insights Dashboard
+          <motion.div variants={fadeUp} style={{ textAlign: 'center', marginBottom: 52 }}>
+            <h2 style={{
+              fontFamily: 'var(--font-display)', fontSize: 'clamp(1.8rem, 4vw, 2.8rem)',
+              fontWeight: 700, color: 'var(--text-primary)', marginBottom: 16,
+            }}>
+              Predictive Safety Engine
             </h2>
-            <p style={{ color: 'var(--text-muted)', maxWidth: 580, margin: '0 auto', lineHeight: 1.75 }}>
-              AI generates daily reports so you always know the state of your family — without needing to check the app every hour.
+            <p style={{ color: 'var(--text-muted)', maxWidth: 600, margin: '0 auto', lineHeight: 1.75 }}>
+              Six AI modules working in parallel — each trained on millions of real family safety events to predict risk before it becomes danger.
             </p>
           </motion.div>
 
           <motion.div
             variants={stagger}
-            style={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fit, minmax(290px, 1fr))',
-              gap: 22,
-            }}
+            style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(170px, 1fr))', gap: 18 }}
           >
-            {/* Card 1: Safety Score */}
+            <PredictionGauge label="Route Safety" score={94} color="#10B981" icon={<Navigation size={16} />}
+              description="Analyzes real-time traffic, crime data, and deviation patterns for every family route." />
+            <PredictionGauge label="Child Safety" score={97} color="#3B82F6" icon={<User size={16} />}
+              description="Monitors school arrival, route compliance, and unusual contact patterns." />
+            <PredictionGauge label="Elder Wellness" score={72} color="#F59E0B" icon={<Heart size={16} />}
+              description="Tracks mobility patterns, heartrate trends, and fall risk indicators in all weather." />
+            <PredictionGauge label="Driving Risk" score={23} max={100} color="#10B981" icon={<Car size={16} />}
+              description="Detects harsh braking, phone usage, drowsiness signals, and fatigue patterns." />
+            <PredictionGauge label="Health Index" score={88} color="#A78BFA" icon={<Activity size={16} />}
+              description="Combines smartwatch data, mobility trends, and rest patterns into a unified score." />
+            <PredictionGauge label="Emergency Risk" score={8} max={100} color="#10B981" icon={<AlertTriangle size={16} />}
+              description="Cross-references all signals to predict emergency probability in the next 24 hours." />
+          </motion.div>
+        </motion.div>
+      </Section>
+
+      {/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+          DAILY SAFETY REPORT — Family timeline
+      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
+      <Section bg="var(--bg-surface)">
+        <motion.div variants={stagger}>
+          <motion.div variants={fadeUp} style={{ textAlign: 'center', marginBottom: 52 }}>
+            <h2 style={{
+              fontFamily: 'var(--font-display)', fontSize: 'clamp(1.8rem, 4vw, 2.8rem)',
+              fontWeight: 700, color: 'var(--text-primary)', marginBottom: 16,
+            }}>
+              Daily Safety Report
+            </h2>
+            <p style={{ color: 'var(--text-muted)', maxWidth: 560, margin: '0 auto', lineHeight: 1.75 }}>
+              AI generates a complete family safety timeline automatically — no manual check-ins required.
+            </p>
+          </motion.div>
+
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(340px, 1fr))', gap: 32 }}>
+            {/* Timeline column */}
             <motion.div
               variants={fadeUp}
               style={{
-                background: 'var(--bg-surface)',
+                background: 'var(--bg)',
                 border: '1px solid var(--border)',
                 borderRadius: 18, padding: '28px 24px',
               }}
             >
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 24 }}>
-                <Shield size={16} style={{ color: '#10B981' }} />
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 20 }}>
+                <Calendar size={15} style={{ color: '#D4A853' }} />
                 <span style={{ fontFamily: 'var(--font-display)', fontWeight: 700, color: 'var(--text-primary)', fontSize: '0.95rem' }}>
-                  Family Safety Score Today
+                  Today — June 13, 2026
                 </span>
               </div>
 
-              {/* Big gauge */}
-              <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 24 }}>
-                <div style={{ position: 'relative', width: 140, height: 140 }}>
-                  <svg width="140" height="140" viewBox="0 0 140 140">
-                    <circle cx="70" cy="70" r="58" fill="none" stroke="rgba(255,255,255,0.05)" strokeWidth="12" />
-                    <motion.circle
-                      cx="70" cy="70" r="58"
-                      fill="none"
-                      stroke="#10B981"
-                      strokeWidth="12"
-                      strokeLinecap="round"
-                      strokeDasharray={`${2 * Math.PI * 58}`}
-                      initial={{ strokeDashoffset: 2 * Math.PI * 58 }}
-                      whileInView={{ strokeDashoffset: 2 * Math.PI * 58 * 0.18 }}
-                      transition={{ duration: 1.8, ease: 'easeOut' }}
-                      transform="rotate(-90 70 70)"
-                      style={{ filter: 'drop-shadow(0 0 8px rgba(16,185,129,0.6))' }}
-                    />
-                  </svg>
-                  <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%,-50%)', textAlign: 'center' }}>
-                    <div style={{ fontFamily: 'var(--font-display)', fontSize: '2.2rem', fontWeight: 800, color: '#10B981', lineHeight: 1 }}>82</div>
-                    <div style={{ fontSize: '0.65rem', color: 'rgba(255,255,255,0.4)', marginTop: 2 }}>SAFE</div>
-                  </div>
-                </div>
-              </div>
+              <TimelineItem time="7:15 AM" member="Grandma" event="Completed morning walk — 1.8km in 28 minutes. Heart rate normal." status="safe" icon={<Heart size={10} />} delay={0.05} />
+              <TimelineItem time="8:42 AM" member="Aanya" event="Arrived at St. Mary's School safely via expected route." status="safe" icon={<User size={10} />} delay={0.1} />
+              <TimelineItem time="9:15 AM" member="Dad" event="Entered office geofence zone. Commute time: 34 minutes." status="safe" icon={<MapPin size={10} />} delay={0.15} />
+              <TimelineItem time="10:15 AM" member="Grandma" event="Elevated heartrate detected — AI recommends rest. Smartwatch alert sent." status="warning" icon={<Activity size={10} />} delay={0.2} />
+              <TimelineItem time="11:30 AM" member="Rohan" event="2 harsh brake events detected during school commute. Driving score: 67/100." status="alert" icon={<Car size={10} />} delay={0.25} />
+              <TimelineItem time="3:45 PM" member="Aanya" event="Left school — on expected route home. ETA: 4:05 PM." status="safe" icon={<Navigation size={10} />} delay={0.3} />
+            </motion.div>
 
-              {/* Sub-scores */}
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+            {/* Summary stats */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+              <motion.div
+                variants={fadeUp}
+                style={{
+                  background: 'var(--bg)',
+                  border: '1px solid var(--border)',
+                  borderRadius: 18, padding: '24px',
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 18 }}>
+                  <TrendingUp size={15} style={{ color: '#10B981' }} />
+                  <span style={{ fontFamily: 'var(--font-display)', fontWeight: 700, color: 'var(--text-primary)', fontSize: '0.95rem' }}>
+                    Today&apos;s Safety Summary
+                  </span>
+                </div>
                 {[
-                  { label: 'Child Safety', score: 94, color: '#3B82F6' },
-                  { label: 'Elderly Wellness', score: 78, color: '#F59E0B' },
-                  { label: 'Driving Safety', score: 86, color: '#10B981' },
-                  { label: 'Family Routine', score: 90, color: '#A78BFA' },
+                  { label: 'Family Safety Score', score: 87, color: '#10B981' },
+                  { label: 'Child Protection', score: 97, color: '#3B82F6' },
+                  { label: 'Elder Wellness', score: 72, color: '#F59E0B' },
+                  { label: 'Driving Safety', score: 67, color: '#EF4444' },
+                  { label: 'Routine Adherence', score: 94, color: '#A78BFA' },
                 ].map((s) => (
-                  <div key={s.label} style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                    <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', width: 110, flexShrink: 0 }}>{s.label}</span>
+                  <div key={s.label} style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10 }}>
+                    <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', width: 130, flexShrink: 0 }}>{s.label}</span>
                     <div style={{ flex: 1, height: 5, borderRadius: 3, background: 'rgba(255,255,255,0.07)', overflow: 'hidden' }}>
                       <motion.div
                         initial={{ width: 0 }}
@@ -774,330 +765,63 @@ export default function AIGuardianPage() {
                     <span style={{ fontSize: '0.72rem', fontWeight: 700, color: s.color, width: 24, textAlign: 'right' }}>{s.score}</span>
                   </div>
                 ))}
-              </div>
-            </motion.div>
+              </motion.div>
 
-            {/* Card 2: Activity Summary */}
-            <motion.div
-              variants={fadeUp}
-              style={{
-                background: 'var(--bg-surface)',
-                border: '1px solid var(--border)',
-                borderRadius: 18, padding: '28px 24px',
-              }}
-            >
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 24 }}>
-                <Activity size={16} style={{ color: '#A78BFA' }} />
-                <span style={{ fontFamily: 'var(--font-display)', fontWeight: 700, color: 'var(--text-primary)', fontSize: '0.95rem' }}>
-                  Daily Activity Summary
-                </span>
-              </div>
-
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-                {[
-                  { time: '07:23', text: 'Priya left for school', status: 'safe' },
-                  { time: '09:15', text: 'Dad arrived at office', status: 'safe' },
-                  { time: '12:30', text: 'Mom at market (unusual)', status: 'warn' },
-                  { time: '15:45', text: 'Grandma walked 2.1km', status: 'safe' },
-                  { time: '16:30', text: 'Priya left school', status: 'safe' },
-                ].map((item, i) => (
-                  <motion.div
-                    key={i}
-                    initial={{ opacity: 0, x: -10 }}
-                    whileInView={{ opacity: 1, x: 0 }}
-                    transition={{ delay: i * 0.1 }}
-                    style={{ display: 'flex', alignItems: 'center', gap: 10 }}
-                  >
-                    <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)', width: 36, flexShrink: 0, fontFamily: 'monospace' }}>
-                      {item.time}
-                    </span>
-                    <div
-                      style={{
-                        width: 6, height: 6, borderRadius: '50%', flexShrink: 0,
-                        background: item.status === 'safe' ? '#10B981' : '#F59E0B',
-                        boxShadow: item.status === 'safe' ? '0 0 6px rgba(16,185,129,0.6)' : '0 0 6px rgba(245,158,11,0.6)',
-                      }}
-                    />
-                    <span style={{ fontSize: '0.82rem', color: 'var(--text-secondary)', flex: 1 }}>{item.text}</span>
-                    <span style={{ fontSize: '0.9rem' }}>{item.status === 'safe' ? '✅' : '⚠️'}</span>
-                  </motion.div>
-                ))}
-              </div>
-            </motion.div>
-
-            {/* Card 3: AI Predictions */}
-            <motion.div
-              variants={fadeUp}
-              style={{
-                background: 'var(--bg-surface)',
-                border: '1px solid var(--border)',
-                borderRadius: 18, padding: '28px 24px',
-              }}
-            >
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 24 }}>
-                <Sparkles size={16} style={{ color: 'var(--gold)' }} />
-                <span style={{ fontFamily: 'var(--font-display)', fontWeight: 700, color: 'var(--text-primary)', fontSize: '0.95rem' }}>
-                  AI Predictions for Tomorrow
-                </span>
-              </div>
-
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-                {[
-                  {
-                    icon: '🌧️',
-                    text: 'High chance of rain — Priya\'s route may be unsafe',
-                    severity: 'medium',
-                  },
-                  {
-                    icon: '🚗',
-                    text: 'Dad\'s Friday driving pattern detected — speed alert likely',
-                    severity: 'high',
-                  },
-                  {
-                    icon: '❤️',
-                    text: 'Grandma\'s health score trending down — wellness check recommended',
-                    severity: 'medium',
-                  },
-                ].map((pred, i) => (
-                  <motion.div
-                    key={i}
-                    initial={{ opacity: 0, y: 8 }}
-                    whileInView={{ opacity: 1, y: 0 }}
-                    transition={{ delay: i * 0.12 }}
-                    style={{
-                      padding: '12px 14px',
-                      borderRadius: 10,
-                      background: pred.severity === 'high' ? 'rgba(239,68,68,0.07)' : 'rgba(245,158,11,0.07)',
-                      border: `1px solid ${pred.severity === 'high' ? 'rgba(239,68,68,0.2)' : 'rgba(245,158,11,0.2)'}`,
-                      display: 'flex', alignItems: 'flex-start', gap: 10,
-                    }}
-                  >
-                    <span style={{ fontSize: '1.1rem', flexShrink: 0, marginTop: 1 }}>{pred.icon}</span>
-                    <p style={{ margin: 0, fontSize: '0.82rem', color: 'var(--text-secondary)', lineHeight: 1.55 }}>
-                      {pred.text}
-                    </p>
-                  </motion.div>
-                ))}
-
-                <div
-                  style={{
-                    marginTop: 4,
-                    padding: '10px 14px',
-                    borderRadius: 10,
-                    background: 'rgba(167,139,250,0.07)',
-                    border: '1px solid rgba(167,139,250,0.18)',
-                    display: 'flex', alignItems: 'center', gap: 8,
-                  }}
-                >
-                  <Brain size={13} style={{ color: '#A78BFA', flexShrink: 0 }} />
-                  <span style={{ fontSize: '0.76rem', color: '#A78BFA' }}>AI confidence: 91% based on 14-day pattern</span>
+              <motion.div
+                variants={fadeUp}
+                style={{
+                  background: 'rgba(212,168,83,0.06)',
+                  border: '1px solid rgba(212,168,83,0.2)',
+                  borderRadius: 18, padding: '20px',
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12 }}>
+                  <Sparkles size={14} style={{ color: '#D4A853' }} />
+                  <span style={{ fontFamily: 'var(--font-display)', fontWeight: 700, color: '#D4A853', fontSize: '0.9rem' }}>
+                    AI Recommendation
+                  </span>
                 </div>
-              </div>
-            </motion.div>
-          </motion.div>
+                <p style={{ fontSize: '0.83rem', color: 'rgba(255,255,255,0.7)', lineHeight: 1.6, margin: 0 }}>
+                  Rohan&apos;s driving needs attention — schedule a safety review. Grandma should rest this afternoon. Overall family safety is above average today.
+                </p>
+              </motion.div>
+            </div>
+          </div>
         </motion.div>
       </Section>
 
       {/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-          SECTION 4 — AI CHAT ASSISTANT
+          AI VOICE COMMANDS — 6 examples
       ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
-      <section
-        style={{
-          background: 'linear-gradient(160deg, #060810 0%, #0a0c1a 100%)',
-          padding: '88px 0',
-        }}
-      >
-        <div style={{ maxWidth: 860, margin: '0 auto', padding: '0 24px' }}>
-          <motion.div
-            initial={{ opacity: 0, y: 28 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.55 }}
-            style={{ textAlign: 'center', marginBottom: 52 }}
-          >
-            <h2
-              style={{
-                fontFamily: 'var(--font-display)',
-                fontSize: 'clamp(1.8rem, 4vw, 2.8rem)',
-                fontWeight: 700, color: '#FFFFFF', marginBottom: 16,
-              }}
-            >
-              Ask AI Guardian Anything
+      <Section bg="var(--bg)">
+        <motion.div variants={stagger}>
+          <motion.div variants={fadeUp} style={{ textAlign: 'center', marginBottom: 52 }}>
+            <h2 style={{
+              fontFamily: 'var(--font-display)', fontSize: 'clamp(1.8rem, 4vw, 2.8rem)',
+              fontWeight: 700, color: 'var(--text-primary)', marginBottom: 16,
+            }}>
+              AI Voice Commands
             </h2>
-            <p style={{ color: 'rgba(255,255,255,0.5)', maxWidth: 560, margin: '0 auto', lineHeight: 1.75 }}>
-              Natural language. Instant answers. No menus, no dashboards — just ask and know.
+            <p style={{ color: 'var(--text-muted)', maxWidth: 560, margin: '0 auto', lineHeight: 1.75 }}>
+              Ask in plain language. Tap any command to see the AI&apos;s response.
             </p>
           </motion.div>
 
-          <motion.div
-            initial={{ opacity: 0, y: 24 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.55, delay: 0.1 }}
-            style={{
-              background: '#0d0f1a',
-              borderRadius: 20,
-              border: '1px solid rgba(167,139,250,0.2)',
-              overflow: 'hidden',
-              boxShadow: '0 8px 48px rgba(0,0,0,0.5), 0 0 80px rgba(167,139,250,0.04)',
-            }}
-          >
-            {/* Chat header */}
-            <div
-              style={{
-                background: 'rgba(167,139,250,0.08)',
-                borderBottom: '1px solid rgba(167,139,250,0.15)',
-                padding: '16px 22px',
-                display: 'flex', alignItems: 'center', gap: 12,
-              }}
-            >
-              <motion.div
-                animate={{ scale: [1, 1.15, 1], boxShadow: ['0 0 10px rgba(167,139,250,0.3)', '0 0 24px rgba(167,139,250,0.6)', '0 0 10px rgba(167,139,250,0.3)'] }}
-                transition={{ duration: 2.2, repeat: Infinity }}
-                style={{
-                  width: 38, height: 38, borderRadius: '50%',
-                  background: 'linear-gradient(135deg, #A78BFA, #EC4899)',
-                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                }}
-              >
-                <Brain size={17} style={{ color: '#fff' }} />
-              </motion.div>
-              <div>
-                <div style={{ fontWeight: 700, color: '#fff', fontSize: '0.94rem' }}>AI Guardian</div>
-                <div style={{ color: '#10B981', fontSize: '0.74rem', display: 'flex', alignItems: 'center', gap: 4 }}>
-                  <motion.span
-                    animate={{ opacity: [1, 0.4, 1] }}
-                    transition={{ duration: 1.2, repeat: Infinity }}
-                    style={{ width: 6, height: 6, borderRadius: '50%', background: '#10B981', display: 'inline-block' }}
-                  />
-                  Active — monitoring your family
-                </div>
-              </div>
-              <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 6 }}>
-                <Sparkles size={13} style={{ color: 'var(--gold)' }} />
-                <span style={{ fontSize: '0.7rem', color: 'var(--gold)', fontWeight: 600 }}>Powered by Gravity AI</span>
-              </div>
-            </div>
-
-            {/* Messages */}
-            <div style={{ padding: '28px 22px', display: 'flex', flexDirection: 'column', gap: 18 }}>
-              <ChatBubble role="user" text="Where is my child right now?" delay={0} />
-              <ChatBubble role="ai" text="Priya is at St. Mary's School, Mumbai — arrived 8:42 AM. Currently in the main building. All safe. ✅" delay={0.1} />
-
-              <ChatBubble role="user" text="Is grandma safe today?" delay={0.2} />
-              <ChatBubble role="ai" text="Grandma walked her morning route at 7:15 AM — 1.8km, 24 minutes. Heart rate normal (smartwatch). She's home now. ✅" delay={0.3} />
-
-              <ChatBubble role="user" text="Any unusual behavior today?" delay={0.4} />
-              <ChatBubble role="ai" text="⚠️ I noticed Mom visited an unfamiliar location (Dharavi Market) for 2+ hours this afternoon. She's safe, but this deviates from her usual Tuesday pattern." delay={0.5} />
-
-              <ChatBubble role="user" text="Emergency recommendations" delay={0.6} />
-              <ChatBubble role="ai" text="Based on current patterns: ① Dad should rest — driving stress detected. ② Priya's route tomorrow has construction — suggest alternate path." delay={0.7} />
-
-              {/* Typing indicator */}
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                <div
-                  style={{
-                    width: 28, height: 28, borderRadius: '50%',
-                    background: 'linear-gradient(135deg, #A78BFA, #EC4899)',
-                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    flexShrink: 0, color: '#fff',
-                  }}
-                >
-                  <Brain size={12} />
-                </div>
-                <div
-                  style={{
-                    padding: '10px 16px', borderRadius: '12px 12px 12px 4px',
-                    background: 'rgba(167,139,250,0.1)',
-                    border: '1px solid rgba(167,139,250,0.2)',
-                    display: 'flex', gap: 5, alignItems: 'center',
-                  }}
-                >
-                  {[0, 0.2, 0.4].map((d) => (
-                    <motion.div
-                      key={d}
-                      animate={{ y: [0, -5, 0], opacity: [0.4, 1, 0.4] }}
-                      transition={{ duration: 0.8, repeat: Infinity, delay: d }}
-                      style={{ width: 6, height: 6, borderRadius: '50%', background: '#A78BFA' }}
-                    />
-                  ))}
-                </div>
-              </div>
-            </div>
-
-            {/* Input bar */}
-            <div
-              style={{
-                borderTop: '1px solid rgba(167,139,250,0.15)',
-                padding: '14px 22px',
-                display: 'flex', gap: 10, alignItems: 'center',
-              }}
-            >
-              <div
-                style={{
-                  flex: 1, background: 'rgba(255,255,255,0.05)',
-                  border: '1px solid rgba(167,139,250,0.2)',
-                  borderRadius: 12, padding: '11px 16px',
-                  color: 'rgba(255,255,255,0.28)', fontSize: '0.86rem',
-                }}
-              >
-                Ask AI Guardian anything...
-              </div>
-              <motion.div
-                whileHover={{ scale: 1.08 }}
-                whileTap={{ scale: 0.95 }}
-                style={{
-                  width: 40, height: 40, borderRadius: 10,
-                  background: 'linear-gradient(135deg, var(--gold), #B8860B)',
-                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  cursor: 'pointer',
-                }}
-              >
-                <Send size={15} style={{ color: '#0a0900' }} />
-              </motion.div>
-            </div>
-          </motion.div>
-        </div>
-      </section>
-
-      {/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-          SECTION 5 — AI VOICE ASSISTANT
-      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
-      <Section bg="var(--bg-surface2)">
-        <motion.div variants={stagger} style={{ textAlign: 'center' }}>
-          <motion.div variants={fadeUp} style={{ marginBottom: 40 }}>
-            <h2
-              style={{
-                fontFamily: 'var(--font-display)',
-                fontSize: 'clamp(1.8rem, 4vw, 2.8rem)',
-                fontWeight: 700, color: 'var(--text-primary)', marginBottom: 16,
-              }}
-            >
-              Voice Commands. Instant Answers.
-            </h2>
-            <p style={{ color: 'var(--text-muted)', maxWidth: 520, margin: '0 auto', lineHeight: 1.75 }}>
-              Hands full? Just speak. AI Guardian listens and responds with full family context.
-            </p>
-          </motion.div>
-
-          {/* Mic button */}
-          <motion.div variants={fadeUp} style={{ display: 'flex', justifyContent: 'center', marginBottom: 36 }}>
+          {/* Large mic button */}
+          <motion.div variants={fadeUp} style={{ display: 'flex', justifyContent: 'center', marginBottom: 44 }}>
             <div style={{ position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              {/* Pulsing rings */}
-              {[1, 1.5, 2].map((scale, i) => (
+              {[1, 1.6, 2.2].map((scale, i) => (
                 <motion.div
                   key={i}
-                  animate={{ scale: [1, scale + 0.3, 1], opacity: [0.6, 0, 0.6] }}
+                  animate={{ scale: [1, scale, 1], opacity: [0.5, 0, 0.5] }}
                   transition={{ duration: 2.4, repeat: Infinity, delay: i * 0.4, ease: 'easeOut' }}
                   style={{
-                    position: 'absolute',
-                    width: 88, height: 88,
-                    borderRadius: '50%',
-                    background: 'rgba(212,168,83,0.15)',
-                    border: '1px solid rgba(212,168,83,0.25)',
+                    position: 'absolute', width: 88, height: 88, borderRadius: '50%',
+                    background: 'rgba(212,168,83,0.12)', border: '1px solid rgba(212,168,83,0.2)',
                     pointerEvents: 'none',
                   }}
                 />
               ))}
-
               <motion.button
                 whileHover={{ scale: 1.08 }}
                 whileTap={{ scale: 0.94 }}
@@ -1111,69 +835,141 @@ export default function AIGuardianPage() {
                 }}
                 aria-label="Activate voice assistant"
               >
-                <Mic size={30} style={{ color: '#0a0900' }} />
+                <Mic size={32} style={{ color: '#0a0900' }} />
               </motion.button>
             </div>
           </motion.div>
 
-          <motion.p
-            variants={fadeUp}
-            style={{ color: 'var(--text-muted)', fontSize: '0.9rem', marginBottom: 28, fontStyle: 'italic' }}
-          >
-            Say: &quot;Hey Gravity, where is everyone?&quot;
+          <motion.p variants={fadeUp} style={{ textAlign: 'center', color: 'var(--text-muted)', fontSize: '0.9rem', marginBottom: 36, fontStyle: 'italic' }}>
+            Say: &quot;Hey Gravity, where is everyone?&quot; — tap a card to see the AI response
           </motion.p>
 
-          {/* Voice command chips */}
           <motion.div
-            variants={fadeUp}
-            style={{ display: 'flex', gap: 10, justifyContent: 'center', flexWrap: 'wrap', marginBottom: 36 }}
+            variants={stagger}
+            style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: 14 }}
           >
-            {['Where is Priya?', 'Is everyone home?', 'Any emergencies?'].map((cmd) => (
-              <motion.div
-                key={cmd}
-                whileHover={{ y: -2 }}
-                style={{
-                  display: 'inline-flex', alignItems: 'center', gap: 6,
-                  background: 'rgba(212,168,83,0.08)',
-                  border: '1px solid rgba(212,168,83,0.25)',
-                  borderRadius: 999, padding: '9px 20px',
-                  color: 'var(--gold)', fontSize: '0.85rem', fontWeight: 600, cursor: 'default',
-                }}
-              >
-                <Mic size={12} />
-                &quot;{cmd}&quot;
-              </motion.div>
-            ))}
-          </motion.div>
-
-          <motion.div
-            variants={fadeUp}
-            style={{ display: 'flex', gap: 12, justifyContent: 'center', alignItems: 'center', flexWrap: 'wrap' }}
-          >
-            {[
-              { label: 'iOS', icon: '🍎' },
-              { label: 'Android', icon: '🤖' },
-            ].map((platform) => (
-              <div
-                key={platform.label}
-                style={{
-                  display: 'inline-flex', alignItems: 'center', gap: 7,
-                  background: 'var(--bg-surface)',
-                  border: '1px solid var(--border)',
-                  borderRadius: 10, padding: '8px 18px',
-                  color: 'var(--text-secondary)', fontSize: '0.82rem', fontWeight: 600,
-                }}
-              >
-                <span>{platform.icon}</span>
-                Available on {platform.label}
-              </div>
-            ))}
+            <VoiceCommandCard
+              command="Where is my child?"
+              response="Aanya is at St. Mary's School, Mumbai — arrived 8:42 AM via safe route. Currently in the main building. All clear."
+              icon={<MapPin size={15} />} color="#3B82F6" delay={0}
+            />
+            <VoiceCommandCard
+              command="Is grandma safe?"
+              response="Grandma completed her morning walk at 7:15 AM — 1.8km, normal heartrate. She's home now. Heartrate elevated at 10:15 AM — rest recommended."
+              icon={<Heart size={15} />} color="#F59E0B" delay={0.05}
+            />
+            <VoiceCommandCard
+              command="Any emergencies?"
+              response="No active SOS alerts. 1 warning: Rohan had 2 harsh brake events this morning. Grandma heartrate elevated. No immediate emergencies."
+              icon={<AlertTriangle size={15} />} color="#EF4444" delay={0.1}
+            />
+            <VoiceCommandCard
+              command="Family activity today?"
+              response="6 events logged. Aanya at school, Dad at office, Grandma home, Rohan driving. All members located. 1 warning, 0 critical alerts."
+              icon={<Activity size={15} />} color="#A78BFA" delay={0.15}
+            />
+            <VoiceCommandCard
+              command="Who needs attention?"
+              response="Priority 1: Rohan — driving risk score 67/100, 2 harsh brakes today. Priority 2: Grandma — heartrate elevated, recommend rest and hydration."
+              icon={<User size={15} />} color="#EC4899" delay={0.2}
+            />
+            <VoiceCommandCard
+              command="Navigate to Aanya's school"
+              response="St. Mary's School, Bandra West. 7.2km via NH 48 — 24 min. School hours end at 3:30 PM. Aanya's last known location: main building."
+              icon={<Navigation size={15} />} color="#10B981" delay={0.25}
+            />
           </motion.div>
         </motion.div>
       </Section>
 
       {/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-          SECTION 6 — CTA
+          WEEKLY SAFETY SUMMARY CHART
+      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
+      <Section bg="var(--bg-surface)">
+        <motion.div variants={stagger}>
+          <motion.div variants={fadeUp} style={{ textAlign: 'center', marginBottom: 52 }}>
+            <h2 style={{
+              fontFamily: 'var(--font-display)', fontSize: 'clamp(1.8rem, 4vw, 2.8rem)',
+              fontWeight: 700, color: 'var(--text-primary)', marginBottom: 16,
+            }}>
+              Weekly Safety Summary
+            </h2>
+            <p style={{ color: 'var(--text-muted)', maxWidth: 560, margin: '0 auto', lineHeight: 1.75 }}>
+              Your family&apos;s 7-day safety trend — track improvements and spot patterns over time.
+            </p>
+          </motion.div>
+
+          <motion.div
+            variants={fadeUp}
+            style={{
+              background: 'var(--bg)',
+              border: '1px solid var(--border)',
+              borderRadius: 20, padding: '32px 28px',
+            }}
+          >
+            {/* Chart header */}
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 28, flexWrap: 'wrap', gap: 12 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <TrendingUp size={16} style={{ color: '#10B981' }} />
+                <span style={{ fontFamily: 'var(--font-display)', fontWeight: 700, color: 'var(--text-primary)', fontSize: '0.95rem' }}>
+                  Family Safety Score — June 7–13, 2026
+                </span>
+              </div>
+              <div style={{ display: 'flex', gap: 14 }}>
+                {[
+                  { color: '#10B981', label: '≥90 Excellent' },
+                  { color: '#D4A853', label: '80–89 Good' },
+                  { color: '#EF4444', label: '<80 Review' },
+                  { color: '#EF4444', label: '● Alert event' },
+                ].map(item => (
+                  <div key={item.label} style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
+                    <div style={{ width: 8, height: 8, borderRadius: item.label.includes('●') ? '50%' : 2, background: item.color }} />
+                    <span style={{ fontSize: '0.68rem', color: 'rgba(255,255,255,0.4)' }}>{item.label}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* SVG bar chart */}
+            <div style={{ overflowX: 'auto' }}>
+              <WeeklySafetyChart />
+            </div>
+
+            {/* Weekly stats row */}
+            <div
+              style={{
+                display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 16, marginTop: 28,
+                borderTop: '1px solid rgba(255,255,255,0.06)', paddingTop: 24,
+              }}
+            >
+              {[
+                { label: 'Avg Safety Score', value: '89.4', color: '#10B981', icon: <Shield size={14} /> },
+                { label: 'Total Events', value: '12', color: '#F59E0B', icon: <AlertTriangle size={14} /> },
+                { label: 'Best Day', value: 'Sunday', color: '#A78BFA', icon: <Star size={14} /> },
+                { label: 'AI Predictions', value: '97.1%', color: '#D4A853', icon: <Brain size={14} /> },
+              ].map((stat) => (
+                <div key={stat.label} style={{ textAlign: 'center' }}>
+                  <div style={{
+                    width: 36, height: 36, borderRadius: 8,
+                    background: `${stat.color}15`, border: `1px solid ${stat.color}30`,
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    color: stat.color, margin: '0 auto 8px',
+                  }}>
+                    {stat.icon}
+                  </div>
+                  <div style={{ fontFamily: 'var(--font-display)', fontSize: '1.3rem', fontWeight: 800, color: stat.color }}>
+                    {stat.value}
+                  </div>
+                  <div style={{ fontSize: '0.72rem', color: 'rgba(255,255,255,0.4)', marginTop: 2 }}>{stat.label}</div>
+                </div>
+              ))}
+            </div>
+          </motion.div>
+        </motion.div>
+      </Section>
+
+      {/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+          BOTTOM CTA — Enable AI Guardian ₹299/month
       ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
       <section
         style={{
@@ -1191,13 +987,13 @@ export default function AIGuardianPage() {
           style={{
             position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%,-50%)',
             width: 600, height: 600, borderRadius: '50%',
-            background: 'radial-gradient(circle, rgba(212,168,83,0.06) 0%, rgba(139,92,246,0.04) 40%, transparent 65%)',
+            background: 'radial-gradient(circle, rgba(212,168,83,0.07) 0%, rgba(139,92,246,0.05) 40%, transparent 65%)',
             pointerEvents: 'none',
           }}
         />
 
-        <div style={{ maxWidth: 640, margin: '0 auto', position: 'relative', zIndex: 1 }}>
-          {/* Rotating brain icon */}
+        <div style={{ maxWidth: 660, margin: '0 auto', position: 'relative', zIndex: 1 }}>
+          {/* Animated brain icon */}
           <motion.div
             animate={{ rotate: [0, 360] }}
             transition={{ duration: 22, repeat: Infinity, ease: 'linear' }}
@@ -1217,73 +1013,91 @@ export default function AIGuardianPage() {
             whileInView={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.55 }}
             style={{
-              fontFamily: 'var(--font-display)',
-              fontSize: 'clamp(1.8rem, 4vw, 2.8rem)',
-              fontWeight: 700, color: '#FFFFFF', marginBottom: 16,
+              fontFamily: 'var(--font-display)', fontSize: 'clamp(1.8rem, 4vw, 3rem)',
+              fontWeight: 800, color: '#FFFFFF', marginBottom: 16,
             }}
           >
-            Start Your AI-Protected Family Journey
+            Your Family Deserves AI-Level Protection
           </motion.h2>
 
           <motion.p
             initial={{ opacity: 0, y: 18 }}
             whileInView={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.55, delay: 0.1 }}
-            style={{ color: 'rgba(255,255,255,0.55)', marginBottom: 44, lineHeight: 1.75, fontSize: '1.02rem' }}
+            style={{ color: 'rgba(255,255,255,0.55)', marginBottom: 18, lineHeight: 1.75, fontSize: '1.05rem' }}
           >
-            14-day free trial &bull; No credit card required &bull; Cancel anytime
+            AI Guardian monitors, predicts, and alerts — so you can live your life knowing everyone you love is safe.
           </motion.p>
+
+          {/* Price callout */}
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            whileInView={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.45, delay: 0.18 }}
+            style={{
+              display: 'inline-flex', alignItems: 'center', gap: 10,
+              background: 'rgba(212,168,83,0.08)',
+              border: '1px solid rgba(212,168,83,0.3)',
+              borderRadius: 14, padding: '12px 24px',
+              marginBottom: 36,
+            }}
+          >
+            <Sparkles size={16} style={{ color: '#D4A853' }} />
+            <span style={{ fontSize: '1.1rem', fontWeight: 800, color: '#D4A853' }}>₹299</span>
+            <span style={{ fontSize: '0.85rem', color: 'rgba(255,255,255,0.5)' }}>/month per family</span>
+            <span style={{
+              fontSize: '0.68rem', fontWeight: 700, padding: '3px 8px',
+              borderRadius: 999, background: 'rgba(16,185,129,0.15)',
+              border: '1px solid rgba(16,185,129,0.3)', color: '#10B981',
+            }}>14-DAY FREE TRIAL</span>
+          </motion.div>
 
           <motion.div
             initial={{ opacity: 0, y: 16 }}
             whileInView={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.55, delay: 0.2 }}
+            transition={{ duration: 0.55, delay: 0.25 }}
             style={{ display: 'flex', gap: 16, justifyContent: 'center', flexWrap: 'wrap', marginBottom: 28 }}
           >
             <Link
               href="/pricing"
               style={{
                 background: 'linear-gradient(90deg, var(--gold), #B8860B)',
-                color: '#0a0900',
-                padding: '15px 36px',
-                borderRadius: 12,
-                textDecoration: 'none',
-                fontWeight: 700,
-                fontSize: '1.05rem',
+                color: '#0a0900', padding: '15px 36px', borderRadius: 12,
+                textDecoration: 'none', fontWeight: 700, fontSize: '1.05rem',
                 display: 'inline-flex', alignItems: 'center', gap: 8,
                 boxShadow: '0 0 32px rgba(212,168,83,0.35)',
               }}
             >
-              <Download size={18} />
-              Download App
+              <Brain size={18} />
+              Enable AI Guardian — ₹299/month
             </Link>
             <Link
               href="/contact"
               style={{
-                background: 'rgba(255,255,255,0.06)',
-                backdropFilter: 'blur(12px)',
-                color: '#fff',
-                padding: '15px 36px',
-                borderRadius: 12,
-                textDecoration: 'none',
-                fontWeight: 600,
-                fontSize: '1.05rem',
+                background: 'rgba(255,255,255,0.06)', backdropFilter: 'blur(12px)',
+                color: '#fff', padding: '15px 36px', borderRadius: 12,
+                textDecoration: 'none', fontWeight: 600, fontSize: '1.05rem',
                 border: '1px solid rgba(255,255,255,0.14)',
                 display: 'inline-flex', alignItems: 'center', gap: 8,
               }}
             >
-              <Calendar size={18} />
-              Book Demo
+              <Phone size={18} />
+              Book a Demo
             </Link>
           </motion.div>
 
           <motion.div
             initial={{ opacity: 0 }}
             whileInView={{ opacity: 1 }}
-            transition={{ delay: 0.35 }}
+            transition={{ delay: 0.4 }}
             style={{ display: 'flex', gap: 24, justifyContent: 'center', flexWrap: 'wrap' }}
           >
-            {['94% prediction accuracy', 'Trusted by 50,000+ families', 'End-to-end encrypted'].map((trust) => (
+            {[
+              '94% prediction accuracy',
+              'Trusted by 50,000+ families',
+              'End-to-end encrypted',
+              'Cancel anytime',
+            ].map((trust) => (
               <div key={trust} style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                 <CheckCircle size={13} style={{ color: '#10B981', flexShrink: 0 }} />
                 <span style={{ fontSize: '0.8rem', color: 'rgba(255,255,255,0.45)' }}>{trust}</span>

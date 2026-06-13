@@ -5,82 +5,23 @@ import { motion, AnimatePresence, useInView } from 'framer-motion'
 import Link from 'next/link'
 import { REGIONAL_PRICING } from '@/lib/constants'
 
-/* ─────────────── Regional prices (6 tiers) ─────────────── */
-type RegionalPriceRow = {
-  free: string
-  premium: string
-  familyPlus: string
-  elderCare: string
-  school: string
-  enterprise: string
-  gateway: string
-}
+/* ─────────────── Types ─────────────── */
+type Currency = 'INR' | 'USD' | 'AED' | 'KES'
+type BillingCycle = 'monthly' | 'annual'
 
-const REGIONAL_PRICES: Record<string, RegionalPriceRow> = {
-  India: {
-    free: 'Free',
-    premium: '₹299/mo',
-    familyPlus: '₹499/mo',
-    elderCare: '₹699/mo',
-    school: '₹999/mo',
-    enterprise: 'Custom',
-    gateway: 'UPI · Razorpay',
-  },
-  'Kenya / East Africa': {
-    free: 'Free',
-    premium: 'KES 550/mo',
-    familyPlus: 'KES 950/mo',
-    elderCare: 'KES 1,350/mo',
-    school: 'KES 1,900/mo',
-    enterprise: 'Custom',
-    gateway: 'M-Pesa · Airtel Money',
-  },
-  'UAE / MENA': {
-    free: 'Free',
-    premium: 'AED 11/mo',
-    familyPlus: 'AED 18/mo',
-    elderCare: 'AED 26/mo',
-    school: 'AED 37/mo',
-    enterprise: 'Custom',
-    gateway: 'Stripe · PayTabs',
-  },
-  'UK / Europe': {
-    free: 'Free',
-    premium: '£2.49/mo',
-    familyPlus: '£4.49/mo',
-    elderCare: '£5.99/mo',
-    school: '£8.99/mo',
-    enterprise: 'Custom',
-    gateway: 'Stripe · PayPal',
-  },
-  'USA / Canada': {
-    free: 'Free',
-    premium: '$2.99/mo',
-    familyPlus: '$5.99/mo',
-    elderCare: '$7.99/mo',
-    school: '$11.99/mo',
-    enterprise: 'Custom',
-    gateway: 'Stripe · Apple Pay',
-  },
-  'Rest of Africa': {
-    free: 'Free',
-    premium: '$1.99/mo',
-    familyPlus: '$3.99/mo',
-    elderCare: '$5.99/mo',
-    school: '$8.99/mo',
-    enterprise: 'Custom',
-    gateway: 'Flutterwave · Paystack',
-  },
-}
-
-/* ─────────────── Plan definitions ─────────────── */
-type PlanId = 'free' | 'premium' | 'familyPlus' | 'elderCare' | 'school' | 'enterprise'
-
-interface Plan {
-  id: PlanId
+interface PlanTier {
+  id: string
   name: string
   tagline: string
   emoji: string
+  monthlyINR: string
+  annualINR: string
+  monthlyUSD: string
+  annualUSD: string
+  monthlyAED: string
+  annualAED: string
+  monthlyKES: string
+  annualKES: string
   badge: string | null
   badgeColor: string | null
   features: string[]
@@ -90,21 +31,32 @@ interface Plan {
   accentRgb: string
   isFeatured: boolean
   isContact: boolean
+  isCustom: boolean
 }
 
-const PLANS: Plan[] = [
+/* ─────────────── 7 Plan Definitions ─────────────── */
+const PLANS: PlanTier[] = [
   {
     id: 'free',
     name: 'Free',
-    tagline: 'For individuals',
+    tagline: 'For individuals getting started',
     emoji: '🆓',
+    monthlyINR: '₹0',
+    annualINR: '₹0',
+    monthlyUSD: '$0',
+    annualUSD: '$0',
+    monthlyAED: 'AED 0',
+    annualAED: 'AED 0',
+    monthlyKES: 'KES 0',
+    annualKES: 'KES 0',
     badge: null,
     badgeColor: null,
     features: [
       '3 family members',
-      'Live location tracking',
-      'Basic SOS alerts',
+      'Real-time location tracking',
+      'Basic SOS alert',
       'Check-in system',
+      'Basic geofence (1 zone)',
       '7-day location history',
     ],
     cta: 'Start Free',
@@ -113,108 +65,161 @@ const PLANS: Plan[] = [
     accentRgb: '107,114,128',
     isFeatured: false,
     isContact: false,
+    isCustom: false,
   },
   {
     id: 'premium',
     name: 'Premium',
     tagline: 'For small families',
     emoji: '👨‍👩‍👧',
+    monthlyINR: '₹299',
+    annualINR: '₹2,499',
+    monthlyUSD: '$3.99',
+    annualUSD: '$32.99',
+    monthlyAED: 'AED 14',
+    annualAED: 'AED 115',
+    monthlyKES: 'KES 550',
+    annualKES: 'KES 4,599',
     badge: 'Popular',
     badgeColor: '#4B80F0',
     features: [
-      '6 family members',
-      'Geofencing (10 zones)',
-      'Journey sharing',
+      '10 family members',
+      'AI Guardian alerts',
+      'Unlimited geofencing',
+      'Driving safety score',
+      'Health monitoring',
       '30-day location history',
-      'Priority support',
+      'Priority SOS response',
     ],
-    cta: 'Go Premium',
+    cta: 'Get Started',
     ctaHref: '/#download',
     accentColor: '#4B80F0',
     accentRgb: '75,128,240',
     isFeatured: false,
     isContact: false,
+    isCustom: false,
   },
   {
     id: 'familyPlus',
     name: 'Family Plus',
-    tagline: 'Best for families',
+    tagline: 'Best for growing families',
     emoji: '⭐',
+    monthlyINR: '₹499',
+    annualINR: '₹3,999',
+    monthlyUSD: '$6.99',
+    annualUSD: '$54.99',
+    monthlyAED: 'AED 25',
+    annualAED: 'AED 199',
+    monthlyKES: 'KES 950',
+    annualKES: 'KES 7,499',
     badge: 'MOST POPULAR',
     badgeColor: '#D4A853',
     features: [
-      '15 family members',
-      'Unlimited geofences',
-      'Family chat',
-      'Driving safety suite',
-      'AI safety alerts',
-      'Wearable sync',
+      '25 family members',
+      'All Premium features',
+      'Child safety mode',
+      'Elder care dashboard',
+      'Smart home integration',
+      'Family group chat',
+      '90-day location history',
+      'Wearable device sync',
     ],
-    cta: 'Get Family Plus',
+    cta: 'Start Trial',
     ctaHref: '/#download',
     accentColor: '#D4A853',
     accentRgb: '212,168,83',
     isFeatured: true,
     isContact: false,
+    isCustom: false,
   },
   {
     id: 'elderCare',
     name: 'Elder Care',
     tagline: 'For families with seniors',
     emoji: '❤️',
+    monthlyINR: '₹399',
+    annualINR: '₹3,199',
+    monthlyUSD: '$5.49',
+    annualUSD: '$43.99',
+    monthlyAED: 'AED 20',
+    annualAED: 'AED 159',
+    monthlyKES: 'KES 750',
+    annualKES: 'KES 5,999',
     badge: 'Care Focused',
     badgeColor: '#10B981',
     features: [
-      'Everything in Family Plus',
-      'Fall detection',
-      'Medication tracking',
-      'Health monitoring',
-      'Wellness dashboard',
+      'Fall detection & alerts',
+      'Medication management',
+      'Health monitoring dashboard',
       'Caregiver mode',
+      'Vital sign tracking',
+      'Emergency contact chain',
+      'Wellness reports',
     ],
-    cta: 'Start Elder Care',
+    cta: 'Start Trial',
     ctaHref: '/#download',
     accentColor: '#10B981',
     accentRgb: '16,185,129',
     isFeatured: false,
     isContact: false,
+    isCustom: false,
   },
   {
     id: 'school',
     name: 'School Edition',
     tagline: 'For educational institutions',
     emoji: '🏫',
+    monthlyINR: '₹999',
+    annualINR: '₹7,999',
+    monthlyUSD: '$13.99',
+    annualUSD: '$109.99',
+    monthlyAED: 'AED 51',
+    annualAED: 'AED 399',
+    monthlyKES: 'KES 1,900',
+    annualKES: 'KES 14,999',
     badge: 'Education',
     badgeColor: '#8B5CF6',
     features: [
-      '500 students',
-      'Bus route tracking',
-      'Pickup verification',
-      'Admin dashboard',
+      'Up to 500 students',
+      'School bus live tracking',
+      'Attendance management',
+      'Pickup authorization system',
       'Parent notifications',
-      'Emergency mode',
+      'Admin dashboard',
+      'Emergency broadcast mode',
     ],
-    cta: 'School Sales',
+    cta: 'Contact Sales',
     ctaHref: 'mailto:schools@trackalways.com',
     accentColor: '#8B5CF6',
     accentRgb: '139,92,246',
     isFeatured: false,
     isContact: true,
+    isCustom: false,
   },
   {
     id: 'enterprise',
     name: 'Enterprise',
-    tagline: 'For organizations',
+    tagline: 'For large organizations',
     emoji: '🏢',
-    badge: 'Custom',
+    monthlyINR: '₹4,999',
+    annualINR: '₹4,999',
+    monthlyUSD: '$67.99',
+    annualUSD: '$67.99',
+    monthlyAED: 'AED 249',
+    annualAED: 'AED 249',
+    monthlyKES: 'KES 9,500',
+    annualKES: 'KES 9,500',
+    badge: 'Enterprise',
     badgeColor: '#64748B',
     features: [
-      'Unlimited users',
-      'White-label platform',
-      'Full API access',
-      'SSO (SAML 2.0)',
+      'Multi-tenant architecture',
+      'White label platform',
+      'SSO / SAML 2.0',
+      'Full REST + WebSocket API',
       '99.9% SLA guarantee',
-      'Dedicated support',
+      'Custom reporting & analytics',
+      'Dedicated account manager',
+      '24/7 phone support',
     ],
     cta: 'Contact Sales',
     ctaHref: '/enterprise#contact',
@@ -222,196 +227,163 @@ const PLANS: Plan[] = [
     accentRgb: '148,163,184',
     isFeatured: false,
     isContact: true,
+    isCustom: false,
+  },
+  {
+    id: 'whiteLabel',
+    name: 'White Label',
+    tagline: 'Full rebrand for your business',
+    emoji: '🎨',
+    monthlyINR: 'Custom',
+    annualINR: 'Custom',
+    monthlyUSD: 'Custom',
+    annualUSD: 'Custom',
+    monthlyAED: 'Custom',
+    annualAED: 'Custom',
+    monthlyKES: 'Custom',
+    annualKES: 'Custom',
+    badge: 'Custom Pricing',
+    badgeColor: '#F59E0B',
+    features: [
+      'Full brand customization',
+      'Custom domain (gravity.yourschool.edu)',
+      'Dedicated infrastructure',
+      'Private cloud deployment',
+      'Custom mobile app build',
+      'Revenue sharing model',
+      'Onboarding & training',
+    ],
+    cta: 'Contact Sales',
+    ctaHref: '/enterprise#white-label',
+    accentColor: '#F59E0B',
+    accentRgb: '245,158,11',
+    isFeatured: false,
+    isContact: true,
+    isCustom: true,
   },
 ]
 
-/* ─────────────── Comparison table data ─────────────── */
-const COMPARISON_ROWS = [
-  { feature: 'Family members', free: '3', premium: '6', familyPlus: '15', elderCare: '15', school: '500 students', enterprise: 'Unlimited' },
-  { feature: 'Live location tracking', free: true, premium: true, familyPlus: true, elderCare: true, school: true, enterprise: true },
-  { feature: 'SOS alerts', free: 'Basic', premium: 'Priority', familyPlus: 'Priority', elderCare: 'Priority', school: 'Emergency mode', enterprise: 'Custom' },
-  { feature: 'Geofencing', free: false, premium: '10 zones', familyPlus: 'Unlimited', elderCare: 'Unlimited', school: 'Campus zones', enterprise: 'Unlimited' },
-  { feature: 'Location history', free: '7 days', premium: '30 days', familyPlus: '90 days', elderCare: '90 days', school: '90 days', enterprise: 'Custom' },
-  { feature: 'Fall detection', free: false, premium: false, familyPlus: false, elderCare: true, school: false, enterprise: 'Optional' },
-  { feature: 'Driving safety', free: false, premium: false, familyPlus: true, elderCare: true, school: false, enterprise: 'Optional' },
-  { feature: 'White-label', free: false, premium: false, familyPlus: false, elderCare: false, school: false, enterprise: true },
-  { feature: 'API access', free: false, premium: false, familyPlus: false, elderCare: false, school: false, enterprise: true },
-  { feature: 'SLA guarantee', free: false, premium: false, familyPlus: false, elderCare: false, school: false, enterprise: '99.9%' },
-]
-
-/* ─────────────── Helpers ─────────────── */
-function parseAmount(raw: string): number | null {
-  if (raw === 'Free' || raw === 'Custom') return null
-  const m = raw.match(/[\d,]+/)
-  return m ? parseFloat(m[0].replace(',', '')) : null
+/* ─────────────── Currency helpers ─────────────── */
+const CURRENCY_CONFIG: Record<Currency, { label: string; flag: string }> = {
+  INR: { label: 'INR ₹', flag: '🇮🇳' },
+  USD: { label: 'USD $', flag: '🇺🇸' },
+  AED: { label: 'AED', flag: '🇦🇪' },
+  KES: { label: 'KES', flag: '🇰🇪' },
 }
 
-function annualize(raw: string): string {
-  if (raw === 'Free' || raw === 'Custom') return raw
-  const amount = parseAmount(raw)
-  if (amount === null) return raw
-  const discounted = Math.round(amount * 0.8)
-  return raw.replace(/[\d,]+/, discounted.toLocaleString())
+function getPlanPrice(plan: PlanTier, currency: Currency, cycle: BillingCycle): string {
+  const key = `${cycle}${currency.charAt(0).toUpperCase()}${currency.slice(1).toLowerCase()}` as keyof PlanTier
+  const val = plan[key]
+  return typeof val === 'string' ? val : 'Custom'
 }
 
-function getPlanPrice(plan: Plan, region: string, cycle: 'monthly' | 'annual'): string {
-  const row = REGIONAL_PRICES[region]
-  if (!row) return plan.id === 'enterprise' ? 'Custom' : '—'
-  const raw = row[plan.id]
-  return cycle === 'annual' ? annualize(raw) : raw
-}
-
-/* ─────────────── Region selector ─────────────── */
-function RegionSelector({
+/* ─────────────── Currency Toggle ─────────────── */
+function CurrencyToggle({
   selected,
   setSelected,
 }: {
-  selected: string
-  setSelected: (r: string) => void
+  selected: Currency
+  setSelected: (c: Currency) => void
 }) {
-  const [open, setOpen] = useState(false)
-  const current = REGIONAL_PRICING.find((r) => r.region === selected)
-
   return (
-    <div className="relative">
-      <button
-        onClick={() => setOpen((v) => !v)}
-        className="flex items-center gap-2 text-sm rounded-xl px-4 py-2.5 focus:outline-none transition-all min-w-[200px] justify-between"
-        style={{
-          background: 'var(--bg-surface)',
-          border: '1px solid var(--border)',
-          color: 'var(--text-primary)',
-          fontFamily: "'Inter', sans-serif",
-        }}
-      >
-        <span>
-          {current?.flag} {selected}
-        </span>
-        <span
+    <div
+      className="flex items-center gap-1 rounded-full p-1"
+      style={{ background: 'var(--bg-surface2)', border: '1px solid var(--border)' }}
+    >
+      {(Object.keys(CURRENCY_CONFIG) as Currency[]).map((c) => (
+        <button
+          key={c}
+          onClick={() => setSelected(c)}
+          className="px-3 py-1.5 rounded-full text-xs font-semibold transition-all duration-200 focus:outline-none"
           style={{
-            display: 'inline-block',
-            transform: open ? 'rotate(180deg)' : 'rotate(0deg)',
-            transition: 'transform 0.2s',
-            color: 'var(--text-muted)',
+            background: selected === c ? 'linear-gradient(135deg, #D4A853, #F5C842)' : 'transparent',
+            color: selected === c ? '#1A0F05' : 'var(--text-secondary)',
+            fontFamily: "'Inter', sans-serif",
           }}
         >
-          ▾
-        </span>
-      </button>
-
-      <AnimatePresence>
-        {open && (
-          <motion.div
-            initial={{ opacity: 0, y: -6, scale: 0.97 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: -6, scale: 0.97 }}
-            transition={{ duration: 0.15 }}
-            className="absolute top-full left-0 mt-2 w-full rounded-xl overflow-hidden z-50"
-            style={{
-              background: 'var(--bg-surface2)',
-              border: '1px solid var(--border)',
-              boxShadow: '0 8px 30px rgba(0,0,0,0.2)',
-            }}
-          >
-            {REGIONAL_PRICING.map((r) => (
-              <button
-                key={r.region}
-                onClick={() => { setSelected(r.region); setOpen(false) }}
-                className="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-left transition-colors"
-                style={{
-                  color: selected === r.region ? 'var(--gold)' : 'var(--text-secondary)',
-                  background: selected === r.region ? 'rgba(212,168,83,0.08)' : 'transparent',
-                  fontWeight: selected === r.region ? 600 : 400,
-                  fontFamily: "'Inter', sans-serif",
-                }}
-              >
-                <span>{r.flag}</span>
-                <span>{r.region}</span>
-              </button>
-            ))}
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      {open && <div className="fixed inset-0 z-40" onClick={() => setOpen(false)} />}
+          {CURRENCY_CONFIG[c].flag} {c}
+        </button>
+      ))}
     </div>
   )
 }
 
-/* ─────────────── Pricing card ─────────────── */
+/* ─────────────── Pricing Card ─────────────── */
 function PricingCard({
   plan,
+  currency,
   cycle,
-  region,
   index,
   inView,
 }: {
-  plan: Plan
-  cycle: 'monthly' | 'annual'
-  region: string
+  plan: PlanTier
+  currency: Currency
+  cycle: BillingCycle
   index: number
   inView: boolean
 }) {
   const [hovered, setHovered] = useState(false)
-  const price = getPlanPrice(plan, region, cycle)
-  const regionalRow = REGIONAL_PRICES[region]
-  const gateway = regionalRow?.gateway ?? ''
-  const showGateway = !plan.isContact && plan.id !== 'free'
-  const showSave = cycle === 'annual' && price !== 'Free' && price !== 'Custom'
+  const price = getPlanPrice(plan, currency, cycle)
+  const isFree = price === '₹0' || price === '$0' || price === 'AED 0' || price === 'KES 0'
+  const isCustom = price === 'Custom'
+  const showSaveBadge = cycle === 'annual' && !isFree && !isCustom
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 32 }}
+      initial={{ opacity: 0, y: 36 }}
       animate={inView ? { opacity: 1, y: 0 } : {}}
-      transition={{ duration: 0.6, ease: 'easeOut', delay: 0.1 + index * 0.08 }}
-      whileHover={{ y: plan.isFeatured ? -10 : -6 }}
+      transition={{ duration: 0.55, ease: 'easeOut', delay: 0.08 + index * 0.07 }}
+      whileHover={{ y: plan.isFeatured ? -12 : -6 }}
       onHoverStart={() => setHovered(true)}
       onHoverEnd={() => setHovered(false)}
       className="relative flex flex-col rounded-2xl"
       style={{
-        background: 'var(--bg-surface)',
+        background: plan.isFeatured
+          ? 'linear-gradient(145deg, rgba(212,168,83,0.07) 0%, var(--bg-surface) 40%)'
+          : 'var(--bg-surface)',
         border: plan.isFeatured
           ? `2px solid ${plan.accentColor}`
           : `1px solid var(--border)`,
         boxShadow: plan.isFeatured
           ? hovered
-            ? `0 0 60px rgba(${plan.accentRgb},0.35), 0 20px 60px rgba(0,0,0,0.25)`
-            : `0 0 40px rgba(${plan.accentRgb},0.2), 0 10px 40px rgba(0,0,0,0.15)`
+            ? `0 0 70px rgba(${plan.accentRgb},0.4), 0 24px 64px rgba(0,0,0,0.3)`
+            : `0 0 45px rgba(${plan.accentRgb},0.25), 0 12px 48px rgba(0,0,0,0.18)`
           : hovered
-          ? `0 0 30px rgba(${plan.accentRgb},0.15), 0 16px 48px rgba(0,0,0,0.18)`
-          : '0 2px 12px rgba(0,0,0,0.07)',
-        transition: 'box-shadow 0.3s',
+          ? `0 0 32px rgba(${plan.accentRgb},0.18), 0 18px 52px rgba(0,0,0,0.2)`
+          : '0 2px 14px rgba(0,0,0,0.08)',
+        transition: 'box-shadow 0.3s ease',
         ...(plan.isFeatured ? { transform: 'scale(1.02)' } : {}),
       }}
     >
-      {/* Top accent border */}
+      {/* Accent top border */}
       <div
         style={{
           height: '4px',
           borderRadius: '16px 16px 0 0',
           background: plan.isFeatured
-            ? `linear-gradient(90deg, ${plan.accentColor}, #F5C842)`
-            : plan.accentColor,
+            ? `linear-gradient(90deg, #B8760A, #D4A853, #F5C842, #D4A853, #B8760A)`
+            : `linear-gradient(90deg, ${plan.accentColor}99, ${plan.accentColor})`,
         }}
       />
 
-      {/* Popular ribbon */}
+      {/* Most Popular animated badge */}
       {plan.isFeatured && (
-        <div className="absolute -top-4 left-1/2 -translate-x-1/2 z-10">
-          <span
-            className="text-[10px] font-extrabold px-5 py-1.5 rounded-full uppercase tracking-widest"
+        <div className="absolute -top-5 left-1/2 -translate-x-1/2 z-20">
+          <motion.span
+            animate={{ boxShadow: ['0 4px 16px rgba(212,168,83,0.4)', '0 4px 28px rgba(212,168,83,0.7)', '0 4px 16px rgba(212,168,83,0.4)'] }}
+            transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}
+            className="text-[10px] font-extrabold px-5 py-1.5 rounded-full uppercase tracking-widest inline-block"
             style={{
-              background: 'linear-gradient(135deg, #D4A853, #F5C842)',
+              background: 'linear-gradient(135deg, #B8760A, #D4A853, #F5C842)',
               color: '#1A0F05',
-              boxShadow: '0 4px 16px rgba(212,168,83,0.5)',
             }}
           >
-            MOST POPULAR
-          </span>
+            ★ MOST POPULAR
+          </motion.span>
         </div>
       )}
 
-      {/* Badge (top-right) for non-featured */}
+      {/* Non-featured badge (top-right) */}
       {plan.badge && !plan.isFeatured && plan.badgeColor && (
         <div className="absolute top-4 right-4">
           <span
@@ -419,7 +391,8 @@ function PricingCard({
             style={{
               background: `rgba(${plan.accentRgb},0.12)`,
               color: plan.accentColor,
-              border: `1px solid rgba(${plan.accentRgb},0.3)`,
+              border: `1px solid rgba(${plan.accentRgb},0.28)`,
+              fontFamily: "'Inter', sans-serif",
             }}
           >
             {plan.badge}
@@ -427,22 +400,22 @@ function PricingCard({
         </div>
       )}
 
-      <div className="p-6 flex flex-col flex-1 pt-7">
+      <div className="p-6 flex flex-col flex-1 pt-8">
         {/* Icon + name */}
-        <div className="flex items-center gap-3 mb-1">
+        <div className="flex items-center gap-3 mb-2">
           <span className="text-2xl">{plan.emoji}</span>
           <div>
             <h3
               className="text-lg font-bold leading-tight"
               style={{
                 fontFamily: "'Plus Jakarta Sans', sans-serif",
-                color: 'var(--text-primary)',
+                color: plan.isFeatured ? plan.accentColor : 'var(--text-primary)',
               }}
             >
               {plan.name}
             </h3>
             <p
-              className="text-xs"
+              className="text-xs leading-tight mt-0.5"
               style={{ color: 'var(--text-muted)', fontFamily: "'Inter', sans-serif" }}
             >
               {plan.tagline}
@@ -450,13 +423,13 @@ function PricingCard({
           </div>
         </div>
 
-        {/* Price */}
+        {/* Price block */}
         <AnimatePresence mode="wait">
           <motion.div
-            key={`${region}-${plan.id}-${cycle}`}
-            initial={{ opacity: 0, y: 8 }}
+            key={`${plan.id}-${currency}-${cycle}`}
+            initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -8 }}
+            exit={{ opacity: 0, y: -10 }}
             transition={{ duration: 0.2 }}
             className="mt-4"
           >
@@ -465,32 +438,36 @@ function PricingCard({
               style={{
                 fontFamily: "'Plus Jakarta Sans', sans-serif",
                 color: plan.isFeatured ? plan.accentColor : 'var(--text-primary)',
-                fontSize: price === 'Custom' ? '28px' : '30px',
+                fontSize: isCustom ? '26px' : '32px',
               }}
             >
-              {price}
-              {price !== 'Free' && price !== 'Custom' && (
-                <span
-                  className="text-sm font-normal ml-1"
-                  style={{ color: 'var(--text-muted)' }}
-                >
+              {isCustom ? 'Custom Pricing' : isFree ? 'Free Forever' : price}
+              {!isCustom && !isFree && (
+                <span className="text-sm font-normal ml-1" style={{ color: 'var(--text-muted)' }}>
                   /{cycle === 'annual' ? 'mo*' : 'mo'}
                 </span>
               )}
             </div>
-            {showSave && (
-              <p className="text-xs mt-1 font-semibold" style={{ color: '#10B981' }}>
-                Save 20% vs monthly
-              </p>
+
+            {showSaveBadge && (
+              <motion.span
+                initial={{ scale: 0.8, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                className="inline-block mt-1.5 text-[10px] font-bold px-2 py-0.5 rounded-full"
+                style={{
+                  background: 'rgba(16,185,129,0.15)',
+                  color: '#10B981',
+                  border: '1px solid rgba(16,185,129,0.3)',
+                  fontFamily: "'Inter', sans-serif",
+                }}
+              >
+                Save ~30% annually
+              </motion.span>
             )}
-            {showGateway && (
-              <p className="text-xs mt-0.5" style={{ color: 'var(--text-muted)', fontFamily: "'Inter', sans-serif" }}>
-                via {gateway}
-              </p>
-            )}
-            {plan.id === 'enterprise' && (
-              <p className="text-xs mt-0.5" style={{ color: 'var(--text-muted)', fontFamily: "'Inter', sans-serif" }}>
-                Contact us for a quote
+
+            {isCustom && (
+              <p className="text-xs mt-1" style={{ color: 'var(--text-muted)', fontFamily: "'Inter', sans-serif" }}>
+                Contact us for a tailored quote
               </p>
             )}
           </motion.div>
@@ -499,37 +476,37 @@ function PricingCard({
         {/* Divider */}
         <div className="my-5" style={{ borderTop: '1px solid var(--border)' }} />
 
-        {/* Features */}
+        {/* Feature list */}
         <ul className="flex-1 flex flex-col gap-2.5 mb-6">
           {plan.features.map((feat) => (
             <li key={feat} className="flex items-start gap-2.5 text-sm">
               <span
-                className="flex-shrink-0 mt-0.5 font-bold"
+                className="flex-shrink-0 mt-0.5 text-xs font-bold"
                 style={{ color: plan.accentColor }}
               >
                 ✓
               </span>
-              <span
-                style={{ color: 'var(--text-secondary)', fontFamily: "'Inter', sans-serif" }}
-              >
+              <span style={{ color: 'var(--text-secondary)', fontFamily: "'Inter', sans-serif" }}>
                 {feat}
               </span>
             </li>
           ))}
         </ul>
 
-        {/* CTA button */}
+        {/* CTA */}
         <motion.a
           href={plan.ctaHref}
+          whileHover={{ scale: 1.02 }}
           whileTap={{ scale: 0.97 }}
-          className="w-full py-3 rounded-xl text-sm font-bold text-center block transition-all duration-200 focus:outline-none"
+          className="w-full py-3 rounded-xl text-sm font-bold text-center block focus:outline-none"
           style={{
             fontFamily: "'Plus Jakarta Sans', sans-serif",
+            transition: 'all 0.2s ease',
             ...(plan.isFeatured
               ? {
                   background: 'linear-gradient(135deg, #D4A853, #F5C842)',
                   color: '#1A0F05',
-                  boxShadow: hovered ? '0 4px 20px rgba(212,168,83,0.5)' : '0 2px 10px rgba(212,168,83,0.3)',
+                  boxShadow: hovered ? '0 6px 24px rgba(212,168,83,0.55)' : '0 3px 12px rgba(212,168,83,0.35)',
                 }
               : plan.isContact
               ? {
@@ -537,11 +514,16 @@ function PricingCard({
                   border: `1.5px solid ${plan.accentColor}`,
                   color: plan.accentColor,
                 }
+              : plan.id === 'free'
+              ? {
+                  background: 'rgba(107,114,128,0.12)',
+                  border: '1.5px solid rgba(107,114,128,0.3)',
+                  color: '#9CA3AF',
+                }
               : {
-                  background: `rgba(${plan.accentRgb},0.12)`,
+                  background: `rgba(${plan.accentRgb},0.14)`,
                   border: `1.5px solid rgba(${plan.accentRgb},0.35)`,
                   color: plan.accentColor,
-                  ...(hovered ? { background: `rgba(${plan.accentRgb},0.2)` } : {}),
                 }),
           }}
         >
@@ -552,38 +534,70 @@ function PricingCard({
   )
 }
 
+/* ─────────────── Comparison Rows ─────────────── */
+const COMP_ROWS = [
+  { feature: 'Family members', free: '3', premium: '10', familyPlus: '25', elderCare: '10', school: '500 students', enterprise: 'Unlimited', whiteLabel: 'Unlimited' },
+  { feature: 'Real-time tracking', free: true, premium: true, familyPlus: true, elderCare: true, school: true, enterprise: true, whiteLabel: true },
+  { feature: 'AI Guardian', free: false, premium: true, familyPlus: true, elderCare: true, school: false, enterprise: true, whiteLabel: true },
+  { feature: 'SOS Emergency', free: 'Basic', premium: 'Priority', familyPlus: 'Priority', elderCare: 'Priority', school: 'Emergency mode', enterprise: 'Custom', whiteLabel: 'Custom' },
+  { feature: 'Geofencing', free: '1 zone', premium: 'Unlimited', familyPlus: 'Unlimited', elderCare: 'Unlimited', school: 'Campus zones', enterprise: 'Unlimited', whiteLabel: 'Unlimited' },
+  { feature: 'Driving safety', free: false, premium: true, familyPlus: true, elderCare: true, school: false, enterprise: true, whiteLabel: true },
+  { feature: 'Fall detection', free: false, premium: false, familyPlus: false, elderCare: true, school: false, enterprise: 'Optional', whiteLabel: 'Optional' },
+  { feature: 'Elder care module', free: false, premium: false, familyPlus: true, elderCare: true, school: false, enterprise: 'Optional', whiteLabel: 'Optional' },
+  { feature: 'School bus tracking', free: false, premium: false, familyPlus: false, elderCare: false, school: true, enterprise: 'Optional', whiteLabel: 'Optional' },
+  { feature: 'White label', free: false, premium: false, familyPlus: false, elderCare: false, school: false, enterprise: true, whiteLabel: true },
+  { feature: 'API access', free: false, premium: false, familyPlus: false, elderCare: false, school: false, enterprise: true, whiteLabel: true },
+  { feature: 'SLA guarantee', free: false, premium: false, familyPlus: false, elderCare: false, school: false, enterprise: '99.9%', whiteLabel: '99.9%' },
+]
+
+function CompCell({ value }: { value: string | boolean }) {
+  if (value === true) return <span style={{ color: '#10B981', fontSize: '15px' }}>✓</span>
+  if (value === false) return <span style={{ color: 'rgba(148,163,184,0.3)', fontSize: '14px' }}>—</span>
+  return <span style={{ color: 'var(--text-secondary)', fontSize: '12px', fontFamily: "'Inter', sans-serif" }}>{value}</span>
+}
+
 /* ─────────────── FAQ ─────────────── */
 const PRICING_FAQ = [
   {
     question: 'Is it really free?',
-    answer:
-      'Yes, completely free forever — no credit card, no hidden fees, no trial expiry. The Free plan gives you live location sharing for up to 3 members, SOS alerts, and check-ins.',
+    answer: 'Yes, completely free forever — no credit card, no hidden fees. The Free plan gives you live location for up to 3 members, SOS alerts, basic geofencing, and check-ins.',
   },
   {
     question: 'Can I track without the person knowing?',
-    answer:
-      'No — and we designed it this way intentionally. Every member must accept an invitation and can see who is viewing their location. Privacy hours let any member pause their location sharing.',
+    answer: 'No — every member must accept an invitation and can see who views their location. Privacy hours let any member pause sharing. Gravity is built for consensual family safety.',
   },
   {
     question: 'Does it work offline?',
-    answer:
-      'Gravity requires an internet connection for live tracking. However, the last known location is always cached and viewable offline. SOS alerts are also sent via SMS as a backup.',
+    answer: 'Gravity requires internet for live tracking. The last known location is always cached and viewable offline. SOS alerts are also sent via SMS as a backup when connectivity drops.',
   },
   {
-    question: 'What happens in an SOS emergency?',
-    answer:
-      'One tap instantly sends an emergency alert with the exact GPS location to every circle member simultaneously. A loud alarm sounds continuously until acknowledged.',
+    question: 'What happens during an SOS emergency?',
+    answer: 'One tap instantly alerts all circle members with exact GPS location simultaneously. A loud alarm sounds continuously until acknowledged. Emergency services can be auto-dialed.',
   },
   {
     question: 'Can I switch plans later?',
-    answer:
-      'Yes — upgrade or downgrade at any time. When you upgrade, the new plan activates immediately with prorated billing for the remainder of your cycle.',
+    answer: 'Yes — upgrade or downgrade at any time. Upgrades activate immediately with prorated billing. Annual plans get a refund of unused months if you cancel.',
+  },
+  {
+    question: 'Do you offer white label?',
+    answer: 'Yes, we offer full white-label customization. Your brand, your domain, your app — we handle the infrastructure. Contact our team for custom pricing and onboarding.',
+  },
+  {
+    question: 'What is the Enterprise SLA?',
+    answer: '99.9% uptime guaranteed with a 1-hour response time for critical incidents. Enterprise plans include dedicated infrastructure, multi-region deployment, and 24/7 phone support.',
+  },
+  {
+    question: 'Is there an API?',
+    answer: 'Yes — Gravity offers a full REST + WebSocket API for enterprise and white-label customers. 50+ endpoints covering location, safety events, notifications, and analytics. Visit our API Marketplace for documentation.',
+  },
+  {
+    question: 'Can white label use a custom domain?',
+    answer: 'Absolutely. White-label deployments fully support custom domains such as gravity.yourschool.edu or safety.yourcompany.com, with SSL provisioned automatically.',
   },
 ]
 
 function FAQItem({ question, answer }: { question: string; answer: string }) {
   const [open, setOpen] = useState(false)
-
   return (
     <div
       className="rounded-xl overflow-hidden"
@@ -591,7 +605,7 @@ function FAQItem({ question, answer }: { question: string; answer: string }) {
     >
       <button
         onClick={() => setOpen((v) => !v)}
-        className="w-full flex items-center justify-between px-6 py-5 text-left focus:outline-none group"
+        className="w-full flex items-center justify-between px-6 py-5 text-left focus:outline-none"
       >
         <span
           className="font-semibold text-sm md:text-base pr-4"
@@ -611,7 +625,6 @@ function FAQItem({ question, answer }: { question: string; answer: string }) {
           {open ? '−' : '+'}
         </div>
       </button>
-
       <AnimatePresence initial={false}>
         {open && (
           <motion.div
@@ -619,11 +632,11 @@ function FAQItem({ question, answer }: { question: string; answer: string }) {
             initial={{ height: 0, opacity: 0 }}
             animate={{ height: 'auto', opacity: 1 }}
             exit={{ height: 0, opacity: 0 }}
-            transition={{ duration: 0.32, ease: 'easeInOut' }}
+            transition={{ duration: 0.3, ease: 'easeInOut' }}
             className="overflow-hidden"
           >
             <p
-              className="px-6 pb-5 text-sm leading-relaxed pt-3"
+              className="px-6 pb-5 pt-3 text-sm leading-relaxed"
               style={{
                 borderTop: '1px solid var(--border)',
                 color: 'var(--text-secondary)',
@@ -639,17 +652,10 @@ function FAQItem({ question, answer }: { question: string; answer: string }) {
   )
 }
 
-/* ─────────────── Comparison table cell ─────────────── */
-function CompCell({ value }: { value: string | boolean | undefined }) {
-  if (value === true) return <span style={{ color: '#10B981', fontSize: '16px' }}>✓</span>
-  if (value === false || value === undefined) return <span style={{ color: 'var(--text-muted)', fontSize: '14px' }}>—</span>
-  return <span style={{ color: 'var(--text-secondary)', fontSize: '13px', fontFamily: "'Inter', sans-serif" }}>{value}</span>
-}
-
-/* ─────────────── Main section ─────────────── */
+/* ─────────────── Main Component ─────────────── */
 export default function PricingSection() {
-  const [cycle, setCycle] = useState<'monthly' | 'annual'>('monthly')
-  const [region, setRegion] = useState('USA / Canada')
+  const [cycle, setCycle] = useState<BillingCycle>('monthly')
+  const [currency, setCurrency] = useState<Currency>('INR')
   const [showTable, setShowTable] = useState(false)
 
   const ref = useRef<HTMLElement>(null)
@@ -662,28 +668,27 @@ export default function PricingSection() {
       className="py-24 relative overflow-hidden"
       style={{ background: 'var(--bg-surface)' }}
     >
-      {/* Ambient gold glow */}
+      {/* Ambient glow */}
       <div
         className="absolute pointer-events-none"
         style={{
-          top: 0,
+          top: '-100px',
           left: '50%',
           transform: 'translateX(-50%)',
-          width: '1000px',
-          height: '500px',
-          background:
-            'radial-gradient(ellipse, rgba(212,168,83,0.13) 0%, rgba(184,114,10,0.04) 55%, transparent 75%)',
-          filter: 'blur(60px)',
+          width: '1100px',
+          height: '600px',
+          background: 'radial-gradient(ellipse, rgba(212,168,83,0.12) 0%, rgba(184,114,10,0.04) 55%, transparent 75%)',
+          filter: 'blur(70px)',
         }}
       />
 
       <div className="max-w-7xl mx-auto px-6">
 
-        {/* ── Section header ── */}
+        {/* Section header */}
         <motion.div
-          initial={{ opacity: 0, y: 24 }}
+          initial={{ opacity: 0, y: 28 }}
           animate={inView ? { opacity: 1, y: 0 } : {}}
-          transition={{ duration: 0.6, ease: 'easeOut' }}
+          transition={{ duration: 0.65, ease: 'easeOut' }}
           className="text-center mb-10"
         >
           <span
@@ -694,18 +699,13 @@ export default function PricingSection() {
               background: 'rgba(212,168,83,0.07)',
             }}
           >
-            <span>💛</span>
-            Transparent Pricing
+            💛 Transparent Pricing
           </span>
-
           <h2
             className="text-4xl md:text-5xl font-extrabold leading-tight"
-            style={{
-              fontFamily: "'Plus Jakarta Sans', sans-serif",
-              color: 'var(--text-primary)',
-            }}
+            style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", color: 'var(--text-primary)' }}
           >
-            Choose Your{' '}
+            Simple Plans,{' '}
             <span
               style={{
                 background: 'linear-gradient(90deg, #D4A853, #F5C842, #D4A853)',
@@ -714,44 +714,36 @@ export default function PricingSection() {
                 backgroundClip: 'text',
               }}
             >
-              Safety Plan
+              Powerful Safety
             </span>
           </h2>
-
           <p
             className="mt-4 max-w-xl mx-auto text-base"
             style={{ color: 'var(--text-secondary)', fontFamily: "'Inter', sans-serif" }}
           >
-            Start free. Upgrade when your family needs more. Cancel anytime.
-          </p>
-          <p className="mt-1 text-xs" style={{ color: 'var(--text-muted)', fontFamily: "'Inter', sans-serif" }}>
-            <span style={{ color: 'var(--gold)' }}>₹</span> Prices shown for India.{' '}
-            <Link href="#pricing" className="underline underline-offset-2 hover:opacity-80">
-              See regional pricing →
-            </Link>
+            From free individual use to enterprise-grade white-label deployments. Start free, upgrade when your family needs more.
           </p>
         </motion.div>
 
-        {/* ── Controls: billing toggle + region ── */}
+        {/* Controls */}
         <motion.div
-          initial={{ opacity: 0, y: 16 }}
+          initial={{ opacity: 0, y: 18 }}
           animate={inView ? { opacity: 1, y: 0 } : {}}
-          transition={{ duration: 0.6, ease: 'easeOut', delay: 0.1 }}
-          className="flex flex-wrap items-center justify-center gap-4 mb-14"
+          transition={{ duration: 0.6, delay: 0.1 }}
+          className="flex flex-wrap items-center justify-center gap-4 mb-16"
         >
           {/* Billing toggle */}
           <div
             className="flex items-center gap-1 rounded-full p-1"
             style={{ background: 'var(--bg-surface2)', border: '1px solid var(--border)' }}
           >
-            {(['monthly', 'annual'] as const).map((c) => (
+            {(['monthly', 'annual'] as BillingCycle[]).map((c) => (
               <button
                 key={c}
                 onClick={() => setCycle(c)}
                 className="relative px-5 py-2 rounded-full text-sm font-semibold transition-all duration-200 flex items-center gap-2 focus:outline-none"
                 style={{
-                  background:
-                    cycle === c ? 'linear-gradient(135deg, #D4A853, #F5C842)' : 'transparent',
+                  background: cycle === c ? 'linear-gradient(135deg, #D4A853, #F5C842)' : 'transparent',
                   color: cycle === c ? '#1A0F05' : 'var(--text-secondary)',
                   fontFamily: "'Plus Jakarta Sans', sans-serif",
                 }}
@@ -761,39 +753,40 @@ export default function PricingSection() {
                   <span
                     className="text-[10px] px-1.5 py-0.5 rounded-full font-bold"
                     style={{
-                      background: cycle === 'annual' ? 'rgba(0,0,0,0.2)' : 'rgba(16,185,129,0.15)',
+                      background: cycle === 'annual' ? 'rgba(0,0,0,0.25)' : 'rgba(16,185,129,0.15)',
                       color: cycle === 'annual' ? '#1A0F05' : '#10B981',
                     }}
                   >
-                    -20%
+                    Save 30%
                   </span>
                 )}
               </button>
             ))}
           </div>
 
-          <RegionSelector selected={region} setSelected={setRegion} />
+          {/* Currency toggle */}
+          <CurrencyToggle selected={currency} setSelected={setCurrency} />
         </motion.div>
 
-        {/* ── Pricing cards grid ── */}
-        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6 items-stretch overflow-visible pb-4">
+        {/* Cards grid — 4 cols on xl, 3 on lg, 2 on sm */}
+        <div className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 items-stretch overflow-visible pb-6">
           {PLANS.map((plan, i) => (
             <PricingCard
               key={plan.id}
               plan={plan}
+              currency={currency}
               cycle={cycle}
-              region={region}
               index={i}
               inView={inView}
             />
           ))}
         </div>
 
-        {/* Annual note + guarantee */}
+        {/* Guarantee note */}
         <motion.div
           initial={{ opacity: 0 }}
           animate={inView ? { opacity: 1 } : {}}
-          transition={{ duration: 0.6, delay: 0.6 }}
+          transition={{ duration: 0.6, delay: 0.65 }}
           className="text-center mt-8 flex flex-col gap-1"
         >
           <p className="text-sm" style={{ color: 'var(--text-muted)', fontFamily: "'Inter', sans-serif" }}>
@@ -802,16 +795,16 @@ export default function PricingSection() {
           </p>
           {cycle === 'annual' && (
             <p className="text-xs" style={{ color: 'var(--text-muted)', fontFamily: "'Inter', sans-serif" }}>
-              * Annual price shown per month — billed once per year (20% savings)
+              * Annual price shown per month — billed once per year (~30% savings vs monthly)
             </p>
           )}
         </motion.div>
 
-        {/* ── Enterprise CTA strip ── */}
+        {/* Enterprise CTA strip */}
         <motion.div
           initial={{ opacity: 0, y: 24 }}
           animate={inView ? { opacity: 1, y: 0 } : {}}
-          transition={{ duration: 0.6, delay: 0.7 }}
+          transition={{ duration: 0.6, delay: 0.75 }}
           className="mt-16 rounded-2xl p-8 flex flex-col md:flex-row items-center justify-between gap-6"
           style={{
             background: 'linear-gradient(135deg, rgba(75,128,240,0.08) 0%, rgba(139,92,246,0.06) 100%)',
@@ -823,13 +816,13 @@ export default function PricingSection() {
               className="text-xl font-bold mb-1"
               style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", color: 'var(--text-primary)' }}
             >
-              Need more than 500 users?
+              Need a custom deployment?
             </h3>
             <p
               className="text-sm"
               style={{ color: 'var(--text-secondary)', fontFamily: "'Inter', sans-serif" }}
             >
-              Gravity Enterprise offers white-label, SSO, dedicated infrastructure, and custom SLAs for schools, hospitals, NGOs, and corporations.
+              Schools, hospitals, logistics companies, and NGOs get white-label, SSO, dedicated infrastructure, and 99.9% SLAs.
             </p>
           </div>
           <Link
@@ -846,11 +839,11 @@ export default function PricingSection() {
           </Link>
         </motion.div>
 
-        {/* ── Feature comparison table (collapsible) ── */}
+        {/* Collapsible feature comparison */}
         <motion.div
           initial={{ opacity: 0, y: 24 }}
           animate={inView ? { opacity: 1, y: 0 } : {}}
-          transition={{ duration: 0.6, delay: 0.75 }}
+          transition={{ duration: 0.6, delay: 0.8 }}
           className="mt-16"
         >
           <button
@@ -859,15 +852,7 @@ export default function PricingSection() {
             style={{ color: 'var(--gold)', fontFamily: "'Plus Jakarta Sans', sans-serif" }}
           >
             <span>{showTable ? 'Hide' : 'Show'} Full Feature Comparison</span>
-            <span
-              style={{
-                display: 'inline-block',
-                transform: showTable ? 'rotate(180deg)' : 'rotate(0deg)',
-                transition: 'transform 0.25s',
-              }}
-            >
-              ▾
-            </span>
+            <span style={{ display: 'inline-block', transform: showTable ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.25s' }}>▾</span>
           </button>
 
           <AnimatePresence>
@@ -880,19 +865,14 @@ export default function PricingSection() {
                 className="overflow-hidden"
               >
                 <div className="overflow-x-auto rounded-2xl" style={{ border: '1px solid var(--border)' }}>
-                  <table className="w-full min-w-[700px]">
+                  <table className="w-full min-w-[900px]">
                     <thead>
                       <tr style={{ background: 'var(--bg-surface2)', borderBottom: '1px solid var(--border)' }}>
-                        <th
-                          className="text-left px-5 py-4 text-sm font-bold"
-                          style={{ color: 'var(--text-primary)', fontFamily: "'Plus Jakarta Sans', sans-serif" }}
-                        >
-                          Feature
-                        </th>
+                        <th className="text-left px-5 py-4 text-sm font-bold" style={{ color: 'var(--text-primary)', fontFamily: "'Plus Jakarta Sans', sans-serif" }}>Feature</th>
                         {PLANS.map((p) => (
                           <th
                             key={p.id}
-                            className="text-center px-4 py-4 text-xs font-bold uppercase tracking-wide"
+                            className="text-center px-3 py-4 text-xs font-bold uppercase tracking-wide"
                             style={{ color: p.isFeatured ? p.accentColor : 'var(--text-muted)', fontFamily: "'Plus Jakarta Sans', sans-serif" }}
                           >
                             {p.name}
@@ -901,22 +881,17 @@ export default function PricingSection() {
                       </tr>
                     </thead>
                     <tbody>
-                      {COMPARISON_ROWS.map((row, i) => (
+                      {COMP_ROWS.map((row, i) => (
                         <tr
                           key={row.feature}
                           style={{
-                            borderBottom: i < COMPARISON_ROWS.length - 1 ? '1px solid var(--border)' : 'none',
+                            borderBottom: i < COMP_ROWS.length - 1 ? '1px solid var(--border)' : 'none',
                             background: i % 2 === 0 ? 'var(--bg-surface)' : 'var(--bg-surface2)',
                           }}
                         >
-                          <td
-                            className="px-5 py-3.5 text-sm"
-                            style={{ color: 'var(--text-secondary)', fontFamily: "'Inter', sans-serif" }}
-                          >
-                            {row.feature}
-                          </td>
+                          <td className="px-5 py-3.5 text-sm" style={{ color: 'var(--text-secondary)', fontFamily: "'Inter', sans-serif" }}>{row.feature}</td>
                           {PLANS.map((p) => (
-                            <td key={p.id} className="px-4 py-3.5 text-center">
+                            <td key={p.id} className="px-3 py-3.5 text-center">
                               <CompCell value={row[p.id as keyof typeof row] as string | boolean} />
                             </td>
                           ))}
@@ -930,11 +905,11 @@ export default function PricingSection() {
           </AnimatePresence>
         </motion.div>
 
-        {/* ── FAQ ── */}
+        {/* FAQ */}
         <motion.div
           initial={{ opacity: 0, y: 24 }}
           animate={inView ? { opacity: 1, y: 0 } : {}}
-          transition={{ duration: 0.6, ease: 'easeOut', delay: 0.8 }}
+          transition={{ duration: 0.6, delay: 0.85 }}
           className="mt-24"
         >
           <h3

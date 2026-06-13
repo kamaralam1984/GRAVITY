@@ -17,6 +17,8 @@ from routers import auth, admin_router, families, devices, geofences, sos_router
 from routers import check_ins, journeys, chat, driving, health, notifications, plans
 from routers import emergency, support_tickets, audit, coupons
 from routers import payments, subscriptions, security_logs, stripe_router, social_auth, titan_router, venus_router, cosmo_router
+from routers import kids_elder
+from routers.ai_guardian import router as ai_guardian_router
 
 app = FastAPI(
     title="Trackalways Gravity API",
@@ -62,6 +64,8 @@ app.include_router(security_logs.router, prefix="/security", tags=["Security"])
 app.include_router(titan_router.router, prefix="/titan", tags=["Titan - Smart Locks"])
 app.include_router(venus_router.router, prefix="/venus", tags=["Venus - Vehicle Tracking"])
 app.include_router(cosmo_router.router, prefix="/cosmo", tags=["Cosmo AI - Dashcam"])
+app.include_router(ai_guardian_router, prefix="/api", tags=["AI Guardian"])
+app.include_router(kids_elder.router, prefix="/gravity", tags=["Kids & Elder"])
 
 @app.get("/")
 async def root():
