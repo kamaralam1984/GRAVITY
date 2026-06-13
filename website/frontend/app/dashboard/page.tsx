@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback } from 'react'
 import dynamic from 'next/dynamic'
 import { motion, AnimatePresence } from 'framer-motion'
 import { MAP_MEMBERS, MapMember, VehicleType } from '@/lib/mapData'
-import { getUser, clearAuth, AuthUser } from '@/lib/auth'
+import { getUser, getToken, clearAuth, AuthUser } from '@/lib/auth'
 import { useRouter } from 'next/navigation'
 import ThemeToggle from '@/components/ui/ThemeToggle'
 import PanelBackground from '@/components/effects/PanelBackground'
@@ -97,7 +97,7 @@ function BattBar({ pct, color }: { pct:number; color:string }) {
 /* ─────────────────────────────────────────────────────────────
    MEMBER CARD (Family tab)
 ─────────────────────────────────────────────────────────────── */
-function MemberCard({ m, open, onToggle }: { m:MapMember; open:boolean; onToggle:()=>void }) {
+function MemberCard({ m, open, onToggle, onSOS }: { m:MapMember; open:boolean; onToggle:()=>void; onSOS?:()=>void }) {
   return (
     <motion.div layout className="rounded-2xl overflow-hidden cursor-pointer"
       style={{ background: open?`${m.color}0D`:'var(--bg-surface2)',
@@ -189,6 +189,7 @@ function MemberCard({ m, open, onToggle }: { m:MapMember; open:boolean; onToggle
                   📞 Call
                 </button>
                 <motion.button
+                  onClick={() => onSOS?.()}
                   className="flex-1 py-2 rounded-xl text-[11px] font-bold transition-all hover:opacity-80 flex items-center justify-center gap-1.5"
                   style={{background:'rgba(239,68,68,0.1)',border:'1px solid rgba(239,68,68,0.3)',color:'#F87171'}}
                   animate={{boxShadow:['0 0 0 0 rgba(239,68,68,0.4)','0 0 0 20px rgba(239,68,68,0)','0 0 0 0 rgba(239,68,68,0)']}}
@@ -316,12 +317,13 @@ function ProfileTab({ user, toggles, setToggle, logout }:{
 /* ─────────────────────────────────────────────────────────────
    RIGHT PANEL
 ─────────────────────────────────────────────────────────────── */
-function RightPanel({ tab, setTab, expanded, setExpanded, alerts, dismiss, toggles, setToggle, user, logout }: {
+function RightPanel({ tab, setTab, expanded, setExpanded, alerts, dismiss, toggles, setToggle, user, logout, onSOS }: {
   tab:Tab; setTab:(t:Tab)=>void
   expanded:string|null; setExpanded:(id:string|null)=>void
   alerts:Alert[]; dismiss:(id:string)=>void
   toggles:Record<TKey,boolean>; setToggle:(k:TKey)=>void
   user:AuthUser; logout:()=>void
+  onSOS?:()=>void
 }) {
   const TABS: {id:Tab;label:string;icon:string;count?:number}[] = [
     {id:'family', label:'Family', icon:'👨‍👩‍👧'},
@@ -380,7 +382,7 @@ function RightPanel({ tab, setTab, expanded, setExpanded, alerts, dismiss, toggl
             <motion.div key="fam" initial={{opacity:0,y:6}} animate={{opacity:1,y:0}} exit={{opacity:0}} className="space-y-2">
               {MAP_MEMBERS.map((m,i) => (
                 <motion.div key={m.id} initial={{opacity:0,y:20}} animate={{opacity:1,y:0}} transition={{delay:i*0.05,duration:0.3}}>
-                  <MemberCard m={m} open={expanded===m.id} onToggle={() => setExpanded(expanded===m.id?null:m.id)} />
+                  <MemberCard m={m} open={expanded===m.id} onToggle={() => setExpanded(expanded===m.id?null:m.id)} onSOS={onSOS} />
                 </motion.div>
               ))}
             </motion.div>
@@ -414,12 +416,49 @@ export default function DashboardPage() {
   const [alerts,  setAlerts]  = useState<Alert[]>(INIT_ALERTS)
   const [bell,    setBell]    = useState(false)
   const [toggles, setToggles] = useState<Record<TKey,boolean>>({location:true,push:true,sos:false,battery:true})
+  const [familyMembers, setFamilyMembers] = useState<any[]>([])
+  const [realAlerts, setRealAlerts] = useState<Alert[]>([])
+  const [familyId, setFamilyId] = useState<number | null>(null)
+
+  // Sync real alerts when they load — use INIT_ALERTS as fallback
+  useEffect(() => {
+    if (realAlerts.length > 0) setAlerts(realAlerts)
+  }, [realAlerts])
 
   useEffect(() => {
     const u = getUser()
     if (!u) { router.replace('/login'); return }
     setUser(u)
   }, [router])
+
+  useEffect(() => {
+    const token = getToken()
+    if (!token) return
+    fetch('/families/my', { headers: { Authorization: 'Bearer ' + token } })
+      .then(r => r.ok ? r.json() : [])
+      .then((families: any[]) => {
+        if (families.length > 0) {
+          setFamilyId(families[0].id)
+          fetch('/sos/history/' + families[0].id, { headers: { Authorization: 'Bearer ' + token } })
+            .then(r => r.ok ? r.json() : [])
+            .then((sos: any[]) => {
+              if (sos.length > 0) {
+                const mapped: Alert[] = sos.slice(0, 4).map((s: any) => ({
+                  id: String(s.id),
+                  icon: s.status === 'active' ? '🚨' : '✅',
+                  title: s.status === 'active' ? 'SOS Alert Active' : 'SOS Resolved',
+                  msg: s.place_name || 'Location shared',
+                  time: new Date(s.triggered_at).toLocaleTimeString(),
+                  sev: (s.status === 'active' ? 'sos' : 'safe') as Sev,
+                }))
+                setRealAlerts(mapped)
+              }
+            })
+            .catch(() => {})
+        }
+      })
+      .catch(() => {})
+  }, [])
 
   const onMemberClick = useCallback((id:string) => {
     setActiveId(p => p===id?null:id)
@@ -431,6 +470,16 @@ export default function DashboardPage() {
   const logout = () => { clearAuth(); router.replace('/login') }
   const dismiss = (id:string) => setAlerts(p => p.filter(a => a.id!==id))
   const toggleSetting = (k:TKey) => setToggles(p => ({...p,[k]:!p[k]}))
+
+  const triggerSOS = useCallback(() => {
+    const token = getToken()
+    if (!token || !familyId) return
+    fetch('/sos/trigger', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token },
+      body: JSON.stringify({ family_id: familyId, message: 'Emergency SOS' }),
+    }).catch(() => {})
+  }, [familyId])
 
   if (!user) return (
     <div className="min-h-screen flex items-center justify-center" style={{background:'var(--bg)'}}>
@@ -649,7 +698,7 @@ export default function DashboardPage() {
           className="hidden lg:flex flex-col w-[320px] flex-shrink-0">
           <RightPanel tab={tab} setTab={setTab} expanded={expanded} setExpanded={setExpanded}
             alerts={alerts} dismiss={dismiss} toggles={toggles} setToggle={toggleSetting}
-            user={user} logout={logout} />
+            user={user} logout={logout} onSOS={triggerSOS} />
         </motion.div>
 
         {/* RIGHT — Mobile tab content */}
@@ -659,7 +708,7 @@ export default function DashboardPage() {
               {mobTab==='family' && (
                 <div className="space-y-2">
                   {MAP_MEMBERS.map(m => (
-                    <MemberCard key={m.id} m={m} open={expanded===m.id} onToggle={() => setExpanded(expanded===m.id?null:m.id)} />
+                    <MemberCard key={m.id} m={m} open={expanded===m.id} onToggle={() => setExpanded(expanded===m.id?null:m.id)} onSOS={triggerSOS} />
                   ))}
                 </div>
               )}

@@ -1,21 +1,10 @@
-import { Inter, Plus_Jakarta_Sans } from 'next/font/google'
 import './globals.css'
 import 'leaflet/dist/leaflet.css'
 import LoaderProvider from '@/components/effects/LoaderProvider'
 
-const inter = Inter({
-  subsets: ['latin'],
-  weight: ['400', '500', '600'],
-  variable: '--font-inter',
-  display: 'swap',
-})
-
-const plusJakartaSans = Plus_Jakarta_Sans({
-  subsets: ['latin'],
-  weight: ['700', '800'],
-  variable: '--font-display',
-  display: 'swap',
-})
+// Using system font fallbacks to avoid Google Fonts network dependency
+const inter = { variable: '--font-inter' }
+const plusJakartaSans = { variable: '--font-display' }
 
 export const metadata = {
   metadataBase: new URL('https://gravity.trackalways.com'),

@@ -10,9 +10,12 @@ export default function ThemeToggle({ className }: { className?: string }) {
 
   useEffect(() => {
     setMounted(true)
-    setDark(document.documentElement.classList.contains('dark'))
+    // Panel theme uses separate key so it doesn't affect the public marketing site
+    const stored = localStorage.getItem('gravity-panel-theme')
+    const isDark = stored ? stored === 'dark' : document.documentElement.classList.contains('dark')
+    setDark(isDark)
+    document.documentElement.classList.toggle('dark', isDark)
 
-    // Keep in sync if another component toggles the theme
     const observer = new MutationObserver(() => {
       setDark(document.documentElement.classList.contains('dark'))
     })
@@ -22,7 +25,7 @@ export default function ThemeToggle({ className }: { className?: string }) {
 
   function toggle() {
     const isDark = document.documentElement.classList.toggle('dark')
-    localStorage.setItem('gravity-theme', isDark ? 'dark' : 'light')
+    localStorage.setItem('gravity-panel-theme', isDark ? 'dark' : 'light')
     setDark(isDark)
   }
 

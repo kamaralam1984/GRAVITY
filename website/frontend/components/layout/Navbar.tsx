@@ -303,12 +303,9 @@ export default function Navbar() {
   useEffect(() => {
     setMounted(true);
 
-    // Read stored preference
-    const stored = localStorage.getItem('gravity-theme');
-    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-    const dark = stored ? stored === 'dark' : prefersDark;
-    setIsDark(dark);
-    document.documentElement.classList.toggle('dark', dark);
+    // Public marketing site is always dark — panel theme preference doesn't affect it
+    setIsDark(true);
+    document.documentElement.classList.add('dark');
 
     // Watch for class changes (e.g. from other components toggling theme)
     const observer = new MutationObserver(() => {

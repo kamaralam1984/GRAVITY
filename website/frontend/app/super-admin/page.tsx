@@ -474,6 +474,58 @@ export default function SuperAdminPage() {
   const [userRoleFilter, setUserRoleFilter] = useState('all')
   const [userStatusFilter, setUserStatusFilter] = useState('all')
 
+  // ── API state ──
+  const [platformStats, setPlatformStats] = useState<any>(null)
+  const [allUsers, setAllUsers] = useState<any[]>([])
+  const [sosData, setSosData] = useState<any[]>([])
+  const [usersLoading, setUsersLoading] = useState(false)
+
+  function getAuthToken(): string {
+    if (typeof document === 'undefined') return ''
+    return (
+      document.cookie
+        .split(';')
+        .find((c) => c.trim().startsWith('gv_token='))
+        ?.split('=')[1] ||
+      localStorage.getItem('gv_token') ||
+      ''
+    )
+  }
+
+  function fetchUsers(search = '') {
+    setUsersLoading(true)
+    const token = getAuthToken()
+    fetch('/super-admin-api/users?limit=50&search=' + encodeURIComponent(search), {
+      headers: { Authorization: 'Bearer ' + token },
+    })
+      .then((r) => r.json())
+      .then((d) => setAllUsers(d.users || []))
+      .catch(() => {})
+      .finally(() => setUsersLoading(false))
+  }
+
+  useEffect(() => {
+    const token = getAuthToken()
+    if (!token) return
+
+    // Fetch platform stats
+    fetch('/super-admin-api/stats', { headers: { Authorization: 'Bearer ' + token } })
+      .then((r) => r.json())
+      .then((d) => setPlatformStats(d))
+      .catch(() => {})
+
+    // Fetch users
+    fetchUsers()
+
+    // Fetch SOS alerts
+    fetch('/super-admin-api/sos?status=all&limit=20', {
+      headers: { Authorization: 'Bearer ' + token },
+    })
+      .then((r) => r.json())
+      .then((d) => setSosData(d.alerts || []))
+      .catch(() => {})
+  }, [])
+
   const superAdminName = user?.name ?? 'Super Admin'
   const initials = superAdminName
     .split(' ')
@@ -482,13 +534,16 @@ export default function SuperAdminPage() {
     .toUpperCase()
     .slice(0, 2)
 
-  const filteredUsers = MOCK_USERS.filter((u) => {
+  const filteredUsers = (allUsers.length > 0 ? allUsers : MOCK_USERS).filter((u) => {
+    const uName = u.name || ''
+    const uEmail = u.email || ''
+    const uStatus = u.status || (u.is_active === false ? 'inactive' : u.is_active === true ? 'active' : 'active')
     const matchSearch =
       !userSearch ||
-      u.name.toLowerCase().includes(userSearch.toLowerCase()) ||
-      u.email.toLowerCase().includes(userSearch.toLowerCase())
+      uName.toLowerCase().includes(userSearch.toLowerCase()) ||
+      uEmail.toLowerCase().includes(userSearch.toLowerCase())
     const matchRole = userRoleFilter === 'all' || u.role === userRoleFilter
-    const matchStatus = userStatusFilter === 'all' || u.status === userStatusFilter
+    const matchStatus = userStatusFilter === 'all' || uStatus === userStatusFilter
     return matchSearch && matchRole && matchStatus
   })
 
@@ -629,6 +684,20 @@ export default function SuperAdminPage() {
   const CommandCenter = () => {
     const ref = useRef<HTMLDivElement>(null)
     const inView = useInView(ref, { once: true })
+    const liveHeroStats = HERO_STATS.map((stat) => {
+      if (stat.label === 'Total Users' && platformStats?.total_users != null)
+        return { ...stat, value: platformStats.total_users.toLocaleString() }
+      if (stat.label === 'Monthly Revenue' && platformStats?.mrr_inr != null)
+        return { ...stat, value: '₹' + (platformStats.mrr_inr / 100000).toFixed(1) + 'L' }
+      return stat
+    })
+    const liveSecondRow = SECOND_ROW_STATS.map((stat) => {
+      if (stat.label === 'Total Families' && platformStats?.total_families != null)
+        return { ...stat, value: platformStats.total_families.toLocaleString() }
+      if (stat.label === 'SOS Today' && platformStats?.active_sos != null)
+        return { ...stat, value: String(platformStats.active_sos) }
+      return stat
+    })
     return (
       <div ref={ref}>
         {/* Hero Stats */}
@@ -640,7 +709,7 @@ export default function SuperAdminPage() {
             marginBottom: 20,
           }}
         >
-          {HERO_STATS.map((stat, i) => (
+          {liveHeroStats.map((stat, i) => (
             <motion.div
               key={stat.label}
               initial={{ opacity: 0, y: 24 }}
@@ -722,7 +791,7 @@ export default function SuperAdminPage() {
             marginBottom: 20,
           }}
         >
-          {SECOND_ROW_STATS.map((stat, i) => {
+          {liveSecondRow.map((stat, i) => {
             const Icon = stat.icon
             return (
               <motion.div
@@ -998,15 +1067,15 @@ export default function SuperAdminPage() {
                           flexShrink: 0,
                         }}
                       >
-                        {u.avatar}
+                        {u.avatar || (u.name || '?').split(' ').map((w: string) => w[0]).join('').toUpperCase().slice(0, 2)}
                       </div>
-                      <span style={{ fontWeight: 500, color: '#fff', whiteSpace: 'nowrap' }}>{u.name}</span>
+                      <span style={{ fontWeight: 500, color: '#fff', whiteSpace: 'nowrap' }}>{u.name || '—'}</span>
                     </div>
                   </td>
-                  <td style={{ padding: '12px 16px', color: 'rgba(255,255,255,0.5)' }}>{u.email}</td>
-                  <td style={{ padding: '12px 16px' }}>{roleBadge(u.role)}</td>
-                  <td style={{ padding: '12px 16px' }}>{statusBadge(u.status)}</td>
-                  <td style={{ padding: '12px 16px', color: 'rgba(255,255,255,0.4)', whiteSpace: 'nowrap' }}>{u.joined}</td>
+                  <td style={{ padding: '12px 16px', color: 'rgba(255,255,255,0.5)' }}>{u.email || '—'}</td>
+                  <td style={{ padding: '12px 16px' }}>{roleBadge(u.role || 'user')}</td>
+                  <td style={{ padding: '12px 16px' }}>{statusBadge(u.status || (u.is_active === false ? 'inactive' : 'active'))}</td>
+                  <td style={{ padding: '12px 16px', color: 'rgba(255,255,255,0.4)', whiteSpace: 'nowrap' }}>{u.joined || (u.created_at ? new Date(u.created_at).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) : '—')}</td>
                   <td style={{ padding: '12px 16px' }}>
                     <div style={{ display: 'flex', gap: 6 }}>
                       {[{ icon: Eye, tip: 'View', color: '#60A5FA' }, { icon: Edit, tip: 'Edit', color: '#F59E0B' }, { icon: Ban, tip: 'Suspend', color: '#F97316' }, { icon: Trash2, tip: 'Delete', color: '#EF4444' }].map(
@@ -1053,7 +1122,7 @@ export default function SuperAdminPage() {
             color: 'rgba(255,255,255,0.35)',
           }}
         >
-          <span>Showing 1–{filteredUsers.length} of 2,847,392 users</span>
+          <span>Showing 1–{filteredUsers.length} of {platformStats?.total_users != null ? platformStats.total_users.toLocaleString() : '2,847,392'} users</span>
           <div style={{ display: 'flex', gap: 6 }}>
             {[1, 2, 3, '...', 284739].map((p, i) => (
               <button
@@ -2128,30 +2197,34 @@ export default function SuperAdminPage() {
   }
 
   const SOSAlerts = () => {
+    const resolvedCount = sosData.length > 0 ? sosData.filter((a) => (a.status || '').toUpperCase() === 'RESOLVED').length : 98
+    const pendingCount = sosData.length > 0 ? sosData.filter((a) => (a.status || '').toUpperCase() !== 'RESOLVED').length : 29
     const sosStats = [
-      { label: 'Total SOS Today', value: '127', color: '#EF4444' },
-      { label: 'Resolved', value: '98', color: '#10B981' },
-      { label: 'Pending', value: '29', color: '#F59E0B' },
+      { label: 'Total SOS Today', value: platformStats?.active_sos != null ? String(platformStats.active_sos) : '127', color: '#EF4444' },
+      { label: 'Resolved', value: String(resolvedCount), color: '#10B981' },
+      { label: 'Pending', value: String(pendingCount), color: '#F59E0B' },
       { label: 'Avg Response', value: '43s', color: PURPLE },
     ]
-    const alerts = [
-      { id: 'SOS-4821', user: 'Priya Mehta', location: 'Andheri, Mumbai', time: '09:14 AM', status: 'RESOLVED', responder: 'Karan S.' },
-      { id: 'SOS-4820', user: 'Ajay Verma', location: 'CP, Delhi', time: '09:02 AM', status: 'CRITICAL', responder: 'Pending' },
-      { id: 'SOS-4819', user: 'Riya Singh', location: 'Koramangala, Bangalore', time: '08:51 AM', status: 'RESOLVED', responder: 'Meena K.' },
-      { id: 'SOS-4818', user: 'Suresh Kumar', location: 'Banjara Hills, Hyderabad', time: '08:33 AM', status: 'PENDING', responder: 'Assigned' },
-      { id: 'SOS-4817', user: 'Pooja Das', location: 'T Nagar, Chennai', time: '08:20 AM', status: 'RESOLVED', responder: 'Suresh R.' },
-      { id: 'SOS-4816', user: 'Amit Jain', location: 'Viman Nagar, Pune', time: '07:58 AM', status: 'CRITICAL', responder: 'Pending' },
-      { id: 'SOS-4815', user: 'Neha Gupta', location: 'Salt Lake, Kolkata', time: '07:45 AM', status: 'RESOLVED', responder: 'Aditya R.' },
-      { id: 'SOS-4814', user: 'Rohit Kapoor', location: 'Satellite, Ahmedabad', time: '07:12 AM', status: 'RESOLVED', responder: 'Kavita M.' },
+    // Use live sosData if available, otherwise fall back to mock data
+    const displayAlerts = sosData.length > 0 ? sosData : [
+      { id: 'SOS-4821', user_name: 'Priya Mehta', place_name: 'Andheri, Mumbai', triggered_at: '09:14 AM', status: 'RESOLVED' },
+      { id: 'SOS-4820', user_name: 'Ajay Verma', place_name: 'CP, Delhi', triggered_at: '09:02 AM', status: 'CRITICAL' },
+      { id: 'SOS-4819', user_name: 'Riya Singh', place_name: 'Koramangala, Bangalore', triggered_at: '08:51 AM', status: 'RESOLVED' },
+      { id: 'SOS-4818', user_name: 'Suresh Kumar', place_name: 'Banjara Hills, Hyderabad', triggered_at: '08:33 AM', status: 'PENDING' },
+      { id: 'SOS-4817', user_name: 'Pooja Das', place_name: 'T Nagar, Chennai', triggered_at: '08:20 AM', status: 'RESOLVED' },
+      { id: 'SOS-4816', user_name: 'Amit Jain', place_name: 'Viman Nagar, Pune', triggered_at: '07:58 AM', status: 'CRITICAL' },
+      { id: 'SOS-4815', user_name: 'Neha Gupta', place_name: 'Salt Lake, Kolkata', triggered_at: '07:45 AM', status: 'RESOLVED' },
+      { id: 'SOS-4814', user_name: 'Rohit Kapoor', place_name: 'Satellite, Ahmedabad', triggered_at: '07:12 AM', status: 'RESOLVED' },
     ]
     const sosBadge = (status: string) => {
+      const normalized = (status || 'PENDING').toUpperCase()
       const map: Record<string, { bg: string; color: string }> = {
         CRITICAL: { bg: 'rgba(239,68,68,0.15)', color: '#EF4444' },
         PENDING: { bg: 'rgba(245,158,11,0.15)', color: '#F59E0B' },
         RESOLVED: { bg: 'rgba(16,185,129,0.12)', color: '#10B981' },
       }
-      const s = map[status] ?? map.PENDING
-      return <span style={{ background: s.bg, color: s.color, fontSize: 11, fontWeight: 700, padding: '2px 8px', borderRadius: 99, border: `1px solid ${s.color}44`, letterSpacing: '0.04em' }}>{status}</span>
+      const s = map[normalized] ?? map.PENDING
+      return <span style={{ background: s.bg, color: s.color, fontSize: 11, fontWeight: 700, padding: '2px 8px', borderRadius: 99, border: `1px solid ${s.color}44`, letterSpacing: '0.04em' }}>{normalized}</span>
     }
     return (
       <div>
@@ -2169,24 +2242,24 @@ export default function SuperAdminPage() {
             <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
               <thead>
                 <tr style={{ borderBottom: '1px solid var(--border)', background: 'var(--bg-surface2)' }}>
-                  {['Alert ID', 'User', 'Location', 'Time', 'Status', 'Responder'].map((h) => (
+                  {['Alert ID', 'User', 'Location', 'Time', 'Status', 'Family'].map((h) => (
                     <th key={h} style={{ padding: '10px 16px', textAlign: 'left', fontSize: 11, fontWeight: 700, color: 'var(--text-muted)', letterSpacing: '0.06em', textTransform: 'uppercase', whiteSpace: 'nowrap' }}>{h}</th>
                   ))}
                 </tr>
               </thead>
               <tbody>
-                {alerts.map((a, i) => (
-                  <motion.tr key={i} initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.04 }}
+                {displayAlerts.map((a: any, i: number) => (
+                  <motion.tr key={a.id || i} initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.04 }}
                     style={{ borderBottom: '1px solid var(--border)', height: 40, background: 'transparent' }}
                     onMouseEnter={(e) => (e.currentTarget.style.background = 'var(--bg-surface2)')}
                     onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
                   >
-                    <td style={{ padding: '12px 16px', color: PURPLE, fontWeight: 600, fontFamily: 'monospace', fontSize: 12 }}>{a.id}</td>
-                    <td style={{ padding: '12px 16px', color: '#fff', fontWeight: 500 }}>{a.user}</td>
-                    <td style={{ padding: '12px 16px', color: 'rgba(255,255,255,0.5)', fontSize: 12 }}>{a.location}</td>
-                    <td style={{ padding: '12px 16px', color: 'rgba(255,255,255,0.4)', whiteSpace: 'nowrap', fontSize: 12 }}>{a.time}</td>
-                    <td style={{ padding: '12px 16px' }}>{sosBadge(a.status)}</td>
-                    <td style={{ padding: '12px 16px', color: 'rgba(255,255,255,0.6)', fontSize: 12 }}>{a.responder}</td>
+                    <td style={{ padding: '12px 16px', color: PURPLE, fontWeight: 600, fontFamily: 'monospace', fontSize: 12 }}>{a.id || '—'}</td>
+                    <td style={{ padding: '12px 16px', color: '#fff', fontWeight: 500 }}>{a.user_name || '—'}</td>
+                    <td style={{ padding: '12px 16px', color: 'rgba(255,255,255,0.5)', fontSize: 12 }}>{a.place_name || (a.lat && a.lng ? `${a.lat.toFixed(4)}, ${a.lng.toFixed(4)}` : '—')}</td>
+                    <td style={{ padding: '12px 16px', color: 'rgba(255,255,255,0.4)', whiteSpace: 'nowrap', fontSize: 12 }}>{a.triggered_at ? (typeof a.triggered_at === 'string' && a.triggered_at.includes('AM') || a.triggered_at.includes('PM') ? a.triggered_at : new Date(a.triggered_at).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })) : '—'}</td>
+                    <td style={{ padding: '12px 16px' }}>{sosBadge(a.status || 'PENDING')}</td>
+                    <td style={{ padding: '12px 16px', color: 'rgba(255,255,255,0.6)', fontSize: 12 }}>{a.family_name || '—'}</td>
                   </motion.tr>
                 ))}
               </tbody>

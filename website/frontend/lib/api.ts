@@ -1,4 +1,4 @@
-const BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000"
+const BASE = process.env.NEXT_PUBLIC_API_URL ?? ""
 
 // ── Storage helpers ──────────────────────────────────────────────
 export const getAdminToken = () => typeof window !== "undefined" ? localStorage.getItem("gravity_admin_token") : null

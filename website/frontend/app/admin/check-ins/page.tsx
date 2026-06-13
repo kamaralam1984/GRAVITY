@@ -176,7 +176,7 @@ export default function CheckInsPage() {
   useEffect(() => {
     const token = localStorage.getItem("gravity_admin_token")
     if (!token) return
-    fetch("http://localhost:8000/check-ins/stats", {
+    fetch("/check-ins/stats", {
       headers: { "Authorization": "Bearer " + token }
     })
       .then(r => r.json())

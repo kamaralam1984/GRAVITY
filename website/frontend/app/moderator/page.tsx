@@ -1,12 +1,13 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   Home, MessageSquare, Flag, Eye, Megaphone, BarChart2,
   Shield, Bell, LogOut, CheckCircle, AlertTriangle, Star,
 } from 'lucide-react'
 import { useAuth } from '@/lib/useAuth'
+import { getToken } from '@/lib/auth'
 import ThemeToggle from '@/components/ui/ThemeToggle'
 import PanelBackground from '@/components/effects/PanelBackground'
 
@@ -367,7 +368,16 @@ function Header({ active, moderatorName }: { active: NavSection; moderatorName: 
 
 // ── OVERVIEW ───────────────────────────────────────────────────────────────────
 
-function Overview() {
+interface TicketStats {
+  open: number
+  resolved_today: number
+  pending_reports: number
+  csat: number
+  avg_response: string
+  active_users: number
+}
+
+function Overview({ ticketStats }: { ticketStats: TicketStats }) {
   return (
     <motion.div
       key="overview"
@@ -389,11 +399,11 @@ function Overview() {
         gap: 0,
       }}>
         {[
-          { label: 'Open Tickets',     value: '23',   trend: '+4',   trendUp: false },
-          { label: 'Resolved Today',   value: '45',   trend: '+12',  trendUp: true  },
-          { label: 'Pending Reports',  value: '7',    trend: null,   trendUp: null  },
-          { label: 'CSAT',             value: '4.6★', trend: '+0.2', trendUp: true  },
-          { label: 'Avg Response',     value: '2.3h', trend: null,   trendUp: null  },
+          { label: 'Open Tickets',     value: String(ticketStats.open),               trend: null, trendUp: null },
+          { label: 'Resolved Today',   value: String(ticketStats.resolved_today),      trend: null, trendUp: null },
+          { label: 'Pending Reports',  value: String(ticketStats.pending_reports),     trend: null, trendUp: null },
+          { label: 'CSAT',             value: ticketStats.csat.toFixed(1) + '★',       trend: null, trendUp: null },
+          { label: 'Avg Response',     value: ticketStats.avg_response,                trend: null, trendUp: null },
         ].map((kpi, i, arr) => (
           <div key={kpi.label} style={{
             display: 'flex',
@@ -549,12 +559,24 @@ function Overview() {
 
 // ── TICKETS ────────────────────────────────────────────────────────────────────
 
-function SupportTickets() {
+function SupportTickets({ realTickets, loadingTickets }: { realTickets: any[]; loadingTickets: boolean }) {
+  const displayTickets: Ticket[] = realTickets.length > 0
+    ? realTickets.map((t: any) => ({
+        id: t.ticket_number || t.id || 'TKT-?',
+        user: t.user_email || t.user || 'Unknown',
+        subject: t.subject || 'No subject',
+        priority: (t.priority === 'critical' ? 'high' : t.priority === 'normal' ? 'medium' : t.priority) as Ticket['priority'] || 'medium',
+        status: (t.status === 'in_progress' ? 'in-progress' : t.status) as Ticket['status'] || 'open',
+        created: t.created_at ? new Date(t.created_at).toLocaleString() : '',
+        description: t.description || '',
+      }))
+    : TICKETS
+
   const [filter, setFilter] = useState<'all' | 'open' | 'resolved'>('all')
-  const [selected, setSelected] = useState<Ticket | null>(TICKETS[0])
+  const [selected, setSelected] = useState<Ticket | null>(displayTickets[0] ?? null)
   const [ticketStatuses, setTicketStatuses] = useState<Record<string, Ticket['status']>>({})
 
-  const filtered = TICKETS.filter(t => {
+  const filtered = displayTickets.filter(t => {
     if (filter === 'open') return t.status !== 'resolved'
     if (filter === 'resolved') return t.status === 'resolved'
     return true
@@ -1318,6 +1340,37 @@ function Analytics() {
 export default function ModeratorPage() {
   const { user, logout } = useAuth()
   const [active, setActive] = useState<NavSection>('overview')
+  const [realTickets, setRealTickets] = useState<any[]>([])
+  const [ticketStats, setTicketStats] = useState<TicketStats>({
+    open: 23,
+    resolved_today: 45,
+    pending_reports: 7,
+    csat: 4.6,
+    avg_response: '2.3h',
+    active_users: 0,
+  })
+  const [loadingTickets, setLoadingTickets] = useState(false)
+
+  useEffect(() => {
+    setLoadingTickets(true)
+    const authToken = getToken() || ''
+
+    fetch('/support/tickets?limit=50', {
+      headers: authToken ? { Authorization: 'Bearer ' + authToken } : {},
+    })
+      .then(r => r.ok ? r.json() : { tickets: [], total: 0 })
+      .then(d => {
+        const tickets = d.tickets || d || []
+        if (Array.isArray(tickets) && tickets.length > 0) {
+          setRealTickets(tickets)
+          const open = tickets.filter((t: any) => t.status === 'open').length
+          const resolved_today = tickets.filter((t: any) => t.status === 'resolved').length
+          setTicketStats(prev => ({ ...prev, open, resolved_today }))
+        }
+      })
+      .catch(() => {})
+      .finally(() => setLoadingTickets(false))
+  }, [])
 
   const moderatorName = user?.name
     ? user.name.split(' ').map((w: string) => w[0]).join('').slice(0, 2) + '.'
@@ -1353,8 +1406,8 @@ export default function ModeratorPage() {
         {/* Section content */}
         <div style={{ flex: 1, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
           <AnimatePresence mode="wait">
-            {active === 'overview'      && <Overview key="overview" />}
-            {active === 'tickets'       && <SupportTickets key="tickets" />}
+            {active === 'overview'      && <Overview key="overview" ticketStats={ticketStats} />}
+            {active === 'tickets'       && <SupportTickets key="tickets" realTickets={realTickets} loadingTickets={loadingTickets} />}
             {active === 'reports'       && <UserReports key="reports" />}
             {active === 'content'       && <ContentReview key="content" />}
             {active === 'announcements' && <Announcements key="announcements" />}
