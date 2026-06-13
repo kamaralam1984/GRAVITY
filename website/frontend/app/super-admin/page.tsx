@@ -509,7 +509,6 @@ const NAV_GROUPS_SA = [
   ],
   // Elder Care
   [
-    { id: 'health' as NavSection, label: 'Health Monitoring', icon: Activity },
     { id: 'medication' as NavSection, label: 'Medication', icon: Activity },
     { id: 'fall-detection' as NavSection, label: 'Fall Detection', icon: AlertTriangle },
     { id: 'wellness' as NavSection, label: 'Wellness Reports', icon: FileText },
