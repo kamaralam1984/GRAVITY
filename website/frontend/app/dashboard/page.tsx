@@ -7,638 +7,192 @@ import { MAP_MEMBERS, MapMember, VehicleType } from '@/lib/mapData'
 import { getUser, clearAuth, AuthUser } from '@/lib/auth'
 import { useRouter } from 'next/navigation'
 
-/* ── Dynamic MapView (no SSR) ─────────────────────────────────── */
+/* ── Dynamic MapView ─────────────────────────────────────────── */
 const MapView = dynamic(() => import('@/components/sections/MapView'), {
   ssr: false,
   loading: () => (
-    <div className="w-full h-full flex items-center justify-center bg-[#071428] rounded-3xl">
-      <div className="flex flex-col items-center gap-3">
-        <div className="w-10 h-10 border-2 border-[#D4A853] border-t-transparent rounded-full animate-spin" />
-        <span className="text-[#D4A853] text-sm font-medium tracking-wider">Loading Map…</span>
+    <div className="w-full h-full flex items-center justify-center"
+         style={{ background: 'linear-gradient(135deg,#050D1A,#0A1628)' }}>
+      <div className="flex flex-col items-center gap-4">
+        <div className="relative w-14 h-14">
+          <div className="absolute inset-0 rounded-full border-2 border-[#D4A853]/20 animate-ping" />
+          <div className="w-14 h-14 rounded-full border-2 border-t-[#D4A853] border-[#D4A853]/10 animate-spin" />
+          <div className="absolute inset-0 flex items-center justify-center text-2xl">📍</div>
+        </div>
+        <span className="text-[#D4A853] text-xs font-semibold tracking-[0.2em] uppercase">Loading Map</span>
       </div>
     </div>
   ),
 })
 
-/* ── Vehicle emoji map ────────────────────────────────────────── */
-const VEHICLE_EMOJI: Record<VehicleType, string> = {
-  car:   '🚗',
-  bus:   '🚌',
-  walk:  '🚶',
-  bike:  '🚲',
-  auto:  '🛺',
-  tempo: '🚛',
+/* ── Vehicle emoji ───────────────────────────────────────────── */
+const V: Record<VehicleType, string> = {
+  car:'🚗', bus:'🚌', walk:'🚶', bike:'🚲', auto:'🛺', tempo:'🚛',
 }
 
-/* ── Mock alerts ──────────────────────────────────────────────── */
-type AlertSeverity = 'safe' | 'warning' | 'sos' | 'info'
-
-interface DashAlert {
-  id: string
-  icon: string
-  title: string
-  message: string
-  time: string
-  severity: AlertSeverity
+/* ── Journey data ────────────────────────────────────────────── */
+const JOURNEY: Record<string, {time:string;place:string;icon:string;done:boolean}[]> = {
+  mom:     [{time:'7:30 AM',place:'Left Home',icon:'🏠',done:true},{time:'8:15 AM',place:'Market',icon:'🛒',done:true},{time:'10:00 AM',place:'Back Home',icon:'🏠',done:true}],
+  dad:     [{time:'8:00 AM',place:'Left Home',icon:'🏠',done:true},{time:'9:20 AM',place:'Office',icon:'🏢',done:true},{time:'6:00 PM',place:'Return home',icon:'🏠',done:false}],
+  priya:   [{time:'7:45 AM',place:'Left Home',icon:'🏠',done:true},{time:'8:50 AM',place:'College',icon:'🎓',done:true},{time:'4:00 PM',place:'Return home',icon:'🏠',done:false}],
+  anya:    [{time:'7:00 AM',place:'Left Home',icon:'🏠',done:true},{time:'8:42 AM',place:'School',icon:'🏫',done:true},{time:'2:30 PM',place:'Return home',icon:'🏠',done:false}],
+  grandpa: [{time:'9:00 AM',place:'Left Home',icon:'🏠',done:true},{time:'9:35 AM',place:'Market',icon:'🛍️',done:true},{time:'12:00 PM',place:'Return home',icon:'🏠',done:false}],
 }
 
-const INITIAL_ALERTS: DashAlert[] = [
-  {
-    id: 'a1',
-    icon: '📍',
-    title: 'Geofence Entered',
-    message: 'Anya entered the School zone at 8:42 AM',
-    time: '8:42 AM',
-    severity: 'safe',
-  },
-  {
-    id: 'a2',
-    icon: '🔋',
-    title: 'Battery Low',
-    message: "Priya's battery is at 42% — consider charging soon",
-    time: '11:15 AM',
-    severity: 'warning',
-  },
-  {
-    id: 'a3',
-    icon: '🚨',
-    title: 'SOS Cleared',
-    message: "Dad's SOS alert has been resolved. All clear.",
-    time: '9:03 AM',
-    severity: 'sos',
-  },
-  {
-    id: 'a4',
-    icon: '🏠',
-    title: 'Geofence Exited',
-    message: 'Mom left the Home zone at 7:30 AM',
-    time: '7:30 AM',
-    severity: 'info',
-  },
+/* ── Alert types ─────────────────────────────────────────────── */
+type Sev = 'safe'|'warning'|'sos'|'info'
+interface Alert { id:string; icon:string; title:string; msg:string; time:string; sev:Sev }
+
+const INIT_ALERTS: Alert[] = [
+  {id:'a1',icon:'📍',title:'Geofence Entered',  msg:'Anya entered School zone',          time:'8:42 AM', sev:'safe'},
+  {id:'a2',icon:'🔋',title:'Battery Low',        msg:"Priya's battery is at 42%",          time:'11:15 AM',sev:'warning'},
+  {id:'a3',icon:'🚨',title:'SOS Cleared',        msg:"Dad's SOS resolved. All clear.",     time:'9:03 AM', sev:'sos'},
+  {id:'a4',icon:'🏠',title:'Geofence Exited',    msg:'Mom left Home zone at 7:30 AM',     time:'7:30 AM', sev:'info'},
 ]
 
-/* ── Mock journey timeline per member ─────────────────────────── */
-const JOURNEY_TIMELINE: Record<string, { time: string; place: string; icon: string }[]> = {
-  mom:     [{ time: '7:30 AM', place: 'Left Home', icon: '🏠' }, { time: '8:15 AM', place: 'Arrived Market', icon: '🛒' }, { time: '10:00 AM', place: 'Back Home', icon: '🏠' }],
-  dad:     [{ time: '8:00 AM', place: 'Left Home', icon: '🏠' }, { time: '9:20 AM', place: 'Arrived Office', icon: '🏢' }],
-  priya:   [{ time: '7:45 AM', place: 'Left Home', icon: '🏠' }, { time: '8:50 AM', place: 'Arrived College', icon: '🎓' }],
-  anya:    [{ time: '7:00 AM', place: 'Left Home', icon: '🏠' }, { time: '8:42 AM', place: 'Arrived School', icon: '🏫' }],
-  grandpa: [{ time: '9:00 AM', place: 'Left Home', icon: '🏠' }, { time: '9:35 AM', place: 'At Market', icon: '🛍️' }],
+const SEV_STYLE: Record<Sev,{bg:string;border:string;bar:string;dot:string}> = {
+  safe:    {bg:'rgba(16,185,129,0.08)',  border:'rgba(16,185,129,0.25)',  bar:'#10B981', dot:'#10B981'},
+  warning: {bg:'rgba(245,158,11,0.08)', border:'rgba(245,158,11,0.25)',  bar:'#F59E0B', dot:'#F59E0B'},
+  sos:     {bg:'rgba(239,68,68,0.08)',   border:'rgba(239,68,68,0.25)',   bar:'#EF4444', dot:'#EF4444'},
+  info:    {bg:'rgba(59,130,246,0.08)',  border:'rgba(59,130,246,0.25)',  bar:'#3B82F6', dot:'#3B82F6'},
 }
 
-/* ── Severity color helpers ───────────────────────────────────── */
-function alertBg(s: AlertSeverity) {
-  if (s === 'safe')    return 'bg-emerald-500/10 border-emerald-500/25'
-  if (s === 'warning') return 'bg-amber-500/10 border-amber-500/25'
-  if (s === 'sos')     return 'bg-red-500/10 border-red-500/25'
-  return 'bg-blue-500/10 border-blue-500/25'
-}
-function alertDot(s: AlertSeverity) {
-  if (s === 'safe')    return 'bg-emerald-400'
-  if (s === 'warning') return 'bg-amber-400'
-  if (s === 'sos')     return 'bg-red-400'
-  return 'bg-blue-400'
-}
+type Tab = 'family'|'alerts'|'profile'
+type TKey = 'location'|'push'|'sos'|'battery'
 
-/* ── Battery bar color ─────────────────────────────────────────── */
-function batteryColor(pct: number) {
-  if (pct > 60) return 'bg-emerald-400'
-  if (pct > 30) return 'bg-amber-400'
-  return 'bg-red-400'
-}
-
-/* ── Tab type ──────────────────────────────────────────────────── */
-type Tab = 'family' | 'alerts' | 'profile'
-
-/* ── Settings key type ─────────────────────────────────────────── */
-type SettingKey = 'location' | 'pushNotif' | 'sosAutoCall' | 'batteryAlerts'
-
-/* ── Framer variants ───────────────────────────────────────────── */
-const fadeUp = {
-  hidden: { opacity: 0, y: 20 },
-  show:   { opacity: 1, y: 0, transition: { duration: 0.4 } },
-}
-const stagger = {
-  hidden: {},
-  show:   { transition: { staggerChildren: 0.07 } },
-}
-
-/* ─────────────────────────────────────────────────────────────────
-   MAIN PAGE
-──────────────────────────────────────────────────────────────────*/
-export default function DashboardPage() {
-  const router = useRouter()
-
-  /* auth */
-  const [authUser, setAuthUser] = useState<AuthUser | null>(null)
-
-  /* map */
-  const [activeId,  setActiveId]  = useState<string | null>(null)
-
-  /* panels */
-  const [tab,       setTab]       = useState<Tab>('family')
-  const [mobileTab, setMobileTab] = useState<Tab>('family')
-  const [expanded,  setExpanded]  = useState<string | null>(null)
-
-  /* alerts */
-  const [alerts, setAlerts] = useState<DashAlert[]>(INITIAL_ALERTS)
-
-  /* profile toggles */
-  const [toggles, setToggles] = useState<Record<SettingKey, boolean>>({
-    location:     true,
-    pushNotif:    true,
-    sosAutoCall:  false,
-    batteryAlerts: true,
-  })
-
-  /* notification bell popup */
-  const [bellOpen, setBellOpen] = useState(false)
-
-  useEffect(() => {
-    const u = getUser()
-    if (!u) { router.replace('/login'); return }
-    setAuthUser(u)
-  }, [router])
-
-  const handleMemberClick = useCallback((id: string) => {
-    setActiveId(prev => (prev === id ? null : id))
-    setExpanded(prev => (prev === id ? null : id))
-    setTab('family')
-    setMobileTab('family')
-  }, [])
-
-  const handleLogout = () => {
-    clearAuth()
-    router.replace('/login')
-  }
-
-  const dismissAlert = (id: string) =>
-    setAlerts(prev => prev.filter(a => a.id !== id))
-
-  const toggleSetting = (key: SettingKey) =>
-    setToggles(prev => ({ ...prev, [key]: !prev[key] }))
-
-  /* ── Determine active panel tab (desktop + mobile merge) ─────── */
-  const activeTab: Tab = tab
-
-  /* ── Responsive active tab selector ──────────────────────────── */
-  const isDesktop = typeof window !== 'undefined' && window.innerWidth >= 1024
-
-  if (!authUser) {
-    return (
-      <div className="min-h-screen flex items-center justify-center" style={{ background: '#071428' }}>
-        <div className="w-10 h-10 border-2 border-[#D4A853] border-t-transparent rounded-full animate-spin" />
-      </div>
-    )
-  }
-
+/* ─────────────────────────────────────────────────────────────
+   TOGGLE SWITCH
+─────────────────────────────────────────────────────────────── */
+function Toggle({ on, set }: { on:boolean; set:(v:boolean)=>void }) {
   return (
-    <div
-      className="min-h-screen flex flex-col"
-      style={{ background: '#071428', color: 'var(--text-primary)' }}
-    >
+    <button onClick={() => set(!on)} role="switch" aria-checked={on}
+      className="relative flex-shrink-0 transition-all duration-300"
+      style={{ width:44,height:24,borderRadius:12,background:on?'linear-gradient(135deg,#D4A853,#B8922E)':'rgba(255,255,255,0.1)',
+               boxShadow:on?'0 0 12px rgba(212,168,83,0.4)':'none' }}>
+      <motion.span animate={{x: on?22:2}} transition={{type:'spring',stiffness:500,damping:30}}
+        className="absolute top-[3px] w-[18px] h-[18px] rounded-full shadow-lg"
+        style={{background: on?'#fff':'rgba(255,255,255,0.4)'}} />
+    </button>
+  )
+}
 
-      {/* ══════════════ TOP HEADER ══════════════════════════════ */}
-      <header className="sticky top-0 z-50 flex items-center justify-between px-4 lg:px-6 h-14 border-b border-white/5"
-        style={{ background: 'rgba(7,20,40,0.92)', backdropFilter: 'blur(20px)' }}
-      >
-        {/* Left — logo + title */}
-        <div className="flex items-center gap-3">
-          <div className="flex items-center gap-1.5">
-            <div className="w-7 h-7 rounded-lg flex items-center justify-center text-sm font-black"
-              style={{ background: 'linear-gradient(135deg, #D4A853, #92580A)' }}
-            >G</div>
-            <span className="font-black text-sm tracking-widest uppercase hidden sm:block"
-              style={{ color: '#D4A853', fontFamily: 'var(--font-display)' }}
-            >GRAVITY</span>
+/* ─────────────────────────────────────────────────────────────
+   BATTERY BAR
+─────────────────────────────────────────────────────────────── */
+function BattBar({ pct, color }: { pct:number; color:string }) {
+  const c = pct<25?'#EF4444':pct<50?'#F59E0B':color
+  return (
+    <div className="flex items-center gap-2 flex-1">
+      <div className="flex-1 h-1.5 rounded-full overflow-hidden" style={{background:'rgba(255,255,255,0.07)'}}>
+        <motion.div initial={{width:0}} animate={{width:`${pct}%`}} transition={{duration:1,ease:'easeOut'}}
+          className="h-full rounded-full" style={{background:c,boxShadow:`0 0 6px ${c}60`}} />
+      </div>
+      <span className="text-[10px] font-semibold tabular-nums" style={{color:'rgba(255,255,255,0.4)',minWidth:28}}>{pct}%</span>
+    </div>
+  )
+}
+
+/* ─────────────────────────────────────────────────────────────
+   MEMBER CARD (Family tab)
+─────────────────────────────────────────────────────────────── */
+function MemberCard({ m, open, onToggle }: { m:MapMember; open:boolean; onToggle:()=>void }) {
+  return (
+    <motion.div layout className="rounded-2xl overflow-hidden cursor-pointer"
+      style={{ background: open?`${m.color}0D`:'rgba(255,255,255,0.025)',
+               border: open?`1px solid ${m.color}40`:'1px solid rgba(255,255,255,0.06)',
+               boxShadow: open?`0 4px 24px ${m.color}15`:'none',
+               transition:'border 0.2s,background 0.2s,box-shadow 0.2s' }}>
+
+      {/* Header row */}
+      <button className="w-full flex items-center gap-3 p-3.5 text-left" onClick={onToggle}>
+
+        {/* Avatar */}
+        <div className="relative flex-shrink-0">
+          <div className="w-11 h-11 rounded-2xl overflow-hidden"
+               style={{border:`2.5px solid ${m.color}`,boxShadow:`0 0 12px ${m.color}40`}}>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src={m.photo} alt={m.name} className="w-full h-full object-cover" />
           </div>
-          <div className="w-px h-4 bg-white/15 hidden sm:block" />
-          <span className="text-white/70 text-sm font-medium hidden sm:block">My Dashboard</span>
+          {/* Live dot */}
+          <motion.span animate={{scale:[1,1.4,1],opacity:[1,0.4,1]}} transition={{duration:2,repeat:Infinity}}
+            className="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 rounded-full border-2"
+            style={{background:'#10B981',borderColor:'#050D1A'}} />
         </div>
 
-        {/* Center — All Safe pill */}
-        <motion.div
-          initial={{ scale: 0.9, opacity: 0 }}
-          animate={{ scale: 1, opacity: 1 }}
-          className="flex items-center gap-1.5 px-3 py-1 rounded-full border text-xs font-semibold tracking-wide"
-          style={{ background: 'rgba(16,185,129,0.12)', borderColor: 'rgba(16,185,129,0.35)', color: '#10B981' }}
-        >
-          <span className="relative flex h-2 w-2">
-            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
-            <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-400" />
-          </span>
-          All Safe
-        </motion.div>
-
-        {/* Right — bell + avatar */}
-        <div className="flex items-center gap-3">
-
-          {/* Notification bell */}
-          <div className="relative">
-            <button
-              onClick={() => setBellOpen(v => !v)}
-              className="relative w-8 h-8 rounded-lg flex items-center justify-center transition-colors hover:bg-white/8"
-              style={{ border: '1px solid rgba(255,255,255,0.08)' }}
-            >
-              <span className="text-base">🔔</span>
-              <span className="absolute -top-0.5 -right-0.5 w-4 h-4 rounded-full text-[9px] font-bold flex items-center justify-center"
-                style={{ background: '#EF4444', color: '#fff' }}
-              >3</span>
-            </button>
-
-            <AnimatePresence>
-              {bellOpen && (
-                <motion.div
-                  key="bell-popup"
-                  initial={{ opacity: 0, y: -6, scale: 0.95 }}
-                  animate={{ opacity: 1, y: 0, scale: 1 }}
-                  exit={{ opacity: 0, y: -6, scale: 0.95 }}
-                  className="absolute right-0 top-10 w-72 rounded-2xl p-3 flex flex-col gap-2 shadow-2xl z-50"
-                  style={{ background: '#0D1A2E', border: '1px solid rgba(255,255,255,0.1)' }}
-                >
-                  <p className="text-xs text-white/50 font-semibold uppercase tracking-wider px-1 mb-1">Recent</p>
-                  {alerts.slice(0, 3).map(a => (
-                    <div key={a.id} className={`flex items-start gap-2 p-2 rounded-xl border ${alertBg(a.severity)}`}>
-                      <span className="text-lg leading-none mt-0.5">{a.icon}</span>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-xs font-semibold text-white/90 truncate">{a.title}</p>
-                        <p className="text-[10px] text-white/45 truncate">{a.time}</p>
-                      </div>
-                    </div>
-                  ))}
-                </motion.div>
-              )}
-            </AnimatePresence>
-          </div>
-
-          {/* User avatar + name */}
-          <div className="flex items-center gap-2">
-            <div className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0"
-              style={{ background: 'linear-gradient(135deg, #D4A853 0%, #92580A 100%)', color: '#fff' }}
-            >
-              {authUser.name.charAt(0).toUpperCase()}
-            </div>
-            <span className="text-sm font-medium text-white/80 hidden sm:block max-w-[100px] truncate">
-              {authUser.name}
+        {/* Info */}
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center justify-between mb-0.5">
+            <p className="text-sm font-bold text-white truncate">{m.name}</p>
+            <span className="text-[10px] font-medium ml-2 flex-shrink-0 px-1.5 py-0.5 rounded-full"
+                  style={{background:`${m.color}15`,color:m.color,border:`1px solid ${m.color}30`}}>
+              {V[m.vehicle]} {m.speed??0}km/h
             </span>
           </div>
-        </div>
-      </header>
-
-      {/* ══════════════ MAIN CONTENT ════════════════════════════ */}
-      <main className="flex-1 flex flex-col lg:flex-row gap-4 p-4 lg:p-5 pb-24 lg:pb-5">
-
-        {/* ── LEFT COLUMN ─────────────────────────────────────── */}
-        <div className="flex-1 flex flex-col gap-4 min-w-0">
-
-          {/* Map container */}
-          <motion.div
-            variants={fadeUp} initial="hidden" animate="show"
-            className="relative rounded-3xl overflow-hidden flex-shrink-0"
-            style={{ height: 400, border: '1px solid rgba(255,255,255,0.07)' }}
-          >
-            <MapView activeId={activeId} onMemberClick={handleMemberClick} />
-
-            {/* Active member overlay — appears top-left on map */}
-            <AnimatePresence>
-              {activeId && (() => {
-                const m = MAP_MEMBERS.find(x => x.id === activeId)
-                if (!m) return null
-                return (
-                  <motion.div
-                    key={activeId}
-                    initial={{ opacity: 0, x: -20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    exit={{ opacity: 0, x: -20 }}
-                    className="absolute top-3 left-3 flex items-center gap-2 px-3 py-2 rounded-2xl backdrop-blur-xl z-10"
-                    style={{ background: 'rgba(7,20,40,0.85)', border: `1px solid ${m.color}40` }}
-                  >
-                    <img src={m.photo} alt={m.name}
-                      className="w-8 h-8 rounded-full object-cover flex-shrink-0"
-                      style={{ border: `2px solid ${m.color}` }} />
-                    <div>
-                      <p className="text-xs font-bold text-white leading-none">{m.name}</p>
-                      <p className="text-[10px] mt-0.5" style={{ color: m.color }}>{m.location} · {VEHICLE_EMOJI[m.vehicle]} {m.speed ?? 0} km/h</p>
-                    </div>
-                    <button onClick={() => { setActiveId(null); setExpanded(null) }}
-                      className="ml-1 text-white/40 hover:text-white/80 transition-colors text-sm leading-none">✕</button>
-                  </motion.div>
-                )
-              })()}
-            </AnimatePresence>
-          </motion.div>
-
-          {/* Member strip (horizontal scroll) */}
-          <motion.div
-            variants={fadeUp} initial="hidden" animate="show"
-            className="flex gap-3 overflow-x-auto pb-1 scrollbar-none"
-          >
-            {MAP_MEMBERS.map((m, i) => (
-              <motion.button
-                key={m.id}
-                initial={{ opacity: 0, y: 12 }}
-                animate={{ opacity: 1, y: 0, transition: { delay: i * 0.06 } }}
-                whileHover={{ scale: 1.04 }}
-                whileTap={{ scale: 0.97 }}
-                onClick={() => handleMemberClick(m.id)}
-                className="flex-shrink-0 flex flex-col items-center gap-1.5 px-3 py-2.5 rounded-2xl transition-all"
-                style={{
-                  background: activeId === m.id ? `${m.color}18` : 'rgba(255,255,255,0.04)',
-                  border: activeId === m.id ? `1px solid ${m.color}50` : '1px solid rgba(255,255,255,0.06)',
-                  minWidth: 72,
-                }}
-              >
-                <div className="relative">
-                  <img src={m.photo} alt={m.name}
-                    className="w-10 h-10 rounded-full object-cover"
-                    style={{ border: `2px solid ${m.color}` }} />
-                  <span className="absolute -bottom-0.5 -right-0.5 text-[11px] leading-none">
-                    {VEHICLE_EMOJI[m.vehicle]}
-                  </span>
-                </div>
-                <span className="text-[10px] font-semibold text-white/80 whitespace-nowrap">{m.name}</span>
-                {/* Battery bar */}
-                <div className="w-full h-1 rounded-full bg-white/10 overflow-hidden">
-                  <div
-                    className={`h-full rounded-full transition-all ${batteryColor(m.battery)}`}
-                    style={{ width: `${m.battery}%` }}
-                  />
-                </div>
-                <span className="text-[9px] text-white/40">{m.battery}%</span>
-              </motion.button>
-            ))}
-          </motion.div>
+          <p className="text-[11px] font-medium mb-1.5 truncate" style={{color:m.color}}>📍 {m.location}</p>
+          <BattBar pct={m.battery} color={m.color} />
         </div>
 
-        {/* ── RIGHT COLUMN (desktop) ───────────────────────────── */}
-        <div className="hidden lg:flex flex-col w-80 flex-shrink-0">
-          <RightPanel
-            tab={activeTab}
-            setTab={setTab}
-            expanded={expanded}
-            setExpanded={setExpanded}
-            alerts={alerts}
-            dismissAlert={dismissAlert}
-            toggles={toggles}
-            toggleSetting={toggleSetting}
-            authUser={authUser}
-            handleLogout={handleLogout}
-          />
-        </div>
-
-        {/* ── RIGHT COLUMN (mobile — shown when not on Map tab) ── */}
-        <div className="lg:hidden flex flex-col">
-          <AnimatePresence mode="wait">
-            {mobileTab !== 'family' || true ? (
-              <motion.div
-                key={mobileTab}
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -10 }}
-                transition={{ duration: 0.25 }}
-              >
-                {mobileTab === 'family' && (
-                  <FamilyTab expanded={expanded} setExpanded={setExpanded} />
-                )}
-                {mobileTab === 'alerts' && (
-                  <AlertsTab alerts={alerts} dismissAlert={dismissAlert} />
-                )}
-                {mobileTab === 'profile' && (
-                  <ProfileTab
-                    authUser={authUser}
-                    toggles={toggles}
-                    toggleSetting={toggleSetting}
-                    handleLogout={handleLogout}
-                  />
-                )}
-              </motion.div>
-            ) : null}
-          </AnimatePresence>
-        </div>
-      </main>
-
-      {/* ══════════════ MOBILE BOTTOM TAB BAR ══════════════════ */}
-      <nav className="lg:hidden fixed bottom-0 inset-x-0 z-50 flex"
-        style={{ background: 'rgba(7,20,40,0.96)', backdropFilter: 'blur(20px)', borderTop: '1px solid rgba(255,255,255,0.07)' }}
-      >
-        {(
-          [
-            { id: 'map',    label: 'Map',    emoji: '🗺️' },
-            { id: 'family', label: 'Family', emoji: '👨‍👩‍👧' },
-            { id: 'alerts', label: 'Alerts', emoji: '🔔', badge: alerts.length },
-            { id: 'profile',label: 'Profile',emoji: '👤' },
-          ] as const
-        ).map(item => {
-          const isActive = item.id === 'map'
-            ? mobileTab === 'family' && activeId === null // slight trick — map has no own tab state
-            : mobileTab === item.id
-
-          return (
-            <button
-              key={item.id}
-              className="flex-1 flex flex-col items-center justify-center gap-0.5 py-2.5 relative transition-colors"
-              style={{ color: mobileTab === item.id || (item.id === 'map' && !['alerts','profile'].includes(mobileTab)) ? '#D4A853' : 'rgba(255,255,255,0.4)' }}
-              onClick={() => {
-                if (item.id !== 'map') setMobileTab(item.id as Tab)
-                else setMobileTab('family') // map tab just scrolls up on mobile
-              }}
-            >
-              <span className="text-xl leading-none">{item.emoji}</span>
-              <span className="text-[9px] font-semibold tracking-wide uppercase">{item.label}</span>
-              {'badge' in item && item.badge && item.badge > 0 ? (
-                <span className="absolute top-1.5 right-[calc(50%-8px)] translate-x-3 w-4 h-4 rounded-full text-[9px] font-bold flex items-center justify-center"
-                  style={{ background: '#EF4444', color: '#fff' }}>{item.badge}</span>
-              ) : null}
-            </button>
-          )
-        })}
-      </nav>
-    </div>
-  )
-}
-
-/* ─────────────────────────────────────────────────────────────────
-   RIGHT PANEL WRAPPER (desktop tabs)
-──────────────────────────────────────────────────────────────────*/
-function RightPanel({
-  tab, setTab, expanded, setExpanded,
-  alerts, dismissAlert,
-  toggles, toggleSetting,
-  authUser, handleLogout,
-}: {
-  tab: Tab
-  setTab: (t: Tab) => void
-  expanded: string | null
-  setExpanded: (id: string | null) => void
-  alerts: DashAlert[]
-  dismissAlert: (id: string) => void
-  toggles: Record<SettingKey, boolean>
-  toggleSetting: (k: SettingKey) => void
-  authUser: AuthUser
-  handleLogout: () => void
-}) {
-  const TABS: { id: Tab; label: string; emoji: string }[] = [
-    { id: 'family',  label: 'My Family', emoji: '👨‍👩‍👧' },
-    { id: 'alerts',  label: 'Alerts',    emoji: '🔔' },
-    { id: 'profile', label: 'Profile',   emoji: '👤' },
-  ]
-
-  return (
-    <div className="flex flex-col h-full rounded-3xl overflow-hidden"
-      style={{ background: 'rgba(13,26,46,0.9)', border: '1px solid rgba(255,255,255,0.07)', backdropFilter: 'blur(20px)' }}
-    >
-      {/* Tab bar */}
-      <div className="flex border-b border-white/7 px-2 pt-2 gap-1">
-        {TABS.map(t => (
-          <button
-            key={t.id}
-            onClick={() => setTab(t.id)}
-            className="flex-1 flex flex-col items-center gap-0.5 pb-2.5 pt-2 rounded-t-xl relative transition-colors"
-            style={{ color: tab === t.id ? '#D4A853' : 'rgba(255,255,255,0.4)' }}
-          >
-            <span className="text-base leading-none">{t.emoji}</span>
-            <span className="text-[9px] font-semibold tracking-wide uppercase">{t.label}</span>
-            {tab === t.id && (
-              <motion.div layoutId="tab-indicator"
-                className="absolute bottom-0 inset-x-2 h-0.5 rounded-full"
-                style={{ background: '#D4A853' }}
-              />
-            )}
-          </button>
-        ))}
-      </div>
-
-      {/* Tab content */}
-      <div className="flex-1 overflow-y-auto p-3 space-y-3 scrollbar-none" style={{ maxHeight: 'calc(100vh - 14rem)' }}>
-        <AnimatePresence mode="wait">
-          {tab === 'family' && (
-            <motion.div key="family" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
-              <FamilyTab expanded={expanded} setExpanded={setExpanded} />
-            </motion.div>
-          )}
-          {tab === 'alerts' && (
-            <motion.div key="alerts" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
-              <AlertsTab alerts={alerts} dismissAlert={dismissAlert} />
-            </motion.div>
-          )}
-          {tab === 'profile' && (
-            <motion.div key="profile" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
-              <ProfileTab
-                authUser={authUser}
-                toggles={toggles}
-                toggleSetting={toggleSetting}
-                handleLogout={handleLogout}
-              />
-            </motion.div>
-          )}
-        </AnimatePresence>
-      </div>
-    </div>
-  )
-}
-
-/* ─────────────────────────────────────────────────────────────────
-   TAB 1 — MY FAMILY
-──────────────────────────────────────────────────────────────────*/
-function FamilyTab({
-  expanded, setExpanded,
-}: {
-  expanded: string | null
-  setExpanded: (id: string | null) => void
-}) {
-  return (
-    <motion.div variants={stagger} initial="hidden" animate="show" className="flex flex-col gap-2">
-      {MAP_MEMBERS.map(m => (
-        <MemberCard key={m.id} member={m} expanded={expanded === m.id} onToggle={() => setExpanded(expanded === m.id ? null : m.id)} />
-      ))}
-    </motion.div>
-  )
-}
-
-function MemberCard({ member: m, expanded, onToggle }: { member: MapMember; expanded: boolean; onToggle: () => void }) {
-  return (
-    <motion.div
-      variants={fadeUp}
-      layout
-      className="rounded-2xl overflow-hidden cursor-pointer"
-      style={{ background: expanded ? `${m.color}10` : 'rgba(255,255,255,0.03)', border: expanded ? `1px solid ${m.color}35` : '1px solid rgba(255,255,255,0.06)' }}
-    >
-      {/* Card header */}
-      <button className="w-full flex items-center gap-3 p-3" onClick={onToggle}>
-        <div className="relative flex-shrink-0">
-          <img src={m.photo} alt={m.name} className="w-10 h-10 rounded-full object-cover" style={{ border: `2px solid ${m.color}` }} />
-          <span className="absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full border-2 bg-emerald-400"
-            style={{ borderColor: '#0D1A2E' }} />
-        </div>
-
-        <div className="flex-1 text-left min-w-0">
-          <div className="flex items-center justify-between">
-            <p className="text-sm font-bold text-white/90 truncate">{m.name}</p>
-            <span className="text-xs text-white/40 ml-2 flex-shrink-0">{VEHICLE_EMOJI[m.vehicle]} {m.speed ?? 0} km/h</span>
-          </div>
-          <p className="text-[11px] mt-0.5 truncate" style={{ color: m.color }}>{m.location}</p>
-
-          {/* Battery bar */}
-          <div className="flex items-center gap-2 mt-1.5">
-            <div className="flex-1 h-1 rounded-full bg-white/10 overflow-hidden">
-              <div className={`h-full rounded-full ${batteryColor(m.battery)}`} style={{ width: `${m.battery}%` }} />
-            </div>
-            <span className="text-[10px] text-white/40 flex-shrink-0">{m.battery}%</span>
-          </div>
-        </div>
-
-        <motion.span
-          animate={{ rotate: expanded ? 180 : 0 }}
-          transition={{ duration: 0.2 }}
-          className="text-white/30 text-xs ml-1 flex-shrink-0"
-        >▼</motion.span>
+        <motion.span animate={{rotate:open?180:0}} transition={{duration:0.2}}
+          className="text-[10px] ml-1 flex-shrink-0" style={{color:'rgba(255,255,255,0.25)'}}>▼</motion.span>
       </button>
 
-      {/* Expanded section */}
+      {/* Expanded content */}
       <AnimatePresence initial={false}>
-        {expanded && (
-          <motion.div
-            key="expand"
-            initial={{ height: 0, opacity: 0 }}
-            animate={{ height: 'auto', opacity: 1 }}
-            exit={{ height: 0, opacity: 0 }}
-            transition={{ duration: 0.25 }}
-            className="overflow-hidden"
-          >
-            <div className="px-3 pb-3 border-t border-white/6 pt-3 flex flex-col gap-3">
+        {open && (
+          <motion.div key="exp" initial={{height:0,opacity:0}} animate={{height:'auto',opacity:1}}
+            exit={{height:0,opacity:0}} transition={{duration:0.28}} className="overflow-hidden">
+            <div className="px-3.5 pb-3.5 pt-2.5 flex flex-col gap-3"
+                 style={{borderTop:`1px solid ${m.color}18`}}>
 
-              {/* Journey timeline */}
+              {/* Mini stats row */}
+              <div className="grid grid-cols-3 gap-2">
+                {[
+                  {icon:'⚡',label:'Speed',val:`${m.speed??0}km/h`},
+                  {icon:'🔒',label:'Zone',val:'SAFE'},
+                  {icon:'🆘',label:'SOS',val:'None'},
+                ].map(s => (
+                  <div key={s.label} className="rounded-xl p-2 text-center"
+                       style={{background:`${m.color}0A`,border:`1px solid ${m.color}20`}}>
+                    <div className="text-base">{s.icon}</div>
+                    <div className="text-[8px] mt-0.5" style={{color:'rgba(255,255,255,0.3)'}}>{s.label}</div>
+                    <div className="text-[10px] font-bold mt-0.5" style={{color:m.color}}>{s.val}</div>
+                  </div>
+                ))}
+              </div>
+
+              {/* Journey */}
               <div>
-                <p className="text-[10px] font-semibold uppercase tracking-wider text-white/40 mb-2">Today's Journey</p>
-                <div className="flex flex-col gap-1.5">
-                  {(JOURNEY_TIMELINE[m.id] ?? []).map((step, i) => (
-                    <div key={i} className="flex items-center gap-2">
-                      <span className="text-sm">{step.icon}</span>
-                      <span className="text-[11px] text-white/70">{step.place}</span>
-                      <span className="text-[10px] text-white/30 ml-auto">{step.time}</span>
+                <p className="text-[9px] font-bold uppercase tracking-[0.15em] mb-2" style={{color:'rgba(255,255,255,0.3)'}}>Today's Journey</p>
+                {(JOURNEY[m.id]??[]).map((step,i,arr) => (
+                  <div key={i} className="flex items-center gap-2.5 mb-1.5">
+                    <div className="flex flex-col items-center">
+                      <div className="w-5 h-5 rounded-full flex items-center justify-center text-[10px]"
+                           style={{background:step.done?`${m.color}20`:'rgba(255,255,255,0.05)',
+                                   border:`1px solid ${step.done?m.color:'rgba(255,255,255,0.1)'}`}}>
+                        {step.icon}
+                      </div>
+                      {i<arr.length-1 && <div className="w-px flex-1 mt-0.5 mb-0.5 min-h-[6px]"
+                        style={{background:step.done?`${m.color}30`:'rgba(255,255,255,0.06)'}} />}
                     </div>
-                  ))}
-                </div>
+                    <span className="text-[11px] flex-1" style={{color:step.done?'rgba(255,255,255,0.75)':'rgba(255,255,255,0.3)'}}>{step.place}</span>
+                    <span className="text-[9px] tabular-nums" style={{color:'rgba(255,255,255,0.25)'}}>{step.time}</span>
+                  </div>
+                ))}
               </div>
 
-              {/* Geofence status */}
-              <div className="flex items-center gap-2 p-2 rounded-xl" style={{ background: 'rgba(16,185,129,0.08)', border: '1px solid rgba(16,185,129,0.2)' }}>
-                <span className="text-sm">📍</span>
-                <p className="text-[11px] text-emerald-400 font-medium">Inside {m.location} zone</p>
-                <span className="ml-auto text-[9px] px-2 py-0.5 rounded-full bg-emerald-400/15 text-emerald-400 font-semibold">SAFE</span>
-              </div>
-
-              {/* Action buttons */}
+              {/* Actions */}
               <div className="flex gap-2">
-                <button className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-xl text-xs font-semibold transition-colors hover:opacity-80"
-                  style={{ background: 'rgba(59,130,246,0.15)', border: '1px solid rgba(59,130,246,0.3)', color: '#60A5FA' }}
-                >
+                <button className="flex-1 py-2 rounded-xl text-[11px] font-bold transition-all hover:opacity-80 flex items-center justify-center gap-1.5"
+                  style={{background:'rgba(59,130,246,0.12)',border:'1px solid rgba(59,130,246,0.3)',color:'#60A5FA'}}>
                   📞 Call
                 </button>
-                <button className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-xl text-xs font-semibold transition-colors hover:opacity-80"
-                  style={{ background: 'rgba(239,68,68,0.12)', border: '1px solid rgba(239,68,68,0.3)', color: '#F87171' }}
-                >
+                <button className="flex-1 py-2 rounded-xl text-[11px] font-bold transition-all hover:opacity-80 flex items-center justify-center gap-1.5"
+                  style={{background:'rgba(239,68,68,0.1)',border:'1px solid rgba(239,68,68,0.3)',color:'#F87171'}}>
                   🚨 SOS
+                </button>
+                <button className="flex-1 py-2 rounded-xl text-[11px] font-bold transition-all hover:opacity-80 flex items-center justify-center gap-1.5"
+                  style={{background:`${m.color}10`,border:`1px solid ${m.color}30`,color:m.color}}>
+                  🗺️ Map
                 </button>
               </div>
             </div>
@@ -649,139 +203,492 @@ function MemberCard({ member: m, expanded, onToggle }: { member: MapMember; expa
   )
 }
 
-/* ─────────────────────────────────────────────────────────────────
-   TAB 2 — ALERTS
-──────────────────────────────────────────────────────────────────*/
-function AlertsTab({ alerts, dismissAlert }: { alerts: DashAlert[]; dismissAlert: (id: string) => void }) {
-  if (alerts.length === 0) {
-    return (
-      <div className="flex flex-col items-center gap-3 py-10">
-        <span className="text-4xl">✅</span>
-        <p className="text-sm text-white/40 font-medium">No active alerts</p>
-      </div>
-    )
-  }
-
+/* ─────────────────────────────────────────────────────────────
+   ALERTS TAB
+─────────────────────────────────────────────────────────────── */
+function AlertsTab({ alerts,dismiss }: { alerts:Alert[]; dismiss:(id:string)=>void }) {
+  if (!alerts.length) return (
+    <div className="flex flex-col items-center gap-3 py-12">
+      <div className="w-16 h-16 rounded-full flex items-center justify-center text-3xl"
+           style={{background:'rgba(16,185,129,0.1)',border:'1px solid rgba(16,185,129,0.25)'}}>✅</div>
+      <p className="text-sm font-semibold" style={{color:'rgba(255,255,255,0.35)'}}>No active alerts</p>
+    </div>
+  )
   return (
-    <motion.div variants={stagger} initial="hidden" animate="show" className="flex flex-col gap-2">
-      {alerts.map(a => (
-        <motion.div
-          key={a.id}
-          variants={fadeUp}
-          layout
-          exit={{ opacity: 0, x: 40, transition: { duration: 0.2 } }}
-          className={`flex items-start gap-3 p-3 rounded-2xl border ${alertBg(a.severity)}`}
-        >
-          <span className="text-xl leading-none mt-0.5 flex-shrink-0">{a.icon}</span>
-          <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-2">
-              <p className="text-xs font-bold text-white/90 truncate">{a.title}</p>
-              <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${alertDot(a.severity)}`} />
+    <div className="flex flex-col gap-2">
+      {alerts.map(a => {
+        const s = SEV_STYLE[a.sev]
+        return (
+          <motion.div key={a.id} layout exit={{opacity:0,x:40}} transition={{duration:0.2}}
+            className="flex gap-3 p-3.5 rounded-2xl relative overflow-hidden"
+            style={{background:s.bg,border:`1px solid ${s.border}`}}>
+            {/* Left accent bar */}
+            <div className="absolute left-0 top-0 bottom-0 w-0.5 rounded-l-2xl" style={{background:s.bar}} />
+            <div className="pl-1 flex gap-3 flex-1 min-w-0">
+              <div className="w-8 h-8 rounded-xl flex items-center justify-center text-base flex-shrink-0"
+                   style={{background:`${s.bar}15`}}>
+                {a.icon}
+              </div>
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2 mb-0.5">
+                  <p className="text-xs font-bold text-white/90 truncate">{a.title}</p>
+                  <span className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{background:s.dot}} />
+                </div>
+                <p className="text-[11px] leading-relaxed" style={{color:'rgba(255,255,255,0.5)'}}>{a.msg}</p>
+                <p className="text-[10px] mt-1 font-medium" style={{color:'rgba(255,255,255,0.25)'}}>{a.time}</p>
+              </div>
             </div>
-            <p className="text-[11px] text-white/55 mt-0.5 leading-relaxed">{a.message}</p>
-            <p className="text-[10px] text-white/30 mt-1">{a.time}</p>
-          </div>
-          <button
-            onClick={() => dismissAlert(a.id)}
-            className="text-white/25 hover:text-white/60 transition-colors text-sm leading-none flex-shrink-0 mt-0.5"
-          >✕</button>
-        </motion.div>
-      ))}
-    </motion.div>
+            <button onClick={() => dismiss(a.id)}
+              className="flex-shrink-0 w-5 h-5 rounded-full flex items-center justify-center text-[10px] transition-all hover:bg-white/10"
+              style={{color:'rgba(255,255,255,0.3)'}}>✕</button>
+          </motion.div>
+        )
+      })}
+    </div>
   )
 }
 
-/* ─────────────────────────────────────────────────────────────────
-   TAB 3 — PROFILE
-──────────────────────────────────────────────────────────────────*/
-function ProfileTab({
-  authUser, toggles, toggleSetting, handleLogout,
-}: {
-  authUser: AuthUser
-  toggles: Record<SettingKey, boolean>
-  toggleSetting: (k: SettingKey) => void
-  handleLogout: () => void
+/* ─────────────────────────────────────────────────────────────
+   PROFILE TAB
+─────────────────────────────────────────────────────────────── */
+function ProfileTab({ user, toggles, setToggle, logout }:{
+  user:AuthUser; toggles:Record<TKey,boolean>; setToggle:(k:TKey)=>void; logout:()=>void
 }) {
-  const SETTINGS: { key: SettingKey; label: string; desc: string; emoji: string }[] = [
-    { key: 'location',      label: 'Location Sharing',  desc: 'Share your location with family', emoji: '📍' },
-    { key: 'pushNotif',     label: 'Push Notifications',desc: 'Receive alerts on your device',   emoji: '🔔' },
-    { key: 'sosAutoCall',   label: 'SOS Auto-Call',     desc: 'Auto-call emergency on SOS',      emoji: '🚨' },
-    { key: 'batteryAlerts', label: 'Battery Alerts',    desc: 'Notify when battery is low',      emoji: '🔋' },
+  const SETTINGS: {key:TKey;label:string;desc:string;icon:string}[] = [
+    {key:'location',label:'Location Sharing',  desc:'Share your live location with family', icon:'📍'},
+    {key:'push',    label:'Push Notifications',desc:'Receive instant alerts on device',      icon:'🔔'},
+    {key:'sos',     label:'SOS Auto-Call',     desc:'Auto-call emergency contacts on SOS',  icon:'🚨'},
+    {key:'battery', label:'Battery Alerts',    desc:'Notify family when battery is low',    icon:'🔋'},
+  ]
+  return (
+    <div className="flex flex-col gap-3">
+      {/* User card */}
+      <div className="rounded-2xl p-4 relative overflow-hidden"
+           style={{background:'linear-gradient(135deg,rgba(212,168,83,0.12),rgba(184,146,46,0.06))',
+                   border:'1px solid rgba(212,168,83,0.25)'}}>
+        <div className="absolute top-0 right-0 w-24 h-24 rounded-full blur-3xl opacity-20"
+             style={{background:'#D4A853',transform:'translate(30%,-30%)'}} />
+        <div className="flex items-center gap-3 relative">
+          <div className="w-14 h-14 rounded-2xl flex items-center justify-center text-xl font-black flex-shrink-0"
+               style={{background:'linear-gradient(135deg,#D4A853,#92580A)',color:'#fff',
+                       boxShadow:'0 4px 16px rgba(212,168,83,0.4)'}}>
+            {user.name.charAt(0).toUpperCase()}
+          </div>
+          <div className="min-w-0 flex-1">
+            <p className="text-sm font-bold text-white truncate">{user.name}</p>
+            <p className="text-[11px] mt-0.5 truncate" style={{color:'rgba(255,255,255,0.45)'}}>{user.email}</p>
+            <span className="inline-block mt-1.5 text-[9px] px-2.5 py-0.5 rounded-full font-bold uppercase tracking-wider"
+                  style={{background:'rgba(212,168,83,0.18)',color:'#D4A853',border:'1px solid rgba(212,168,83,0.35)'}}>
+              ● Member
+            </span>
+          </div>
+        </div>
+      </div>
+
+      {/* Settings */}
+      <p className="text-[9px] font-bold uppercase tracking-[0.15em] px-1" style={{color:'rgba(255,255,255,0.25)'}}>Preferences</p>
+      {SETTINGS.map((s,i) => (
+        <motion.div key={s.key} initial={{opacity:0,y:8}} animate={{opacity:1,y:0}} transition={{delay:i*0.06}}
+          className="flex items-center gap-3 p-3.5 rounded-2xl"
+          style={{background:'rgba(255,255,255,0.03)',border:'1px solid rgba(255,255,255,0.06)'}}>
+          <div className="w-9 h-9 rounded-xl flex items-center justify-center text-base flex-shrink-0"
+               style={{background:'rgba(255,255,255,0.05)',border:'1px solid rgba(255,255,255,0.08)'}}>
+            {s.icon}
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="text-[11px] font-semibold text-white/85 truncate">{s.label}</p>
+            <p className="text-[10px] mt-0.5 truncate" style={{color:'rgba(255,255,255,0.3)'}}>{s.desc}</p>
+          </div>
+          <Toggle on={toggles[s.key]} set={() => setToggle(s.key)} />
+        </motion.div>
+      ))}
+
+      {/* Logout */}
+      <motion.button whileHover={{scale:1.02}} whileTap={{scale:0.97}} onClick={logout}
+        className="w-full flex items-center justify-center gap-2 py-3 rounded-2xl text-sm font-bold transition-all mt-1"
+        style={{background:'rgba(239,68,68,0.08)',border:'1px solid rgba(239,68,68,0.25)',color:'#F87171',
+                boxShadow:'0 0 0 0 rgba(239,68,68,0)'}}>
+        <span>🚪</span> Sign Out
+      </motion.button>
+    </div>
+  )
+}
+
+/* ─────────────────────────────────────────────────────────────
+   RIGHT PANEL
+─────────────────────────────────────────────────────────────── */
+function RightPanel({ tab, setTab, expanded, setExpanded, alerts, dismiss, toggles, setToggle, user, logout }: {
+  tab:Tab; setTab:(t:Tab)=>void
+  expanded:string|null; setExpanded:(id:string|null)=>void
+  alerts:Alert[]; dismiss:(id:string)=>void
+  toggles:Record<TKey,boolean>; setToggle:(k:TKey)=>void
+  user:AuthUser; logout:()=>void
+}) {
+  const TABS: {id:Tab;label:string;icon:string;count?:number}[] = [
+    {id:'family', label:'Family', icon:'👨‍👩‍👧'},
+    {id:'alerts', label:'Alerts', icon:'🔔', count:alerts.length},
+    {id:'profile',label:'Profile',icon:'👤'},
   ]
 
   return (
-    <motion.div variants={stagger} initial="hidden" animate="show" className="flex flex-col gap-3">
+    <div className="flex flex-col h-full rounded-3xl overflow-hidden"
+         style={{background:'rgba(8,16,32,0.85)',border:'1px solid rgba(255,255,255,0.07)',
+                 backdropFilter:'blur(24px)',boxShadow:'0 32px 64px rgba(0,0,0,0.4)'}}>
 
-      {/* User info card */}
-      <motion.div variants={fadeUp}
-        className="flex items-center gap-3 p-3 rounded-2xl"
-        style={{ background: 'rgba(212,168,83,0.08)', border: '1px solid rgba(212,168,83,0.2)' }}
-      >
-        <div className="w-12 h-12 rounded-2xl flex items-center justify-center text-lg font-black flex-shrink-0"
-          style={{ background: 'linear-gradient(135deg, #D4A853, #92580A)', color: '#fff' }}
-        >
-          {authUser.name.charAt(0).toUpperCase()}
-        </div>
-        <div className="min-w-0">
-          <p className="text-sm font-bold text-white/95 truncate">{authUser.name}</p>
-          <p className="text-[11px] text-white/45 truncate">{authUser.email}</p>
-          <span className="inline-block mt-1 text-[9px] px-2 py-0.5 rounded-full font-semibold uppercase tracking-wider"
-            style={{ background: 'rgba(212,168,83,0.18)', color: '#D4A853', border: '1px solid rgba(212,168,83,0.3)' }}
-          >Member</span>
-        </div>
-      </motion.div>
+      {/* All safe banner */}
+      <div className="mx-3 mt-3 mb-0 flex items-center gap-2 rounded-2xl px-3 py-2"
+           style={{background:'rgba(16,185,129,0.08)',border:'1px solid rgba(16,185,129,0.2)'}}>
+        <motion.div animate={{scale:[1,1.3,1]}} transition={{duration:2,repeat:Infinity}}
+          className="w-2 h-2 rounded-full bg-emerald-400 flex-shrink-0" />
+        <span className="text-xs font-semibold text-emerald-400 flex-1">All {MAP_MEMBERS.length} members safe</span>
+        <span className="text-lg">🛡️</span>
+      </div>
 
-      {/* Settings toggles */}
-      <div className="flex flex-col gap-2">
-        <p className="text-[10px] font-semibold uppercase tracking-wider text-white/35 px-1">Settings</p>
-        {SETTINGS.map(s => (
-          <motion.div key={s.key} variants={fadeUp}
-            className="flex items-center gap-3 p-3 rounded-2xl"
-            style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }}
-          >
-            <span className="text-base flex-shrink-0">{s.emoji}</span>
-            <div className="flex-1 min-w-0">
-              <p className="text-xs font-semibold text-white/85 truncate">{s.label}</p>
-              <p className="text-[10px] text-white/35 truncate">{s.desc}</p>
-            </div>
-            <ToggleSwitch active={toggles[s.key]} onToggle={() => toggleSetting(s.key)} />
-          </motion.div>
+      {/* Tabs */}
+      <div className="flex gap-1 px-3 pt-3 pb-0">
+        {TABS.map(t => (
+          <button key={t.id} onClick={() => setTab(t.id)}
+            className="flex-1 relative flex flex-col items-center gap-0.5 py-2.5 rounded-xl transition-all duration-200"
+            style={{
+              background: tab===t.id ? 'rgba(212,168,83,0.12)' : 'transparent',
+              border: tab===t.id ? '1px solid rgba(212,168,83,0.25)' : '1px solid transparent',
+              color: tab===t.id ? '#D4A853' : 'rgba(255,255,255,0.35)',
+            }}>
+            <span className="text-base leading-none">{t.icon}</span>
+            <span className="text-[9px] font-bold tracking-wider uppercase">{t.label}</span>
+            {t.count && t.count>0 ? (
+              <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full text-[8px] font-bold flex items-center justify-center"
+                    style={{background:'#EF4444',color:'#fff'}}>{t.count}</span>
+            ) : null}
+          </button>
         ))}
       </div>
 
-      {/* Logout button */}
-      <motion.button
-        variants={fadeUp}
-        whileHover={{ scale: 1.02 }}
-        whileTap={{ scale: 0.97 }}
-        onClick={handleLogout}
-        className="w-full flex items-center justify-center gap-2 py-3 rounded-2xl text-sm font-semibold transition-all mt-1"
-        style={{ background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.25)', color: '#F87171' }}
-      >
-        <span>🚪</span> Sign Out
-      </motion.button>
-    </motion.div>
+      {/* Divider */}
+      <div className="mx-3 mt-3 h-px" style={{background:'rgba(255,255,255,0.06)'}} />
+
+      {/* Content */}
+      <div className="flex-1 overflow-y-auto px-3 py-3 space-y-2 scrollbar-none"
+           style={{maxHeight:'calc(100vh - 220px)'}}>
+        <AnimatePresence mode="wait">
+          {tab==='family' && (
+            <motion.div key="fam" initial={{opacity:0,y:6}} animate={{opacity:1,y:0}} exit={{opacity:0}} className="space-y-2">
+              {MAP_MEMBERS.map(m => (
+                <MemberCard key={m.id} m={m} open={expanded===m.id} onToggle={() => setExpanded(expanded===m.id?null:m.id)} />
+              ))}
+            </motion.div>
+          )}
+          {tab==='alerts' && (
+            <motion.div key="alr" initial={{opacity:0,y:6}} animate={{opacity:1,y:0}} exit={{opacity:0}}>
+              <AlertsTab alerts={alerts} dismiss={dismiss} />
+            </motion.div>
+          )}
+          {tab==='profile' && (
+            <motion.div key="pro" initial={{opacity:0,y:6}} animate={{opacity:1,y:0}} exit={{opacity:0}}>
+              <ProfileTab user={user} toggles={toggles} setToggle={setToggle} logout={logout} />
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
+    </div>
   )
 }
 
-/* ─────────────────────────────────────────────────────────────────
-   TOGGLE SWITCH COMPONENT
-──────────────────────────────────────────────────────────────────*/
-function ToggleSwitch({ active, onToggle }: { active: boolean; onToggle: () => void }) {
+/* ─────────────────────────────────────────────────────────────
+   MAIN PAGE
+─────────────────────────────────────────────────────────────── */
+export default function DashboardPage() {
+  const router  = useRouter()
+  const [user,    setUser]    = useState<AuthUser|null>(null)
+  const [activeId,setActiveId]= useState<string|null>(null)
+  const [tab,     setTab]     = useState<Tab>('family')
+  const [mobTab,  setMobTab]  = useState<Tab>('family')
+  const [expanded,setExpanded]= useState<string|null>(null)
+  const [alerts,  setAlerts]  = useState<Alert[]>(INIT_ALERTS)
+  const [bell,    setBell]    = useState(false)
+  const [toggles, setToggles] = useState<Record<TKey,boolean>>({location:true,push:true,sos:false,battery:true})
+
+  useEffect(() => {
+    const u = getUser()
+    if (!u) { router.replace('/login'); return }
+    setUser(u)
+  }, [router])
+
+  const onMemberClick = useCallback((id:string) => {
+    setActiveId(p => p===id?null:id)
+    setExpanded(p => p===id?null:id)
+    setTab('family')
+    setMobTab('family')
+  }, [])
+
+  const logout = () => { clearAuth(); router.replace('/login') }
+  const dismiss = (id:string) => setAlerts(p => p.filter(a => a.id!==id))
+  const toggleSetting = (k:TKey) => setToggles(p => ({...p,[k]:!p[k]}))
+
+  if (!user) return (
+    <div className="min-h-screen flex items-center justify-center" style={{background:'#050D1A'}}>
+      <div className="relative w-16 h-16">
+        <div className="absolute inset-0 rounded-full border-2 border-[#D4A853]/20 animate-ping" />
+        <div className="w-16 h-16 rounded-full border-2 border-t-[#D4A853] border-[#D4A853]/10 animate-spin" />
+      </div>
+    </div>
+  )
+
+  const activeMember = MAP_MEMBERS.find(m => m.id===activeId) ?? null
+
   return (
-    <button
-      onClick={onToggle}
-      className="relative flex-shrink-0 w-10 h-5 rounded-full transition-colors duration-200"
-      style={{ background: active ? '#D4A853' : 'rgba(255,255,255,0.12)' }}
-      aria-checked={active}
-      role="switch"
-    >
-      <motion.span
-        animate={{ x: active ? 22 : 2 }}
-        transition={{ type: 'spring', stiffness: 500, damping: 30 }}
-        className="absolute top-0.5 w-4 h-4 rounded-full shadow-md"
-        style={{ background: active ? '#fff' : 'rgba(255,255,255,0.5)' }}
-      />
-    </button>
+    <div className="min-h-screen flex flex-col" style={{background:'linear-gradient(160deg,#050D1A 0%,#080F20 50%,#060C18 100%)'}}>
+
+      {/* Ambient bg glows */}
+      <div className="fixed inset-0 pointer-events-none overflow-hidden" style={{zIndex:0}}>
+        <div className="absolute -top-40 -left-40 w-96 h-96 rounded-full blur-3xl opacity-10" style={{background:'#3B82F6'}} />
+        <div className="absolute -bottom-40 -right-40 w-96 h-96 rounded-full blur-3xl opacity-8" style={{background:'#D4A853'}} />
+      </div>
+
+      {/* ══════ HEADER ══════════════════════════════════════════ */}
+      <header className="relative z-50 sticky top-0 flex items-center justify-between px-5 lg:px-6"
+        style={{height:60,background:'rgba(5,13,26,0.90)',backdropFilter:'blur(24px)',
+                borderBottom:'1px solid rgba(255,255,255,0.06)',
+                boxShadow:'0 1px 0 rgba(212,168,83,0.08)'}}>
+
+        {/* Logo */}
+        <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2">
+            <div className="w-8 h-8 rounded-xl flex items-center justify-center font-black text-sm"
+                 style={{background:'linear-gradient(135deg,#D4A853,#92580A)',boxShadow:'0 4px 12px rgba(212,168,83,0.35)'}}>
+              G
+            </div>
+            <span className="font-black tracking-widest uppercase text-sm hidden sm:block"
+                  style={{color:'#D4A853',letterSpacing:'0.12em'}}>GRAVITY</span>
+          </div>
+          <div className="w-px h-4 hidden sm:block" style={{background:'rgba(255,255,255,0.1)'}} />
+          <span className="text-sm font-medium hidden sm:block" style={{color:'rgba(255,255,255,0.5)'}}>My Dashboard</span>
+        </div>
+
+        {/* Center — safe status */}
+        <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full"
+             style={{background:'rgba(16,185,129,0.1)',border:'1px solid rgba(16,185,129,0.28)',
+                     boxShadow:'0 0 20px rgba(16,185,129,0.1)'}}>
+          <motion.span animate={{opacity:[1,0.3,1]}} transition={{duration:1.4,repeat:Infinity}}
+            className="w-2 h-2 rounded-full bg-emerald-400 flex-shrink-0" />
+          <span className="text-xs font-semibold text-emerald-400">All Safe</span>
+        </div>
+
+        {/* Right */}
+        <div className="flex items-center gap-2.5">
+
+          {/* Bell */}
+          <div className="relative">
+            <button onClick={() => setBell(v => !v)}
+              className="relative w-9 h-9 rounded-xl flex items-center justify-center transition-all hover:bg-white/5"
+              style={{border:'1px solid rgba(255,255,255,0.08)'}}>
+              <span className="text-base">🔔</span>
+              {alerts.length>0 && (
+                <span className="absolute -top-1 -right-1 w-4.5 h-4.5 rounded-full text-[8px] font-bold flex items-center justify-center"
+                      style={{background:'#EF4444',color:'#fff',width:18,height:18}}>
+                  {alerts.length}
+                </span>
+              )}
+            </button>
+
+            <AnimatePresence>
+              {bell && (
+                <motion.div key="bell" initial={{opacity:0,y:-8,scale:0.95}} animate={{opacity:1,y:0,scale:1}}
+                  exit={{opacity:0,y:-8,scale:0.95}} transition={{duration:0.2}}
+                  className="absolute right-0 top-11 w-76 rounded-2xl p-3 z-50"
+                  style={{background:'#0A1628',border:'1px solid rgba(255,255,255,0.09)',
+                          boxShadow:'0 24px 60px rgba(0,0,0,0.6)',width:288}}>
+                  <p className="text-[9px] font-bold uppercase tracking-[0.15em] px-1 mb-2" style={{color:'rgba(255,255,255,0.3)'}}>Recent</p>
+                  {alerts.slice(0,3).map(a => (
+                    <div key={a.id} className="flex items-center gap-2.5 p-2.5 rounded-xl mb-1.5"
+                         style={{background:SEV_STYLE[a.sev].bg,border:`1px solid ${SEV_STYLE[a.sev].border}`}}>
+                      <span className="text-lg flex-shrink-0">{a.icon}</span>
+                      <div className="min-w-0">
+                        <p className="text-xs font-semibold text-white/90 truncate">{a.title}</p>
+                        <p className="text-[10px] mt-0.5" style={{color:'rgba(255,255,255,0.4)'}}>{a.time}</p>
+                      </div>
+                    </div>
+                  ))}
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
+
+          {/* Avatar */}
+          <div className="flex items-center gap-2 pl-1">
+            <div className="w-8 h-8 rounded-xl flex items-center justify-center text-sm font-black"
+                 style={{background:'linear-gradient(135deg,#D4A853,#92580A)',color:'#fff',
+                         boxShadow:'0 4px 10px rgba(212,168,83,0.3)'}}>
+              {user.name.charAt(0).toUpperCase()}
+            </div>
+            <span className="text-sm font-semibold hidden sm:block max-w-[100px] truncate"
+                  style={{color:'rgba(255,255,255,0.8)'}}>
+              {user.name}
+            </span>
+          </div>
+        </div>
+      </header>
+
+      {/* ══════ MAIN ════════════════════════════════════════════ */}
+      <main className="relative z-10 flex-1 flex flex-col lg:flex-row gap-4 p-4 lg:p-5 pb-24 lg:pb-5">
+
+        {/* LEFT — Map + strip */}
+        <div className="flex-1 flex flex-col gap-3 min-w-0">
+
+          {/* Map */}
+          <motion.div initial={{opacity:0,y:20}} animate={{opacity:1,y:0}} transition={{duration:0.5}}
+            className="relative rounded-3xl overflow-hidden flex-shrink-0"
+            style={{height:420,
+                    border:'1px solid rgba(255,255,255,0.08)',
+                    boxShadow:'0 24px 60px rgba(0,0,0,0.5), 0 0 0 1px rgba(212,168,83,0.04)'}}>
+
+            <MapView activeId={activeId} onMemberClick={onMemberClick} />
+
+            {/* Corner gradient overlays for depth */}
+            <div className="absolute inset-0 pointer-events-none" style={{
+              background:'radial-gradient(ellipse at top left, rgba(5,13,26,0.25) 0%, transparent 50%)',
+              zIndex:5
+            }} />
+
+            {/* Active member overlay */}
+            <AnimatePresence>
+              {activeMember && (
+                <motion.div key={activeMember.id} initial={{opacity:0,x:-16}} animate={{opacity:1,x:0}} exit={{opacity:0,x:-16}}
+                  className="absolute top-4 left-4 z-10 flex items-center gap-3 px-4 py-2.5 rounded-2xl"
+                  style={{background:'rgba(5,13,26,0.92)',backdropFilter:'blur(20px)',
+                          border:`1px solid ${activeMember.color}40`,
+                          boxShadow:`0 8px 32px rgba(0,0,0,0.5),0 0 0 1px ${activeMember.color}15`}}>
+                  <div className="w-9 h-9 rounded-xl overflow-hidden flex-shrink-0"
+                       style={{border:`2px solid ${activeMember.color}`}}>
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src={activeMember.photo} alt={activeMember.name} className="w-full h-full object-cover" />
+                  </div>
+                  <div>
+                    <p className="text-xs font-bold text-white leading-none">{activeMember.name}</p>
+                    <p className="text-[10px] mt-0.5" style={{color:activeMember.color}}>
+                      {activeMember.location} · {V[activeMember.vehicle]} {activeMember.speed??0}km/h
+                    </p>
+                  </div>
+                  <button onClick={() => {setActiveId(null);setExpanded(null)}}
+                    className="ml-2 w-5 h-5 rounded-full flex items-center justify-center text-[10px] transition-all hover:bg-white/10"
+                    style={{color:'rgba(255,255,255,0.3)'}}>✕</button>
+                </motion.div>
+              )}
+            </AnimatePresence>
+
+            {/* Live badge */}
+            <div className="absolute top-4 right-4 z-10 flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl"
+                 style={{background:'rgba(5,13,26,0.85)',backdropFilter:'blur(12px)',
+                         border:'1px solid rgba(16,185,129,0.3)'}}>
+              <motion.div animate={{opacity:[1,0.3,1]}} transition={{duration:1.2,repeat:Infinity}}
+                className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
+              <span className="text-[9px] font-bold text-emerald-400 tracking-wider">LIVE</span>
+            </div>
+          </motion.div>
+
+          {/* Member strip */}
+          <motion.div initial={{opacity:0,y:16}} animate={{opacity:1,y:0}} transition={{duration:0.5,delay:0.15}}
+            className="flex gap-2.5 overflow-x-auto pb-1 scrollbar-none">
+            {MAP_MEMBERS.map((m,i) => (
+              <motion.button key={m.id}
+                initial={{opacity:0,y:12}} animate={{opacity:1,y:0,transition:{delay:i*0.07}}}
+                whileHover={{scale:1.04,y:-2}} whileTap={{scale:0.96}}
+                onClick={() => onMemberClick(m.id)}
+                className="flex-shrink-0 flex flex-col items-center gap-2 px-3.5 py-3 rounded-2xl transition-all duration-200"
+                style={{
+                  minWidth:80,
+                  background: activeId===m.id?`${m.color}15`:'rgba(255,255,255,0.03)',
+                  border: activeId===m.id?`1px solid ${m.color}45`:'1px solid rgba(255,255,255,0.06)',
+                  boxShadow: activeId===m.id?`0 8px 24px ${m.color}20`:'none',
+                }}>
+
+                {/* Photo */}
+                <div className="relative">
+                  <div className="w-11 h-11 rounded-full overflow-hidden"
+                       style={{border:`2.5px solid ${activeId===m.id?m.color:m.color+'60'}`,
+                               boxShadow:activeId===m.id?`0 0 14px ${m.color}50`:'none'}}>
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src={m.photo} alt={m.name} className="w-full h-full object-cover" />
+                  </div>
+                  <span className="absolute -bottom-1 -right-1 text-[12px] leading-none">{V[m.vehicle]}</span>
+                </div>
+
+                <span className="text-[10px] font-semibold whitespace-nowrap"
+                      style={{color: activeId===m.id?m.color:'rgba(255,255,255,0.7)'}}>
+                  {m.name}
+                </span>
+
+                {/* Battery */}
+                <div className="w-full flex flex-col gap-0.5">
+                  <div className="w-full h-1 rounded-full overflow-hidden" style={{background:'rgba(255,255,255,0.08)'}}>
+                    <div className="h-full rounded-full transition-all"
+                         style={{width:`${m.battery}%`,
+                                 background:m.battery<25?'#EF4444':m.battery<50?'#F59E0B':m.color,
+                                 boxShadow:`0 0 4px ${m.color}60`}} />
+                  </div>
+                  <span className="text-[9px] text-center" style={{color:'rgba(255,255,255,0.3)'}}>{m.battery}%</span>
+                </div>
+              </motion.button>
+            ))}
+          </motion.div>
+        </div>
+
+        {/* RIGHT — Panel (desktop) */}
+        <motion.div initial={{opacity:0,x:20}} animate={{opacity:1,x:0}} transition={{duration:0.5,delay:0.1}}
+          className="hidden lg:flex flex-col w-[300px] flex-shrink-0">
+          <RightPanel tab={tab} setTab={setTab} expanded={expanded} setExpanded={setExpanded}
+            alerts={alerts} dismiss={dismiss} toggles={toggles} setToggle={toggleSetting}
+            user={user} logout={logout} />
+        </motion.div>
+
+        {/* RIGHT — Mobile tab content */}
+        <div className="lg:hidden">
+          <AnimatePresence mode="wait">
+            <motion.div key={mobTab} initial={{opacity:0,y:8}} animate={{opacity:1,y:0}} exit={{opacity:0}} transition={{duration:0.2}}>
+              {mobTab==='family' && (
+                <div className="space-y-2">
+                  {MAP_MEMBERS.map(m => (
+                    <MemberCard key={m.id} m={m} open={expanded===m.id} onToggle={() => setExpanded(expanded===m.id?null:m.id)} />
+                  ))}
+                </div>
+              )}
+              {mobTab==='alerts' && <AlertsTab alerts={alerts} dismiss={dismiss} />}
+              {mobTab==='profile' && <ProfileTab user={user} toggles={toggles} setToggle={toggleSetting} logout={logout} />}
+            </motion.div>
+          </AnimatePresence>
+        </div>
+      </main>
+
+      {/* ══════ MOBILE BOTTOM TAB BAR ═══════════════════════════ */}
+      <nav className="lg:hidden fixed bottom-0 inset-x-0 z-50 flex"
+           style={{background:'rgba(5,13,26,0.97)',backdropFilter:'blur(24px)',
+                   borderTop:'1px solid rgba(255,255,255,0.07)',
+                   boxShadow:'0 -8px 32px rgba(0,0,0,0.4)'}}>
+        {([
+          {id:'map',   label:'Map',   icon:'🗺️'},
+          {id:'family',label:'Family',icon:'👨‍👩‍👧'},
+          {id:'alerts',label:'Alerts',icon:'🔔',badge:alerts.length},
+          {id:'profile',label:'Profile',icon:'👤'},
+        ] as const).map(item => {
+          const active = item.id==='map'?!['alerts','profile'].includes(mobTab):mobTab===item.id
+          return (
+            <button key={item.id} onClick={() => { if(item.id!=='map') setMobTab(item.id as Tab) }}
+              className="flex-1 flex flex-col items-center justify-center gap-0.5 py-3 relative transition-colors"
+              style={{color:active?'#D4A853':'rgba(255,255,255,0.35)'}}>
+              <span className="text-xl leading-none">{item.icon}</span>
+              <span className="text-[8px] font-bold tracking-wider uppercase">{item.label}</span>
+              {'badge' in item && item.badge&&item.badge>0 ? (
+                <span className="absolute top-2 left-[calc(50%+4px)] w-4 h-4 rounded-full text-[8px] font-bold flex items-center justify-center"
+                      style={{background:'#EF4444',color:'#fff'}}>{item.badge}</span>
+              ) : null}
+              {active && (
+                <motion.div layoutId="mob-tab" className="absolute bottom-0 left-[25%] right-[25%] h-0.5 rounded-full"
+                  style={{background:'#D4A853',boxShadow:'0 0 8px rgba(212,168,83,0.8)'}} />
+              )}
+            </button>
+          )
+        })}
+      </nav>
+    </div>
   )
 }
