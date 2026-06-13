@@ -684,6 +684,13 @@ export default function SuperAdminPage() {
 
       {/* Bottom — user + logout */}
       <div style={{ marginTop: 'auto', padding: 12, borderTop: '1px solid var(--border)', flexShrink: 0 }}>
+        {/* System status dots — same as admin sidebar */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 10 }}>
+          <span style={{ width: 7, height: 7, borderRadius: '50%', background: '#22c55e', flexShrink: 0, display: 'inline-block' }} />
+          <span style={{ width: 7, height: 7, borderRadius: '50%', background: '#f59e0b', flexShrink: 0, display: 'inline-block' }} />
+          <span style={{ width: 7, height: 7, borderRadius: '50%', background: '#22c55e', flexShrink: 0, display: 'inline-block' }} />
+          <span style={{ fontSize: 11, color: 'var(--text-muted)', marginLeft: 2 }}>All systems operational</span>
+        </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
           <div
             style={{
