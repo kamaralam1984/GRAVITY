@@ -490,13 +490,13 @@ export default function LoginPage() {
   async function handleLoginSuccess(token: string, user: AuthUser, message = 'Authenticated') {
     setSuccessMessage(message)
     setSuccess(true)
-    // Persist token and user in localStorage
     setAuth(token, user)
-    // Also set cookie for middleware route protection (7 days)
-    document.cookie = `gv_token=${token}; path=/; max-age=604800`
-    document.cookie = `gv_user=${encodeURIComponent(JSON.stringify(user))}; path=/; max-age=604800`
+    // SameSite=Lax ensures cookies are sent on full navigations (required for middleware)
+    document.cookie = `gv_token=${token}; path=/; max-age=604800; SameSite=Lax`
+    document.cookie = `gv_user=${encodeURIComponent(JSON.stringify(user))}; path=/; max-age=604800; SameSite=Lax`
     await new Promise((r) => setTimeout(r, 1500))
-    router.push(getRoleRedirect(user.role))
+    // Hard navigation so the browser sends fresh cookies to the middleware
+    window.location.href = getRoleRedirect(user.role)
   }
 
   // ── Email login ──────────────────────────────────────────────
