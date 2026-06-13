@@ -28,8 +28,7 @@ const nextConfig = {
   },
 
   async rewrites() {
-    const API = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8001'
-    const base = API.replace(/\/api$/, '')
+    const base = process.env.INTERNAL_API_URL || 'http://127.0.0.1:8001'
     const routes = [
       'auth', 'admin-api', 'families', 'devices', 'geofences', 'sos',
       'check-ins', 'journeys', 'chat', 'driving', 'health', 'notifications',
