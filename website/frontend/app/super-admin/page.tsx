@@ -3,6 +3,8 @@
 import { useState, useEffect, useRef } from 'react'
 import { motion, AnimatePresence, useInView } from 'framer-motion'
 import { useAuth } from '@/lib/useAuth'
+import PanelBackground from '@/components/effects/PanelBackground'
+import ThemeToggle from '@/components/ui/ThemeToggle'
 import {
   Crown,
   Home,
@@ -498,7 +500,7 @@ export default function SuperAdminPage() {
         display: 'flex',
         flexDirection: 'column',
         height: '100%',
-        background: 'rgba(10,6,24,0.96)',
+        background: 'var(--bg-surface)',
         backdropFilter: 'blur(20px)',
         WebkitBackdropFilter: 'blur(20px)',
       }}
@@ -506,31 +508,14 @@ export default function SuperAdminPage() {
       {/* Logo */}
       <div
         style={{
-          padding: '20px 16px 16px',
-          borderBottom: '1px solid rgba(139,92,246,0.2)',
+          padding: '18px 16px 14px',
+          borderBottom: '1px solid var(--border)',
           display: 'flex',
           alignItems: 'center',
-          gap: 12,
+          gap: 10,
         }}
       >
-        <div
-          style={{
-            width: 38,
-            height: 38,
-            borderRadius: 12,
-            background: `linear-gradient(135deg, ${PURPLE}, ${PURPLE_DARK})`,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            fontWeight: 800,
-            fontSize: 15,
-            color: '#fff',
-            boxShadow: `0 4px 20px rgba(139,92,246,0.5)`,
-            flexShrink: 0,
-          }}
-        >
-          G
-        </div>
+        <Crown size={22} color={PURPLE} strokeWidth={2} style={{ flexShrink: 0 }} />
         <div>
           <div
             style={{
@@ -538,28 +523,28 @@ export default function SuperAdminPage() {
               fontWeight: 800,
               fontSize: 15,
               letterSpacing: '0.08em',
-              color: '#fff',
-              lineHeight: 1.1,
+              color: 'var(--text-primary)',
+              lineHeight: 1.2,
             }}
           >
             GRAVITY
           </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 4, marginTop: 3 }}>
-            <span style={{ fontSize: 16 }}>👑</span>
-            <span
-              style={{
-                fontSize: 10,
-                fontWeight: 700,
-                letterSpacing: '0.06em',
-                background: `linear-gradient(135deg, ${PURPLE}, #EC4899)`,
-                color: '#fff',
-                borderRadius: 4,
-                padding: '1px 6px',
-              }}
-            >
-              SUPER ADMIN
-            </span>
-          </div>
+          <span
+            style={{
+              display: 'inline-block',
+              marginTop: 3,
+              fontSize: 10,
+              fontWeight: 700,
+              letterSpacing: '0.06em',
+              textTransform: 'uppercase',
+              background: 'rgba(139,92,246,0.12)',
+              color: PURPLE,
+              borderRadius: 4,
+              padding: '2px 8px',
+            }}
+          >
+            Super Admin
+          </span>
         </div>
       </div>
 
@@ -571,9 +556,9 @@ export default function SuperAdminPage() {
           return (
             <motion.div
               key={item.id}
-              initial={{ opacity: 0, x: -12 }}
+              initial={{ opacity: 0, x: -20 }}
               animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: i * 0.05 }}
+              transition={{ delay: i * 0.03, duration: 0.3 }}
             >
               <button
                 onClick={() => {
@@ -583,27 +568,27 @@ export default function SuperAdminPage() {
                 style={{
                   display: 'flex',
                   alignItems: 'center',
-                  gap: 10,
-                  width: '100%',
-                  padding: '9px 12px',
-                  borderRadius: 10,
-                  marginBottom: 2,
+                  gap: 8,
+                  width: 'calc(100% - 16px)',
+                  height: 32,
+                  padding: '0 10px',
+                  borderRadius: 6,
+                  margin: '1px 8px',
                   border: 'none',
                   cursor: 'pointer',
-                  color: isActive ? '#fff' : 'rgba(255,255,255,0.5)',
-                  background: isActive
-                    ? `linear-gradient(135deg, ${PURPLE}33, ${PURPLE_DARK}22)`
-                    : 'transparent',
-                  borderLeft: isActive ? `3px solid ${PURPLE}` : '3px solid transparent',
-                  fontWeight: isActive ? 600 : 500,
-                  fontSize: 13.5,
+                  color: isActive ? 'var(--text-primary)' : 'var(--text-muted)',
+                  background: isActive ? 'rgba(139,92,246,0.1)' : 'transparent',
+                  borderLeft: isActive ? `2px solid ${PURPLE}` : '2px solid transparent',
+                  fontWeight: 500,
+                  fontSize: 13,
                   textAlign: 'left',
-                  transition: 'all 0.18s ease',
+                  transition: 'background 0.12s ease',
                 }}
+                onMouseEnter={(e) => { if (!isActive) e.currentTarget.style.background = 'rgba(255,255,255,0.04)' }}
+                onMouseLeave={(e) => { if (!isActive) e.currentTarget.style.background = 'transparent' }}
               >
-                <Icon size={17} strokeWidth={isActive ? 2.2 : 1.8} />
+                <Icon size={14} color={isActive ? PURPLE : undefined} strokeWidth={isActive ? 2.2 : 1.8} />
                 <span>{item.label}</span>
-                {isActive && <ChevronRight size={13} style={{ marginLeft: 'auto', opacity: 0.6 }} />}
               </button>
             </motion.div>
           )
@@ -660,15 +645,19 @@ export default function SuperAdminPage() {
               key={stat.label}
               initial={{ opacity: 0, y: 24 }}
               animate={inView ? { opacity: 1, y: 0 } : {}}
-              transition={{ delay: i * 0.08 }}
+              transition={{ delay: i * 0.08, duration: 0.2 }}
               style={{
-                borderRadius: 18,
+                borderRadius: 12,
                 padding: 20,
-                background: 'rgba(255,255,255,0.04)',
-                border: '1px solid rgba(255,255,255,0.08)',
+                background: 'var(--bg-surface)',
+                border: '1px solid var(--border)',
                 position: 'relative',
                 overflow: 'hidden',
+                transition: 'transform 0.15s ease',
+                cursor: 'default',
               }}
+              onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.transform = 'translateY(-2px)' }}
+              onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.transform = 'translateY(0)' }}
             >
               <div
                 style={{
@@ -683,14 +672,14 @@ export default function SuperAdminPage() {
                   filter: 'blur(24px)',
                 }}
               />
-              <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.45)', marginBottom: 8, fontWeight: 500 }}>
+              <div style={{ fontSize: 12, color: 'var(--text-muted)', marginBottom: 8, fontWeight: 500 }}>
                 {stat.label}
               </div>
               <div
                 style={{
                   fontSize: 28,
                   fontWeight: 800,
-                  color: '#fff',
+                  color: 'var(--text-primary)',
                   fontFamily: 'Plus Jakarta Sans, sans-serif',
                   lineHeight: 1,
                   marginBottom: 8,
@@ -740,16 +729,20 @@ export default function SuperAdminPage() {
                 key={stat.label}
                 initial={{ opacity: 0, y: 16 }}
                 animate={inView ? { opacity: 1, y: 0 } : {}}
-                transition={{ delay: 0.35 + i * 0.07 }}
+                transition={{ delay: 0.35 + i * 0.07, duration: 0.2 }}
                 style={{
-                  borderRadius: 14,
+                  borderRadius: 12,
                   padding: '16px 20px',
-                  background: 'rgba(255,255,255,0.03)',
-                  border: '1px solid rgba(255,255,255,0.07)',
+                  background: 'var(--bg-surface)',
+                  border: '1px solid var(--border)',
                   display: 'flex',
                   alignItems: 'center',
                   gap: 14,
+                  transition: 'transform 0.15s ease',
+                  cursor: 'default',
                 }}
+                onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.transform = 'translateY(-2px)' }}
+                onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.transform = 'translateY(0)' }}
               >
                 <div
                   style={{
@@ -957,16 +950,16 @@ export default function SuperAdminPage() {
         <div style={{ overflowX: 'auto' }}>
           <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
             <thead>
-              <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
+              <tr style={{ borderBottom: '1px solid var(--border)', background: 'var(--bg-surface2)' }}>
                 {['User', 'Email', 'Role', 'Status', 'Joined', 'Actions'].map((h) => (
                   <th
                     key={h}
                     style={{
-                      padding: '12px 16px',
+                      padding: '10px 16px',
                       textAlign: 'left',
                       fontSize: 11,
                       fontWeight: 700,
-                      color: 'rgba(255,255,255,0.35)',
+                      color: 'var(--text-muted)',
                       letterSpacing: '0.06em',
                       textTransform: 'uppercase',
                       whiteSpace: 'nowrap',
@@ -984,8 +977,8 @@ export default function SuperAdminPage() {
                   initial={{ opacity: 0, y: 8 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: i * 0.04 }}
-                  style={{ borderBottom: '1px solid rgba(255,255,255,0.04)' }}
-                  onMouseEnter={(e) => (e.currentTarget.style.background = 'rgba(255,255,255,0.03)')}
+                  style={{ borderBottom: '1px solid var(--border)', height: 40 }}
+                  onMouseEnter={(e) => (e.currentTarget.style.background = 'var(--bg-surface2)')}
                   onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
                 >
                   <td style={{ padding: '12px 16px' }}>
@@ -1714,16 +1707,16 @@ export default function SuperAdminPage() {
         <div style={{ overflowX: 'auto' }}>
           <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
             <thead>
-              <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
+              <tr style={{ borderBottom: '1px solid var(--border)', background: 'var(--bg-surface2)' }}>
                 {['Timestamp', 'Event', 'User', 'IP Address', 'Location', 'Status'].map((h) => (
                   <th
                     key={h}
                     style={{
-                      padding: '12px 16px',
+                      padding: '10px 16px',
                       textAlign: 'left',
                       fontSize: 11,
                       fontWeight: 700,
-                      color: 'rgba(255,255,255,0.35)',
+                      color: 'var(--text-muted)',
                       letterSpacing: '0.06em',
                       textTransform: 'uppercase',
                       whiteSpace: 'nowrap',
@@ -1742,22 +1735,13 @@ export default function SuperAdminPage() {
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: i * 0.05 }}
                   style={{
-                    borderBottom: '1px solid rgba(255,255,255,0.04)',
-                    background:
-                      log.status === 'blocked'
-                        ? 'rgba(239,68,68,0.04)'
-                        : log.event === 'role_change'
-                        ? 'rgba(139,92,246,0.04)'
-                        : 'transparent',
+                    borderBottom: '1px solid var(--border)',
+                    height: 40,
+                    background: 'transparent',
                   }}
-                  onMouseEnter={(e) => (e.currentTarget.style.background = 'rgba(255,255,255,0.03)')}
+                  onMouseEnter={(e) => (e.currentTarget.style.background = 'var(--bg-surface2)')}
                   onMouseLeave={(e) => {
-                    e.currentTarget.style.background =
-                      log.status === 'blocked'
-                        ? 'rgba(239,68,68,0.04)'
-                        : log.event === 'role_change'
-                        ? 'rgba(139,92,246,0.04)'
-                        : 'transparent'
+                    e.currentTarget.style.background = 'transparent'
                   }}
                 >
                   <td style={{ padding: '11px 16px', color: 'rgba(255,255,255,0.4)', whiteSpace: 'nowrap', fontSize: 12 }}>
@@ -2029,17 +2013,17 @@ export default function SuperAdminPage() {
           <div style={{ overflowX: 'auto' }}>
             <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
               <thead>
-                <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
+                <tr style={{ borderBottom: '1px solid var(--border)', background: 'var(--bg-surface2)' }}>
                   {['Family Name', 'Owner', 'Members', 'Plan', 'Created', 'Actions'].map((h) => (
-                    <th key={h} style={{ padding: '12px 16px', textAlign: 'left', fontSize: 11, fontWeight: 700, color: 'rgba(255,255,255,0.35)', letterSpacing: '0.06em', textTransform: 'uppercase', whiteSpace: 'nowrap' }}>{h}</th>
+                    <th key={h} style={{ padding: '10px 16px', textAlign: 'left', fontSize: 11, fontWeight: 700, color: 'var(--text-muted)', letterSpacing: '0.06em', textTransform: 'uppercase', whiteSpace: 'nowrap' }}>{h}</th>
                   ))}
                 </tr>
               </thead>
               <tbody>
                 {families.map((f, i) => (
                   <motion.tr key={i} initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.04 }}
-                    style={{ borderBottom: '1px solid rgba(255,255,255,0.04)' }}
-                    onMouseEnter={(e) => (e.currentTarget.style.background = 'rgba(255,255,255,0.03)')}
+                    style={{ borderBottom: '1px solid var(--border)', height: 40 }}
+                    onMouseEnter={(e) => (e.currentTarget.style.background = 'var(--bg-surface2)')}
                     onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
                   >
                     <td style={{ padding: '12px 16px', color: '#fff', fontWeight: 500 }}>{f.name}</td>
@@ -2102,17 +2086,17 @@ export default function SuperAdminPage() {
           <div style={{ overflowX: 'auto' }}>
             <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
               <thead>
-                <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
+                <tr style={{ borderBottom: '1px solid var(--border)', background: 'var(--bg-surface2)' }}>
                   {['Device Name', 'User', 'OS', 'Battery', 'Status', 'Last Seen'].map((h) => (
-                    <th key={h} style={{ padding: '12px 16px', textAlign: 'left', fontSize: 11, fontWeight: 700, color: 'rgba(255,255,255,0.35)', letterSpacing: '0.06em', textTransform: 'uppercase', whiteSpace: 'nowrap' }}>{h}</th>
+                    <th key={h} style={{ padding: '10px 16px', textAlign: 'left', fontSize: 11, fontWeight: 700, color: 'var(--text-muted)', letterSpacing: '0.06em', textTransform: 'uppercase', whiteSpace: 'nowrap' }}>{h}</th>
                   ))}
                 </tr>
               </thead>
               <tbody>
                 {devices.map((d, i) => (
                   <motion.tr key={i} initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.04 }}
-                    style={{ borderBottom: '1px solid rgba(255,255,255,0.04)' }}
-                    onMouseEnter={(e) => (e.currentTarget.style.background = 'rgba(255,255,255,0.03)')}
+                    style={{ borderBottom: '1px solid var(--border)', height: 40 }}
+                    onMouseEnter={(e) => (e.currentTarget.style.background = 'var(--bg-surface2)')}
                     onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
                   >
                     <td style={{ padding: '12px 16px', color: '#fff', fontWeight: 500 }}>
@@ -2184,18 +2168,18 @@ export default function SuperAdminPage() {
           <div style={{ overflowX: 'auto' }}>
             <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
               <thead>
-                <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
+                <tr style={{ borderBottom: '1px solid var(--border)', background: 'var(--bg-surface2)' }}>
                   {['Alert ID', 'User', 'Location', 'Time', 'Status', 'Responder'].map((h) => (
-                    <th key={h} style={{ padding: '12px 16px', textAlign: 'left', fontSize: 11, fontWeight: 700, color: 'rgba(255,255,255,0.35)', letterSpacing: '0.06em', textTransform: 'uppercase', whiteSpace: 'nowrap' }}>{h}</th>
+                    <th key={h} style={{ padding: '10px 16px', textAlign: 'left', fontSize: 11, fontWeight: 700, color: 'var(--text-muted)', letterSpacing: '0.06em', textTransform: 'uppercase', whiteSpace: 'nowrap' }}>{h}</th>
                   ))}
                 </tr>
               </thead>
               <tbody>
                 {alerts.map((a, i) => (
                   <motion.tr key={i} initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.04 }}
-                    style={{ borderBottom: '1px solid rgba(255,255,255,0.04)', background: a.status === 'CRITICAL' ? 'rgba(239,68,68,0.04)' : 'transparent' }}
-                    onMouseEnter={(e) => (e.currentTarget.style.background = 'rgba(255,255,255,0.03)')}
-                    onMouseLeave={(e) => (e.currentTarget.style.background = a.status === 'CRITICAL' ? 'rgba(239,68,68,0.04)' : 'transparent')}
+                    style={{ borderBottom: '1px solid var(--border)', height: 40, background: 'transparent' }}
+                    onMouseEnter={(e) => (e.currentTarget.style.background = 'var(--bg-surface2)')}
+                    onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
                   >
                     <td style={{ padding: '12px 16px', color: PURPLE, fontWeight: 600, fontFamily: 'monospace', fontSize: 12 }}>{a.id}</td>
                     <td style={{ padding: '12px 16px', color: '#fff', fontWeight: 500 }}>{a.user}</td>
@@ -2250,17 +2234,17 @@ export default function SuperAdminPage() {
           <div style={{ overflowX: 'auto' }}>
             <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
               <thead>
-                <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
+                <tr style={{ borderBottom: '1px solid var(--border)', background: 'var(--bg-surface2)' }}>
                   {['User', 'Plan', 'Amount', 'Start Date', 'Renewal', 'Status'].map((h) => (
-                    <th key={h} style={{ padding: '12px 16px', textAlign: 'left', fontSize: 11, fontWeight: 700, color: 'rgba(255,255,255,0.35)', letterSpacing: '0.06em', textTransform: 'uppercase', whiteSpace: 'nowrap' }}>{h}</th>
+                    <th key={h} style={{ padding: '10px 16px', textAlign: 'left', fontSize: 11, fontWeight: 700, color: 'var(--text-muted)', letterSpacing: '0.06em', textTransform: 'uppercase', whiteSpace: 'nowrap' }}>{h}</th>
                   ))}
                 </tr>
               </thead>
               <tbody>
                 {subs.map((s, i) => (
                   <motion.tr key={i} initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.04 }}
-                    style={{ borderBottom: '1px solid rgba(255,255,255,0.04)' }}
-                    onMouseEnter={(e) => (e.currentTarget.style.background = 'rgba(255,255,255,0.03)')}
+                    style={{ borderBottom: '1px solid var(--border)', height: 40 }}
+                    onMouseEnter={(e) => (e.currentTarget.style.background = 'var(--bg-surface2)')}
                     onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
                   >
                     <td style={{ padding: '12px 16px', color: '#fff', fontWeight: 500 }}>{s.user}</td>
@@ -2363,17 +2347,17 @@ export default function SuperAdminPage() {
           <div style={{ overflowX: 'auto' }}>
             <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
               <thead>
-                <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
+                <tr style={{ borderBottom: '1px solid var(--border)', background: 'var(--bg-surface2)' }}>
                   {['Name', 'Family', 'Type', 'Radius', 'Alerts Today', 'Status'].map((h) => (
-                    <th key={h} style={{ padding: '12px 16px', textAlign: 'left', fontSize: 11, fontWeight: 700, color: 'rgba(255,255,255,0.35)', letterSpacing: '0.06em', textTransform: 'uppercase', whiteSpace: 'nowrap' }}>{h}</th>
+                    <th key={h} style={{ padding: '10px 16px', textAlign: 'left', fontSize: 11, fontWeight: 700, color: 'var(--text-muted)', letterSpacing: '0.06em', textTransform: 'uppercase', whiteSpace: 'nowrap' }}>{h}</th>
                   ))}
                 </tr>
               </thead>
               <tbody>
                 {fences.map((f, i) => (
                   <motion.tr key={i} initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.04 }}
-                    style={{ borderBottom: '1px solid rgba(255,255,255,0.04)' }}
-                    onMouseEnter={(e) => (e.currentTarget.style.background = 'rgba(255,255,255,0.03)')}
+                    style={{ borderBottom: '1px solid var(--border)', height: 40 }}
+                    onMouseEnter={(e) => (e.currentTarget.style.background = 'var(--bg-surface2)')}
                     onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
                   >
                     <td style={{ padding: '12px 16px', color: '#fff', fontWeight: 500 }}>
@@ -2454,17 +2438,17 @@ export default function SuperAdminPage() {
           <div style={{ overflowX: 'auto' }}>
             <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
               <thead>
-                <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
+                <tr style={{ borderBottom: '1px solid var(--border)', background: 'var(--bg-surface2)' }}>
                   {['Title', 'Target', 'Sent', 'Delivered', 'Opened', 'Date'].map((h) => (
-                    <th key={h} style={{ padding: '12px 16px', textAlign: 'left', fontSize: 11, fontWeight: 700, color: 'rgba(255,255,255,0.35)', letterSpacing: '0.06em', textTransform: 'uppercase', whiteSpace: 'nowrap' }}>{h}</th>
+                    <th key={h} style={{ padding: '10px 16px', textAlign: 'left', fontSize: 11, fontWeight: 700, color: 'var(--text-muted)', letterSpacing: '0.06em', textTransform: 'uppercase', whiteSpace: 'nowrap' }}>{h}</th>
                   ))}
                 </tr>
               </thead>
               <tbody>
                 {recent.map((r, i) => (
                   <motion.tr key={i} initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.04 }}
-                    style={{ borderBottom: '1px solid rgba(255,255,255,0.04)' }}
-                    onMouseEnter={(e) => (e.currentTarget.style.background = 'rgba(255,255,255,0.03)')}
+                    style={{ borderBottom: '1px solid var(--border)', height: 40 }}
+                    onMouseEnter={(e) => (e.currentTarget.style.background = 'var(--bg-surface2)')}
                     onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
                   >
                     <td style={{ padding: '12px 16px', color: '#fff', fontWeight: 500 }}>{r.title}</td>
@@ -2533,17 +2517,17 @@ export default function SuperAdminPage() {
           <div style={{ overflowX: 'auto' }}>
             <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
               <thead>
-                <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
+                <tr style={{ borderBottom: '1px solid var(--border)', background: 'var(--bg-surface2)' }}>
                   {['Ticket ID', 'User', 'Subject', 'Priority', 'Status', 'Assigned', 'Date'].map((h) => (
-                    <th key={h} style={{ padding: '12px 16px', textAlign: 'left', fontSize: 11, fontWeight: 700, color: 'rgba(255,255,255,0.35)', letterSpacing: '0.06em', textTransform: 'uppercase', whiteSpace: 'nowrap' }}>{h}</th>
+                    <th key={h} style={{ padding: '10px 16px', textAlign: 'left', fontSize: 11, fontWeight: 700, color: 'var(--text-muted)', letterSpacing: '0.06em', textTransform: 'uppercase', whiteSpace: 'nowrap' }}>{h}</th>
                   ))}
                 </tr>
               </thead>
               <tbody>
                 {tickets.map((t, i) => (
                   <motion.tr key={i} initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.04 }}
-                    style={{ borderBottom: '1px solid rgba(255,255,255,0.04)' }}
-                    onMouseEnter={(e) => (e.currentTarget.style.background = 'rgba(255,255,255,0.03)')}
+                    style={{ borderBottom: '1px solid var(--border)', height: 40 }}
+                    onMouseEnter={(e) => (e.currentTarget.style.background = 'var(--bg-surface2)')}
                     onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
                   >
                     <td style={{ padding: '12px 16px', color: PURPLE, fontWeight: 600, fontFamily: 'monospace', fontSize: 12 }}>{t.id}</td>
@@ -2615,18 +2599,18 @@ export default function SuperAdminPage() {
           <div style={{ overflowX: 'auto' }}>
             <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
               <thead>
-                <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
+                <tr style={{ borderBottom: '1px solid var(--border)', background: 'var(--bg-surface2)' }}>
                   {['Timestamp', 'Action', 'User', 'IP Address', 'Location', 'Result'].map((h) => (
-                    <th key={h} style={{ padding: '12px 16px', textAlign: 'left', fontSize: 11, fontWeight: 700, color: 'rgba(255,255,255,0.35)', letterSpacing: '0.06em', textTransform: 'uppercase', whiteSpace: 'nowrap' }}>{h}</th>
+                    <th key={h} style={{ padding: '10px 16px', textAlign: 'left', fontSize: 11, fontWeight: 700, color: 'var(--text-muted)', letterSpacing: '0.06em', textTransform: 'uppercase', whiteSpace: 'nowrap' }}>{h}</th>
                   ))}
                 </tr>
               </thead>
               <tbody>
                 {logs.map((log, i) => (
                   <motion.tr key={i} initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.04 }}
-                    style={{ borderBottom: '1px solid rgba(255,255,255,0.04)', background: log.severity === 'critical' ? 'rgba(239,68,68,0.03)' : log.severity === 'warning' ? 'rgba(245,158,11,0.03)' : 'transparent' }}
-                    onMouseEnter={(e) => (e.currentTarget.style.background = 'rgba(255,255,255,0.03)')}
-                    onMouseLeave={(e) => (e.currentTarget.style.background = log.severity === 'critical' ? 'rgba(239,68,68,0.03)' : log.severity === 'warning' ? 'rgba(245,158,11,0.03)' : 'transparent')}
+                    style={{ borderBottom: '1px solid var(--border)', height: 40, background: 'transparent' }}
+                    onMouseEnter={(e) => (e.currentTarget.style.background = 'var(--bg-surface2)')}
+                    onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
                   >
                     <td style={{ padding: '11px 16px', color: 'rgba(255,255,255,0.4)', whiteSpace: 'nowrap', fontSize: 12, fontFamily: 'monospace' }}>{log.ts}</td>
                     <td style={{ padding: '11px 16px' }}>{actionBadge(log.action, log.severity)}</td>
@@ -2682,17 +2666,17 @@ export default function SuperAdminPage() {
           <div style={{ overflowX: 'auto' }}>
             <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
               <thead>
-                <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
+                <tr style={{ borderBottom: '1px solid var(--border)', background: 'var(--bg-surface2)' }}>
                   {['Organization', 'License Type', 'Users', 'Expires', 'MRR', 'Status'].map((h) => (
-                    <th key={h} style={{ padding: '12px 16px', textAlign: 'left', fontSize: 11, fontWeight: 700, color: 'rgba(255,255,255,0.35)', letterSpacing: '0.06em', textTransform: 'uppercase', whiteSpace: 'nowrap' }}>{h}</th>
+                    <th key={h} style={{ padding: '10px 16px', textAlign: 'left', fontSize: 11, fontWeight: 700, color: 'var(--text-muted)', letterSpacing: '0.06em', textTransform: 'uppercase', whiteSpace: 'nowrap' }}>{h}</th>
                   ))}
                 </tr>
               </thead>
               <tbody>
                 {clients.map((c, i) => (
                   <motion.tr key={i} initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.04 }}
-                    style={{ borderBottom: '1px solid rgba(255,255,255,0.04)' }}
-                    onMouseEnter={(e) => (e.currentTarget.style.background = 'rgba(255,255,255,0.03)')}
+                    style={{ borderBottom: '1px solid var(--border)', height: 40 }}
+                    onMouseEnter={(e) => (e.currentTarget.style.background = 'var(--bg-surface2)')}
                     onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
                   >
                     <td style={{ padding: '12px 16px', color: '#fff', fontWeight: 600 }}>
@@ -2811,17 +2795,17 @@ export default function SuperAdminPage() {
           <div style={{ overflowX: 'auto' }}>
             <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
               <thead>
-                <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
+                <tr style={{ borderBottom: '1px solid var(--border)', background: 'var(--bg-surface2)' }}>
                   {['API Key', 'Owner', 'Calls/Day', 'Last Used', 'Created', 'Status', 'Actions'].map((h) => (
-                    <th key={h} style={{ padding: '12px 16px', textAlign: 'left', fontSize: 11, fontWeight: 700, color: 'rgba(255,255,255,0.35)', letterSpacing: '0.06em', textTransform: 'uppercase', whiteSpace: 'nowrap' }}>{h}</th>
+                    <th key={h} style={{ padding: '10px 16px', textAlign: 'left', fontSize: 11, fontWeight: 700, color: 'var(--text-muted)', letterSpacing: '0.06em', textTransform: 'uppercase', whiteSpace: 'nowrap' }}>{h}</th>
                   ))}
                 </tr>
               </thead>
               <tbody>
                 {keys.map((k, i) => (
                   <motion.tr key={i} initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.04 }}
-                    style={{ borderBottom: '1px solid rgba(255,255,255,0.04)' }}
-                    onMouseEnter={(e) => (e.currentTarget.style.background = 'rgba(255,255,255,0.03)')}
+                    style={{ borderBottom: '1px solid var(--border)', height: 40 }}
+                    onMouseEnter={(e) => (e.currentTarget.style.background = 'var(--bg-surface2)')}
                     onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
                   >
                     <td style={{ padding: '12px 16px', color: 'rgba(255,255,255,0.6)', fontFamily: 'monospace', fontSize: 12, whiteSpace: 'nowrap' }}>{k.key}</td>
@@ -2895,28 +2879,37 @@ export default function SuperAdminPage() {
           .super-admin-mobile-bottom { display: none !important; }
           .super-admin-hamburger { display: none !important; }
         }
+        html:not(.dark) [data-panel] { background: var(--bg) !important; }
+        html:not(.dark) [data-sidebar] { background: var(--bg-surface) !important; }
       `}</style>
 
       <div
+        data-panel
         style={{
           display: 'flex',
           minHeight: '100vh',
-          background: '#0a0618',
+          background: 'var(--bg)',
           fontFamily: 'Inter, sans-serif',
-          color: '#fff',
+          color: 'var(--text-primary)',
+          position: 'relative',
         }}
       >
+        <PanelBackground />
         {/* Desktop Sidebar */}
         <div
           className="super-admin-sidebar"
+          data-sidebar
           style={{
             width: 240,
             flexShrink: 0,
-            borderRight: `1px solid rgba(139,92,246,0.15)`,
+            borderRight: `1px solid var(--border)`,
             position: 'sticky',
             top: 0,
             height: '100vh',
             overflowY: 'auto',
+            background: 'var(--bg-surface)',
+            backdropFilter: 'blur(20px)',
+            WebkitBackdropFilter: 'blur(20px)',
           }}
         >
           <SidebarContent />
@@ -2945,8 +2938,9 @@ export default function SuperAdminPage() {
                   width: 240,
                   height: '100vh',
                   zIndex: 50,
-                  borderRight: `1px solid rgba(139,92,246,0.2)`,
+                  borderRight: `1px solid var(--border)`,
                   overflowY: 'auto',
+                  background: 'var(--bg-surface)',
                 }}
               >
                 <SidebarContent />
@@ -2961,11 +2955,11 @@ export default function SuperAdminPage() {
           {/* ── TOP HEADER ── */}
           <header
             style={{
-              height: 62,
-              borderBottom: `1px solid rgba(139,92,246,0.15)`,
-              background: 'rgba(10,6,24,0.95)',
-              backdropFilter: 'blur(20px)',
-              WebkitBackdropFilter: 'blur(20px)',
+              height: 52,
+              borderBottom: `1px solid var(--border)`,
+              background: 'var(--bg-surface)',
+              backdropFilter: 'blur(24px)',
+              WebkitBackdropFilter: 'blur(24px)',
               display: 'flex',
               alignItems: 'center',
               padding: '0 20px',
@@ -3054,6 +3048,7 @@ export default function SuperAdminPage() {
 
             {/* Right */}
             <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+              <ThemeToggle />
               <div style={{ textAlign: 'right', display: 'flex', flexDirection: 'column', gap: 1 }}>
                 <span style={{ fontSize: 13, fontWeight: 700, color: '#fff' }}>{superAdminName}</span>
                 <span style={{ fontSize: 10, color: PURPLE, fontWeight: 600, letterSpacing: '0.04em' }}>SUPER ADMIN</span>
@@ -3110,7 +3105,7 @@ export default function SuperAdminPage() {
               flex: 1,
               overflowY: 'auto',
               padding: 24,
-              background: '#0a0618',
+              background: 'var(--bg)',
             }}
           >
             {/* Section header */}
@@ -3147,18 +3142,19 @@ export default function SuperAdminPage() {
                   <h1
                     style={{
                       margin: 0,
-                      fontSize: 20,
-                      fontWeight: 800,
-                      color: '#fff',
+                      fontSize: 18,
+                      fontWeight: 700,
+                      color: 'var(--text-primary)',
                       fontFamily: 'Plus Jakarta Sans, sans-serif',
                       lineHeight: 1.2,
                     }}
                   >
                     {sectionLabel}
                   </h1>
-                  <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.35)', marginTop: 2 }}>
+                  <div style={{ fontSize: 13, color: 'var(--text-muted)', marginTop: 4 }}>
                     GRAVITY Super Admin Control Center
                   </div>
+                  <div style={{ width: 32, height: 2, background: 'var(--gold)', borderRadius: 2, marginTop: 10 }} />
                 </div>
               </div>
             </motion.div>
@@ -3188,8 +3184,8 @@ export default function SuperAdminPage() {
             left: 0,
             right: 0,
             height: 64,
-            background: 'rgba(10,6,24,0.97)',
-            borderTop: `1px solid rgba(139,92,246,0.2)`,
+            background: 'var(--bg-surface)',
+            borderTop: `1px solid var(--border)`,
             backdropFilter: 'blur(20px)',
             WebkitBackdropFilter: 'blur(20px)',
             zIndex: 30,

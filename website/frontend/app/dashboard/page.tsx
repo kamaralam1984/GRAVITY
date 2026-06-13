@@ -6,6 +6,8 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { MAP_MEMBERS, MapMember, VehicleType } from '@/lib/mapData'
 import { getUser, clearAuth, AuthUser } from '@/lib/auth'
 import { useRouter } from 'next/navigation'
+import ThemeToggle from '@/components/ui/ThemeToggle'
+import PanelBackground from '@/components/effects/PanelBackground'
 
 /* ── Dynamic MapView ─────────────────────────────────────────── */
 const MapView = dynamic(() => import('@/components/sections/MapView'), {
@@ -83,11 +85,11 @@ function BattBar({ pct, color }: { pct:number; color:string }) {
   const c = pct<25?'#EF4444':pct<50?'#F59E0B':color
   return (
     <div className="flex items-center gap-2 flex-1">
-      <div className="flex-1 h-1.5 rounded-full overflow-hidden" style={{background:'rgba(255,255,255,0.07)'}}>
+      <div className="flex-1 h-1.5 rounded-full overflow-hidden" style={{background:'var(--bg-surface3)'}}>
         <motion.div initial={{width:0}} animate={{width:`${pct}%`}} transition={{duration:1,ease:'easeOut'}}
           className="h-full rounded-full" style={{background:c,boxShadow:`0 0 6px ${c}60`}} />
       </div>
-      <span className="text-[10px] font-semibold tabular-nums" style={{color:'rgba(255,255,255,0.4)',minWidth:28}}>{pct}%</span>
+      <span className="text-[10px] font-semibold tabular-nums" style={{color:'var(--text-muted)',minWidth:28}}>{pct}%</span>
     </div>
   )
 }
@@ -98,8 +100,8 @@ function BattBar({ pct, color }: { pct:number; color:string }) {
 function MemberCard({ m, open, onToggle }: { m:MapMember; open:boolean; onToggle:()=>void }) {
   return (
     <motion.div layout className="rounded-2xl overflow-hidden cursor-pointer"
-      style={{ background: open?`${m.color}0D`:'rgba(255,255,255,0.025)',
-               border: open?`1px solid ${m.color}40`:'1px solid rgba(255,255,255,0.06)',
+      style={{ background: open?`${m.color}0D`:'var(--bg-surface2)',
+               border: open?`1px solid ${m.color}40`:'1px solid var(--border)',
                boxShadow: open?`0 4px 24px ${m.color}15`:'none',
                transition:'border 0.2s,background 0.2s,box-shadow 0.2s' }}>
 
@@ -116,24 +118,24 @@ function MemberCard({ m, open, onToggle }: { m:MapMember; open:boolean; onToggle
           {/* Live dot */}
           <motion.span animate={{scale:[1,1.4,1],opacity:[1,0.4,1]}} transition={{duration:2,repeat:Infinity}}
             className="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 rounded-full border-2"
-            style={{background:'#10B981',borderColor:'#050D1A'}} />
+            style={{background:'#10B981',borderColor:'var(--bg-surface2)'}} />
         </div>
 
         {/* Info */}
         <div className="flex-1 min-w-0">
           <div className="flex items-center justify-between mb-0.5">
-            <p className="text-sm font-bold text-white truncate">{m.name}</p>
-            <span className="text-[10px] font-medium ml-2 flex-shrink-0 px-1.5 py-0.5 rounded-full"
-                  style={{background:`${m.color}15`,color:m.color,border:`1px solid ${m.color}30`}}>
+            <p className="truncate" style={{fontSize:13,fontWeight:600,color:'var(--text-primary)'}}>{m.name}</p>
+            <span className="ml-2 flex-shrink-0 px-1 py-0.5 rounded-full"
+                  style={{fontSize:10,fontWeight:500,background:`${m.color}15`,color:m.color,border:`1px solid ${m.color}30`}}>
               {V[m.vehicle]} {m.speed??0}km/h
             </span>
           </div>
-          <p className="text-[11px] font-medium mb-1.5 truncate" style={{color:m.color}}>📍 {m.location}</p>
+          <p className="mb-1.5 truncate" style={{fontSize:11,color:'var(--text-muted)'}}>📍 {m.location}</p>
           <BattBar pct={m.battery} color={m.color} />
         </div>
 
         <motion.span animate={{rotate:open?180:0}} transition={{duration:0.2}}
-          className="text-[10px] ml-1 flex-shrink-0" style={{color:'rgba(255,255,255,0.25)'}}>▼</motion.span>
+          className="text-[10px] ml-1 flex-shrink-0" style={{color:'var(--text-muted)'}}>▼</motion.span>
       </button>
 
       {/* Expanded content */}
@@ -154,7 +156,7 @@ function MemberCard({ m, open, onToggle }: { m:MapMember; open:boolean; onToggle
                   <div key={s.label} className="rounded-xl p-2 text-center"
                        style={{background:`${m.color}0A`,border:`1px solid ${m.color}20`}}>
                     <div className="text-base">{s.icon}</div>
-                    <div className="text-[8px] mt-0.5" style={{color:'rgba(255,255,255,0.3)'}}>{s.label}</div>
+                    <div className="text-[8px] mt-0.5" style={{color:'var(--text-muted)'}}>{s.label}</div>
                     <div className="text-[10px] font-bold mt-0.5" style={{color:m.color}}>{s.val}</div>
                   </div>
                 ))}
@@ -162,7 +164,7 @@ function MemberCard({ m, open, onToggle }: { m:MapMember; open:boolean; onToggle
 
               {/* Journey */}
               <div>
-                <p className="text-[9px] font-bold uppercase tracking-[0.15em] mb-2" style={{color:'rgba(255,255,255,0.3)'}}>Today's Journey</p>
+                <p className="text-[9px] font-bold uppercase tracking-[0.15em] mb-2" style={{color:'var(--text-muted)'}}>Today's Journey</p>
                 {(JOURNEY[m.id]??[]).map((step,i,arr) => (
                   <div key={i} className="flex items-center gap-2.5 mb-1.5">
                     <div className="flex flex-col items-center">
@@ -174,8 +176,8 @@ function MemberCard({ m, open, onToggle }: { m:MapMember; open:boolean; onToggle
                       {i<arr.length-1 && <div className="w-px flex-1 mt-0.5 mb-0.5 min-h-[6px]"
                         style={{background:step.done?`${m.color}30`:'rgba(255,255,255,0.06)'}} />}
                     </div>
-                    <span className="text-[11px] flex-1" style={{color:step.done?'rgba(255,255,255,0.75)':'rgba(255,255,255,0.3)'}}>{step.place}</span>
-                    <span className="text-[9px] tabular-nums" style={{color:'rgba(255,255,255,0.25)'}}>{step.time}</span>
+                    <span className="text-[11px] flex-1" style={{color:step.done?'var(--text-primary)':'var(--text-muted)'}}>{step.place}</span>
+                    <span className="text-[9px] tabular-nums" style={{color:'var(--text-muted)'}}>{step.time}</span>
                   </div>
                 ))}
               </div>
@@ -186,10 +188,13 @@ function MemberCard({ m, open, onToggle }: { m:MapMember; open:boolean; onToggle
                   style={{background:'rgba(59,130,246,0.12)',border:'1px solid rgba(59,130,246,0.3)',color:'#60A5FA'}}>
                   📞 Call
                 </button>
-                <button className="flex-1 py-2 rounded-xl text-[11px] font-bold transition-all hover:opacity-80 flex items-center justify-center gap-1.5"
-                  style={{background:'rgba(239,68,68,0.1)',border:'1px solid rgba(239,68,68,0.3)',color:'#F87171'}}>
+                <motion.button
+                  className="flex-1 py-2 rounded-xl text-[11px] font-bold transition-all hover:opacity-80 flex items-center justify-center gap-1.5"
+                  style={{background:'rgba(239,68,68,0.1)',border:'1px solid rgba(239,68,68,0.3)',color:'#F87171'}}
+                  animate={{boxShadow:['0 0 0 0 rgba(239,68,68,0.4)','0 0 0 20px rgba(239,68,68,0)','0 0 0 0 rgba(239,68,68,0)']}}
+                  transition={{duration:2,repeat:Infinity}}>
                   🚨 SOS
-                </button>
+                </motion.button>
                 <button className="flex-1 py-2 rounded-xl text-[11px] font-bold transition-all hover:opacity-80 flex items-center justify-center gap-1.5"
                   style={{background:`${m.color}10`,border:`1px solid ${m.color}30`,color:m.color}}>
                   🗺️ Map
@@ -211,7 +216,7 @@ function AlertsTab({ alerts,dismiss }: { alerts:Alert[]; dismiss:(id:string)=>vo
     <div className="flex flex-col items-center gap-3 py-12">
       <div className="w-16 h-16 rounded-full flex items-center justify-center text-3xl"
            style={{background:'rgba(16,185,129,0.1)',border:'1px solid rgba(16,185,129,0.25)'}}>✅</div>
-      <p className="text-sm font-semibold" style={{color:'rgba(255,255,255,0.35)'}}>No active alerts</p>
+      <p className="text-sm font-semibold" style={{color:'var(--text-muted)'}}>No active alerts</p>
     </div>
   )
   return (
@@ -220,27 +225,21 @@ function AlertsTab({ alerts,dismiss }: { alerts:Alert[]; dismiss:(id:string)=>vo
         const s = SEV_STYLE[a.sev]
         return (
           <motion.div key={a.id} layout exit={{opacity:0,x:40}} transition={{duration:0.2}}
-            className="flex gap-3 p-3.5 rounded-2xl relative overflow-hidden"
-            style={{background:s.bg,border:`1px solid ${s.border}`}}>
-            {/* Left accent bar */}
-            <div className="absolute left-0 top-0 bottom-0 w-0.5 rounded-l-2xl" style={{background:s.bar}} />
-            <div className="pl-1 flex gap-3 flex-1 min-w-0">
-              <div className="w-8 h-8 rounded-xl flex items-center justify-center text-base flex-shrink-0"
-                   style={{background:`${s.bar}15`}}>
-                {a.icon}
-              </div>
-              <div className="flex-1 min-w-0">
+            className="flex gap-3 relative overflow-hidden rounded-xl"
+            style={{padding:'12px 16px',background:'var(--bg-surface)',borderLeft:`3px solid ${s.bar}`}}>
+            <div className="flex gap-3 flex-1 min-w-0">
+              <div>
                 <div className="flex items-center gap-2 mb-0.5">
-                  <p className="text-xs font-bold text-white/90 truncate">{a.title}</p>
+                  <p className="truncate" style={{fontSize:13,fontWeight:600,color:'var(--text-primary)'}}>{a.title}</p>
                   <span className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{background:s.dot}} />
                 </div>
-                <p className="text-[11px] leading-relaxed" style={{color:'rgba(255,255,255,0.5)'}}>{a.msg}</p>
-                <p className="text-[10px] mt-1 font-medium" style={{color:'rgba(255,255,255,0.25)'}}>{a.time}</p>
+                <p style={{fontSize:12,color:'var(--text-secondary)',lineHeight:1.4}}>{a.msg}</p>
+                <p className="mt-1" style={{fontSize:11,color:'var(--text-muted)'}}>{a.time}</p>
               </div>
             </div>
             <button onClick={() => dismiss(a.id)}
               className="flex-shrink-0 w-5 h-5 rounded-full flex items-center justify-center text-[10px] transition-all hover:bg-white/10"
-              style={{color:'rgba(255,255,255,0.3)'}}>✕</button>
+              style={{color:'var(--text-muted)'}}>✕</button>
           </motion.div>
         )
       })}
@@ -275,8 +274,8 @@ function ProfileTab({ user, toggles, setToggle, logout }:{
             {user.name.charAt(0).toUpperCase()}
           </div>
           <div className="min-w-0 flex-1">
-            <p className="text-sm font-bold text-white truncate">{user.name}</p>
-            <p className="text-[11px] mt-0.5 truncate" style={{color:'rgba(255,255,255,0.45)'}}>{user.email}</p>
+            <p className="text-sm font-bold truncate" style={{color:'var(--text-primary)'}}>{user.name}</p>
+            <p className="text-[11px] mt-0.5 truncate" style={{color:'var(--text-muted)'}}>{user.email}</p>
             <span className="inline-block mt-1.5 text-[9px] px-2.5 py-0.5 rounded-full font-bold uppercase tracking-wider"
                   style={{background:'rgba(212,168,83,0.18)',color:'#D4A853',border:'1px solid rgba(212,168,83,0.35)'}}>
               ● Member
@@ -286,18 +285,18 @@ function ProfileTab({ user, toggles, setToggle, logout }:{
       </div>
 
       {/* Settings */}
-      <p className="text-[9px] font-bold uppercase tracking-[0.15em] px-1" style={{color:'rgba(255,255,255,0.25)'}}>Preferences</p>
+      <p className="text-[9px] font-bold uppercase tracking-[0.15em] px-1" style={{color:'var(--text-muted)'}}>Preferences</p>
       {SETTINGS.map((s,i) => (
         <motion.div key={s.key} initial={{opacity:0,y:8}} animate={{opacity:1,y:0}} transition={{delay:i*0.06}}
           className="flex items-center gap-3 p-3.5 rounded-2xl"
-          style={{background:'rgba(255,255,255,0.03)',border:'1px solid rgba(255,255,255,0.06)'}}>
+          style={{background:'var(--bg-surface2)',border:'1px solid var(--border)'}}>
           <div className="w-9 h-9 rounded-xl flex items-center justify-center text-base flex-shrink-0"
-               style={{background:'rgba(255,255,255,0.05)',border:'1px solid rgba(255,255,255,0.08)'}}>
+               style={{background:'var(--bg-surface3)',border:'1px solid var(--border)'}}>
             {s.icon}
           </div>
           <div className="flex-1 min-w-0">
-            <p className="text-[11px] font-semibold text-white/85 truncate">{s.label}</p>
-            <p className="text-[10px] mt-0.5 truncate" style={{color:'rgba(255,255,255,0.3)'}}>{s.desc}</p>
+            <p className="text-[11px] font-semibold truncate" style={{color:'var(--text-primary)'}}>{s.label}</p>
+            <p className="text-[10px] mt-0.5 truncate" style={{color:'var(--text-muted)'}}>{s.desc}</p>
           </div>
           <Toggle on={toggles[s.key]} set={() => setToggle(s.key)} />
         </motion.div>
@@ -331,8 +330,8 @@ function RightPanel({ tab, setTab, expanded, setExpanded, alerts, dismiss, toggl
   ]
 
   return (
-    <div className="flex flex-col h-full rounded-3xl overflow-hidden"
-         style={{background:'rgba(8,16,32,0.85)',border:'1px solid rgba(255,255,255,0.07)',
+    <div className="flex flex-col h-full rounded-3xl overflow-hidden dashboard-panel"
+         style={{background:'var(--bg-surface)',border:'1px solid var(--border)',
                  backdropFilter:'blur(24px)',boxShadow:'0 32px 64px rgba(0,0,0,0.4)'}}>
 
       {/* All safe banner */}
@@ -345,27 +344,33 @@ function RightPanel({ tab, setTab, expanded, setExpanded, alerts, dismiss, toggl
       </div>
 
       {/* Tabs */}
-      <div className="flex gap-1 px-3 pt-3 pb-0">
+      <div className="flex px-4 pt-2 pb-0"
+           style={{borderBottom:'1px solid var(--border)'}}>
         {TABS.map(t => (
           <button key={t.id} onClick={() => setTab(t.id)}
-            className="flex-1 relative flex flex-col items-center gap-0.5 py-2.5 rounded-xl transition-all duration-200"
+            className="flex-1 relative flex items-center justify-center gap-1.5 transition-all duration-200"
             style={{
-              background: tab===t.id ? 'rgba(212,168,83,0.12)' : 'transparent',
-              border: tab===t.id ? '1px solid rgba(212,168,83,0.25)' : '1px solid transparent',
-              color: tab===t.id ? '#D4A853' : 'rgba(255,255,255,0.35)',
+              height:40,
+              fontSize:13,
+              fontWeight:500,
+              color: tab===t.id ? 'var(--gold)' : 'var(--text-muted)',
+              background:'transparent',
+              border:'none',
+              borderBottom: tab===t.id ? '2px solid var(--gold)' : '2px solid transparent',
+              marginBottom:-1,
+              paddingBottom:0,
             }}>
-            <span className="text-base leading-none">{t.icon}</span>
-            <span className="text-[9px] font-bold tracking-wider uppercase">{t.label}</span>
+            <span className="text-sm leading-none">{t.icon}</span>
+            <span>{t.label}</span>
             {t.count && t.count>0 ? (
-              <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full text-[8px] font-bold flex items-center justify-center"
-                    style={{background:'#EF4444',color:'#fff'}}>{t.count}</span>
+              <span className="rounded-full text-[8px] font-bold flex items-center justify-center flex-shrink-0"
+                    style={{background:'#EF4444',color:'#fff',width:16,height:16,minWidth:16}}>
+                {t.count}
+              </span>
             ) : null}
           </button>
         ))}
       </div>
-
-      {/* Divider */}
-      <div className="mx-3 mt-3 h-px" style={{background:'rgba(255,255,255,0.06)'}} />
 
       {/* Content */}
       <div className="flex-1 overflow-y-auto px-3 py-3 space-y-2 scrollbar-none"
@@ -373,8 +378,10 @@ function RightPanel({ tab, setTab, expanded, setExpanded, alerts, dismiss, toggl
         <AnimatePresence mode="wait">
           {tab==='family' && (
             <motion.div key="fam" initial={{opacity:0,y:6}} animate={{opacity:1,y:0}} exit={{opacity:0}} className="space-y-2">
-              {MAP_MEMBERS.map(m => (
-                <MemberCard key={m.id} m={m} open={expanded===m.id} onToggle={() => setExpanded(expanded===m.id?null:m.id)} />
+              {MAP_MEMBERS.map((m,i) => (
+                <motion.div key={m.id} initial={{opacity:0,y:20}} animate={{opacity:1,y:0}} transition={{delay:i*0.05,duration:0.3}}>
+                  <MemberCard m={m} open={expanded===m.id} onToggle={() => setExpanded(expanded===m.id?null:m.id)} />
+                </motion.div>
               ))}
             </motion.div>
           )}
@@ -426,7 +433,7 @@ export default function DashboardPage() {
   const toggleSetting = (k:TKey) => setToggles(p => ({...p,[k]:!p[k]}))
 
   if (!user) return (
-    <div className="min-h-screen flex items-center justify-center" style={{background:'#050D1A'}}>
+    <div className="min-h-screen flex items-center justify-center" style={{background:'var(--bg)'}}>
       <div className="relative w-16 h-16">
         <div className="absolute inset-0 rounded-full border-2 border-[#D4A853]/20 animate-ping" />
         <div className="w-16 h-16 rounded-full border-2 border-t-[#D4A853] border-[#D4A853]/10 animate-spin" />
@@ -437,7 +444,10 @@ export default function DashboardPage() {
   const activeMember = MAP_MEMBERS.find(m => m.id===activeId) ?? null
 
   return (
-    <div className="min-h-screen flex flex-col" style={{background:'linear-gradient(160deg,#050D1A 0%,#080F20 50%,#060C18 100%)'}}>
+    <div className="min-h-screen flex flex-col" style={{background:'var(--bg)',color:'var(--text-primary)'}}>
+
+      {/* VFX background layer */}
+      <PanelBackground />
 
       {/* Ambient bg glows */}
       <div className="fixed inset-0 pointer-events-none overflow-hidden" style={{zIndex:0}}>
@@ -446,23 +456,21 @@ export default function DashboardPage() {
       </div>
 
       {/* ══════ HEADER ══════════════════════════════════════════ */}
-      <header className="relative z-50 sticky top-0 flex items-center justify-between px-5 lg:px-6"
-        style={{height:60,background:'rgba(5,13,26,0.90)',backdropFilter:'blur(24px)',
-                borderBottom:'1px solid rgba(255,255,255,0.06)',
+      <header className="relative z-50 sticky top-0 flex items-center justify-between"
+        style={{height:52,padding:'0 16px',background:'var(--bg-surface)',backdropFilter:'blur(24px)',
+                borderBottom:'1px solid var(--border)',
                 boxShadow:'0 1px 0 rgba(212,168,83,0.08)'}}>
 
-        {/* Logo */}
-        <div className="flex items-center gap-3">
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-xl flex items-center justify-center font-black text-sm"
-                 style={{background:'linear-gradient(135deg,#D4A853,#92580A)',boxShadow:'0 4px 12px rgba(212,168,83,0.35)'}}>
-              G
-            </div>
-            <span className="font-black tracking-widest uppercase text-sm hidden sm:block"
-                  style={{color:'#D4A853',letterSpacing:'0.12em'}}>GRAVITY</span>
-          </div>
-          <div className="w-px h-4 hidden sm:block" style={{background:'rgba(255,255,255,0.1)'}} />
-          <span className="text-sm font-medium hidden sm:block" style={{color:'rgba(255,255,255,0.5)'}}>My Dashboard</span>
+        {/* Logo — Shield + Gravity */}
+        <div className="flex items-center gap-2">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" style={{color:'#D4A853',flexShrink:0}}>
+            <path d="M12 2L3 7v6c0 5.25 3.75 10.15 9 11.35C17.25 23.15 21 18.25 21 13V7L12 2z"
+                  fill="currentColor" opacity="0.2" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round"/>
+            <path d="M9 12l2 2 4-4" stroke="#fff" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+          </svg>
+          <span className="font-bold text-sm tracking-wide" style={{color:'#D4A853',fontSize:14,fontWeight:700}}>Gravity</span>
+          <div className="w-px h-3.5 hidden sm:block" style={{background:'var(--border)'}} />
+          <span className="text-xs font-medium hidden sm:block" style={{color:'var(--text-muted)'}}>Dashboard</span>
         </div>
 
         {/* Center — safe status */}
@@ -475,17 +483,20 @@ export default function DashboardPage() {
         </div>
 
         {/* Right */}
-        <div className="flex items-center gap-2.5">
+        <div className="flex items-center gap-2">
 
-          {/* Bell */}
+          {/* Theme toggle */}
+          <ThemeToggle />
+
+          {/* Bell / SOS count badge */}
           <div className="relative">
             <button onClick={() => setBell(v => !v)}
-              className="relative w-9 h-9 rounded-xl flex items-center justify-center transition-all hover:bg-white/5"
-              style={{border:'1px solid rgba(255,255,255,0.08)'}}>
-              <span className="text-base">🔔</span>
+              className="relative w-8 h-8 rounded-xl flex items-center justify-center transition-all hover:bg-white/5"
+              style={{border:'1px solid var(--border)'}}>
+              <span className="text-sm">🔔</span>
               {alerts.length>0 && (
-                <span className="absolute -top-1 -right-1 w-4.5 h-4.5 rounded-full text-[8px] font-bold flex items-center justify-center"
-                      style={{background:'#EF4444',color:'#fff',width:18,height:18}}>
+                <span className="absolute -top-1 -right-1 rounded-full text-[8px] font-bold flex items-center justify-center"
+                      style={{background:'#EF4444',color:'#fff',width:16,height:16,minWidth:16}}>
                   {alerts.length}
                 </span>
               )}
@@ -495,17 +506,17 @@ export default function DashboardPage() {
               {bell && (
                 <motion.div key="bell" initial={{opacity:0,y:-8,scale:0.95}} animate={{opacity:1,y:0,scale:1}}
                   exit={{opacity:0,y:-8,scale:0.95}} transition={{duration:0.2}}
-                  className="absolute right-0 top-11 w-76 rounded-2xl p-3 z-50"
-                  style={{background:'#0A1628',border:'1px solid rgba(255,255,255,0.09)',
+                  className="absolute right-0 top-10 rounded-2xl p-3 z-50"
+                  style={{background:'var(--bg-surface)',border:'1px solid var(--border)',
                           boxShadow:'0 24px 60px rgba(0,0,0,0.6)',width:288}}>
-                  <p className="text-[9px] font-bold uppercase tracking-[0.15em] px-1 mb-2" style={{color:'rgba(255,255,255,0.3)'}}>Recent</p>
+                  <p className="text-[9px] font-bold uppercase tracking-[0.15em] px-1 mb-2" style={{color:'var(--text-muted)'}}>Recent</p>
                   {alerts.slice(0,3).map(a => (
                     <div key={a.id} className="flex items-center gap-2.5 p-2.5 rounded-xl mb-1.5"
                          style={{background:SEV_STYLE[a.sev].bg,border:`1px solid ${SEV_STYLE[a.sev].border}`}}>
-                      <span className="text-lg flex-shrink-0">{a.icon}</span>
+                      <span className="text-base flex-shrink-0">{a.icon}</span>
                       <div className="min-w-0">
-                        <p className="text-xs font-semibold text-white/90 truncate">{a.title}</p>
-                        <p className="text-[10px] mt-0.5" style={{color:'rgba(255,255,255,0.4)'}}>{a.time}</p>
+                        <p className="text-xs font-semibold truncate" style={{color:'var(--text-primary)'}}>{a.title}</p>
+                        <p className="text-[10px] mt-0.5" style={{color:'var(--text-muted)'}}>{a.time}</p>
                       </div>
                     </div>
                   ))}
@@ -514,17 +525,11 @@ export default function DashboardPage() {
             </AnimatePresence>
           </div>
 
-          {/* Avatar */}
-          <div className="flex items-center gap-2 pl-1">
-            <div className="w-8 h-8 rounded-xl flex items-center justify-center text-sm font-black"
-                 style={{background:'linear-gradient(135deg,#D4A853,#92580A)',color:'#fff',
-                         boxShadow:'0 4px 10px rgba(212,168,83,0.3)'}}>
-              {user.name.charAt(0).toUpperCase()}
-            </div>
-            <span className="text-sm font-semibold hidden sm:block max-w-[100px] truncate"
-                  style={{color:'rgba(255,255,255,0.8)'}}>
-              {user.name}
-            </span>
+          {/* Avatar 30px gold gradient */}
+          <div className="w-[30px] h-[30px] rounded-full flex items-center justify-center text-xs font-black flex-shrink-0"
+               style={{background:'linear-gradient(135deg,#D4A853,#92580A)',color:'#fff',
+                       boxShadow:'0 3px 10px rgba(212,168,83,0.35)'}}>
+            {user.name.charAt(0).toUpperCase()}
           </div>
         </div>
       </header>
@@ -537,17 +542,23 @@ export default function DashboardPage() {
 
           {/* Map */}
           <motion.div initial={{opacity:0,y:20}} animate={{opacity:1,y:0}} transition={{duration:0.5}}
-            className="relative rounded-3xl overflow-hidden flex-shrink-0"
-            style={{height:420,
+            className="relative rounded-3xl overflow-hidden flex-1"
+            style={{minHeight:380,
                     border:'1px solid rgba(255,255,255,0.08)',
                     boxShadow:'0 24px 60px rgba(0,0,0,0.5), 0 0 0 1px rgba(212,168,83,0.04)'}}>
 
             <MapView activeId={activeId} onMemberClick={onMemberClick} />
 
+            {/* Top gradient fade — premium depth */}
+            <div className="absolute top-0 left-0 right-0 pointer-events-none"
+                 style={{height:80,
+                         background:'linear-gradient(to bottom, var(--bg) 0%, transparent 100%)',
+                         zIndex:2}} />
+
             {/* Corner gradient overlays for depth */}
             <div className="absolute inset-0 pointer-events-none" style={{
               background:'radial-gradient(ellipse at top left, rgba(5,13,26,0.25) 0%, transparent 50%)',
-              zIndex:5
+              zIndex:3
             }} />
 
             {/* Active member overlay */}
@@ -597,8 +608,8 @@ export default function DashboardPage() {
                 className="flex-shrink-0 flex flex-col items-center gap-2 px-3.5 py-3 rounded-2xl transition-all duration-200"
                 style={{
                   minWidth:80,
-                  background: activeId===m.id?`${m.color}15`:'rgba(255,255,255,0.03)',
-                  border: activeId===m.id?`1px solid ${m.color}45`:'1px solid rgba(255,255,255,0.06)',
+                  background: activeId===m.id?`${m.color}15`:'var(--bg-surface2)',
+                  border: activeId===m.id?`1px solid ${m.color}45`:'1px solid var(--border)',
                   boxShadow: activeId===m.id?`0 8px 24px ${m.color}20`:'none',
                 }}>
 
@@ -614,19 +625,19 @@ export default function DashboardPage() {
                 </div>
 
                 <span className="text-[10px] font-semibold whitespace-nowrap"
-                      style={{color: activeId===m.id?m.color:'rgba(255,255,255,0.7)'}}>
+                      style={{color: activeId===m.id?m.color:'var(--text-primary)'}}>
                   {m.name}
                 </span>
 
                 {/* Battery */}
                 <div className="w-full flex flex-col gap-0.5">
-                  <div className="w-full h-1 rounded-full overflow-hidden" style={{background:'rgba(255,255,255,0.08)'}}>
+                  <div className="w-full h-1 rounded-full overflow-hidden" style={{background:'var(--bg-surface3)'}}>
                     <div className="h-full rounded-full transition-all"
                          style={{width:`${m.battery}%`,
                                  background:m.battery<25?'#EF4444':m.battery<50?'#F59E0B':m.color,
                                  boxShadow:`0 0 4px ${m.color}60`}} />
                   </div>
-                  <span className="text-[9px] text-center" style={{color:'rgba(255,255,255,0.3)'}}>{m.battery}%</span>
+                  <span className="text-[9px] text-center" style={{color:'var(--text-muted)'}}>{m.battery}%</span>
                 </div>
               </motion.button>
             ))}
@@ -635,7 +646,7 @@ export default function DashboardPage() {
 
         {/* RIGHT — Panel (desktop) */}
         <motion.div initial={{opacity:0,x:20}} animate={{opacity:1,x:0}} transition={{duration:0.5,delay:0.1}}
-          className="hidden lg:flex flex-col w-[300px] flex-shrink-0">
+          className="hidden lg:flex flex-col w-[320px] flex-shrink-0">
           <RightPanel tab={tab} setTab={setTab} expanded={expanded} setExpanded={setExpanded}
             alerts={alerts} dismiss={dismiss} toggles={toggles} setToggle={toggleSetting}
             user={user} logout={logout} />
@@ -661,8 +672,8 @@ export default function DashboardPage() {
 
       {/* ══════ MOBILE BOTTOM TAB BAR ═══════════════════════════ */}
       <nav className="lg:hidden fixed bottom-0 inset-x-0 z-50 flex"
-           style={{background:'rgba(5,13,26,0.97)',backdropFilter:'blur(24px)',
-                   borderTop:'1px solid rgba(255,255,255,0.07)',
+           style={{background:'var(--bg-surface)',backdropFilter:'blur(24px)',
+                   borderTop:'1px solid var(--border)',
                    boxShadow:'0 -8px 32px rgba(0,0,0,0.4)'}}>
         {([
           {id:'map',   label:'Map',   icon:'🗺️'},
@@ -689,6 +700,10 @@ export default function DashboardPage() {
           )
         })}
       </nav>
+
+      <style>{`
+        .dashboard-panel { background: var(--bg-surface) !important; border-color: var(--border) !important; }
+      `}</style>
     </div>
   )
 }
