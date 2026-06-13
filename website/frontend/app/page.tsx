@@ -19,6 +19,7 @@ const InteractiveProductDemo = dynamic(() => import('@/components/sections/Inter
 const AIGuardianSection      = dynamic(() => import('@/components/sections/AIGuardianSection'),      { loading: () => <div className="min-h-[600px]" /> })
 const ROISection             = dynamic(() => import('@/components/sections/ROISection'),             { loading: () => <div className="min-h-[500px]" /> })
 const EnterpriseTrustSection = dynamic(() => import('@/components/sections/EnterpriseTrustSection'), { loading: () => <div className="min-h-[600px]" /> })
+const ParentChildSection     = dynamic(() => import('@/components/sections/ParentChildSection'),     { loading: () => <div className="min-h-[700px]" /> })
 import JsonLd from '@/components/seo/JsonLd'
 import {
   buildOrganizationSchema,
@@ -52,6 +53,10 @@ export default function HomePage() {
 
       <div id="ai-guardian">
         <AIGuardianSection />
+      </div>
+
+      <div id="parent-child">
+        <ParentChildSection />
       </div>
 
       <div id="demo">

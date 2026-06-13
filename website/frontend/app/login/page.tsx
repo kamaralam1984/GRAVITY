@@ -1,5 +1,7 @@
 'use client'
-import { useState, useEffect, useRef, useCallback } from 'react'
+import { useState, useEffect, useRef } from 'react'
+import { setAuth, getRoleRedirect } from '@/lib/auth'
+import type { AuthUser } from '@/lib/auth'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
@@ -485,12 +487,16 @@ export default function LoginPage() {
     setTimeout(() => setError(null), 5000)
   }
 
-  async function handleLoginSuccess(token: string, message = 'Authenticated') {
+  async function handleLoginSuccess(token: string, user: AuthUser, message = 'Authenticated') {
     setSuccessMessage(message)
     setSuccess(true)
-    localStorage.setItem('gravity_token', token)
+    // Persist token and user in localStorage
+    setAuth(token, user)
+    // Also set cookie for middleware route protection (7 days)
+    document.cookie = `gv_token=${token}; path=/; max-age=604800`
+    document.cookie = `gv_user=${encodeURIComponent(JSON.stringify(user))}; path=/; max-age=604800`
     await new Promise((r) => setTimeout(r, 1500))
-    router.push('/live-tracking')
+    router.push(getRoleRedirect(user.role))
   }
 
   // ── Email login ──────────────────────────────────────────────
@@ -501,14 +507,16 @@ export default function LoginPage() {
     setLoading(true)
     setError(null)
     try {
-      const res = await fetch('/auth/login/json', {
+      const res = await fetch('/auth/login/unified', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password }),
       })
       const data = await res.json()
       if (!res.ok) throw new Error(data.detail || data.message || 'Login failed')
-      await handleLoginSuccess(data.access_token || data.token, 'Welcome back')
+      const token = data.access_token || data.token
+      const user: AuthUser = data.user
+      await handleLoginSuccess(token, user, 'Welcome back')
     } catch (err: unknown) {
       showError(err instanceof Error ? err.message : 'Login failed. Please try again.')
     } finally {
@@ -552,7 +560,7 @@ export default function LoginPage() {
       })
       const data = await res.json()
       if (!res.ok) throw new Error(data.detail || data.message || 'OTP verification failed')
-      await handleLoginSuccess(data.access_token || data.token, 'Verified')
+      await handleLoginSuccess(data.access_token || data.token, data.user, 'Verified')
     } catch (err: unknown) {
       showError(err instanceof Error ? err.message : 'OTP incorrect or expired.')
     } finally {
@@ -576,7 +584,7 @@ export default function LoginPage() {
           })
           const data = await res.json()
           if (!res.ok) throw new Error(data.detail || data.message || 'Google login failed')
-          await handleLoginSuccess(data.access_token || data.token, 'Authenticated with Google')
+          await handleLoginSuccess(data.access_token || data.token, data.user, 'Authenticated with Google')
         } catch (err: unknown) {
           showError(err instanceof Error ? err.message : 'Google login failed.')
         } finally {
@@ -607,7 +615,7 @@ export default function LoginPage() {
       })
       const result = await res.json()
       if (!res.ok) throw new Error(result.detail || result.message || 'Apple login failed')
-      await handleLoginSuccess(result.access_token || result.token, 'Authenticated with Apple')
+      await handleLoginSuccess(result.access_token || result.token, result.user, 'Authenticated with Apple')
     } catch (err: unknown) {
       if (err instanceof Error && err.message !== 'popup_closed_by_user') {
         showError(err.message || 'Apple login failed.')

@@ -1,5 +1,6 @@
 import { Inter, Plus_Jakarta_Sans } from 'next/font/google'
 import './globals.css'
+import 'leaflet/dist/leaflet.css'
 import LoaderProvider from '@/components/effects/LoaderProvider'
 
 const inter = Inter({

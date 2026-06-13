@@ -5,79 +5,74 @@ import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { MAP_MEMBERS } from '@/lib/mapData'
 
-/* ── Dynamic import — Leaflet is browser-only ───────────────── */
+/* ── Dynamic import — Leaflet is browser-only ───────────────────── */
 const MapView = dynamic(() => import('./MapView'), {
   ssr: false,
   loading: () => (
     <div
-      className="w-full h-full flex items-center justify-center"
+      className="w-full h-full flex flex-col items-center justify-center gap-3"
       style={{ background: 'linear-gradient(135deg, #071428 0%, #0B1E4A 50%, #081530 100%)' }}
     >
       <motion.div
-        animate={{ opacity: [0.3, 0.8, 0.3] }}
-        transition={{ duration: 1.4, repeat: Infinity }}
-        className="text-xs font-semibold tracking-widest uppercase"
-        style={{ color: 'rgba(16,185,129,0.7)' }}
+        animate={{ scale: [1, 1.2, 1], opacity: [0.4, 1, 0.4] }}
+        transition={{ duration: 1.6, repeat: Infinity }}
+        style={{ width: 40, height: 40, borderRadius: '50%', background: 'rgba(16,185,129,0.15)',
+                 border: '2px solid rgba(16,185,129,0.4)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
       >
-        Loading map…
+        <span style={{ fontSize: 18 }}>📍</span>
       </motion.div>
+      <p className="text-xs font-semibold tracking-widest uppercase" style={{ color: 'rgba(16,185,129,0.7)' }}>
+        Loading live map…
+      </p>
     </div>
   ),
 })
 
-/* ── Radar sweep overlay (sits above Leaflet, pointer-events:none) */
+/* ── Radar sweep overlay ─────────────────────────────────────────── */
 function RadarSweep() {
   return (
     <div className="absolute inset-0 pointer-events-none overflow-hidden" style={{ zIndex: 800 }}>
-      {/* Concentric rings */}
       <svg className="absolute inset-0 w-full h-full">
-        {[60, 110, 165].map((r, i) => (
-          <circle
-            key={r}
-            cx="55%" cy="55%"
-            r={r}
-            fill="none"
-            stroke="rgba(16,185,129,0.07)"
-            strokeWidth="1"
-            strokeDasharray={i === 0 ? undefined : '4 8'}
-          />
+        {[80, 150, 220].map((r, i) => (
+          <circle key={r} cx="50%" cy="50%" r={r} fill="none"
+            stroke="rgba(16,185,129,0.05)" strokeWidth="1"
+            strokeDasharray={i === 0 ? undefined : '4 10'} />
         ))}
       </svg>
-      {/* Rotating sweep */}
       <motion.div
         animate={{ rotate: 360 }}
-        transition={{ duration: 5, repeat: Infinity, ease: 'linear' }}
+        transition={{ duration: 6, repeat: Infinity, ease: 'linear' }}
         className="absolute"
-        style={{ top: '55%', left: '55%', width: 170, height: 170, marginTop: -170, marginLeft: -170 }}
+        style={{ top: '50%', left: '50%', width: 240, height: 240, marginTop: -240, marginLeft: -240 }}
       >
-        <svg width="340" height="340" viewBox="0 0 340 340">
-          <path d="M 170,170 L 170,0 A 170,170 0 0,1 295,50 Z" fill="rgba(16,185,129,0.07)" />
-          <line x1="170" y1="170" x2="170" y2="0" stroke="rgba(16,185,129,0.35)" strokeWidth="1.5" />
+        <svg width="480" height="480" viewBox="0 0 480 480">
+          <path d="M 240,240 L 240,20 A 220,220 0 0,1 395,80 Z" fill="rgba(16,185,129,0.04)" />
+          <line x1="240" y1="240" x2="240" y2="20" stroke="rgba(16,185,129,0.25)" strokeWidth="1.5" />
         </svg>
       </motion.div>
     </div>
   )
 }
 
-/* ── Scan line ─────────────────────────────────────────────────── */
+/* ── Scan line ───────────────────────────────────────────────────── */
 function ScanLine() {
   return (
     <motion.div
       className="absolute left-0 right-0 h-px pointer-events-none"
       style={{
         zIndex: 801,
-        background: 'linear-gradient(to right, transparent, rgba(16,185,129,0.35) 50%, transparent)',
+        background: 'linear-gradient(to right, transparent, rgba(16,185,129,0.3) 50%, transparent)',
       }}
       animate={{ top: ['0%', '100%'] }}
-      transition={{ duration: 4, repeat: Infinity, ease: 'linear' }}
+      transition={{ duration: 5, repeat: Infinity, ease: 'linear' }}
     />
   )
 }
 
-/* ── Battery bar ───────────────────────────────────────────────── */
+/* ── Battery bar ─────────────────────────────────────────────────── */
 function BatteryBar({ pct, color }: { pct: number; color: string }) {
   return (
-    <div className="h-1.5 rounded-full overflow-hidden" style={{ background: 'rgba(255,255,255,0.08)', width: 36 }}>
+    <div className="h-1.5 rounded-full overflow-hidden flex-1" style={{ background: 'rgba(255,255,255,0.08)' }}>
       <motion.div
         className="h-full rounded-full"
         initial={{ width: 0 }}
@@ -89,48 +84,58 @@ function BatteryBar({ pct, color }: { pct: number; color: string }) {
   )
 }
 
-/* ── Tooltip card (floats above the map) ──────────────────────── */
+/* ── Vehicle label ───────────────────────────────────────────────── */
+const VEHICLE_LABELS: Record<string, string> = {
+  car: '🚗', bus: '🚌', walk: '🚶', bike: '🚲', auto: '🛺', tempo: '🚛',
+}
+
+/* ── Active member tooltip ───────────────────────────────────────── */
 function MemberTooltip({ member, onClose }: { member: typeof MAP_MEMBERS[0]; onClose: () => void }) {
   return (
     <motion.div
-      initial={{ opacity: 0, y: 8, scale: 0.92 }}
+      initial={{ opacity: 0, y: -10, scale: 0.92 }}
       animate={{ opacity: 1, y: 0, scale: 1 }}
-      exit={{ opacity: 0, y: 6, scale: 0.92 }}
+      exit={{ opacity: 0, y: -8, scale: 0.92 }}
       transition={{ duration: 0.2 }}
       className="absolute z-[900] pointer-events-none"
-      style={{ top: '12%', left: '50%', transform: 'translateX(-50%)' }}
+      style={{ top: '14%', left: '50%', transform: 'translateX(-50%)' }}
     >
       <div
         className="flex items-center gap-3 rounded-2xl px-4 py-3 shadow-2xl whitespace-nowrap"
         style={{
-          background: 'rgba(7,20,40,0.96)',
-          border: `1px solid ${member.color}40`,
-          boxShadow: `0 12px 36px rgba(0,0,0,0.6), 0 0 0 1px ${member.color}20`,
+          background: 'rgba(7,20,40,0.97)',
+          border: `1px solid ${member.color}50`,
+          boxShadow: `0 16px 48px rgba(0,0,0,0.7), 0 0 0 1px ${member.color}20`,
+          backdropFilter: 'blur(16px)',
         }}
       >
-        <div className="w-8 h-8 rounded-full overflow-hidden flex-shrink-0"
-             style={{ border: `2px solid ${member.color}` }}>
+        <div className="w-10 h-10 rounded-full overflow-hidden flex-shrink-0"
+             style={{ border: `2.5px solid ${member.color}` }}>
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src={member.photo} alt={member.name} className="w-full h-full object-cover" />
         </div>
         <div>
-          <p className="text-xs font-bold text-white">{member.name}
-            <span className="ml-1.5 font-normal" style={{ color: 'rgba(255,255,255,0.45)' }}>· {member.location}</span>
-          </p>
-          <p className="text-[10px] mt-0.5" style={{ color: 'rgba(255,255,255,0.4)' }}>
-            🔋 {member.battery}% · Last seen: just now
+          <div className="flex items-center gap-2">
+            <p className="text-xs font-bold text-white">{member.name}</p>
+            <span className="text-[10px] px-1.5 py-0.5 rounded-full font-semibold"
+                  style={{ background: `${member.color}20`, color: member.color }}>
+              {VEHICLE_LABELS[member.vehicle]} {member.vehicle}
+            </span>
+          </div>
+          <p className="text-[10px] mt-0.5" style={{ color: 'rgba(255,255,255,0.45)' }}>
+            📍 {member.location} · {member.speed}km/h · 🔋 {member.battery}%
           </p>
         </div>
-        <div className="w-1.5 h-1.5 rounded-full bg-emerald-400 flex-shrink-0">
-          <motion.div animate={{ scale: [1,2], opacity: [0.8,0] }} transition={{ duration: 1.5, repeat: Infinity }}
-            className="w-full h-full rounded-full bg-emerald-400" />
-        </div>
+        <span className="relative flex h-2 w-2 flex-shrink-0">
+          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
+          <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-400" />
+        </span>
       </div>
     </motion.div>
   )
 }
 
-/* ── Main section ──────────────────────────────────────────────── */
+/* ── Main section ────────────────────────────────────────────────── */
 export default function LiveMapDemoSection() {
   const [activeId, setActiveId] = useState<string | null>(null)
 
@@ -140,29 +145,26 @@ export default function LiveMapDemoSection() {
   return (
     <section
       id="live-demo"
-      className="relative py-24 px-4 sm:px-6 overflow-hidden"
+      className="relative overflow-hidden"
       style={{ background: 'var(--bg-surface)' }}
     >
-      {/* Ambient glow */}
-      <div className="pointer-events-none absolute bottom-0 left-1/2 -translate-x-1/2 w-[700px] h-[260px] blur-3xl"
-           style={{ background: 'radial-gradient(ellipse, rgba(212,168,83,0.16) 0%, rgba(184,114,10,0.05) 50%, transparent 75%)' }} />
-
-      <div className="relative max-w-6xl mx-auto">
-
-        {/* Section header */}
+      {/* ── Section header ─────────────────────────────────────────── */}
+      <div className="relative z-10 pt-20 pb-8 px-4 text-center max-w-2xl mx-auto">
         <motion.div
-          initial={{ opacity: 0, y: 28 }}
+          initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ duration: 0.6 }}
-          className="text-center mb-12"
         >
           <span
             className="inline-flex items-center gap-2 text-xs font-bold tracking-widest uppercase mb-5 px-4 py-1.5 rounded-full"
             style={{ color: 'var(--safe)', background: 'rgba(16,185,129,0.1)', border: '1px solid rgba(16,185,129,0.25)' }}
           >
-            <motion.span animate={{ opacity: [1,0.3,1] }} transition={{ duration: 1.4, repeat: Infinity }}
-              className="w-2 h-2 rounded-full inline-block bg-emerald-400" />
+            <motion.span
+              animate={{ opacity: [1, 0.3, 1] }}
+              transition={{ duration: 1.4, repeat: Infinity }}
+              className="w-2 h-2 rounded-full inline-block bg-emerald-400"
+            />
             Live Demo
           </span>
           <h2
@@ -172,168 +174,186 @@ export default function LiveMapDemoSection() {
             See Your Family<br />
             On <span className="gradient-text-gold">One Map</span>
           </h2>
-          <p className="text-lg mt-4 max-w-lg mx-auto" style={{ color: 'var(--text-muted)' }}>
-            Real-time location, battery status, arrival alerts — all in one beautiful dashboard.
+          <p className="text-base mt-4" style={{ color: 'var(--text-muted)' }}>
+            Real-time location, vehicle mode, battery status — all on a live map.
           </p>
         </motion.div>
+      </div>
 
-        {/* Map + panel row */}
-        <div className="flex flex-col md:flex-row gap-6 items-stretch">
+      {/* ── Full-width Map Container ───────────────────────────────── */}
+      <motion.div
+        initial={{ opacity: 0, y: 30 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={{ once: true }}
+        transition={{ duration: 0.8 }}
+        className="relative mx-4 sm:mx-6 lg:mx-8 rounded-3xl overflow-hidden"
+        style={{ height: 580, boxShadow: '0 40px 100px rgba(0,0,0,0.5)' }}
+      >
+        {/* Real Leaflet map — fills 100% */}
+        <MapView activeId={activeId} onMemberClick={handlePin} />
 
-          {/* ── Real Leaflet map ── */}
-          <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.7 }}
-            className="flex-1 relative rounded-3xl overflow-hidden"
-            style={{ height: 440, boxShadow: '0 30px 80px rgba(0,0,0,0.4)' }}
-          >
-            {/* Leaflet map fills the box */}
-            <MapView activeId={activeId} onMemberClick={handlePin} />
+        {/* Radar + scan overlays */}
+        <RadarSweep />
+        <ScanLine />
 
-            {/* Radar + scan overlays */}
-            <RadarSweep />
-            <ScanLine />
+        {/* Active member tooltip */}
+        <AnimatePresence>
+          {activeMember && (
+            <MemberTooltip key={activeMember.id} member={activeMember} onClose={() => setActiveId(null)} />
+          )}
+        </AnimatePresence>
 
-            {/* Active member tooltip */}
-            <AnimatePresence>
-              {activeMember && (
-                <MemberTooltip
-                  key={activeMember.id}
-                  member={activeMember}
-                  onClose={() => setActiveId(null)}
-                />
-              )}
-            </AnimatePresence>
-
-            {/* Top-left title bar */}
-            <div
-              className="absolute top-4 left-4 z-[900] flex items-center gap-2 rounded-xl px-3 py-2"
-              style={{ background: 'rgba(7,20,40,0.88)', backdropFilter: 'blur(12px)', border: '1px solid rgba(255,255,255,0.08)' }}
-            >
-              <p className="text-white text-xs font-bold">GRAVITY Family Map</p>
-              <div className="flex items-center gap-1 rounded-lg px-2 py-0.5"
-                   style={{ background: 'rgba(16,185,129,0.2)', border: '1px solid rgba(16,185,129,0.3)' }}>
-                <motion.span animate={{ opacity: [1,0.3,1] }} transition={{ duration: 1.2, repeat: Infinity }}
-                  className="w-1.5 h-1.5 rounded-full bg-emerald-400 inline-block" />
-                <span className="text-emerald-400 text-[9px] font-bold">LIVE</span>
-              </div>
-            </div>
-
-            {/* Bottom member strip */}
-            <div
-              className="absolute bottom-0 left-0 right-0 z-[900] px-3 py-3"
-              style={{ background: 'rgba(7,20,40,0.88)', backdropFilter: 'blur(12px)', borderTop: '1px solid rgba(255,255,255,0.07)' }}
-            >
-              <div className="flex gap-2 overflow-x-auto pb-0.5">
-                {MAP_MEMBERS.map(m => (
-                  <motion.div
-                    key={m.id}
-                    whileHover={{ scale: 1.04 }}
-                    whileTap={{ scale: 0.97 }}
-                    className="flex items-center gap-2 flex-shrink-0 rounded-xl px-3 py-2 cursor-pointer"
-                    style={{
-                      background: activeId === m.id ? `${m.color}18` : 'rgba(255,255,255,0.04)',
-                      border: activeId === m.id ? `1px solid ${m.color}50` : '1px solid rgba(255,255,255,0.07)',
-                      boxShadow: activeId === m.id ? `0 0 12px ${m.color}30` : 'none',
-                      transition: 'all 0.2s',
-                    }}
-                    onClick={() => handlePin(m.id)}
-                  >
-                    <div className="w-7 h-7 rounded-full overflow-hidden flex-shrink-0"
-                         style={{ border: `2px solid ${m.color}80`, boxShadow: `0 0 8px ${m.color}40` }}>
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img src={m.photo} alt={m.name} className="w-full h-full object-cover" />
-                    </div>
-                    <div className="min-w-0">
-                      <div className="flex items-center gap-1">
-                        <span className="text-white text-[10px] font-semibold">{m.name}</span>
-                        <span style={{ color: 'rgba(255,255,255,0.35)', fontSize: 9 }}>📍 Live</span>
-                      </div>
-                      <BatteryBar pct={m.battery} color={m.color} />
-                    </div>
-                  </motion.div>
-                ))}
-              </div>
-            </div>
-          </motion.div>
-
-          {/* Right stats panel */}
-          <motion.div
-            initial={{ opacity: 0, x: 24 }}
-            whileInView={{ opacity: 1, x: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.6, delay: 0.15 }}
-            className="hidden md:flex flex-col gap-3 glass-warm rounded-2xl p-5"
-            style={{ width: 230, border: '1px solid var(--border)', flexShrink: 0 }}
-          >
-            <div className="flex items-center gap-2 p-3 rounded-xl"
-                 style={{ background: 'rgba(16,185,129,0.08)', border: '1px solid rgba(16,185,129,0.2)' }}>
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
-                <path d="M12 2L3 7v5c0 5.5 3.8 10.7 9 12 5.2-1.3 9-6.5 9-12V7l-9-5z"
-                      fill="rgba(16,185,129,0.3)" stroke="#10B981" strokeWidth="1.8"/>
-                <path d="M9 12l2 2 4-4" stroke="#10B981" strokeWidth="2" strokeLinecap="round"/>
-              </svg>
-              <p className="text-xs font-semibold text-emerald-400">All 4 members safe</p>
-            </div>
-
-            <div>
-              <p className="text-[10px] font-semibold mb-1" style={{ color: 'var(--text-muted)' }}>Last SOS</p>
-              <p className="text-xs font-bold text-emerald-400">None today ✓</p>
-            </div>
-
-            <div>
-              <p className="text-[10px] font-semibold mb-1" style={{ color: 'var(--text-muted)' }}>Journey</p>
-              <p className="text-xs" style={{ color: 'var(--text-secondary)' }}>Mom: 2.4 km from home</p>
-            </div>
-
-            <div>
-              <p className="text-[10px] font-semibold mb-3" style={{ color: 'var(--text-muted)' }}>Battery</p>
-              <div className="space-y-2.5">
-                {MAP_MEMBERS.map(m => (
-                  <div key={m.id} className="flex items-center gap-2">
-                    <div className="w-6 h-6 rounded-full overflow-hidden flex-shrink-0"
-                         style={{ border: `1.5px solid ${m.color}70` }}>
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img src={m.photo} alt={m.name} className="w-full h-full object-cover" />
-                    </div>
-                    <div className="flex-1 h-1.5 rounded-full overflow-hidden" style={{ background: 'var(--border)' }}>
-                      <motion.div
-                        className="h-full rounded-full"
-                        initial={{ width: 0 }}
-                        whileInView={{ width: `${m.battery}%` }}
-                        viewport={{ once: true }}
-                        transition={{ duration: 1.2, ease: 'easeOut', delay: 0.2 }}
-                        style={{ background: m.battery < 30 ? '#EF4444' : m.color }}
-                      />
-                    </div>
-                    <span className="text-[9px] font-semibold tabular-nums"
-                          style={{ color: 'var(--text-muted)', width: 26, textAlign: 'right' }}>
-                      {m.battery}%
-                    </span>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            <motion.button
-              whileHover={{ scale: 1.03, boxShadow: '0 0 18px rgba(var(--gold-rgb),0.3)' }}
-              whileTap={{ scale: 0.98 }}
-              className="mt-auto w-full py-2.5 rounded-xl text-xs font-bold"
-              style={{ border: '1.5px solid var(--gold)', color: 'var(--gold)', background: 'rgba(var(--gold-rgb),0.06)' }}
-            >
-              Open Full Dashboard →
-            </motion.button>
-          </motion.div>
+        {/* ── Top-left title bar ──────────────────────────────────── */}
+        <div
+          className="absolute top-4 left-4 z-[900] flex items-center gap-2 rounded-xl px-3 py-2"
+          style={{ background: 'rgba(7,20,40,0.90)', backdropFilter: 'blur(16px)', border: '1px solid rgba(255,255,255,0.09)' }}
+        >
+          <p className="text-white text-xs font-bold">GRAVITY Family Map</p>
+          <div className="flex items-center gap-1 rounded-lg px-2 py-0.5"
+               style={{ background: 'rgba(16,185,129,0.2)', border: '1px solid rgba(16,185,129,0.35)' }}>
+            <motion.span animate={{ opacity: [1, 0.3, 1] }} transition={{ duration: 1.2, repeat: Infinity }}
+              className="w-1.5 h-1.5 rounded-full bg-emerald-400 inline-block" />
+            <span className="text-emerald-400 text-[9px] font-bold">LIVE</span>
+          </div>
         </div>
 
-        {/* Feature highlights */}
-        <div className="mt-8 grid grid-cols-1 sm:grid-cols-3 gap-4">
+        {/* ── Floating stats panel — top-right overlay ────────────── */}
+        <motion.div
+          initial={{ opacity: 0, x: 20 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ delay: 0.5, duration: 0.5 }}
+          className="absolute top-4 right-4 z-[900] flex flex-col gap-3 p-4 rounded-2xl"
+          style={{
+            background: 'rgba(7,20,40,0.92)',
+            backdropFilter: 'blur(20px)',
+            border: '1px solid rgba(255,255,255,0.09)',
+            width: 210,
+            boxShadow: '0 20px 60px rgba(0,0,0,0.5)',
+          }}
+        >
+          {/* All safe status */}
+          <div className="flex items-center gap-2 p-2.5 rounded-xl"
+               style={{ background: 'rgba(16,185,129,0.1)', border: '1px solid rgba(16,185,129,0.25)' }}>
+            <span className="text-emerald-400 text-sm">🛡️</span>
+            <p className="text-xs font-semibold text-emerald-400">All {MAP_MEMBERS.length} members safe</p>
+          </div>
+
+          {/* SOS */}
+          <div>
+            <p className="text-[9px] font-bold uppercase tracking-wider mb-1" style={{ color: 'rgba(255,255,255,0.35)' }}>
+              Last SOS
+            </p>
+            <p className="text-xs font-bold text-emerald-400">None today ✓</p>
+          </div>
+
+          {/* Journey */}
+          <div>
+            <p className="text-[9px] font-bold uppercase tracking-wider mb-1" style={{ color: 'rgba(255,255,255,0.35)' }}>
+              Journey
+            </p>
+            <p className="text-xs text-white/70">Dad: 2.4 km from home</p>
+          </div>
+
+          {/* Battery per member */}
+          <div>
+            <p className="text-[9px] font-bold uppercase tracking-wider mb-2" style={{ color: 'rgba(255,255,255,0.35)' }}>
+              Battery
+            </p>
+            <div className="space-y-2">
+              {MAP_MEMBERS.map(m => (
+                <div key={m.id} className="flex items-center gap-2">
+                  <div className="w-6 h-6 rounded-full overflow-hidden flex-shrink-0"
+                       style={{ border: `1.5px solid ${m.color}70` }}>
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src={m.photo} alt={m.name} className="w-full h-full object-cover" />
+                  </div>
+                  <BatteryBar pct={m.battery} color={m.color} />
+                  <span className="text-[9px] font-semibold tabular-nums"
+                        style={{ color: 'rgba(255,255,255,0.45)', width: 26, textAlign: 'right' }}>
+                    {m.battery}%
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <button
+            className="w-full py-2 rounded-xl text-[10px] font-bold transition-all"
+            style={{ border: '1px solid rgba(212,168,83,0.5)', color: '#D4A853', background: 'rgba(212,168,83,0.06)' }}
+          >
+            Open Full Dashboard →
+          </button>
+        </motion.div>
+
+        {/* ── Bottom member strip ──────────────────────────────────── */}
+        <div
+          className="absolute bottom-0 left-0 right-0 z-[900] px-3 py-3"
+          style={{ background: 'rgba(7,20,40,0.92)', backdropFilter: 'blur(16px)', borderTop: '1px solid rgba(255,255,255,0.07)' }}
+        >
+          <div className="flex gap-2 overflow-x-auto pb-0.5 scrollbar-hide">
+            {MAP_MEMBERS.map(m => (
+              <motion.div
+                key={m.id}
+                whileHover={{ scale: 1.04 }}
+                whileTap={{ scale: 0.97 }}
+                className="flex items-center gap-2.5 flex-shrink-0 rounded-xl px-3 py-2 cursor-pointer select-none"
+                style={{
+                  background: activeId === m.id ? `${m.color}18` : 'rgba(255,255,255,0.04)',
+                  border: activeId === m.id ? `1px solid ${m.color}55` : '1px solid rgba(255,255,255,0.07)',
+                  boxShadow: activeId === m.id ? `0 0 14px ${m.color}30` : 'none',
+                  transition: 'all 0.2s',
+                }}
+                onClick={() => handlePin(m.id)}
+              >
+                {/* Face photo */}
+                <div className="relative flex-shrink-0">
+                  <div className="w-8 h-8 rounded-full overflow-hidden"
+                       style={{ border: `2px solid ${m.color}80`, boxShadow: `0 0 8px ${m.color}40` }}>
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src={m.photo} alt={m.name} className="w-full h-full object-cover" />
+                  </div>
+                  {/* Vehicle badge on photo */}
+                  <div
+                    className="absolute -bottom-1 -right-1 w-4 h-4 rounded-full flex items-center justify-center text-[8px]"
+                    style={{ background: m.color, border: '1.5px solid #071428', lineHeight: 1 }}
+                  >
+                    {VEHICLE_LABELS[m.vehicle]}
+                  </div>
+                </div>
+
+                <div className="min-w-0">
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-white text-[11px] font-semibold">{m.name}</span>
+                    <span className="relative flex h-1.5 w-1.5 flex-shrink-0">
+                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full opacity-75"
+                            style={{ background: m.color }} />
+                      <span className="relative inline-flex rounded-full h-1.5 w-1.5" style={{ background: m.color }} />
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-1 mt-0.5">
+                    <span className="text-[9px]" style={{ color: 'rgba(255,255,255,0.4)' }}>
+                      {m.location}
+                    </span>
+                    {m.speed && (
+                      <span className="text-[9px] font-medium" style={{ color: m.color }}>
+                        · {m.speed}km/h
+                      </span>
+                    )}
+                  </div>
+                </div>
+              </motion.div>
+            ))}
+          </div>
+        </div>
+      </motion.div>
+
+      {/* ── Feature highlights ─────────────────────────────────────── */}
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 pb-20 mt-8">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           {[
-            { icon: '📍', title: 'Real-time precision', stat: 'GPS accuracy < 10m',   color: '#3B82F6' },
-            { icon: '🆘', title: 'Instant SOS alerts',  stat: 'Avg response 0.3s',    color: '#EF4444' },
-            { icon: '🔒', title: 'Privacy protected',   stat: 'End-to-end encrypted', color: '#10B981' },
+            { icon: '📍', title: 'Real-time precision',  stat: 'GPS accuracy < 10m',    color: '#3B82F6' },
+            { icon: '🚗', title: 'Vehicle detection',    stat: 'Car · Bus · Auto · Walk', color: '#D4A853' },
+            { icon: '🔒', title: 'Privacy protected',    stat: 'End-to-end encrypted',   color: '#10B981' },
           ].map((feat, i) => (
             <motion.div
               key={feat.title}

@@ -29,6 +29,7 @@ class UserResponse(BaseModel):
     email: str
     phone: Optional[str]
     is_active: bool
+    role: str = "user"
     class Config:
         from_attributes = True
 
@@ -133,6 +134,31 @@ def login_json(data: UserLogin, db: Session = Depends(get_db)):
         raise HTTPException(status_code=401, detail="Invalid credentials")
     token = create_access_token({"sub": user.id})
     return {"access_token": token, "token_type": "bearer", "user": user}
+
+@router.post("/login/unified", response_model=TokenResponse)
+def login_unified(data: UserLogin, db: Session = Depends(get_db)):
+    """Unified login for all roles. Checks User table first, then AdminUser table."""
+    # Check regular User table (role: user, moderator)
+    user = db.query(models.User).filter(models.User.email == data.email).first()
+    if user and verify_password(data.password, user.password_hash):
+        token = create_access_token({"sub": user.id})
+        return {"access_token": token, "token_type": "bearer", "user": user}
+
+    # Check AdminUser table (role: admin, super_admin)
+    admin = db.query(models.AdminUser).filter(models.AdminUser.email == data.email).first()
+    if admin and verify_password(data.password, admin.password_hash):
+        token = create_access_token({"sub": admin.id, "is_admin": True})
+        user_payload = UserResponse(
+            id=admin.id,
+            name=admin.name,
+            email=admin.email,
+            phone=getattr(admin, "phone", None),
+            is_active=getattr(admin, "is_active", True),
+            role=admin.role,
+        )
+        return {"access_token": token, "token_type": "bearer", "user": user_payload}
+
+    raise HTTPException(status_code=401, detail="Invalid credentials")
 
 @router.get("/me", response_model=UserResponse)
 def get_me(current_user: models.User = Depends(get_current_user)):

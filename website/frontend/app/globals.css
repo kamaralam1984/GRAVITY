@@ -627,6 +627,24 @@ body {
   animation: gpin-dot-pulse 1.8s ease-in-out infinite;
 }
 
+/* Vehicle icon badge */
+.gpin-vehicle {
+  position: absolute;
+  bottom: -10px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid #071428;
+  z-index: 3;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.5);
+}
+.gpin-vehicle svg { width: 12px; height: 12px; fill: #fff; }
+
 @keyframes gpin-pulse-anim {
   0%   { transform: scale(0.55); opacity: 0.75; }
   100% { transform: scale(2.4);  opacity: 0; }
