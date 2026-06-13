@@ -367,11 +367,9 @@ function GlassCard({
     <div
       className={className}
       style={{
-        background: 'rgba(255,255,255,0.04)',
-        border: '1px solid rgba(255,255,255,0.08)',
-        borderRadius: 16,
-        backdropFilter: 'blur(12px)',
-        WebkitBackdropFilter: 'blur(12px)',
+        background: 'var(--bg-surface)',
+        border: '1px solid var(--border)',
+        borderRadius: 12,
         ...style,
       }}
     >
@@ -419,7 +417,7 @@ function ResourceBar({ label, pct, color }: { label: string; pct: number; color:
       <div
         style={{
           height: 8,
-          background: 'rgba(255,255,255,0.06)',
+          background: 'var(--bg-surface2)',
           borderRadius: 99,
           overflow: 'hidden',
         }}
@@ -766,19 +764,6 @@ export default function SuperAdminPage() {
               onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.transform = 'translateY(-2px)' }}
               onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.transform = 'translateY(0)' }}
             >
-              <div
-                style={{
-                  position: 'absolute',
-                  top: -20,
-                  right: -20,
-                  width: 100,
-                  height: 100,
-                  borderRadius: '50%',
-                  background: stat.gradient,
-                  opacity: 0.12,
-                  filter: 'blur(24px)',
-                }}
-              />
               <div style={{ fontSize: 12, color: 'var(--text-muted)', marginBottom: 8, fontWeight: 500 }}>
                 {stat.label}
               </div>
@@ -804,18 +789,6 @@ export default function SuperAdminPage() {
                   {stat.sub}
                 </span>
               </div>
-              <div
-                style={{
-                  position: 'absolute',
-                  bottom: 0,
-                  left: 0,
-                  right: 0,
-                  height: 3,
-                  background: stat.gradient,
-                  borderRadius: '0 0 18px 18px',
-                  opacity: 0.7,
-                }}
-              />
             </motion.div>
           ))}
         </div>
@@ -867,10 +840,10 @@ export default function SuperAdminPage() {
                   <Icon size={20} color={stat.color} />
                 </div>
                 <div>
-                  <div style={{ fontSize: 20, fontWeight: 800, color: '#fff', fontFamily: 'Plus Jakarta Sans, sans-serif' }}>
+                  <div style={{ fontSize: 20, fontWeight: 800, color: 'var(--text-primary)', fontFamily: 'Plus Jakarta Sans, sans-serif' }}>
                     {stat.value}
                   </div>
-                  <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.4)', marginTop: 2 }}>{stat.label}</div>
+                  <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 2 }}>{stat.label}</div>
                 </div>
               </motion.div>
             )
@@ -880,7 +853,7 @@ export default function SuperAdminPage() {
         {/* Role breakdown + Events */}
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
           <GlassCard style={{ padding: 20 }}>
-            <div style={{ fontSize: 14, fontWeight: 700, color: '#fff', marginBottom: 16 }}>Role Breakdown</div>
+            <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--text-primary)', marginBottom: 16 }}>Role Breakdown</div>
             {/* Horizontal bar */}
             <div
               style={{
@@ -889,7 +862,7 @@ export default function SuperAdminPage() {
                 overflow: 'hidden',
                 display: 'flex',
                 marginBottom: 16,
-                background: 'rgba(255,255,255,0.05)',
+                background: 'var(--bg-surface2)',
               }}
             >
               {ROLE_BREAKDOWN.map((r, i) => (
@@ -911,8 +884,8 @@ export default function SuperAdminPage() {
               {ROLE_BREAKDOWN.map((r) => (
                 <div key={r.label} style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                   <div style={{ width: 10, height: 10, borderRadius: 3, background: r.color, flexShrink: 0 }} />
-                  <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.6)' }}>
-                    {r.label} <span style={{ color: '#fff', fontWeight: 600 }}>({r.count})</span>
+                  <span style={{ fontSize: 12, color: 'var(--text-secondary)' }}>
+                    {r.label} <span style={{ color: 'var(--text-primary)', fontWeight: 600 }}>({r.count})</span>
                   </span>
                 </div>
               ))}
@@ -920,7 +893,7 @@ export default function SuperAdminPage() {
           </GlassCard>
 
           <GlassCard style={{ padding: 20 }}>
-            <div style={{ fontSize: 14, fontWeight: 700, color: '#fff', marginBottom: 14 }}>Recent System Events</div>
+            <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--text-primary)', marginBottom: 14 }}>Recent System Events</div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
               {SYSTEM_EVENTS.map((ev, i) => (
                 <motion.div
@@ -933,12 +906,12 @@ export default function SuperAdminPage() {
                     alignItems: 'flex-start',
                     gap: 10,
                     paddingBottom: 10,
-                    borderBottom: i < SYSTEM_EVENTS.length - 1 ? '1px solid rgba(255,255,255,0.05)' : 'none',
+                    borderBottom: i < SYSTEM_EVENTS.length - 1 ? '1px solid var(--border)' : 'none',
                   }}
                 >
                   <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.75)', lineHeight: 1.4 }}>{ev.msg}</div>
-                    <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.3)', marginTop: 3 }}>{ev.time}</div>
+                    <div style={{ fontSize: 12, color: 'var(--text-secondary)', lineHeight: 1.4 }}>{ev.msg}</div>
+                    <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 3 }}>{ev.time}</div>
                   </div>
                   {severityBadge(ev.severity)}
                 </motion.div>
@@ -955,7 +928,7 @@ export default function SuperAdminPage() {
       {/* Toolbar */}
       <div style={{ display: 'flex', gap: 10, marginBottom: 16, flexWrap: 'wrap', alignItems: 'center' }}>
         <div style={{ position: 'relative', flex: 1, minWidth: 200 }}>
-          <Search size={14} style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: 'rgba(255,255,255,0.3)', pointerEvents: 'none' }} />
+          <Search size={14} style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)', pointerEvents: 'none' }} />
           <input
             type="text"
             placeholder="Search users..."
@@ -965,9 +938,9 @@ export default function SuperAdminPage() {
               width: '100%',
               padding: '8px 12px 8px 34px',
               borderRadius: 10,
-              border: '1px solid rgba(255,255,255,0.1)',
-              background: 'rgba(255,255,255,0.05)',
-              color: '#fff',
+              border: '1px solid var(--border)',
+              background: 'var(--bg-surface2)',
+              color: 'var(--text-primary)',
               fontSize: 13,
               outline: 'none',
               boxSizing: 'border-box',
@@ -980,9 +953,9 @@ export default function SuperAdminPage() {
           style={{
             padding: '8px 12px',
             borderRadius: 10,
-            border: '1px solid rgba(255,255,255,0.1)',
-            background: 'rgba(255,255,255,0.05)',
-            color: '#fff',
+            border: '1px solid var(--border)',
+            background: 'var(--bg-surface2)',
+            color: 'var(--text-primary)',
             fontSize: 13,
             cursor: 'pointer',
             outline: 'none',
@@ -1000,9 +973,9 @@ export default function SuperAdminPage() {
           style={{
             padding: '8px 12px',
             borderRadius: 10,
-            border: '1px solid rgba(255,255,255,0.1)',
-            background: 'rgba(255,255,255,0.05)',
-            color: '#fff',
+            border: '1px solid var(--border)',
+            background: 'var(--bg-surface2)',
+            color: 'var(--text-primary)',
             fontSize: 13,
             cursor: 'pointer',
             outline: 'none',
@@ -1021,9 +994,9 @@ export default function SuperAdminPage() {
               gap: 6,
               padding: '8px 14px',
               borderRadius: 10,
-              border: '1px solid rgba(255,255,255,0.12)',
-              background: 'rgba(255,255,255,0.05)',
-              color: 'rgba(255,255,255,0.7)',
+              border: '1px solid var(--border)',
+              background: 'var(--bg-surface2)',
+              color: 'var(--text-secondary)',
               cursor: 'pointer',
               fontSize: 13,
               fontWeight: 500,
@@ -1040,7 +1013,7 @@ export default function SuperAdminPage() {
               borderRadius: 10,
               border: 'none',
               background: `linear-gradient(135deg, ${PURPLE}, ${PURPLE_DARK})`,
-              color: '#fff',
+              color: 'var(--text-primary)',
               cursor: 'pointer',
               fontSize: 13,
               fontWeight: 600,
@@ -1101,19 +1074,19 @@ export default function SuperAdminPage() {
                           justifyContent: 'center',
                           fontSize: 11,
                           fontWeight: 700,
-                          color: '#fff',
+                          color: 'var(--text-primary)',
                           flexShrink: 0,
                         }}
                       >
                         {u.avatar || (u.name || '?').split(' ').map((w: string) => w[0]).join('').toUpperCase().slice(0, 2)}
                       </div>
-                      <span style={{ fontWeight: 500, color: '#fff', whiteSpace: 'nowrap' }}>{u.name || '—'}</span>
+                      <span style={{ fontWeight: 500, color: 'var(--text-primary)', whiteSpace: 'nowrap' }}>{u.name || '—'}</span>
                     </div>
                   </td>
-                  <td style={{ padding: '12px 16px', color: 'rgba(255,255,255,0.5)' }}>{u.email || '—'}</td>
+                  <td style={{ padding: '12px 16px', color: 'var(--text-muted)' }}>{u.email || '—'}</td>
                   <td style={{ padding: '12px 16px' }}>{roleBadge(u.role || 'user')}</td>
                   <td style={{ padding: '12px 16px' }}>{statusBadge(u.status || (u.is_active === false ? 'inactive' : 'active'))}</td>
-                  <td style={{ padding: '12px 16px', color: 'rgba(255,255,255,0.4)', whiteSpace: 'nowrap' }}>{u.joined || (u.created_at ? new Date(u.created_at).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) : '—')}</td>
+                  <td style={{ padding: '12px 16px', color: 'var(--text-muted)', whiteSpace: 'nowrap' }}>{u.joined || (u.created_at ? new Date(u.created_at).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) : '—')}</td>
                   <td style={{ padding: '12px 16px' }}>
                     <div style={{ display: 'flex', gap: 6 }}>
                       {[{ icon: Eye, tip: 'View', color: '#60A5FA' }, { icon: Edit, tip: 'Edit', color: '#F59E0B' }, { icon: Ban, tip: 'Suspend', color: '#F97316' }, { icon: Trash2, tip: 'Delete', color: '#EF4444' }].map(
@@ -1152,12 +1125,12 @@ export default function SuperAdminPage() {
         <div
           style={{
             padding: '12px 16px',
-            borderTop: '1px solid rgba(255,255,255,0.06)',
+            borderTop: '1px solid var(--border)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-between',
             fontSize: 12,
-            color: 'rgba(255,255,255,0.35)',
+            color: 'var(--text-muted)',
           }}
         >
           <span>Showing 1–{filteredUsers.length} of {platformStats?.total_users != null ? platformStats.total_users.toLocaleString() : '2,847,392'} users</span>
@@ -1168,9 +1141,9 @@ export default function SuperAdminPage() {
                 style={{
                   padding: '4px 8px',
                   borderRadius: 6,
-                  border: `1px solid ${p === 1 ? PURPLE : 'rgba(255,255,255,0.1)'}`,
+                  border: `1px solid ${p === 1 ? 'var(--gold)' : 'var(--border)'}`,
                   background: p === 1 ? `${PURPLE}22` : 'transparent',
-                  color: p === 1 ? PURPLE : 'rgba(255,255,255,0.4)',
+                  color: p === 1 ? 'var(--gold)' : 'var(--text-muted)',
                   cursor: 'pointer',
                   fontSize: 12,
                   fontWeight: p === 1 ? 700 : 400,
@@ -1191,7 +1164,7 @@ export default function SuperAdminPage() {
       <div style={{ marginBottom: 24 }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
           <div>
-            <span style={{ fontSize: 16, fontWeight: 700, color: '#fff' }}>Admins</span>
+            <span style={{ fontSize: 16, fontWeight: 700, color: 'var(--text-primary)' }}>Admins</span>
             <span
               style={{
                 marginLeft: 8,
@@ -1216,7 +1189,7 @@ export default function SuperAdminPage() {
               borderRadius: 10,
               border: 'none',
               background: `linear-gradient(135deg, ${PURPLE}, ${PURPLE_DARK})`,
-              color: '#fff',
+              color: 'var(--text-primary)',
               cursor: 'pointer',
               fontSize: 13,
               fontWeight: 600,
@@ -1248,7 +1221,7 @@ export default function SuperAdminPage() {
                       justifyContent: 'center',
                       fontSize: 14,
                       fontWeight: 700,
-                      color: '#fff',
+                      color: 'var(--text-primary)',
                       flexShrink: 0,
                       boxShadow: `0 4px 14px rgba(139,92,246,0.35)`,
                     }}
@@ -1256,14 +1229,14 @@ export default function SuperAdminPage() {
                     {a.avatar}
                   </div>
                   <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ fontSize: 14, fontWeight: 700, color: '#fff', marginBottom: 3 }}>{a.name}</div>
-                    <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.4)', marginBottom: 4 }}>{a.email}</div>
+                    <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--text-primary)', marginBottom: 3 }}>{a.name}</div>
+                    <div style={{ fontSize: 12, color: 'var(--text-muted)', marginBottom: 4 }}>{a.email}</div>
                     {roleBadge(a.role)}
                   </div>
                 </div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, color: 'rgba(255,255,255,0.4)', marginBottom: 14 }}>
-                  <span>Last active: <span style={{ color: 'rgba(255,255,255,0.7)' }}>{a.lastActive}</span></span>
-                  <span>Tickets: <span style={{ color: '#fff', fontWeight: 600 }}>{a.tickets.toLocaleString()}</span></span>
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, color: 'var(--text-muted)', marginBottom: 14 }}>
+                  <span>Last active: <span style={{ color: 'var(--text-secondary)' }}>{a.lastActive}</span></span>
+                  <span>Tickets: <span style={{ color: 'var(--text-primary)', fontWeight: 600 }}>{a.tickets.toLocaleString()}</span></span>
                 </div>
                 <button
                   style={{
@@ -1293,7 +1266,7 @@ export default function SuperAdminPage() {
       <div>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
           <div>
-            <span style={{ fontSize: 16, fontWeight: 700, color: '#fff' }}>Moderators</span>
+            <span style={{ fontSize: 16, fontWeight: 700, color: 'var(--text-primary)' }}>Moderators</span>
             <span
               style={{
                 marginLeft: 8,
@@ -1318,7 +1291,7 @@ export default function SuperAdminPage() {
               borderRadius: 10,
               border: 'none',
               background: 'linear-gradient(135deg, #F59E0B, #D97706)',
-              color: '#fff',
+              color: 'var(--text-primary)',
               cursor: 'pointer',
               fontSize: 13,
               fontWeight: 600,
@@ -1349,21 +1322,21 @@ export default function SuperAdminPage() {
                       justifyContent: 'center',
                       fontSize: 12,
                       fontWeight: 700,
-                      color: '#fff',
+                      color: 'var(--text-primary)',
                       flexShrink: 0,
                     }}
                   >
                     {m.avatar}
                   </div>
                   <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ fontSize: 13, fontWeight: 700, color: '#fff' }}>{m.name}</div>
-                    <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.4)' }}>{m.email}</div>
+                    <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-primary)' }}>{m.name}</div>
+                    <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>{m.email}</div>
                   </div>
                   {roleBadge(m.role)}
                 </div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11, color: 'rgba(255,255,255,0.4)', marginBottom: 12 }}>
-                  <span>Active: <span style={{ color: 'rgba(255,255,255,0.7)' }}>{m.lastActive}</span></span>
-                  <span>Tickets: <span style={{ color: '#fff', fontWeight: 600 }}>{m.tickets}</span></span>
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11, color: 'var(--text-muted)', marginBottom: 12 }}>
+                  <span>Active: <span style={{ color: 'var(--text-secondary)' }}>{m.lastActive}</span></span>
+                  <span>Tickets: <span style={{ color: 'var(--text-primary)', fontWeight: 600 }}>{m.tickets}</span></span>
                 </div>
                 <button
                   style={{
@@ -1421,12 +1394,12 @@ export default function SuperAdminPage() {
               }}
             >
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 22 }}>
-                <div style={{ fontSize: 18, fontWeight: 800, color: '#fff', fontFamily: 'Plus Jakarta Sans, sans-serif' }}>
+                <div style={{ fontSize: 18, fontWeight: 800, color: 'var(--text-primary)', fontFamily: 'Plus Jakarta Sans, sans-serif' }}>
                   Add New Admin
                 </div>
                 <button
                   onClick={() => setShowAddAdminModal(false)}
-                  style={{ background: 'transparent', border: 'none', color: 'rgba(255,255,255,0.4)', cursor: 'pointer' }}
+                  style={{ background: 'transparent', border: 'none', color: 'var(--text-muted)', cursor: 'pointer' }}
                 >
                   <X size={20} />
                 </button>
@@ -1437,7 +1410,7 @@ export default function SuperAdminPage() {
                 { label: 'Temporary Password', placeholder: '••••••••', type: 'password' },
               ].map((field) => (
                 <div key={field.label} style={{ marginBottom: 16 }}>
-                  <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: 'rgba(255,255,255,0.55)', marginBottom: 6 }}>
+                  <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: 'var(--text-muted)', marginBottom: 6 }}>
                     {field.label}
                   </label>
                   <input
@@ -1447,9 +1420,9 @@ export default function SuperAdminPage() {
                       width: '100%',
                       padding: '10px 14px',
                       borderRadius: 10,
-                      border: '1px solid rgba(255,255,255,0.1)',
-                      background: 'rgba(255,255,255,0.05)',
-                      color: '#fff',
+                      border: '1px solid var(--border)',
+                      background: 'var(--bg-surface2)',
+                      color: 'var(--text-primary)',
                       fontSize: 14,
                       outline: 'none',
                       boxSizing: 'border-box',
@@ -1458,7 +1431,7 @@ export default function SuperAdminPage() {
                 </div>
               ))}
               <div style={{ marginBottom: 20 }}>
-                <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: 'rgba(255,255,255,0.55)', marginBottom: 6 }}>
+                <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: 'var(--text-muted)', marginBottom: 6 }}>
                   Role
                 </label>
                 <select
@@ -1466,9 +1439,9 @@ export default function SuperAdminPage() {
                     width: '100%',
                     padding: '10px 14px',
                     borderRadius: 10,
-                    border: '1px solid rgba(255,255,255,0.1)',
-                    background: 'rgba(255,255,255,0.05)',
-                    color: '#fff',
+                    border: '1px solid var(--border)',
+                    background: 'var(--bg-surface2)',
+                    color: 'var(--text-primary)',
                     fontSize: 14,
                     outline: 'none',
                     cursor: 'pointer',
@@ -1486,7 +1459,7 @@ export default function SuperAdminPage() {
                   borderRadius: 12,
                   border: 'none',
                   background: `linear-gradient(135deg, ${PURPLE}, ${PURPLE_DARK})`,
-                  color: '#fff',
+                  color: 'var(--text-primary)',
                   cursor: 'pointer',
                   fontSize: 14,
                   fontWeight: 700,
@@ -1517,8 +1490,8 @@ export default function SuperAdminPage() {
             { label: 'Paying Users', value: '1.56L', sub: '54.8% of active', color: '#3B82F6' },
           ].map((kpi) => (
             <GlassCard key={kpi.label} style={{ padding: 18 }}>
-              <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.4)', marginBottom: 6 }}>{kpi.label}</div>
-              <div style={{ fontSize: 22, fontWeight: 800, color: '#fff', fontFamily: 'Plus Jakarta Sans, sans-serif', marginBottom: 4 }}>
+              <div style={{ fontSize: 12, color: 'var(--text-muted)', marginBottom: 6 }}>{kpi.label}</div>
+              <div style={{ fontSize: 22, fontWeight: 800, color: 'var(--text-primary)', fontFamily: 'Plus Jakarta Sans, sans-serif', marginBottom: 4 }}>
                 {kpi.value}
               </div>
               <div style={{ fontSize: 11, color: kpi.color, fontWeight: 600 }}>{kpi.sub}</div>
@@ -1528,11 +1501,11 @@ export default function SuperAdminPage() {
 
         {/* Chart */}
         <GlassCard style={{ padding: 20, marginBottom: 20 }}>
-          <div style={{ fontSize: 14, fontWeight: 700, color: '#fff', marginBottom: 20 }}>Monthly Revenue (₹L)</div>
+          <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--text-primary)', marginBottom: 20 }}>Monthly Revenue (₹L)</div>
           <div style={{ display: 'flex', alignItems: 'flex-end', gap: 12, height: 140 }}>
             {REVENUE_MONTHS.map((m, i) => (
               <div key={m.month} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6 }}>
-                <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.5)', fontWeight: 600 }}>{m.value}L</div>
+                <div style={{ fontSize: 11, color: 'var(--text-muted)', fontWeight: 600 }}>{m.value}L</div>
                 <motion.div
                   initial={{ height: 0 }}
                   animate={inView ? { height: `${(m.value / maxRevenue) * 100}px` } : {}}
@@ -1547,7 +1520,7 @@ export default function SuperAdminPage() {
                     boxShadow: i === REVENUE_MONTHS.length - 1 ? `0 0 18px rgba(139,92,246,0.5)` : 'none',
                   }}
                 />
-                <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.35)' }}>{m.month}</div>
+                <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>{m.month}</div>
               </div>
             ))}
           </div>
@@ -1555,16 +1528,16 @@ export default function SuperAdminPage() {
 
         {/* Plan breakdown */}
         <GlassCard style={{ padding: 20, marginBottom: 20 }}>
-          <div style={{ fontSize: 14, fontWeight: 700, color: '#fff', marginBottom: 16 }}>Plan Breakdown</div>
+          <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--text-primary)', marginBottom: 16 }}>Plan Breakdown</div>
           {PLAN_BREAKDOWN.map((p) => (
             <div key={p.label} style={{ marginBottom: 14 }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6, fontSize: 12 }}>
-                <span style={{ color: 'rgba(255,255,255,0.7)', fontWeight: 500 }}>{p.label}</span>
-                <span style={{ color: 'rgba(255,255,255,0.4)' }}>
-                  {p.pct}% · <span style={{ color: '#fff', fontWeight: 600 }}>{p.mrr}</span>
+                <span style={{ color: 'var(--text-secondary)', fontWeight: 500 }}>{p.label}</span>
+                <span style={{ color: 'var(--text-muted)' }}>
+                  {p.pct}% · <span style={{ color: 'var(--text-primary)', fontWeight: 600 }}>{p.mrr}</span>
                 </span>
               </div>
-              <div style={{ height: 8, background: 'rgba(255,255,255,0.06)', borderRadius: 99, overflow: 'hidden' }}>
+              <div style={{ height: 8, background: 'var(--bg-surface2)', borderRadius: 99, overflow: 'hidden' }}>
                 <motion.div
                   initial={{ width: 0 }}
                   animate={inView ? { width: `${p.pct}%` } : {}}
@@ -1585,8 +1558,8 @@ export default function SuperAdminPage() {
             { label: 'Avg Transaction', value: '₹384', sub: 'Per order', color: '#10B981' },
           ].map((s) => (
             <GlassCard key={s.label} style={{ padding: 16 }}>
-              <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.4)', marginBottom: 6 }}>{s.label}</div>
-              <div style={{ fontSize: 20, fontWeight: 800, color: '#fff', fontFamily: 'Plus Jakarta Sans, sans-serif', marginBottom: 3 }}>
+              <div style={{ fontSize: 11, color: 'var(--text-muted)', marginBottom: 6 }}>{s.label}</div>
+              <div style={{ fontSize: 20, fontWeight: 800, color: 'var(--text-primary)', fontFamily: 'Plus Jakarta Sans, sans-serif', marginBottom: 3 }}>
                 {s.value}
               </div>
               <div style={{ fontSize: 11, color: s.color, fontWeight: 600 }}>{s.sub}</div>
@@ -1629,22 +1602,22 @@ export default function SuperAdminPage() {
                     >
                       <Icon size={18} color={isUp ? '#10B981' : isDeg ? '#F59E0B' : '#EF4444'} />
                     </div>
-                    <span style={{ fontSize: 14, fontWeight: 600, color: '#fff' }}>{svc.name}</span>
+                    <span style={{ fontSize: 14, fontWeight: 600, color: 'var(--text-primary)' }}>{svc.name}</span>
                   </div>
                   {statusBadge(svc.status)}
                 </div>
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 14, fontSize: 12 }}>
                   <div>
-                    <div style={{ color: 'rgba(255,255,255,0.35)', marginBottom: 2 }}>Uptime</div>
-                    <div style={{ color: '#fff', fontWeight: 700 }}>{svc.uptime}</div>
+                    <div style={{ color: 'var(--text-muted)', marginBottom: 2 }}>Uptime</div>
+                    <div style={{ color: 'var(--text-primary)', fontWeight: 700 }}>{svc.uptime}</div>
                   </div>
                   <div>
-                    <div style={{ color: 'rgba(255,255,255,0.35)', marginBottom: 2 }}>Response</div>
-                    <div style={{ color: '#fff', fontWeight: 700 }}>{svc.responseTime}</div>
+                    <div style={{ color: 'var(--text-muted)', marginBottom: 2 }}>Response</div>
+                    <div style={{ color: 'var(--text-primary)', fontWeight: 700 }}>{svc.responseTime}</div>
                   </div>
                 </div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.3)' }}>Last: {svc.lastChecked}</span>
+                  <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>Last: {svc.lastChecked}</span>
                   <button
                     style={{
                       padding: '5px 10px',
@@ -1669,7 +1642,7 @@ export default function SuperAdminPage() {
 
       {/* Resources */}
       <GlassCard style={{ padding: 20 }}>
-        <div style={{ fontSize: 14, fontWeight: 700, color: '#fff', marginBottom: 18 }}>Server Resources</div>
+        <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--text-primary)', marginBottom: 18 }}>Server Resources</div>
         <ResourceBar label="CPU Usage" pct={34} color="#3B82F6" />
         <ResourceBar label="RAM Usage" pct={67} color={PURPLE} />
         <ResourceBar label="Disk Usage" pct={41} color="#10B981" />
@@ -1687,18 +1660,18 @@ export default function SuperAdminPage() {
         <GlassCard style={{ padding: 20, marginBottom: 20 }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 20 }}>
             <div>
-              <div style={{ fontSize: 14, fontWeight: 700, color: '#fff' }}>Daily Active Users (K)</div>
-              <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.4)', marginTop: 3 }}>This week</div>
+              <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--text-primary)' }}>Daily Active Users (K)</div>
+              <div style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 3 }}>This week</div>
             </div>
-            <div style={{ display: 'flex', gap: 16, fontSize: 12, color: 'rgba(255,255,255,0.5)' }}>
-              <span>MAU: <strong style={{ color: '#fff' }}>2.19M</strong></span>
+            <div style={{ display: 'flex', gap: 16, fontSize: 12, color: 'var(--text-muted)' }}>
+              <span>MAU: <strong style={{ color: 'var(--text-primary)' }}>2.19M</strong></span>
               <span>DAU/MAU: <strong style={{ color: PURPLE }}>8.4%</strong></span>
             </div>
           </div>
           <div style={{ display: 'flex', alignItems: 'flex-end', gap: 10, height: 120 }}>
             {DAU_DATA.map((d, i) => (
               <div key={d.day} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6 }}>
-                <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.5)', fontWeight: 600 }}>{d.dau}K</div>
+                <div style={{ fontSize: 11, color: 'var(--text-muted)', fontWeight: 600 }}>{d.dau}K</div>
                 <motion.div
                   initial={{ height: 0 }}
                   animate={inView ? { height: `${(d.dau / maxDau) * 90}px` } : {}}
@@ -1710,7 +1683,7 @@ export default function SuperAdminPage() {
                     boxShadow: i === 4 ? `0 0 14px rgba(139,92,246,0.4)` : 'none',
                   }}
                 />
-                <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.35)' }}>{d.day}</div>
+                <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>{d.day}</div>
               </div>
             ))}
           </div>
@@ -1719,7 +1692,7 @@ export default function SuperAdminPage() {
         {/* Retention */}
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 20 }}>
           <GlassCard style={{ padding: 20 }}>
-            <div style={{ fontSize: 14, fontWeight: 700, color: '#fff', marginBottom: 16 }}>Retention Rates</div>
+            <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--text-primary)', marginBottom: 16 }}>Retention Rates</div>
             {[
               { label: 'Day 1', pct: 78, color: '#10B981' },
               { label: 'Day 7', pct: 52, color: '#F59E0B' },
@@ -1727,10 +1700,10 @@ export default function SuperAdminPage() {
             ].map((r) => (
               <div key={r.label} style={{ marginBottom: 14 }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6, fontSize: 12 }}>
-                  <span style={{ color: 'rgba(255,255,255,0.6)' }}>{r.label} Retention</span>
+                  <span style={{ color: 'var(--text-secondary)' }}>{r.label} Retention</span>
                   <span style={{ color: r.color, fontWeight: 700 }}>{r.pct}%</span>
                 </div>
-                <div style={{ height: 7, background: 'rgba(255,255,255,0.06)', borderRadius: 99, overflow: 'hidden' }}>
+                <div style={{ height: 7, background: 'var(--bg-surface2)', borderRadius: 99, overflow: 'hidden' }}>
                   <motion.div
                     initial={{ width: 0 }}
                     animate={inView ? { width: `${r.pct}%` } : {}}
@@ -1743,14 +1716,14 @@ export default function SuperAdminPage() {
           </GlassCard>
 
           <GlassCard style={{ padding: 20 }}>
-            <div style={{ fontSize: 14, fontWeight: 700, color: '#fff', marginBottom: 16 }}>Top Locations</div>
+            <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--text-primary)', marginBottom: 16 }}>Top Locations</div>
             {TOP_LOCATIONS.map((loc) => (
               <div key={loc.city} style={{ marginBottom: 12 }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4, fontSize: 12 }}>
-                  <span style={{ color: 'rgba(255,255,255,0.7)', fontWeight: 500 }}>{loc.city}</span>
-                  <span style={{ color: 'rgba(255,255,255,0.4)' }}>{(loc.users / 1000).toFixed(0)}K</span>
+                  <span style={{ color: 'var(--text-secondary)', fontWeight: 500 }}>{loc.city}</span>
+                  <span style={{ color: 'var(--text-muted)' }}>{(loc.users / 1000).toFixed(0)}K</span>
                 </div>
-                <div style={{ height: 6, background: 'rgba(255,255,255,0.06)', borderRadius: 99, overflow: 'hidden' }}>
+                <div style={{ height: 6, background: 'var(--bg-surface2)', borderRadius: 99, overflow: 'hidden' }}>
                   <motion.div
                     initial={{ width: 0 }}
                     animate={inView ? { width: `${loc.pct}%` } : {}}
@@ -1765,7 +1738,7 @@ export default function SuperAdminPage() {
 
         {/* Feature usage */}
         <GlassCard style={{ padding: 20 }}>
-          <div style={{ fontSize: 14, fontWeight: 700, color: '#fff', marginBottom: 16 }}>Feature Adoption</div>
+          <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--text-primary)', marginBottom: 16 }}>Feature Adoption</div>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: 14 }}>
             {FEATURE_USAGE.map((f) => (
               <div key={f.feature} style={{ textAlign: 'center' }}>
@@ -1793,13 +1766,13 @@ export default function SuperAdminPage() {
                       justifyContent: 'center',
                       fontSize: 15,
                       fontWeight: 800,
-                      color: '#fff',
+                      color: 'var(--text-primary)',
                     }}
                   >
                     {f.pct}%
                   </div>
                 </div>
-                <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.6)', fontWeight: 500 }}>{f.feature}</div>
+                <div style={{ fontSize: 12, color: 'var(--text-secondary)', fontWeight: 500 }}>{f.feature}</div>
               </div>
             ))}
           </div>
@@ -1851,11 +1824,11 @@ export default function SuperAdminPage() {
                     e.currentTarget.style.background = 'transparent'
                   }}
                 >
-                  <td style={{ padding: '11px 16px', color: 'rgba(255,255,255,0.4)', whiteSpace: 'nowrap', fontSize: 12 }}>
+                  <td style={{ padding: '11px 16px', color: 'var(--text-muted)', whiteSpace: 'nowrap', fontSize: 12 }}>
                     {log.time}
                   </td>
                   <td style={{ padding: '11px 16px' }}>{eventTypeBadge(log.event)}</td>
-                  <td style={{ padding: '11px 16px', color: 'rgba(255,255,255,0.7)', fontSize: 12 }}>{log.user}</td>
+                  <td style={{ padding: '11px 16px', color: 'var(--text-secondary)', fontSize: 12 }}>{log.user}</td>
                   <td style={{ padding: '11px 16px', color: 'rgba(255,255,255,0.45)', fontFamily: 'monospace', fontSize: 12, whiteSpace: 'nowrap' }}>
                     {log.ip}
                   </td>
@@ -1892,8 +1865,8 @@ export default function SuperAdminPage() {
         }}
       >
         <div>
-          <div style={{ fontSize: 14, fontWeight: 600, color: '#fff' }}>{label}</div>
-          {desc && <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.35)', marginTop: 3 }}>{desc}</div>}
+          <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--text-primary)' }}>{label}</div>
+          {desc && <div style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 3 }}>{desc}</div>}
         </div>
         <button
           onClick={() => onChange(!value)}
@@ -1931,7 +1904,7 @@ export default function SuperAdminPage() {
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20 }}>
         {/* App Config */}
         <GlassCard style={{ padding: 22 }}>
-          <div style={{ fontSize: 15, fontWeight: 700, color: '#fff', marginBottom: 16 }}>App Configuration</div>
+          <div style={{ fontSize: 15, fontWeight: 700, color: 'var(--text-primary)', marginBottom: 16 }}>App Configuration</div>
           <Toggle
             label="Maintenance Mode"
             desc="Blocks all user access with a maintenance screen"
@@ -1957,7 +1930,7 @@ export default function SuperAdminPage() {
                 borderRadius: 10,
                 border: 'none',
                 background: `linear-gradient(135deg, ${PURPLE}, ${PURPLE_DARK})`,
-                color: '#fff',
+                color: 'var(--text-primary)',
                 cursor: 'pointer',
                 fontSize: 13,
                 fontWeight: 700,
@@ -1971,7 +1944,7 @@ export default function SuperAdminPage() {
 
         {/* Email Config */}
         <GlassCard style={{ padding: 22 }}>
-          <div style={{ fontSize: 15, fontWeight: 700, color: '#fff', marginBottom: 16 }}>Email Configuration (SMTP)</div>
+          <div style={{ fontSize: 15, fontWeight: 700, color: 'var(--text-primary)', marginBottom: 16 }}>Email Configuration (SMTP)</div>
           {[
             { label: 'SMTP Host', placeholder: 'smtp.mailgun.org', type: 'text' },
             { label: 'SMTP Port', placeholder: '587', type: 'number' },
@@ -1980,7 +1953,7 @@ export default function SuperAdminPage() {
             { label: 'From Address', placeholder: 'no-reply@gravity.app', type: 'email' },
           ].map((f) => (
             <div key={f.label} style={{ marginBottom: 12 }}>
-              <label style={{ display: 'block', fontSize: 11, fontWeight: 600, color: 'rgba(255,255,255,0.4)', marginBottom: 5 }}>
+              <label style={{ display: 'block', fontSize: 11, fontWeight: 600, color: 'var(--text-muted)', marginBottom: 5 }}>
                 {f.label}
               </label>
               <input
@@ -1990,9 +1963,9 @@ export default function SuperAdminPage() {
                   width: '100%',
                   padding: '8px 12px',
                   borderRadius: 9,
-                  border: '1px solid rgba(255,255,255,0.1)',
+                  border: '1px solid var(--border)',
                   background: 'rgba(255,255,255,0.04)',
-                  color: '#fff',
+                  color: 'var(--text-primary)',
                   fontSize: 13,
                   outline: 'none',
                   boxSizing: 'border-box',
@@ -2007,7 +1980,7 @@ export default function SuperAdminPage() {
               borderRadius: 9,
               border: 'none',
               background: `linear-gradient(135deg, ${PURPLE}, ${PURPLE_DARK})`,
-              color: '#fff',
+              color: 'var(--text-primary)',
               cursor: 'pointer',
               fontSize: 13,
               fontWeight: 700,
@@ -2030,7 +2003,7 @@ export default function SuperAdminPage() {
             <AlertTriangle size={18} color="#EF4444" />
             <span style={{ fontSize: 15, fontWeight: 700, color: '#EF4444' }}>Danger Zone</span>
           </div>
-          <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.4)', marginBottom: 18, lineHeight: 1.5 }}>
+          <p style={{ fontSize: 12, color: 'var(--text-muted)', marginBottom: 18, lineHeight: 1.5 }}>
             These actions are irreversible or high-impact. Proceed with caution.
           </p>
           <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
@@ -2099,20 +2072,20 @@ export default function SuperAdminPage() {
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 14, marginBottom: 20 }}>
           {familyStats.map((s) => (
             <GlassCard key={s.label} style={{ padding: 18 }}>
-              <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.4)', marginBottom: 6 }}>{s.label}</div>
-              <div style={{ fontSize: 22, fontWeight: 800, color: '#fff', fontFamily: 'Plus Jakarta Sans, sans-serif', marginBottom: 4 }}>{s.value}</div>
+              <div style={{ fontSize: 11, color: 'var(--text-muted)', marginBottom: 6 }}>{s.label}</div>
+              <div style={{ fontSize: 22, fontWeight: 800, color: 'var(--text-primary)', fontFamily: 'Plus Jakarta Sans, sans-serif', marginBottom: 4 }}>{s.value}</div>
               <div style={{ width: 32, height: 3, borderRadius: 99, background: s.color }} />
             </GlassCard>
           ))}
         </div>
         <div style={{ display: 'flex', gap: 10, marginBottom: 14, alignItems: 'center' }}>
-          <select style={{ padding: '8px 12px', borderRadius: 10, border: '1px solid rgba(255,255,255,0.1)', background: 'rgba(255,255,255,0.05)', color: '#fff', fontSize: 13, outline: 'none', cursor: 'pointer' }}>
+          <select style={{ padding: '8px 12px', borderRadius: 10, border: '1px solid var(--border)', background: 'var(--bg-surface2)', color: 'var(--text-primary)', fontSize: 13, outline: 'none', cursor: 'pointer' }}>
             <option style={{ background: '#1a1030' }}>All Plans</option>
             <option style={{ background: '#1a1030' }}>Free</option>
             <option style={{ background: '#1a1030' }}>Premium</option>
             <option style={{ background: '#1a1030' }}>Family+</option>
           </select>
-          <button style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 6, padding: '8px 14px', borderRadius: 10, border: 'none', background: `linear-gradient(135deg, ${PURPLE}, ${PURPLE_DARK})`, color: '#fff', cursor: 'pointer', fontSize: 13, fontWeight: 600 }}>
+          <button style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 6, padding: '8px 14px', borderRadius: 10, border: 'none', background: `linear-gradient(135deg, ${PURPLE}, ${PURPLE_DARK})`, color: 'var(--text-primary)', cursor: 'pointer', fontSize: 13, fontWeight: 600 }}>
             <Plus size={14} /> Add Family
           </button>
         </div>
@@ -2133,13 +2106,13 @@ export default function SuperAdminPage() {
                     onMouseEnter={(e) => (e.currentTarget.style.background = 'var(--bg-surface2)')}
                     onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
                   >
-                    <td style={{ padding: '12px 16px', color: '#fff', fontWeight: 500 }}>{f.name}</td>
-                    <td style={{ padding: '12px 16px', color: 'rgba(255,255,255,0.6)' }}>{f.owner}</td>
-                    <td style={{ padding: '12px 16px', color: 'rgba(255,255,255,0.7)', fontWeight: 600 }}>{f.members}</td>
+                    <td style={{ padding: '12px 16px', color: 'var(--text-primary)', fontWeight: 500 }}>{f.name}</td>
+                    <td style={{ padding: '12px 16px', color: 'var(--text-secondary)' }}>{f.owner}</td>
+                    <td style={{ padding: '12px 16px', color: 'var(--text-secondary)', fontWeight: 600 }}>{f.members}</td>
                     <td style={{ padding: '12px 16px' }}>
                       <span style={{ background: `${planColor(f.plan)}20`, color: planColor(f.plan), fontSize: 11, fontWeight: 700, padding: '2px 8px', borderRadius: 99, border: `1px solid ${planColor(f.plan)}44` }}>{f.plan}</span>
                     </td>
-                    <td style={{ padding: '12px 16px', color: 'rgba(255,255,255,0.4)', whiteSpace: 'nowrap' }}>{f.created}</td>
+                    <td style={{ padding: '12px 16px', color: 'var(--text-muted)', whiteSpace: 'nowrap' }}>{f.created}</td>
                     <td style={{ padding: '12px 16px' }}>
                       <div style={{ display: 'flex', gap: 6 }}>
                         {[{ icon: Eye, color: '#60A5FA', tip: 'View' }, { icon: Edit, color: '#F59E0B', tip: 'Edit' }, { icon: Trash2, color: '#EF4444', tip: 'Delete' }].map(({ icon: Icon, color, tip }) => (
@@ -2183,8 +2156,8 @@ export default function SuperAdminPage() {
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: 14, marginBottom: 20 }}>
           {deviceStats.map((s) => (
             <GlassCard key={s.label} style={{ padding: 18 }}>
-              <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.4)', marginBottom: 6 }}>{s.label}</div>
-              <div style={{ fontSize: 22, fontWeight: 800, color: '#fff', fontFamily: 'Plus Jakarta Sans, sans-serif', marginBottom: 4 }}>{s.value}</div>
+              <div style={{ fontSize: 11, color: 'var(--text-muted)', marginBottom: 6 }}>{s.label}</div>
+              <div style={{ fontSize: 22, fontWeight: 800, color: 'var(--text-primary)', fontFamily: 'Plus Jakarta Sans, sans-serif', marginBottom: 4 }}>{s.value}</div>
               <div style={{ width: 32, height: 3, borderRadius: 99, background: s.color }} />
             </GlassCard>
           ))}
@@ -2206,14 +2179,14 @@ export default function SuperAdminPage() {
                     onMouseEnter={(e) => (e.currentTarget.style.background = 'var(--bg-surface2)')}
                     onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
                   >
-                    <td style={{ padding: '12px 16px', color: '#fff', fontWeight: 500 }}>
+                    <td style={{ padding: '12px 16px', color: 'var(--text-primary)', fontWeight: 500 }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                         <Smartphone size={14} color={PURPLE} />
                         {d.name}
                       </div>
                     </td>
-                    <td style={{ padding: '12px 16px', color: 'rgba(255,255,255,0.6)' }}>{d.user}</td>
-                    <td style={{ padding: '12px 16px', color: 'rgba(255,255,255,0.5)', fontSize: 12 }}>{d.os}</td>
+                    <td style={{ padding: '12px 16px', color: 'var(--text-secondary)' }}>{d.user}</td>
+                    <td style={{ padding: '12px 16px', color: 'var(--text-muted)', fontSize: 12 }}>{d.os}</td>
                     <td style={{ padding: '12px 16px' }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                         <div style={{ width: 40, height: 6, borderRadius: 3, background: 'rgba(255,255,255,0.08)', overflow: 'hidden' }}>
@@ -2223,7 +2196,7 @@ export default function SuperAdminPage() {
                       </div>
                     </td>
                     <td style={{ padding: '12px 16px' }}>{statusBadge(d.status)}</td>
-                    <td style={{ padding: '12px 16px', color: 'rgba(255,255,255,0.4)', whiteSpace: 'nowrap', fontSize: 12 }}>{d.lastSeen}</td>
+                    <td style={{ padding: '12px 16px', color: 'var(--text-muted)', whiteSpace: 'nowrap', fontSize: 12 }}>{d.lastSeen}</td>
                   </motion.tr>
                 ))}
               </tbody>
@@ -2269,7 +2242,7 @@ export default function SuperAdminPage() {
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 14, marginBottom: 20 }}>
           {sosStats.map((s) => (
             <GlassCard key={s.label} style={{ padding: 18, border: s.label === 'Total SOS Today' ? '1px solid rgba(239,68,68,0.25)' : undefined }}>
-              <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.4)', marginBottom: 6 }}>{s.label}</div>
+              <div style={{ fontSize: 11, color: 'var(--text-muted)', marginBottom: 6 }}>{s.label}</div>
               <div style={{ fontSize: 24, fontWeight: 800, color: s.color, fontFamily: 'Plus Jakarta Sans, sans-serif', marginBottom: 4 }}>{s.value}</div>
               <div style={{ width: 32, height: 3, borderRadius: 99, background: s.color }} />
             </GlassCard>
@@ -2293,11 +2266,11 @@ export default function SuperAdminPage() {
                     onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
                   >
                     <td style={{ padding: '12px 16px', color: PURPLE, fontWeight: 600, fontFamily: 'monospace', fontSize: 12 }}>{a.id || '—'}</td>
-                    <td style={{ padding: '12px 16px', color: '#fff', fontWeight: 500 }}>{a.user_name || '—'}</td>
-                    <td style={{ padding: '12px 16px', color: 'rgba(255,255,255,0.5)', fontSize: 12 }}>{a.place_name || (a.lat && a.lng ? `${a.lat.toFixed(4)}, ${a.lng.toFixed(4)}` : '—')}</td>
-                    <td style={{ padding: '12px 16px', color: 'rgba(255,255,255,0.4)', whiteSpace: 'nowrap', fontSize: 12 }}>{a.triggered_at ? (typeof a.triggered_at === 'string' && a.triggered_at.includes('AM') || a.triggered_at.includes('PM') ? a.triggered_at : new Date(a.triggered_at).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })) : '—'}</td>
+                    <td style={{ padding: '12px 16px', color: 'var(--text-primary)', fontWeight: 500 }}>{a.user_name || '—'}</td>
+                    <td style={{ padding: '12px 16px', color: 'var(--text-muted)', fontSize: 12 }}>{a.place_name || (a.lat && a.lng ? `${a.lat.toFixed(4)}, ${a.lng.toFixed(4)}` : '—')}</td>
+                    <td style={{ padding: '12px 16px', color: 'var(--text-muted)', whiteSpace: 'nowrap', fontSize: 12 }}>{a.triggered_at ? (typeof a.triggered_at === 'string' && a.triggered_at.includes('AM') || a.triggered_at.includes('PM') ? a.triggered_at : new Date(a.triggered_at).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })) : '—'}</td>
                     <td style={{ padding: '12px 16px' }}>{sosBadge(a.status || 'PENDING')}</td>
-                    <td style={{ padding: '12px 16px', color: 'rgba(255,255,255,0.6)', fontSize: 12 }}>{a.family_name || '—'}</td>
+                    <td style={{ padding: '12px 16px', color: 'var(--text-secondary)', fontSize: 12 }}>{a.family_name || '—'}</td>
                   </motion.tr>
                 ))}
               </tbody>
@@ -2335,8 +2308,8 @@ export default function SuperAdminPage() {
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 14, marginBottom: 20 }}>
           {subStats.map((s) => (
             <GlassCard key={s.label} style={{ padding: 18 }}>
-              <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.4)', marginBottom: 6 }}>{s.label}</div>
-              <div style={{ fontSize: 22, fontWeight: 800, color: '#fff', fontFamily: 'Plus Jakarta Sans, sans-serif', marginBottom: 4 }}>{s.value}</div>
+              <div style={{ fontSize: 11, color: 'var(--text-muted)', marginBottom: 6 }}>{s.label}</div>
+              <div style={{ fontSize: 22, fontWeight: 800, color: 'var(--text-primary)', fontFamily: 'Plus Jakarta Sans, sans-serif', marginBottom: 4 }}>{s.value}</div>
               <div style={{ width: 32, height: 3, borderRadius: 99, background: s.color }} />
             </GlassCard>
           ))}
@@ -2358,11 +2331,11 @@ export default function SuperAdminPage() {
                     onMouseEnter={(e) => (e.currentTarget.style.background = 'var(--bg-surface2)')}
                     onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
                   >
-                    <td style={{ padding: '12px 16px', color: '#fff', fontWeight: 500 }}>{s.user}</td>
+                    <td style={{ padding: '12px 16px', color: 'var(--text-primary)', fontWeight: 500 }}>{s.user}</td>
                     <td style={{ padding: '12px 16px' }}>{planBadge(s.plan)}</td>
                     <td style={{ padding: '12px 16px', color: '#10B981', fontWeight: 700 }}>{s.amount}</td>
-                    <td style={{ padding: '12px 16px', color: 'rgba(255,255,255,0.4)', whiteSpace: 'nowrap' }}>{s.start}</td>
-                    <td style={{ padding: '12px 16px', color: 'rgba(255,255,255,0.4)', whiteSpace: 'nowrap' }}>{s.renewal}</td>
+                    <td style={{ padding: '12px 16px', color: 'var(--text-muted)', whiteSpace: 'nowrap' }}>{s.start}</td>
+                    <td style={{ padding: '12px 16px', color: 'var(--text-muted)', whiteSpace: 'nowrap' }}>{s.renewal}</td>
                     <td style={{ padding: '12px 16px' }}>{statusBadge(s.status)}</td>
                   </motion.tr>
                 ))}
@@ -2392,10 +2365,10 @@ export default function SuperAdminPage() {
                 <div style={{ position: 'absolute', top: -16, right: -16, width: 80, height: 80, borderRadius: '50%', background: p.color, opacity: 0.08, filter: 'blur(20px)' }} />
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
                   <div>
-                    <div style={{ fontSize: 14, fontWeight: 700, color: '#fff', marginBottom: 4 }}>{p.name}</div>
+                    <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--text-primary)', marginBottom: 4 }}>{p.name}</div>
                     <div style={{ fontSize: 24, fontWeight: 800, fontFamily: 'Plus Jakarta Sans, sans-serif' }}>
                       <span style={{ color: p.color }}>{p.price}</span>
-                      <span style={{ fontSize: 13, color: 'rgba(255,255,255,0.4)', fontWeight: 500 }}>{p.period}</span>
+                      <span style={{ fontSize: 13, color: 'var(--text-muted)', fontWeight: 500 }}>{p.period}</span>
                     </div>
                   </div>
                   <div style={{ width: 44, height: 44, borderRadius: 12, background: `${p.color}18`, border: `1px solid ${p.color}30`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -2404,11 +2377,11 @@ export default function SuperAdminPage() {
                 </div>
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 16 }}>
                   <div>
-                    <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.35)', marginBottom: 3 }}>Subscribers</div>
-                    <div style={{ fontSize: 15, fontWeight: 700, color: '#fff' }}>{p.subscribers}</div>
+                    <div style={{ fontSize: 11, color: 'var(--text-muted)', marginBottom: 3 }}>Subscribers</div>
+                    <div style={{ fontSize: 15, fontWeight: 700, color: 'var(--text-primary)' }}>{p.subscribers}</div>
                   </div>
                   <div>
-                    <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.35)', marginBottom: 3 }}>Revenue</div>
+                    <div style={{ fontSize: 11, color: 'var(--text-muted)', marginBottom: 3 }}>Revenue</div>
                     <div style={{ fontSize: 15, fontWeight: 700, color: '#10B981' }}>{p.revenue}</div>
                   </div>
                 </div>
@@ -2448,8 +2421,8 @@ export default function SuperAdminPage() {
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: 14, marginBottom: 20 }}>
           {geoStats.map((s) => (
             <GlassCard key={s.label} style={{ padding: 18 }}>
-              <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.4)', marginBottom: 6 }}>{s.label}</div>
-              <div style={{ fontSize: 20, fontWeight: 800, color: '#fff', fontFamily: 'Plus Jakarta Sans, sans-serif', marginBottom: 4 }}>{s.value}</div>
+              <div style={{ fontSize: 11, color: 'var(--text-muted)', marginBottom: 6 }}>{s.label}</div>
+              <div style={{ fontSize: 20, fontWeight: 800, color: 'var(--text-primary)', fontFamily: 'Plus Jakarta Sans, sans-serif', marginBottom: 4 }}>{s.value}</div>
               <div style={{ width: 28, height: 3, borderRadius: 99, background: s.color }} />
             </GlassCard>
           ))}
@@ -2471,17 +2444,17 @@ export default function SuperAdminPage() {
                     onMouseEnter={(e) => (e.currentTarget.style.background = 'var(--bg-surface2)')}
                     onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
                   >
-                    <td style={{ padding: '12px 16px', color: '#fff', fontWeight: 500 }}>
+                    <td style={{ padding: '12px 16px', color: 'var(--text-primary)', fontWeight: 500 }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
                         <MapPin size={13} color={typeColor(f.type)} />
                         {f.name}
                       </div>
                     </td>
-                    <td style={{ padding: '12px 16px', color: 'rgba(255,255,255,0.6)' }}>{f.family}</td>
+                    <td style={{ padding: '12px 16px', color: 'var(--text-secondary)' }}>{f.family}</td>
                     <td style={{ padding: '12px 16px' }}>
                       <span style={{ background: `${typeColor(f.type)}20`, color: typeColor(f.type), fontSize: 11, fontWeight: 700, padding: '2px 8px', borderRadius: 99, border: `1px solid ${typeColor(f.type)}44` }}>{f.type}</span>
                     </td>
-                    <td style={{ padding: '12px 16px', color: 'rgba(255,255,255,0.5)' }}>{f.radius}</td>
+                    <td style={{ padding: '12px 16px', color: 'var(--text-muted)' }}>{f.radius}</td>
                     <td style={{ padding: '12px 16px', color: f.alertsToday > 0 ? '#F59E0B' : 'rgba(255,255,255,0.4)', fontWeight: f.alertsToday > 0 ? 700 : 400 }}>{f.alertsToday}</td>
                     <td style={{ padding: '12px 16px' }}>{statusBadge(f.status)}</td>
                   </motion.tr>
@@ -2513,22 +2486,22 @@ export default function SuperAdminPage() {
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 14, marginBottom: 20 }}>
           {notifStats.map((s) => (
             <GlassCard key={s.label} style={{ padding: 18 }}>
-              <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.4)', marginBottom: 6 }}>{s.label}</div>
-              <div style={{ fontSize: 22, fontWeight: 800, color: '#fff', fontFamily: 'Plus Jakarta Sans, sans-serif', marginBottom: 4 }}>{s.value}</div>
+              <div style={{ fontSize: 11, color: 'var(--text-muted)', marginBottom: 6 }}>{s.label}</div>
+              <div style={{ fontSize: 22, fontWeight: 800, color: 'var(--text-primary)', fontFamily: 'Plus Jakarta Sans, sans-serif', marginBottom: 4 }}>{s.value}</div>
               <div style={{ width: 32, height: 3, borderRadius: 99, background: s.color }} />
             </GlassCard>
           ))}
         </div>
         <GlassCard style={{ padding: 22, marginBottom: 20 }}>
-          <div style={{ fontSize: 15, fontWeight: 700, color: '#fff', marginBottom: 16 }}>Send Notification</div>
+          <div style={{ fontSize: 15, fontWeight: 700, color: 'var(--text-primary)', marginBottom: 16 }}>Send Notification</div>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14, marginBottom: 14 }}>
             <div>
-              <label style={{ display: 'block', fontSize: 11, fontWeight: 600, color: 'rgba(255,255,255,0.4)', marginBottom: 5 }}>Title</label>
-              <input type="text" placeholder="Notification title..." style={{ width: '100%', padding: '9px 12px', borderRadius: 9, border: '1px solid rgba(255,255,255,0.1)', background: 'rgba(255,255,255,0.04)', color: '#fff', fontSize: 13, outline: 'none', boxSizing: 'border-box' }} />
+              <label style={{ display: 'block', fontSize: 11, fontWeight: 600, color: 'var(--text-muted)', marginBottom: 5 }}>Title</label>
+              <input type="text" placeholder="Notification title..." style={{ width: '100%', padding: '9px 12px', borderRadius: 9, border: '1px solid var(--border)', background: 'rgba(255,255,255,0.04)', color: 'var(--text-primary)', fontSize: 13, outline: 'none', boxSizing: 'border-box' }} />
             </div>
             <div>
-              <label style={{ display: 'block', fontSize: 11, fontWeight: 600, color: 'rgba(255,255,255,0.4)', marginBottom: 5 }}>Target Audience</label>
-              <select style={{ width: '100%', padding: '9px 12px', borderRadius: 9, border: '1px solid rgba(255,255,255,0.1)', background: 'rgba(255,255,255,0.05)', color: '#fff', fontSize: 13, outline: 'none', cursor: 'pointer', boxSizing: 'border-box' }}>
+              <label style={{ display: 'block', fontSize: 11, fontWeight: 600, color: 'var(--text-muted)', marginBottom: 5 }}>Target Audience</label>
+              <select style={{ width: '100%', padding: '9px 12px', borderRadius: 9, border: '1px solid var(--border)', background: 'var(--bg-surface2)', color: 'var(--text-primary)', fontSize: 13, outline: 'none', cursor: 'pointer', boxSizing: 'border-box' }}>
                 <option style={{ background: '#1a1030' }}>All Users</option>
                 <option style={{ background: '#1a1030' }}>Premium</option>
                 <option style={{ background: '#1a1030' }}>Android</option>
@@ -2537,15 +2510,15 @@ export default function SuperAdminPage() {
             </div>
           </div>
           <div style={{ marginBottom: 14 }}>
-            <label style={{ display: 'block', fontSize: 11, fontWeight: 600, color: 'rgba(255,255,255,0.4)', marginBottom: 5 }}>Message</label>
-            <textarea placeholder="Notification message..." rows={3} style={{ width: '100%', padding: '9px 12px', borderRadius: 9, border: '1px solid rgba(255,255,255,0.1)', background: 'rgba(255,255,255,0.04)', color: '#fff', fontSize: 13, outline: 'none', resize: 'vertical', boxSizing: 'border-box', fontFamily: 'inherit' }} />
+            <label style={{ display: 'block', fontSize: 11, fontWeight: 600, color: 'var(--text-muted)', marginBottom: 5 }}>Message</label>
+            <textarea placeholder="Notification message..." rows={3} style={{ width: '100%', padding: '9px 12px', borderRadius: 9, border: '1px solid var(--border)', background: 'rgba(255,255,255,0.04)', color: 'var(--text-primary)', fontSize: 13, outline: 'none', resize: 'vertical', boxSizing: 'border-box', fontFamily: 'inherit' }} />
           </div>
-          <button style={{ padding: '10px 22px', borderRadius: 10, border: 'none', background: `linear-gradient(135deg, ${PURPLE}, ${PURPLE_DARK})`, color: '#fff', cursor: 'pointer', fontSize: 13, fontWeight: 700, display: 'flex', alignItems: 'center', gap: 6, boxShadow: `0 4px 14px rgba(139,92,246,0.4)` }}>
+          <button style={{ padding: '10px 22px', borderRadius: 10, border: 'none', background: `linear-gradient(135deg, ${PURPLE}, ${PURPLE_DARK})`, color: 'var(--text-primary)', cursor: 'pointer', fontSize: 13, fontWeight: 700, display: 'flex', alignItems: 'center', gap: 6, boxShadow: `0 4px 14px rgba(139,92,246,0.4)` }}>
             <Bell size={14} /> Send Notification
           </button>
         </GlassCard>
         <GlassCard style={{ overflow: 'hidden' }}>
-          <div style={{ padding: '14px 16px', borderBottom: '1px solid rgba(255,255,255,0.06)', fontSize: 14, fontWeight: 700, color: '#fff' }}>Recent Notifications</div>
+          <div style={{ padding: '14px 16px', borderBottom: '1px solid rgba(255,255,255,0.06)', fontSize: 14, fontWeight: 700, color: 'var(--text-primary)' }}>Recent Notifications</div>
           <div style={{ overflowX: 'auto' }}>
             <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
               <thead>
@@ -2562,12 +2535,12 @@ export default function SuperAdminPage() {
                     onMouseEnter={(e) => (e.currentTarget.style.background = 'var(--bg-surface2)')}
                     onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
                   >
-                    <td style={{ padding: '12px 16px', color: '#fff', fontWeight: 500 }}>{r.title}</td>
+                    <td style={{ padding: '12px 16px', color: 'var(--text-primary)', fontWeight: 500 }}>{r.title}</td>
                     <td style={{ padding: '12px 16px', color: PURPLE, fontWeight: 600, fontSize: 12 }}>{r.target}</td>
-                    <td style={{ padding: '12px 16px', color: 'rgba(255,255,255,0.6)' }}>{r.sent}</td>
+                    <td style={{ padding: '12px 16px', color: 'var(--text-secondary)' }}>{r.sent}</td>
                     <td style={{ padding: '12px 16px', color: '#10B981' }}>{r.delivered}</td>
                     <td style={{ padding: '12px 16px', color: '#3B82F6' }}>{r.opened}</td>
-                    <td style={{ padding: '12px 16px', color: 'rgba(255,255,255,0.4)', whiteSpace: 'nowrap' }}>{r.date}</td>
+                    <td style={{ padding: '12px 16px', color: 'var(--text-muted)', whiteSpace: 'nowrap' }}>{r.date}</td>
                   </motion.tr>
                 ))}
               </tbody>
@@ -2618,8 +2591,8 @@ export default function SuperAdminPage() {
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 14, marginBottom: 20 }}>
           {supportStats.map((s) => (
             <GlassCard key={s.label} style={{ padding: 18 }}>
-              <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.4)', marginBottom: 6 }}>{s.label}</div>
-              <div style={{ fontSize: 22, fontWeight: 800, color: '#fff', fontFamily: 'Plus Jakarta Sans, sans-serif', marginBottom: 4 }}>{s.value}</div>
+              <div style={{ fontSize: 11, color: 'var(--text-muted)', marginBottom: 6 }}>{s.label}</div>
+              <div style={{ fontSize: 22, fontWeight: 800, color: 'var(--text-primary)', fontFamily: 'Plus Jakarta Sans, sans-serif', marginBottom: 4 }}>{s.value}</div>
               <div style={{ width: 32, height: 3, borderRadius: 99, background: s.color }} />
             </GlassCard>
           ))}
@@ -2642,12 +2615,12 @@ export default function SuperAdminPage() {
                     onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
                   >
                     <td style={{ padding: '12px 16px', color: PURPLE, fontWeight: 600, fontFamily: 'monospace', fontSize: 12 }}>{t.id}</td>
-                    <td style={{ padding: '12px 16px', color: '#fff', fontWeight: 500 }}>{t.user}</td>
-                    <td style={{ padding: '12px 16px', color: 'rgba(255,255,255,0.7)' }}>{t.subject}</td>
+                    <td style={{ padding: '12px 16px', color: 'var(--text-primary)', fontWeight: 500 }}>{t.user}</td>
+                    <td style={{ padding: '12px 16px', color: 'var(--text-secondary)' }}>{t.subject}</td>
                     <td style={{ padding: '12px 16px' }}>{priorityBadge(t.priority)}</td>
                     <td style={{ padding: '12px 16px' }}>{ticketStatusBadge(t.status)}</td>
-                    <td style={{ padding: '12px 16px', color: 'rgba(255,255,255,0.5)', fontSize: 12 }}>{t.assigned}</td>
-                    <td style={{ padding: '12px 16px', color: 'rgba(255,255,255,0.4)', whiteSpace: 'nowrap', fontSize: 12 }}>{t.date}</td>
+                    <td style={{ padding: '12px 16px', color: 'var(--text-muted)', fontSize: 12 }}>{t.assigned}</td>
+                    <td style={{ padding: '12px 16px', color: 'var(--text-muted)', whiteSpace: 'nowrap', fontSize: 12 }}>{t.date}</td>
                   </motion.tr>
                 ))}
               </tbody>
@@ -2700,8 +2673,8 @@ export default function SuperAdminPage() {
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 14, marginBottom: 20 }}>
           {auditStats.map((s) => (
             <GlassCard key={s.label} style={{ padding: 18 }}>
-              <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.4)', marginBottom: 6 }}>{s.label}</div>
-              <div style={{ fontSize: 22, fontWeight: 800, color: '#fff', fontFamily: 'Plus Jakarta Sans, sans-serif', marginBottom: 4 }}>{s.value}</div>
+              <div style={{ fontSize: 11, color: 'var(--text-muted)', marginBottom: 6 }}>{s.label}</div>
+              <div style={{ fontSize: 22, fontWeight: 800, color: 'var(--text-primary)', fontFamily: 'Plus Jakarta Sans, sans-serif', marginBottom: 4 }}>{s.value}</div>
               <div style={{ width: 32, height: 3, borderRadius: 99, background: s.color }} />
             </GlassCard>
           ))}
@@ -2723,9 +2696,9 @@ export default function SuperAdminPage() {
                     onMouseEnter={(e) => (e.currentTarget.style.background = 'var(--bg-surface2)')}
                     onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
                   >
-                    <td style={{ padding: '11px 16px', color: 'rgba(255,255,255,0.4)', whiteSpace: 'nowrap', fontSize: 12, fontFamily: 'monospace' }}>{log.ts}</td>
+                    <td style={{ padding: '11px 16px', color: 'var(--text-muted)', whiteSpace: 'nowrap', fontSize: 12, fontFamily: 'monospace' }}>{log.ts}</td>
                     <td style={{ padding: '11px 16px' }}>{actionBadge(log.action, log.severity)}</td>
-                    <td style={{ padding: '11px 16px', color: 'rgba(255,255,255,0.7)', fontSize: 12 }}>{log.user}</td>
+                    <td style={{ padding: '11px 16px', color: 'var(--text-secondary)', fontSize: 12 }}>{log.user}</td>
                     <td style={{ padding: '11px 16px', color: 'rgba(255,255,255,0.45)', fontFamily: 'monospace', fontSize: 12, whiteSpace: 'nowrap' }}>{log.ip}</td>
                     <td style={{ padding: '11px 16px', color: 'rgba(255,255,255,0.45)', fontSize: 12 }}>{log.location}</td>
                     <td style={{ padding: '11px 16px' }}>{statusBadge(log.result)}</td>
@@ -2762,14 +2735,14 @@ export default function SuperAdminPage() {
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 14, marginBottom: 20 }}>
           {entStats.map((s) => (
             <GlassCard key={s.label} style={{ padding: 18 }}>
-              <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.4)', marginBottom: 6 }}>{s.label}</div>
-              <div style={{ fontSize: 22, fontWeight: 800, color: '#fff', fontFamily: 'Plus Jakarta Sans, sans-serif', marginBottom: 4 }}>{s.value}</div>
+              <div style={{ fontSize: 11, color: 'var(--text-muted)', marginBottom: 6 }}>{s.label}</div>
+              <div style={{ fontSize: 22, fontWeight: 800, color: 'var(--text-primary)', fontFamily: 'Plus Jakarta Sans, sans-serif', marginBottom: 4 }}>{s.value}</div>
               <div style={{ width: 32, height: 3, borderRadius: 99, background: s.color }} />
             </GlassCard>
           ))}
         </div>
         <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 14 }}>
-          <button style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '8px 16px', borderRadius: 10, border: 'none', background: `linear-gradient(135deg, ${PURPLE}, ${PURPLE_DARK})`, color: '#fff', cursor: 'pointer', fontSize: 13, fontWeight: 600, boxShadow: `0 4px 14px rgba(139,92,246,0.4)` }}>
+          <button style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '8px 16px', borderRadius: 10, border: 'none', background: `linear-gradient(135deg, ${PURPLE}, ${PURPLE_DARK})`, color: 'var(--text-primary)', cursor: 'pointer', fontSize: 13, fontWeight: 600, boxShadow: `0 4px 14px rgba(139,92,246,0.4)` }}>
             <Plus size={14} /> Add Client
           </button>
         </div>
@@ -2790,7 +2763,7 @@ export default function SuperAdminPage() {
                     onMouseEnter={(e) => (e.currentTarget.style.background = 'var(--bg-surface2)')}
                     onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
                   >
-                    <td style={{ padding: '12px 16px', color: '#fff', fontWeight: 600 }}>
+                    <td style={{ padding: '12px 16px', color: 'var(--text-primary)', fontWeight: 600 }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                         <Building2 size={14} color={typeColor(c.type)} />
                         {c.org}
@@ -2799,8 +2772,8 @@ export default function SuperAdminPage() {
                     <td style={{ padding: '12px 16px' }}>
                       <span style={{ background: `${typeColor(c.type)}20`, color: typeColor(c.type), fontSize: 11, fontWeight: 700, padding: '2px 8px', borderRadius: 99, border: `1px solid ${typeColor(c.type)}44` }}>{c.type}</span>
                     </td>
-                    <td style={{ padding: '12px 16px', color: 'rgba(255,255,255,0.7)', fontWeight: 600 }}>{c.users.toLocaleString()}</td>
-                    <td style={{ padding: '12px 16px', color: 'rgba(255,255,255,0.4)', whiteSpace: 'nowrap' }}>{c.expires}</td>
+                    <td style={{ padding: '12px 16px', color: 'var(--text-secondary)', fontWeight: 600 }}>{c.users.toLocaleString()}</td>
+                    <td style={{ padding: '12px 16px', color: 'var(--text-muted)', whiteSpace: 'nowrap' }}>{c.expires}</td>
                     <td style={{ padding: '12px 16px', color: '#10B981', fontWeight: 700 }}>{c.mrr}</td>
                     <td style={{ padding: '12px 16px' }}>{statusBadge(c.status)}</td>
                   </motion.tr>
@@ -2832,8 +2805,8 @@ export default function SuperAdminPage() {
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 14, marginBottom: 24 }}>
           {wlStats.map((s) => (
             <GlassCard key={s.label} style={{ padding: 18 }}>
-              <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.4)', marginBottom: 6 }}>{s.label}</div>
-              <div style={{ fontSize: 22, fontWeight: 800, color: '#fff', fontFamily: 'Plus Jakarta Sans, sans-serif', marginBottom: 4 }}>{s.value}</div>
+              <div style={{ fontSize: 11, color: 'var(--text-muted)', marginBottom: 6 }}>{s.label}</div>
+              <div style={{ fontSize: 22, fontWeight: 800, color: 'var(--text-primary)', fontFamily: 'Plus Jakarta Sans, sans-serif', marginBottom: 4 }}>{s.value}</div>
               <div style={{ width: 32, height: 3, borderRadius: 99, background: s.color }} />
             </GlassCard>
           ))}
@@ -2843,19 +2816,19 @@ export default function SuperAdminPage() {
             <motion.div key={p.name} initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.07 }}>
               <GlassCard style={{ padding: 20, border: `1px solid ${p.color}25` }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 14 }}>
-                  <div style={{ width: 48, height: 48, borderRadius: 14, background: `linear-gradient(135deg, ${p.color}, ${p.color}bb)`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 15, fontWeight: 800, color: '#fff', flexShrink: 0, boxShadow: `0 4px 14px ${p.color}40` }}>
+                  <div style={{ width: 48, height: 48, borderRadius: 14, background: `linear-gradient(135deg, ${p.color}, ${p.color}bb)`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 15, fontWeight: 800, color: 'var(--text-primary)', flexShrink: 0, boxShadow: `0 4px 14px ${p.color}40` }}>
                     {p.initial}
                   </div>
                   <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ fontSize: 15, fontWeight: 700, color: '#fff' }}>{p.name}</div>
-                    <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.4)', marginTop: 2 }}>{p.domain}</div>
+                    <div style={{ fontSize: 15, fontWeight: 700, color: 'var(--text-primary)' }}>{p.name}</div>
+                    <div style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 2 }}>{p.domain}</div>
                   </div>
                   {statusBadge(p.status)}
                 </div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                   <div>
-                    <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.35)', marginBottom: 2 }}>Users</div>
-                    <div style={{ fontSize: 16, fontWeight: 700, color: '#fff' }}>{p.users.toLocaleString()}</div>
+                    <div style={{ fontSize: 11, color: 'var(--text-muted)', marginBottom: 2 }}>Users</div>
+                    <div style={{ fontSize: 16, fontWeight: 700, color: 'var(--text-primary)' }}>{p.users.toLocaleString()}</div>
                   </div>
                   <div style={{ display: 'flex', gap: 8 }}>
                     <button style={{ padding: '6px 12px', borderRadius: 8, border: `1px solid ${p.color}40`, background: `${p.color}12`, color: p.color, cursor: 'pointer', fontSize: 12, fontWeight: 600 }}>Configure</button>
@@ -2891,14 +2864,14 @@ export default function SuperAdminPage() {
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 14, marginBottom: 20 }}>
           {apiStats.map((s) => (
             <GlassCard key={s.label} style={{ padding: 18 }}>
-              <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.4)', marginBottom: 6 }}>{s.label}</div>
-              <div style={{ fontSize: 22, fontWeight: 800, color: '#fff', fontFamily: 'Plus Jakarta Sans, sans-serif', marginBottom: 4 }}>{s.value}</div>
+              <div style={{ fontSize: 11, color: 'var(--text-muted)', marginBottom: 6 }}>{s.label}</div>
+              <div style={{ fontSize: 22, fontWeight: 800, color: 'var(--text-primary)', fontFamily: 'Plus Jakarta Sans, sans-serif', marginBottom: 4 }}>{s.value}</div>
               <div style={{ width: 32, height: 3, borderRadius: 99, background: s.color }} />
             </GlassCard>
           ))}
         </div>
         <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 14 }}>
-          <button style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '8px 16px', borderRadius: 10, border: 'none', background: `linear-gradient(135deg, ${PURPLE}, ${PURPLE_DARK})`, color: '#fff', cursor: 'pointer', fontSize: 13, fontWeight: 600, boxShadow: `0 4px 14px rgba(139,92,246,0.4)` }}>
+          <button style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '8px 16px', borderRadius: 10, border: 'none', background: `linear-gradient(135deg, ${PURPLE}, ${PURPLE_DARK})`, color: 'var(--text-primary)', cursor: 'pointer', fontSize: 13, fontWeight: 600, boxShadow: `0 4px 14px rgba(139,92,246,0.4)` }}>
             <Key size={14} /> Generate New Key
           </button>
         </div>
@@ -2919,11 +2892,11 @@ export default function SuperAdminPage() {
                     onMouseEnter={(e) => (e.currentTarget.style.background = 'var(--bg-surface2)')}
                     onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
                   >
-                    <td style={{ padding: '12px 16px', color: 'rgba(255,255,255,0.6)', fontFamily: 'monospace', fontSize: 12, whiteSpace: 'nowrap' }}>{k.key}</td>
-                    <td style={{ padding: '12px 16px', color: '#fff', fontWeight: 500 }}>{k.owner}</td>
+                    <td style={{ padding: '12px 16px', color: 'var(--text-secondary)', fontFamily: 'monospace', fontSize: 12, whiteSpace: 'nowrap' }}>{k.key}</td>
+                    <td style={{ padding: '12px 16px', color: 'var(--text-primary)', fontWeight: 500 }}>{k.owner}</td>
                     <td style={{ padding: '12px 16px', color: PURPLE, fontWeight: 600 }}>{k.calls}</td>
-                    <td style={{ padding: '12px 16px', color: 'rgba(255,255,255,0.4)', whiteSpace: 'nowrap', fontSize: 12 }}>{k.lastUsed}</td>
-                    <td style={{ padding: '12px 16px', color: 'rgba(255,255,255,0.4)', whiteSpace: 'nowrap', fontSize: 12 }}>{k.created}</td>
+                    <td style={{ padding: '12px 16px', color: 'var(--text-muted)', whiteSpace: 'nowrap', fontSize: 12 }}>{k.lastUsed}</td>
+                    <td style={{ padding: '12px 16px', color: 'var(--text-muted)', whiteSpace: 'nowrap', fontSize: 12 }}>{k.created}</td>
                     <td style={{ padding: '12px 16px' }}>{statusBadge(k.status)}</td>
                     <td style={{ padding: '12px 16px' }}>
                       <div style={{ display: 'flex', gap: 6 }}>
