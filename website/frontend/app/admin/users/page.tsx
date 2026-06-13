@@ -38,23 +38,24 @@ function Modal({ title, onClose, children, width = 440 }: { title: string; onClo
   return (
     <>
       <Backdrop onClick={onClose} />
+      <div style={{ position: 'fixed', inset: 0, zIndex: 210, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '16px', pointerEvents: 'none' }}>
       <motion.div
-        initial={{ opacity: 0, scale: 0.95, y: 16 }}
+        initial={{ opacity: 0, scale: 0.95, y: 12 }}
         animate={{ opacity: 1, scale: 1, y: 0 }}
-        exit={{ opacity: 0, scale: 0.95, y: 16 }}
+        exit={{ opacity: 0, scale: 0.95, y: 12 }}
         transition={{ type: 'spring', damping: 28, stiffness: 320 }}
         style={{
-          position: 'fixed', top: '50%', left: '50%',
-          transform: 'translate(-50%, -50%)',
-          width: `min(${width}px, calc(100vw - 32px))`,
+          width: '100%',
+          maxWidth: width,
           background: 'var(--bg-surface)',
           border: '1px solid var(--border)',
-          borderRadius: 18, zIndex: 210,
+          borderRadius: 18,
           boxShadow: '0 24px 64px rgba(0,0,0,0.4)',
           overflow: 'hidden',
-        maxHeight: 'calc(100vh - 48px)',
-        display: 'flex',
-        flexDirection: 'column',
+          maxHeight: 'calc(100vh - 48px)',
+          display: 'flex',
+          flexDirection: 'column',
+          pointerEvents: 'all',
         }}
       >
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '18px 22px 14px', borderBottom: '1px solid var(--border)', flexShrink: 0 }}>
@@ -65,6 +66,7 @@ function Modal({ title, onClose, children, width = 440 }: { title: string; onClo
         </div>
         <div style={{ padding: '20px 22px 22px', overflowY: 'auto', flex: 1 }}>{children}</div>
       </motion.div>
+      </div>
     </>
   )
 }
