@@ -460,6 +460,42 @@ const NAV = [
   { id: 'settings' as NavSection, label: 'Settings', icon: Settings },
 ]
 
+// Grouped nav for Linear-style sidebar (same pattern as admin)
+const NAV_GROUPS_SA = [
+  // Core
+  [
+    { id: 'command' as NavSection, label: 'Command Center', icon: Home },
+    { id: 'users' as NavSection, label: 'All Users', icon: Users },
+    { id: 'families' as NavSection, label: 'Families', icon: Users2 },
+    { id: 'devices' as NavSection, label: 'Devices', icon: Smartphone },
+    { id: 'admins' as NavSection, label: 'Admins & Mods', icon: Shield },
+  ],
+  // Operations
+  [
+    { id: 'sos' as NavSection, label: 'SOS Alerts', icon: AlertTriangle },
+    { id: 'geofences' as NavSection, label: 'Geofences', icon: MapPin },
+    { id: 'notifications' as NavSection, label: 'Notifications', icon: Bell },
+    { id: 'support' as NavSection, label: 'Support Tickets', icon: MessageSquare },
+  ],
+  // Revenue
+  [
+    { id: 'revenue' as NavSection, label: 'Revenue', icon: DollarSign },
+    { id: 'subscriptions' as NavSection, label: 'Subscriptions', icon: CreditCard },
+    { id: 'plans' as NavSection, label: 'Plans', icon: Zap },
+    { id: 'enterprise' as NavSection, label: 'Enterprise', icon: Building2 },
+    { id: 'whitelabel' as NavSection, label: 'White Label', icon: Globe },
+  ],
+  // System
+  [
+    { id: 'health' as NavSection, label: 'System Health', icon: Activity },
+    { id: 'analytics' as NavSection, label: 'Analytics', icon: BarChart2 },
+    { id: 'security' as NavSection, label: 'Security Logs', icon: Lock },
+    { id: 'audit' as NavSection, label: 'Audit Logs', icon: FileText },
+    { id: 'api' as NavSection, label: 'API & Keys', icon: Key },
+    { id: 'settings' as NavSection, label: 'Settings', icon: Settings },
+  ],
+]
+
 // ─── Main Component ───────────────────────────────────────────────────────────
 
 export default function SuperAdminPage() {
@@ -561,120 +597,122 @@ export default function SuperAdminPage() {
       }}
     >
       {/* Logo */}
-      <div
-        style={{
-          padding: '18px 16px 14px',
-          borderBottom: '1px solid var(--border)',
-          display: 'flex',
-          alignItems: 'center',
-          gap: 10,
-        }}
-      >
-        <Crown size={22} color={PURPLE} strokeWidth={2} style={{ flexShrink: 0 }} />
-        <div>
-          <div
+      <div style={{ padding: '16px 12px 8px', flexShrink: 0 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10 }}>
+          <Crown size={18} color="var(--gold)" strokeWidth={2} style={{ flexShrink: 0 }} />
+          <span style={{ fontSize: 15, fontWeight: 700, color: 'var(--text-primary)', lineHeight: 1 }}>
+            Gravity
+          </span>
+          <sup
             style={{
-              fontFamily: 'Plus Jakarta Sans, sans-serif',
-              fontWeight: 800,
-              fontSize: 15,
-              letterSpacing: '0.08em',
-              color: 'var(--text-primary)',
-              lineHeight: 1.2,
-            }}
-          >
-            GRAVITY
-          </div>
-          <span
-            style={{
-              display: 'inline-block',
-              marginTop: 3,
-              fontSize: 10,
-              fontWeight: 700,
-              letterSpacing: '0.06em',
+              fontSize: 9,
+              fontWeight: 600,
               textTransform: 'uppercase',
-              background: 'rgba(139,92,246,0.12)',
-              color: PURPLE,
+              background: 'rgba(212,168,83,0.12)',
+              color: 'var(--gold)',
+              padding: '2px 5px',
               borderRadius: 4,
-              padding: '2px 8px',
+              letterSpacing: '0.04em',
+              lineHeight: 1.4,
             }}
           >
             Super Admin
-          </span>
+          </sup>
         </div>
+        <input
+          type="text"
+          placeholder="Jump to..."
+          readOnly
+          style={{
+            width: '100%',
+            height: 28,
+            fontSize: 12,
+            padding: '0 10px',
+            background: 'var(--bg-surface2)',
+            border: '1px solid var(--border)',
+            borderRadius: 6,
+            color: 'var(--text-secondary)',
+            outline: 'none',
+            boxSizing: 'border-box',
+            cursor: 'default',
+          }}
+        />
       </div>
 
       {/* Nav */}
-      <nav style={{ flex: 1, overflowY: 'auto', padding: '12px 8px' }}>
-        {NAV.map((item, i) => {
-          const isActive = active === item.id
-          const Icon = item.icon
-          return (
-            <motion.div
-              key={item.id}
-              initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: i * 0.03, duration: 0.3 }}
-            >
-              <button
-                onClick={() => {
-                  setActive(item.id)
-                  setSidebarOpen(false)
-                }}
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 8,
-                  width: 'calc(100% - 16px)',
-                  height: 32,
-                  padding: '0 10px',
-                  borderRadius: 6,
-                  margin: '1px 8px',
-                  border: 'none',
-                  cursor: 'pointer',
-                  color: isActive ? 'var(--text-primary)' : 'var(--text-muted)',
-                  background: isActive ? 'rgba(139,92,246,0.1)' : 'transparent',
-                  borderLeft: isActive ? `2px solid ${PURPLE}` : '2px solid transparent',
-                  fontWeight: 500,
-                  fontSize: 13,
-                  textAlign: 'left',
-                  transition: 'background 0.12s ease',
-                }}
-                onMouseEnter={(e) => { if (!isActive) e.currentTarget.style.background = 'rgba(255,255,255,0.04)' }}
-                onMouseLeave={(e) => { if (!isActive) e.currentTarget.style.background = 'transparent' }}
-              >
-                <Icon size={14} color={isActive ? PURPLE : undefined} strokeWidth={isActive ? 2.2 : 1.8} />
-                <span>{item.label}</span>
-              </button>
-            </motion.div>
-          )
-        })}
+      <nav style={{ flex: 1, overflowY: 'auto', paddingBottom: 8 }}>
+        {NAV_GROUPS_SA.map((group, gi) => (
+          <div key={gi}>
+            {gi > 0 && (
+              <div style={{ height: 1, background: 'var(--border)', margin: '8px 12px' }} />
+            )}
+            {group.map((item) => {
+              const isActive = active === item.id
+              const Icon = item.icon
+              return (
+                <button
+                  key={item.id}
+                  onClick={() => { setActive(item.id); setSidebarOpen(false) }}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 8,
+                    width: isActive ? 'calc(100% - 14px)' : 'calc(100% - 16px)',
+                    height: 32,
+                    padding: '0 8px',
+                    borderRadius: 6,
+                    margin: isActive ? '1px 8px 1px 6px' : '1px 8px',
+                    border: 'none',
+                    cursor: 'pointer',
+                    color: isActive ? 'var(--text-primary)' : 'var(--text-secondary)',
+                    background: isActive ? 'var(--bg-surface2)' : 'transparent',
+                    borderLeft: isActive ? '2px solid var(--gold)' : '2px solid transparent',
+                    fontWeight: isActive ? 600 : 400,
+                    fontSize: 13,
+                    textAlign: 'left',
+                    transition: 'background 0.12s ease',
+                  }}
+                  onMouseEnter={(e) => { if (!isActive) e.currentTarget.style.background = 'var(--bg-surface2)' }}
+                  onMouseLeave={(e) => { if (!isActive) e.currentTarget.style.background = 'transparent' }}
+                >
+                  <Icon size={14} color={isActive ? 'var(--gold)' : 'var(--text-muted)'} strokeWidth={isActive ? 2.2 : 1.8} style={{ flexShrink: 0 }} />
+                  <span style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', flex: 1 }}>{item.label}</span>
+                </button>
+              )
+            })}
+          </div>
+        ))}
       </nav>
 
-      {/* Logout */}
-      <div style={{ padding: '12px 8px', borderTop: '1px solid rgba(139,92,246,0.15)' }}>
-        <button
-          onClick={logout}
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: 10,
-            width: '100%',
-            padding: '9px 12px',
-            borderRadius: 10,
-            border: 'none',
-            background: 'transparent',
-            color: '#EF4444',
-            cursor: 'pointer',
-            fontSize: 13.5,
-            fontWeight: 500,
-            transition: 'background 0.18s',
-          }}
-          onMouseEnter={(e) => (e.currentTarget.style.background = 'rgba(239,68,68,0.08)')}
-          onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
-        >
-          <LogOut size={17} />
-          <span>Log Out</span>
-        </button>
+      {/* Bottom — user + logout */}
+      <div style={{ marginTop: 'auto', padding: 12, borderTop: '1px solid var(--border)', flexShrink: 0 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
+          <div
+            style={{
+              width: 28, height: 28, borderRadius: '50%',
+              background: 'linear-gradient(135deg, var(--gold), #92400e)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              fontSize: 11, fontWeight: 700, color: '#000', flexShrink: 0,
+            }}
+          >
+            {initials}
+          </div>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-primary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+              {superAdminName}
+            </div>
+            <div style={{ fontSize: 10, color: 'var(--gold)', fontWeight: 600, letterSpacing: '0.04em' }}>SUPER ADMIN</div>
+          </div>
+          <button
+            onClick={logout}
+            title="Log out"
+            style={{ background: 'transparent', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', padding: 4, display: 'flex', alignItems: 'center', borderRadius: 6 }}
+            onMouseEnter={(e) => { e.currentTarget.style.color = '#EF4444' }}
+            onMouseLeave={(e) => { e.currentTarget.style.color = 'var(--text-muted)' }}
+          >
+            <LogOut size={15} />
+          </button>
+        </div>
       </div>
     </div>
   )
@@ -2941,8 +2979,8 @@ export default function SuperAdminPage() {
         html, body { margin: 0; padding: 0; }
         ::-webkit-scrollbar { width: 6px; height: 6px; }
         ::-webkit-scrollbar-track { background: rgba(255,255,255,0.03); }
-        ::-webkit-scrollbar-thumb { background: rgba(139,92,246,0.35); border-radius: 99px; }
-        ::-webkit-scrollbar-thumb:hover { background: rgba(139,92,246,0.6); }
+        ::-webkit-scrollbar-thumb { background: rgba(212,168,83,0.35); border-radius: 99px; }
+        ::-webkit-scrollbar-thumb:hover { background: rgba(212,168,83,0.6); }
         @media (max-width: 768px) {
           .super-admin-sidebar { display: none !important; }
           .super-admin-mobile-bottom { display: flex !important; }
@@ -2973,16 +3011,21 @@ export default function SuperAdminPage() {
           className="super-admin-sidebar"
           data-sidebar
           style={{
-            width: 240,
+            width: 260,
             flexShrink: 0,
-            borderRight: `1px solid var(--border)`,
-            position: 'sticky',
+            borderRight: '1px solid var(--border)',
+            position: 'fixed',
             top: 0,
+            left: 0,
             height: '100vh',
             overflowY: 'auto',
+            overflowX: 'hidden',
             background: 'var(--bg-surface)',
             backdropFilter: 'blur(20px)',
             WebkitBackdropFilter: 'blur(20px)',
+            zIndex: 40,
+            display: 'flex',
+            flexDirection: 'column',
           }}
         >
           <SidebarContent />
@@ -3023,7 +3066,7 @@ export default function SuperAdminPage() {
         </AnimatePresence>
 
         {/* Main Column */}
-        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0 }}>
+        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0, marginLeft: 260 }}>
 
           {/* ── TOP HEADER ── */}
           <header
@@ -3042,132 +3085,46 @@ export default function SuperAdminPage() {
               zIndex: 30,
             }}
           >
-            {/* Hamburger */}
+            {/* Hamburger — mobile only */}
             <button
               className="super-admin-hamburger"
               onClick={() => setSidebarOpen(true)}
-              style={{ background: 'transparent', border: 'none', color: 'rgba(255,255,255,0.5)', cursor: 'pointer', padding: 4, display: 'flex', alignItems: 'center' }}
+              style={{ background: 'transparent', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', padding: 4, display: 'flex', alignItems: 'center', borderRadius: 6 }}
             >
-              <Menu size={22} />
+              <Menu size={20} />
             </button>
 
-            {/* Logo + badge */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-              <div
-                style={{
-                  width: 34,
-                  height: 34,
-                  borderRadius: 10,
-                  background: `linear-gradient(135deg, ${PURPLE}, ${PURPLE_DARK})`,
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  fontWeight: 800,
-                  fontSize: 15,
-                  color: '#fff',
-                  boxShadow: `0 4px 14px rgba(139,92,246,0.5)`,
-                  flexShrink: 0,
-                }}
-              >
-                G
-              </div>
-              <div>
-                <span
-                  style={{
-                    fontFamily: 'Plus Jakarta Sans, sans-serif',
-                    fontWeight: 800,
-                    fontSize: 14,
-                    letterSpacing: '0.07em',
-                    color: '#fff',
-                  }}
-                >
-                  GRAVITY
-                </span>
-                <span
-                  style={{
-                    marginLeft: 8,
-                    fontSize: 10,
-                    fontWeight: 700,
-                    background: `linear-gradient(135deg, ${PURPLE}, #EC4899)`,
-                    color: '#fff',
-                    borderRadius: 5,
-                    padding: '2px 7px',
-                    letterSpacing: '0.05em',
-                    verticalAlign: 'middle',
-                  }}
-                >
-                  👑 Super Admin
-                </span>
-              </div>
-            </div>
+            {/* Section title */}
+            <span style={{ fontSize: 15, fontWeight: 600, color: 'var(--text-primary)' }}>
+              {NAV.find(n => n.id === active)?.label ?? 'Command Center'}
+            </span>
 
-            {/* Center — system health */}
-            <div
-              style={{
-                flex: 1,
-                display: 'flex',
-                justifyContent: 'center',
-                alignItems: 'center',
-                gap: 6,
-              }}
-            >
+            {/* System health pulse */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: 5, marginLeft: 12 }}>
               <motion.div
-                animate={{ opacity: [1, 0.4, 1] }}
+                animate={{ opacity: [1, 0.3, 1] }}
                 transition={{ repeat: Infinity, duration: 2 }}
-                style={{ width: 8, height: 8, borderRadius: '50%', background: '#10B981', boxShadow: '0 0 8px #10B981' }}
+                style={{ width: 7, height: 7, borderRadius: '50%', background: '#10B981', boxShadow: '0 0 6px #10B981', flexShrink: 0 }}
               />
-              <span style={{ fontSize: 12, color: '#10B981', fontWeight: 600 }}>All Systems Operational</span>
+              <span style={{ fontSize: 11, color: '#10B981', fontWeight: 600 }}>All Systems Operational</span>
             </div>
 
-            {/* Right */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+            <div style={{ flex: 1 }} />
+
+            {/* Right controls */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
               <ThemeToggle />
-              <div style={{ textAlign: 'right', display: 'flex', flexDirection: 'column', gap: 1 }}>
-                <span style={{ fontSize: 13, fontWeight: 700, color: '#fff' }}>{superAdminName}</span>
-                <span style={{ fontSize: 10, color: PURPLE, fontWeight: 600, letterSpacing: '0.04em' }}>SUPER ADMIN</span>
-              </div>
               <div
                 style={{
-                  width: 36,
-                  height: 36,
-                  borderRadius: '50%',
-                  background: `linear-gradient(135deg, ${PURPLE}, #EC4899)`,
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  fontSize: 13,
-                  fontWeight: 700,
-                  color: '#fff',
-                  cursor: 'pointer',
-                  boxShadow: `0 2px 12px rgba(139,92,246,0.5)`,
-                  flexShrink: 0,
+                  width: 34, height: 34, borderRadius: '50%',
+                  background: 'linear-gradient(135deg, var(--gold), #92400e)',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  fontSize: 12, fontWeight: 700, color: '#000', flexShrink: 0, cursor: 'default',
                 }}
+                title={superAdminName}
               >
                 {initials}
               </div>
-              <button
-                onClick={logout}
-                title="Logout"
-                style={{
-                  background: 'rgba(239,68,68,0.1)',
-                  border: '1px solid rgba(239,68,68,0.25)',
-                  color: '#EF4444',
-                  cursor: 'pointer',
-                  padding: '6px 10px',
-                  borderRadius: 8,
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 5,
-                  fontSize: 12,
-                  fontWeight: 600,
-                  transition: 'background 0.15s',
-                }}
-                onMouseEnter={(e) => (e.currentTarget.style.background = 'rgba(239,68,68,0.2)')}
-                onMouseLeave={(e) => (e.currentTarget.style.background = 'rgba(239,68,68,0.1)')}
-              >
-                <LogOut size={14} />
-                <span className="super-admin-hamburger" style={{ display: 'inline' }}>Logout</span>
-              </button>
             </div>
           </header>
 
