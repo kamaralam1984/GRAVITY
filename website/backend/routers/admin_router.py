@@ -170,3 +170,118 @@ def analytics_data(admin=Depends(get_current_admin), db: Session = Depends(get_d
         "ios_devices": ios_devices, "android_devices": android_devices,
         "plan_distribution": {"free": free, "premium": premium, "family": family_plan},
     }
+
+
+# ── User Management ───────────────────────────────────────────────
+
+class UserCreateRequest(BaseModel):
+    name: str
+    email: str
+    phone: Optional[str] = None
+    password: str
+
+class UserUpdateRequest(BaseModel):
+    name: Optional[str] = None
+    email: Optional[str] = None
+    phone: Optional[str] = None
+
+class UserStatusRequest(BaseModel):
+    is_active: bool
+
+class UserPasswordRequest(BaseModel):
+    new_password: str
+
+@router.get("/users")
+def list_users(
+    skip: int = 0, limit: int = 20,
+    search: Optional[str] = None, status: Optional[str] = None,
+    admin=Depends(get_current_admin), db: Session = Depends(get_db)
+):
+    q = db.query(models.User)
+    if search:
+        q = q.filter(
+            (models.User.name.ilike(f"%{search}%")) |
+            (models.User.email.ilike(f"%{search}%")) |
+            (models.User.phone.ilike(f"%{search}%"))
+        )
+    if status == "active":
+        q = q.filter(models.User.is_active == True)
+    elif status == "inactive":
+        q = q.filter(models.User.is_active == False)
+    total = q.count()
+    users = q.order_by(desc(models.User.created_at)).offset(skip).limit(limit).all()
+    result = []
+    for u in users:
+        device_count = db.query(func.count(models.Device.id)).filter(models.Device.user_id == u.id).scalar()
+        membership = db.query(models.FamilyMember).filter(models.FamilyMember.user_id == u.id).first()
+        family_name = ""
+        if membership:
+            family = db.query(models.Family).filter(models.Family.id == membership.family_id).first()
+            family_name = family.name if family else ""
+        result.append({
+            "id": u.id, "name": u.name, "email": u.email,
+            "phone": u.phone or "", "is_active": u.is_active,
+            "status": "active" if u.is_active else "inactive",
+            "devices": device_count, "family_name": family_name,
+            "created_at": u.created_at.isoformat() if u.created_at else None,
+            "avatar": (u.name[:2].upper() if u.name and len(u.name) >= 2 else (u.name[0].upper() if u.name else "?")),
+        })
+    return {"total": total, "users": result}
+
+@router.post("/users")
+def create_user(data: UserCreateRequest, admin=Depends(get_current_admin), db: Session = Depends(get_db)):
+    if db.query(models.User).filter(models.User.email == data.email).first():
+        raise HTTPException(status_code=400, detail="Email already registered")
+    user = models.User(
+        name=data.name, email=data.email, phone=data.phone,
+        password_hash=get_password_hash(data.password), is_active=True,
+    )
+    db.add(user)
+    db.commit()
+    db.refresh(user)
+    return {"message": "User created", "id": user.id}
+
+@router.put("/users/{user_id}")
+def update_user(user_id: int, data: UserUpdateRequest, admin=Depends(get_current_admin), db: Session = Depends(get_db)):
+    user = db.query(models.User).filter(models.User.id == user_id).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    if data.name is not None:
+        user.name = data.name
+    if data.email is not None:
+        if db.query(models.User).filter(models.User.email == data.email, models.User.id != user_id).first():
+            raise HTTPException(status_code=400, detail="Email already in use")
+        user.email = data.email
+    if data.phone is not None:
+        user.phone = data.phone
+    db.commit()
+    return {"message": "User updated"}
+
+@router.patch("/users/{user_id}/status")
+def update_user_status(user_id: int, data: UserStatusRequest, admin=Depends(get_current_admin), db: Session = Depends(get_db)):
+    user = db.query(models.User).filter(models.User.id == user_id).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    user.is_active = data.is_active
+    db.commit()
+    return {"message": "Status updated"}
+
+@router.post("/users/{user_id}/change-password")
+def change_user_password(user_id: int, data: UserPasswordRequest, admin=Depends(get_current_admin), db: Session = Depends(get_db)):
+    user = db.query(models.User).filter(models.User.id == user_id).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    if len(data.new_password) < 6:
+        raise HTTPException(status_code=400, detail="Password must be at least 6 characters")
+    user.password_hash = get_password_hash(data.new_password)
+    db.commit()
+    return {"message": "Password changed"}
+
+@router.delete("/users/{user_id}")
+def delete_user(user_id: int, admin=Depends(get_current_admin), db: Session = Depends(get_db)):
+    user = db.query(models.User).filter(models.User.id == user_id).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    db.delete(user)
+    db.commit()
+    return {"message": "User deleted"}

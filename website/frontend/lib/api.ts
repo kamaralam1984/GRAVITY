@@ -26,6 +26,7 @@ export interface FamilyItem { id: number; name: string; plan: string; member_cou
 export interface DeviceItem { id: number; device_name: string; os: string; os_version: string; app_version: string; battery_level: number; is_online: boolean; last_seen: string; owner_name: string; owner_id: number }
 export interface SOSAlert { id: number; user_name: string; family_name: string; place_name: string; lat: number; lng: number; triggered_at: string; resolved_at?: string; status: string }
 export interface Notification { id: number; title: string; body: string; type: string; target: string; sent_count: number; delivered_count: number; opened_count: number; sent_at: string }
+export interface AdminUser { id: number; name: string; email: string; phone: string; is_active: boolean; status: string; devices: number; family_name: string; created_at: string; avatar: string }
 
 // ── Admin API ─────────────────────────────────────────────────────
 export const adminApi = {
@@ -60,6 +61,26 @@ export const adminApi = {
     apiFetch("/admin-api/notifications/send", { method: "POST", body: JSON.stringify(data) }, true),
 
   analytics: () => apiFetch<any>("/admin-api/analytics", {}, true),
+
+  // User management
+  users: (params?: { skip?: number; limit?: number; search?: string; status?: string }) => {
+    const q = new URLSearchParams()
+    if (params?.skip !== undefined) q.set('skip', String(params.skip))
+    if (params?.limit !== undefined) q.set('limit', String(params.limit))
+    if (params?.search) q.set('search', params.search)
+    if (params?.status) q.set('status', params.status)
+    return apiFetch<{ total: number; users: AdminUser[] }>(`/admin-api/users?${q}`, {}, true)
+  },
+  createUser: (data: { name: string; email: string; phone?: string; password: string }) =>
+    apiFetch<{ message: string; id: number }>('/admin-api/users', { method: 'POST', body: JSON.stringify(data) }, true),
+  updateUser: (id: number, data: { name?: string; email?: string; phone?: string }) =>
+    apiFetch<{ message: string }>(`/admin-api/users/${id}`, { method: 'PUT', body: JSON.stringify(data) }, true),
+  updateUserStatus: (id: number, is_active: boolean) =>
+    apiFetch<{ message: string }>(`/admin-api/users/${id}/status`, { method: 'PATCH', body: JSON.stringify({ is_active }) }, true),
+  changeUserPassword: (id: number, new_password: string) =>
+    apiFetch<{ message: string }>(`/admin-api/users/${id}/change-password`, { method: 'POST', body: JSON.stringify({ new_password }) }, true),
+  deleteUser: (id: number) =>
+    apiFetch<{ message: string }>(`/admin-api/users/${id}`, { method: 'DELETE' }, true),
 }
 
 // ── User Auth API ────────────────────────────────────────────────
