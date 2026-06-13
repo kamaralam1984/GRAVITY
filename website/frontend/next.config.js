@@ -27,6 +27,21 @@ const nextConfig = {
     removeConsole: process.env.NODE_ENV === 'production',
   },
 
+  async rewrites() {
+    const API = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8001'
+    const base = API.replace(/\/api$/, '')
+    const routes = [
+      'auth', 'admin-api', 'families', 'devices', 'geofences', 'sos',
+      'check-ins', 'journeys', 'chat', 'driving', 'health', 'notifications',
+      'plans', 'emergency-profile', 'support', 'audit', 'coupons', 'payments',
+      'ai', 'location', 'subscriptions', 'security-logs', 'social-auth',
+    ]
+    return routes.flatMap(r => [
+      { source: `/${r}`, destination: `${base}/${r}` },
+      { source: `/${r}/:path*`, destination: `${base}/${r}/:path*` },
+    ])
+  },
+
   async headers() {
     return [
       {
