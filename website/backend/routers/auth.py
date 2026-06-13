@@ -148,13 +148,17 @@ def login_unified(data: UserLogin, db: Session = Depends(get_db)):
     admin = db.query(models.AdminUser).filter(models.AdminUser.email == data.email).first()
     if admin and verify_password(data.password, admin.password_hash):
         token = create_access_token({"sub": admin.id, "is_admin": True})
+        # Normalize legacy "superadmin" → "super_admin" (DB may have old format)
+        role = admin.role
+        if role == "superadmin":
+            role = "super_admin"
         user_payload = UserResponse(
             id=admin.id,
             name=admin.name,
             email=admin.email,
             phone=getattr(admin, "phone", None),
             is_active=getattr(admin, "is_active", True),
-            role=admin.role,
+            role=role,
         )
         return {"access_token": token, "token_type": "bearer", "user": user_payload}
 
