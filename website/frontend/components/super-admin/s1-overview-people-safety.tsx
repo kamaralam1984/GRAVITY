@@ -648,6 +648,7 @@ const childStatusColor: Record<string, string> = {
 export function ChildrenSection() {
   const [search, setSearch] = useState('')
   const [statusFilter, setStatusFilter] = useState('All')
+  const [hoveredRow, setHoveredRow] = useState<number | null>(null)
 
   const filtered = childrenData.filter(c => {
     const matchStatus = statusFilter === 'All' || c.status === statusFilter
@@ -658,6 +659,18 @@ export function ChildrenSection() {
     return matchStatus && matchSearch
   })
 
+  const countAll = childrenData.length
+  const countSafe = childrenData.filter(c => c.status === 'Safe').length
+  const countAlert = childrenData.filter(c => c.status === 'Alert').length
+  const countOffline = childrenData.filter(c => c.status === 'Offline').length
+
+  const filterCounts: Record<string, number> = {
+    All: countAll,
+    Safe: countSafe,
+    Alert: countAlert,
+    Offline: countOffline,
+  }
+
   return (
     <div>
       <SectionHeader
@@ -666,18 +679,78 @@ export function ChildrenSection() {
       />
 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 16, marginBottom: 24 }}>
-        <StatCard label="Total Children" value="1,24,891" sub="+2,340 this week" icon={Users} />
-        <StatCard label="Safe Now" value="1,21,340" sub="97.2% safety rate" icon={Shield} iconColor="#10B981" />
-        <StatCard label="In School Hours" value="89,234" sub="Active school tracking" icon={Activity} iconColor="#3B82F6" />
-        <StatCard label="Alerts Today" value="47" sub="12 unresolved" subColor="#EF4444" icon={AlertTriangle} iconColor="#EF4444" />
+        <div style={{ background: 'var(--bg-surface)', border: '1px solid var(--border)', borderRadius: 12, padding: 20 }}>
+          <div style={{ marginBottom: 10 }}><Users size={18} color="var(--gold)" /></div>
+          <div style={{ fontSize: 12, color: 'var(--text-muted)', fontWeight: 500, marginBottom: 8 }}>Total Children</div>
+          <div style={{ fontSize: 28, fontWeight: 800, color: 'var(--text-primary)' }}>1,24,891</div>
+          <div style={{ fontSize: 12, color: '#10B981', marginTop: 6, display: 'flex', alignItems: 'center', gap: 4 }}>
+            <TrendingUp size={12} /><span>+2,340 this week</span>
+          </div>
+        </div>
+        <div style={{ background: 'var(--bg-surface)', border: '1px solid var(--border)', borderRadius: 12, padding: 20 }}>
+          <div style={{ marginBottom: 10 }}><Shield size={18} color="#10B981" /></div>
+          <div style={{ fontSize: 12, color: 'var(--text-muted)', fontWeight: 500, marginBottom: 8 }}>Safe Now</div>
+          <div style={{ fontSize: 28, fontWeight: 800, color: 'var(--text-primary)' }}>1,21,340</div>
+          <div style={{ fontSize: 12, color: '#10B981', marginTop: 6, display: 'flex', alignItems: 'center', gap: 4 }}>
+            <TrendingUp size={12} /><span>97.2% safety rate</span>
+          </div>
+        </div>
+        <div style={{ background: 'var(--bg-surface)', border: '1px solid var(--border)', borderRadius: 12, padding: 20 }}>
+          <div style={{ marginBottom: 10 }}><Activity size={18} color="#3B82F6" /></div>
+          <div style={{ fontSize: 12, color: 'var(--text-muted)', fontWeight: 500, marginBottom: 8 }}>In School Hours</div>
+          <div style={{ fontSize: 28, fontWeight: 800, color: 'var(--text-primary)' }}>89,234</div>
+          <div style={{ fontSize: 12, color: '#3B82F6', marginTop: 6, display: 'flex', alignItems: 'center', gap: 4 }}>
+            <TrendingUp size={12} /><span>Active school tracking</span>
+          </div>
+        </div>
+        <div style={{ background: 'var(--bg-surface)', border: '1px solid var(--border)', borderRadius: 12, padding: 20 }}>
+          <div style={{ marginBottom: 10 }}><AlertTriangle size={18} color="#EF4444" /></div>
+          <div style={{ fontSize: 12, color: 'var(--text-muted)', fontWeight: 500, marginBottom: 8 }}>Alerts Today</div>
+          <div style={{ fontSize: 28, fontWeight: 800, color: 'var(--text-primary)' }}>47</div>
+          <div style={{ fontSize: 12, color: '#EF4444', marginTop: 6, display: 'flex', alignItems: 'center', gap: 4 }}>
+            <TrendingDown size={12} /><span>12 unresolved</span>
+          </div>
+        </div>
       </div>
 
       <div style={{ background: 'var(--bg-surface)', border: '1px solid var(--border)', borderRadius: 12, overflow: 'hidden' }}>
-        <div style={{ padding: '12px 20px', borderBottom: '1px solid var(--border)', display: 'flex', gap: 10, flexWrap: 'wrap' as const }}>
+        <div style={{ padding: '12px 20px', borderBottom: '1px solid var(--border)', display: 'flex', gap: 10, flexWrap: 'wrap' as const, alignItems: 'center' }}>
           <SearchBar value={search} onChange={setSearch} placeholder="Search by name, school, parent..." />
-          {['All', 'Safe', 'Alert', 'Offline'].map(s => (
-            <FilterBtn key={s} active={statusFilter === s} onClick={() => setStatusFilter(s)}>{s}</FilterBtn>
+          {(['All', 'Safe', 'Alert', 'Offline'] as const).map(s => (
+            <FilterBtn key={s} active={statusFilter === s} onClick={() => setStatusFilter(s)}>
+              <span style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
+                {s}
+                <span style={{
+                  background: statusFilter === s ? 'rgba(0,0,0,0.2)' : 'var(--bg-surface)',
+                  color: statusFilter === s ? '#000' : 'var(--text-muted)',
+                  border: `1px solid ${statusFilter === s ? 'rgba(0,0,0,0.15)' : 'var(--border)'}`,
+                  borderRadius: 99,
+                  fontSize: 10,
+                  fontWeight: 700,
+                  padding: '1px 6px',
+                  minWidth: 18,
+                  textAlign: 'center' as const,
+                }}>{filterCounts[s]}</span>
+              </span>
+            </FilterBtn>
           ))}
+          <button style={{
+            marginLeft: 'auto',
+            display: 'flex',
+            alignItems: 'center',
+            gap: 5,
+            background: 'var(--bg-surface2)',
+            border: '1px solid var(--border)',
+            borderRadius: 6,
+            padding: '5px 12px',
+            fontSize: 12,
+            fontWeight: 600,
+            color: 'var(--text-secondary)',
+            cursor: 'pointer',
+            whiteSpace: 'nowrap' as const,
+          }}>
+            <FileText size={12} />Export CSV
+          </button>
         </div>
         <div style={{ overflowX: 'auto' }}>
           <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: 900 }}>
@@ -687,29 +760,84 @@ export function ChildrenSection() {
               </tr>
             </thead>
             <tbody>
-              {filtered.map((c, i) => (
-                <tr key={i} style={{ borderBottom: '1px solid var(--border)' }}>
-                  <TD><span style={{ fontWeight: 600 }}>{c.name}</span></TD>
-                  <TD muted>{c.age} yrs</TD>
-                  <td style={{ padding: '12px 20px', fontSize: 12, color: 'var(--text-muted)', maxWidth: 160, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' as const }}>{c.school}</td>
-                  <TD>{c.parent}</TD>
-                  <TD muted>{c.device}</TD>
-                  <TD>{badge(c.status, childStatusColor[c.status])}</TD>
-                  <td style={{ padding: '12px 20px', fontSize: 12, color: 'var(--text-secondary)' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-                      <MapPin size={11} color="var(--text-muted)" />{c.location}
-                    </div>
-                  </td>
-                  <TD muted>{c.lastSeen}</TD>
-                  <td style={{ padding: '12px 20px' }}>
-                    <button style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)' }}>
-                      <Eye size={14} />
-                    </button>
-                  </td>
-                </tr>
-              ))}
+              {filtered.map((c, i) => {
+                const isAlert = c.status === 'Alert'
+                const isOffline = c.status === 'Offline'
+                const borderLeft = isAlert
+                  ? '3px solid #EF4444'
+                  : isOffline
+                  ? '3px solid #6B7280'
+                  : '3px solid transparent'
+                return (
+                  <tr
+                    key={i}
+                    onMouseEnter={() => setHoveredRow(i)}
+                    onMouseLeave={() => setHoveredRow(null)}
+                    style={{
+                      borderBottom: '1px solid var(--border)',
+                      borderLeft,
+                      background: hoveredRow === i ? 'var(--bg-surface2)' : 'transparent',
+                      transition: 'background 0.15s',
+                    }}
+                  >
+                    <td style={{ padding: '12px 20px', whiteSpace: 'nowrap' as const }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                        <div style={{
+                          width: 28,
+                          height: 28,
+                          borderRadius: '50%',
+                          background: '#3B82F620',
+                          color: '#3B82F6',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          fontSize: 12,
+                          fontWeight: 700,
+                          flexShrink: 0,
+                        }}>
+                          {c.name.charAt(0)}
+                        </div>
+                        <span style={{ fontWeight: 600, fontSize: 13, color: 'var(--text-primary)' }}>{c.name}</span>
+                      </div>
+                    </td>
+                    <TD muted>{c.age} yrs</TD>
+                    <td style={{ padding: '12px 20px', fontSize: 12, color: 'var(--text-muted)', maxWidth: 160, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' as const }}>{c.school}</td>
+                    <TD>{c.parent}</TD>
+                    <TD muted>{c.device}</TD>
+                    <TD>{badge(c.status, childStatusColor[c.status])}</TD>
+                    <td style={{ padding: '12px 20px', fontSize: 12, color: 'var(--text-secondary)' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                        <MapPin size={11} color="var(--text-muted)" />{c.location}
+                      </div>
+                    </td>
+                    <TD muted>{c.lastSeen}</TD>
+                    <td style={{ padding: '12px 20px' }}>
+                      <button style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)' }}>
+                        <Eye size={14} />
+                      </button>
+                    </td>
+                  </tr>
+                )
+              })}
             </tbody>
           </table>
+        </div>
+        <div style={{
+          padding: '12px 20px',
+          borderTop: '1px solid var(--border)',
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          fontSize: 12,
+          color: 'var(--text-muted)',
+        }}>
+          <span>Showing {filtered.length} of 1,24,891 children</span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <button style={{ background: 'var(--bg-surface2)', border: '1px solid var(--border)', borderRadius: 4, padding: '3px 8px', fontSize: 12, color: 'var(--text-secondary)', cursor: 'pointer' }}>Prev</button>
+            <span style={{ fontWeight: 600, color: 'var(--text-primary)' }}>Page 1</span>
+            <span>of 8,326</span>
+            <button style={{ background: 'var(--bg-surface2)', border: '1px solid var(--border)', borderRadius: 4, padding: '3px 8px', fontSize: 12, color: 'var(--text-secondary)', cursor: 'pointer' }}>Next</button>
+          </div>
         </div>
       </div>
     </div>
@@ -740,6 +868,7 @@ const healthColor: Record<string, string> = {
 export function ElderlySection() {
   const [search, setSearch] = useState('')
   const [healthFilter, setHealthFilter] = useState('All')
+  const [hoveredRow, setHoveredRow] = useState<number | null>(null)
 
   const filtered = elderlyData.filter(e => {
     const matchHealth = healthFilter === 'All' || e.health === healthFilter
@@ -749,6 +878,13 @@ export function ElderlySection() {
     return matchHealth && matchSearch
   })
 
+  const filterCounts: Record<string, number> = {
+    All: elderlyData.length,
+    Stable: elderlyData.filter(e => e.health === 'Stable').length,
+    'At Risk': elderlyData.filter(e => e.health === 'At Risk').length,
+    Critical: elderlyData.filter(e => e.health === 'Critical').length,
+  }
+
   return (
     <div>
       <SectionHeader
@@ -757,17 +893,60 @@ export function ElderlySection() {
       />
 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 16, marginBottom: 24 }}>
-        <StatCard label="Total Elderly" value="23,450" sub="+320 this month" icon={Heart} />
-        <StatCard label="Active Monitoring" value="21,100" sub="90% coverage" icon={Activity} iconColor="#10B981" />
-        <StatCard label="Fall Alerts Today" value="8" sub="3 unresolved" subColor="#EF4444" icon={AlertTriangle} iconColor="#EF4444" />
-        <StatCard label="Medication Due" value="1,234" sub="Next 2 hours" subColor="#F59E0B" icon={Bell} iconColor="#F59E0B" />
+        <div style={{ background: 'var(--bg-surface)', border: '1px solid var(--border)', borderRadius: 12, padding: 20 }}>
+          <div style={{ marginBottom: 10 }}><Heart size={18} color="var(--gold)" /></div>
+          <div style={{ fontSize: 12, color: 'var(--text-muted)', fontWeight: 500, marginBottom: 8 }}>Total Elderly</div>
+          <div style={{ fontSize: 28, fontWeight: 800, color: 'var(--text-primary)' }}>23,450</div>
+          <div style={{ fontSize: 12, color: '#10B981', marginTop: 6, display: 'flex', alignItems: 'center', gap: 4 }}>
+            <TrendingUp size={12} /><span>+320 this month</span>
+          </div>
+        </div>
+        <div style={{ background: 'var(--bg-surface)', border: '1px solid var(--border)', borderRadius: 12, padding: 20 }}>
+          <div style={{ marginBottom: 10 }}><Activity size={18} color="#10B981" /></div>
+          <div style={{ fontSize: 12, color: 'var(--text-muted)', fontWeight: 500, marginBottom: 8 }}>Active Monitoring</div>
+          <div style={{ fontSize: 28, fontWeight: 800, color: 'var(--text-primary)' }}>21,100</div>
+          <div style={{ fontSize: 12, color: '#10B981', marginTop: 6, display: 'flex', alignItems: 'center', gap: 4 }}>
+            <TrendingUp size={12} /><span>90% coverage</span>
+          </div>
+        </div>
+        <div style={{ background: 'var(--bg-surface)', border: '1px solid var(--border)', borderRadius: 12, padding: 20 }}>
+          <div style={{ marginBottom: 10 }}><AlertTriangle size={18} color="#EF4444" /></div>
+          <div style={{ fontSize: 12, color: 'var(--text-muted)', fontWeight: 500, marginBottom: 8 }}>Fall Alerts Today</div>
+          <div style={{ fontSize: 28, fontWeight: 800, color: 'var(--text-primary)' }}>8</div>
+          <div style={{ fontSize: 12, color: '#EF4444', marginTop: 6, display: 'flex', alignItems: 'center', gap: 4 }}>
+            <TrendingDown size={12} /><span>3 unresolved</span>
+          </div>
+        </div>
+        <div style={{ background: 'var(--bg-surface)', border: '1px solid var(--border)', borderRadius: 12, padding: 20 }}>
+          <div style={{ marginBottom: 10 }}><Bell size={18} color="#F59E0B" /></div>
+          <div style={{ fontSize: 12, color: 'var(--text-muted)', fontWeight: 500, marginBottom: 8 }}>Medication Due</div>
+          <div style={{ fontSize: 28, fontWeight: 800, color: 'var(--text-primary)' }}>1,234</div>
+          <div style={{ fontSize: 12, color: '#F59E0B', marginTop: 6, display: 'flex', alignItems: 'center', gap: 4 }}>
+            <Clock size={12} /><span>Next 2 hours</span>
+          </div>
+        </div>
       </div>
 
       <div style={{ background: 'var(--bg-surface)', border: '1px solid var(--border)', borderRadius: 12, overflow: 'hidden' }}>
-        <div style={{ padding: '12px 20px', borderBottom: '1px solid var(--border)', display: 'flex', gap: 10, flexWrap: 'wrap' as const }}>
+        <div style={{ padding: '12px 20px', borderBottom: '1px solid var(--border)', display: 'flex', gap: 10, flexWrap: 'wrap' as const, alignItems: 'center' }}>
           <SearchBar value={search} onChange={setSearch} placeholder="Search by name or caregiver..." />
-          {['All', 'Stable', 'At Risk', 'Critical'].map(s => (
-            <FilterBtn key={s} active={healthFilter === s} onClick={() => setHealthFilter(s)}>{s}</FilterBtn>
+          {(['All', 'Stable', 'At Risk', 'Critical'] as const).map(s => (
+            <FilterBtn key={s} active={healthFilter === s} onClick={() => setHealthFilter(s)}>
+              <span style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
+                {s}
+                <span style={{
+                  background: healthFilter === s ? 'rgba(0,0,0,0.2)' : 'var(--bg-surface)',
+                  color: healthFilter === s ? '#000' : 'var(--text-muted)',
+                  border: `1px solid ${healthFilter === s ? 'rgba(0,0,0,0.15)' : 'var(--border)'}`,
+                  borderRadius: 99,
+                  fontSize: 10,
+                  fontWeight: 700,
+                  padding: '1px 6px',
+                  minWidth: 18,
+                  textAlign: 'center' as const,
+                }}>{filterCounts[s]}</span>
+              </span>
+            </FilterBtn>
           ))}
         </div>
         <div style={{ overflowX: 'auto' }}>
@@ -778,28 +957,93 @@ export function ElderlySection() {
               </tr>
             </thead>
             <tbody>
-              {filtered.map((e, i) => (
-                <tr key={i} style={{ borderBottom: '1px solid var(--border)' }}>
-                  <TD><span style={{ fontWeight: 600 }}>{e.name}</span></TD>
-                  <TD muted>{e.age} yrs</TD>
-                  <TD>{e.caregiver}</TD>
-                  <TD>{badge(e.health, healthColor[e.health])}</TD>
-                  <TD muted>{e.lastCheckin}</TD>
-                  <TD muted>{e.device}</TD>
-                  <td style={{ padding: '12px 20px', fontSize: 12, color: 'var(--text-secondary)' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-                      <MapPin size={11} color="var(--text-muted)" />{e.location}
-                    </div>
-                  </td>
-                  <td style={{ padding: '12px 20px' }}>
-                    <button style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)' }}>
-                      <Eye size={14} />
-                    </button>
-                  </td>
-                </tr>
-              ))}
+              {filtered.map((e, i) => {
+                const isCritical = e.health === 'Critical'
+                const isAtRisk = e.health === 'At Risk'
+                const avatarBg = isCritical ? '#EF444420' : isAtRisk ? '#F59E0B20' : '#10B98120'
+                const avatarColor = isCritical ? '#EF4444' : isAtRisk ? '#F59E0B' : '#10B981'
+                const borderLeft = isCritical
+                  ? '3px solid #EF4444'
+                  : isAtRisk
+                  ? '3px solid #F59E0B'
+                  : '3px solid transparent'
+                const rowBg = isCritical ? '#EF44440a' : isAtRisk ? '#F59E0B08' : 'transparent'
+                return (
+                  <tr
+                    key={i}
+                    onMouseEnter={() => setHoveredRow(i)}
+                    onMouseLeave={() => setHoveredRow(null)}
+                    style={{
+                      borderBottom: '1px solid var(--border)',
+                      borderLeft,
+                      background: hoveredRow === i ? 'var(--bg-surface2)' : rowBg,
+                      transition: 'background 0.15s',
+                    }}
+                  >
+                    <td style={{ padding: '12px 20px', whiteSpace: 'nowrap' as const }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                        <div style={{
+                          width: 28,
+                          height: 28,
+                          borderRadius: '50%',
+                          background: avatarBg,
+                          color: avatarColor,
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          fontSize: 12,
+                          fontWeight: 700,
+                          flexShrink: 0,
+                        }}>
+                          {e.name.charAt(0)}
+                        </div>
+                        <span style={{ fontWeight: 600, fontSize: 13, color: 'var(--text-primary)' }}>{e.name}</span>
+                      </div>
+                    </td>
+                    <TD muted>{e.age} yrs</TD>
+                    <TD>{e.caregiver}</TD>
+                    <TD>{badge(e.health, healthColor[e.health])}</TD>
+                    <TD muted>{e.lastCheckin}</TD>
+                    <TD muted>{e.device}</TD>
+                    <td style={{ padding: '12px 20px', fontSize: 12, color: 'var(--text-secondary)' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                        <MapPin size={11} color="var(--text-muted)" />{e.location}
+                      </div>
+                    </td>
+                    <td style={{ padding: '12px 20px' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                        <button style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)' }}>
+                          <Eye size={14} />
+                        </button>
+                        {isCritical && (
+                          <button style={{
+                            background: '#EF444420',
+                            color: '#EF4444',
+                            border: '1px solid #EF444433',
+                            fontSize: 11,
+                            fontWeight: 600,
+                            padding: '3px 8px',
+                            borderRadius: 6,
+                            cursor: 'pointer',
+                          }}>
+                            Alert
+                          </button>
+                        )}
+                      </div>
+                    </td>
+                  </tr>
+                )
+              })}
             </tbody>
           </table>
+        </div>
+        <div style={{
+          padding: '12px 20px',
+          borderTop: '1px solid var(--border)',
+          fontSize: 12,
+          color: 'var(--text-muted)',
+        }}>
+          Showing {filtered.length} of 23,450 elderly members
         </div>
       </div>
     </div>
@@ -841,6 +1085,7 @@ const Stars = ({ rating }: { rating: number }) => {
 export function CaregiversSection() {
   const [search, setSearch] = useState('')
   const [statusFilter, setStatusFilter] = useState('All')
+  const [hoveredRow, setHoveredRow] = useState<number | null>(null)
 
   const filtered = caregiversData.filter(c => {
     const matchStatus = statusFilter === 'All' || c.status === statusFilter
@@ -849,6 +1094,35 @@ export function CaregiversSection() {
       c.phone.includes(search)
     return matchStatus && matchSearch
   })
+
+  const countAll = caregiversData.length
+  const countActive = caregiversData.filter(c => c.status === 'Active').length
+  const countInactive = caregiversData.filter(c => c.status === 'Inactive').length
+
+  const filterCounts: Record<string, number> = {
+    All: countAll,
+    Active: countActive,
+    Inactive: countInactive,
+  }
+
+  const getInitials = (name: string) => {
+    const parts = name.trim().split(' ')
+    if (parts.length === 1) return parts[0][0].toUpperCase()
+    return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase()
+  }
+
+  const actionBtn = (color: string) => ({
+    width: 28,
+    height: 28,
+    borderRadius: 7,
+    border: `1px solid ${color}33`,
+    background: `${color}12`,
+    cursor: 'pointer',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    flexShrink: 0,
+  } as React.CSSProperties)
 
   return (
     <div>
@@ -865,39 +1139,159 @@ export function CaregiversSection() {
       </div>
 
       <div style={{ background: 'var(--bg-surface)', border: '1px solid var(--border)', borderRadius: 12, overflow: 'hidden' }}>
-        <div style={{ padding: '12px 20px', borderBottom: '1px solid var(--border)', display: 'flex', gap: 10, flexWrap: 'wrap' as const }}>
+        {/* Toolbar */}
+        <div style={{ padding: '12px 20px', borderBottom: '1px solid var(--border)', display: 'flex', gap: 10, flexWrap: 'wrap' as const, alignItems: 'center' }}>
           <SearchBar value={search} onChange={setSearch} placeholder="Search caregivers..." />
-          {['All', 'Active', 'Inactive'].map(s => (
-            <FilterBtn key={s} active={statusFilter === s} onClick={() => setStatusFilter(s)}>{s}</FilterBtn>
+          {(['All', 'Active', 'Inactive'] as const).map(s => (
+            <FilterBtn key={s} active={statusFilter === s} onClick={() => setStatusFilter(s)}>
+              {s}
+              <span style={{
+                marginLeft: 5,
+                background: statusFilter === s ? 'rgba(0,0,0,0.18)' : 'var(--border)',
+                color: statusFilter === s ? '#000' : 'var(--text-muted)',
+                borderRadius: 99,
+                padding: '0 5px',
+                fontSize: 10,
+                fontWeight: 700,
+                lineHeight: '16px',
+                display: 'inline-block',
+                minWidth: 18,
+                textAlign: 'center',
+              }}>{filterCounts[s]}</span>
+            </FilterBtn>
           ))}
+          <div style={{ marginLeft: 'auto' }}>
+            <button style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 5,
+              background: 'var(--bg-surface2)',
+              border: '1px solid var(--border)',
+              borderRadius: 6,
+              padding: '5px 12px',
+              fontSize: 12,
+              fontWeight: 600,
+              color: 'var(--text-secondary)',
+              cursor: 'pointer',
+              whiteSpace: 'nowrap' as const,
+            }}>
+              <FileText size={12} />
+              Export
+            </button>
+          </div>
         </div>
-        <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-          <thead>
-            <tr style={{ borderBottom: '1px solid var(--border)', background: 'var(--bg-surface2)' }}>
-              <TH>Name</TH><TH>Phone</TH><TH>Assigned Elders</TH><TH>Status</TH><TH>Last Active</TH><TH>Rating</TH><TH>Actions</TH>
-            </tr>
-          </thead>
-          <tbody>
-            {filtered.map((c, i) => (
-              <tr key={i} style={{ borderBottom: '1px solid var(--border)' }}>
-                <TD><span style={{ fontWeight: 600 }}>{c.name}</span></TD>
-                <TD muted>{c.phone}</TD>
-                <td style={{ padding: '12px 20px' }}>
-                  <span style={{ fontSize: 14, fontWeight: 700, color: 'var(--text-primary)' }}>{c.elders}</span>
-                  <span style={{ fontSize: 11, color: 'var(--text-muted)', marginLeft: 4 }}>elders</span>
-                </td>
-                <TD>{badge(c.status, c.status === 'Active' ? '#10B981' : '#6B7280')}</TD>
-                <TD muted>{c.lastActive}</TD>
-                <td style={{ padding: '12px 20px' }}><Stars rating={c.rating} /></td>
-                <td style={{ padding: '12px 20px' }}>
-                  <button style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)' }}>
-                    <Eye size={14} />
-                  </button>
-                </td>
+
+        {/* Table */}
+        <div style={{ overflowX: 'auto' }}>
+          <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: 800 }}>
+            <thead>
+              <tr style={{ borderBottom: '1px solid var(--border)', background: 'var(--bg-surface2)' }}>
+                <TH>Name</TH><TH>Phone</TH><TH>Assigned Elders</TH><TH>Status</TH><TH>Last Active</TH><TH>Rating</TH><TH>Actions</TH>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {filtered.map((c, i) => {
+                const isActive = c.status === 'Active'
+                const avatarBg = isActive ? '#10B98120' : '#6B728020'
+                const avatarColor = isActive ? '#10B981' : '#6B7280'
+                const isHovered = hoveredRow === i
+                return (
+                  <tr
+                    key={i}
+                    onMouseEnter={() => setHoveredRow(i)}
+                    onMouseLeave={() => setHoveredRow(null)}
+                    style={{
+                      borderBottom: '1px solid var(--border)',
+                      borderLeft: isActive ? '3px solid transparent' : '3px solid #6B7280',
+                      opacity: isActive ? 1 : 0.7,
+                      background: isHovered ? 'var(--bg-surface2)' : 'transparent',
+                      transition: 'background 0.15s ease',
+                    }}
+                  >
+                    {/* Name with avatar */}
+                    <td style={{ padding: '12px 20px' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                        <div style={{
+                          width: 32,
+                          height: 32,
+                          borderRadius: '50%',
+                          background: avatarBg,
+                          color: avatarColor,
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          fontSize: 11,
+                          fontWeight: 700,
+                          flexShrink: 0,
+                          border: `1px solid ${avatarColor}33`,
+                        }}>
+                          {getInitials(c.name)}
+                        </div>
+                        <span style={{ fontWeight: 600, color: 'var(--text-primary)', fontSize: 13 }}>{c.name}</span>
+                      </div>
+                    </td>
+
+                    <TD muted>{c.phone}</TD>
+
+                    {/* Elders with workload bar */}
+                    <td style={{ padding: '12px 20px' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                        <span style={{ fontSize: 14, fontWeight: 700, color: 'var(--text-primary)' }}>{c.elders}</span>
+                        <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>elders</span>
+                        <div style={{ width: 40, height: 4, borderRadius: 2, background: 'var(--border)', overflow: 'hidden' }}>
+                          <div style={{
+                            width: `${(c.elders / 5) * 100}%`,
+                            height: '100%',
+                            borderRadius: 2,
+                            background: c.elders >= 4 ? '#F59E0B' : '#10B981',
+                          }} />
+                        </div>
+                      </div>
+                    </td>
+
+                    <TD>{badge(c.status, isActive ? '#10B981' : '#6B7280')}</TD>
+                    <TD muted>{c.lastActive}</TD>
+                    <td style={{ padding: '12px 20px' }}><Stars rating={c.rating} /></td>
+
+                    {/* Actions */}
+                    <td style={{ padding: '12px 20px' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                        <button title="View" style={actionBtn('#60A5FA')}>
+                          <Eye size={13} color="#60A5FA" />
+                        </button>
+                        <button title="Message" style={actionBtn('#10B981')}>
+                          <MessageSquare size={13} color="#10B981" />
+                        </button>
+                        <button title="Call" style={actionBtn('#F59E0B')}>
+                          <Phone size={13} color="#F59E0B" />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                )
+              })}
+            </tbody>
+          </table>
+        </div>
+
+        {/* Pagination footer */}
+        <div style={{
+          padding: '12px 20px',
+          borderTop: '1px solid var(--border)',
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          fontSize: 12,
+          color: 'var(--text-muted)',
+        }}>
+          <span>Showing <strong style={{ color: 'var(--text-primary)' }}>{filtered.length}</strong> of <strong style={{ color: 'var(--text-primary)' }}>18,920</strong> caregivers</span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <button style={{ background: 'var(--bg-surface2)', border: '1px solid var(--border)', borderRadius: 4, padding: '3px 8px', fontSize: 12, color: 'var(--text-secondary)', cursor: 'pointer' }}>Prev</button>
+            <span style={{ fontWeight: 600, color: 'var(--text-primary)' }}>Page 1</span>
+            <span>of 1,261</span>
+            <button style={{ background: 'var(--bg-surface2)', border: '1px solid var(--border)', borderRadius: 4, padding: '3px 8px', fontSize: 12, color: 'var(--text-secondary)', cursor: 'pointer' }}>Next</button>
+          </div>
+        </div>
       </div>
     </div>
   )
@@ -918,18 +1312,29 @@ const verificationData = [
   { user: 'Suresh Babu', submitted: '10 Jun 2026', type: 'Aadhaar', status: 'Verified', reviewer: 'Auto', id: 10 },
   { user: 'Anita Desai', submitted: '09 Jun 2026', type: 'Phone', status: 'Pending', reviewer: 'Auto', id: 11 },
   { user: 'Ravi Shankar', submitted: '09 Jun 2026', type: 'Aadhaar', status: 'Verified', reviewer: 'Rohan K', id: 12 },
+  { user: 'Divya Pillai', submitted: '13 Jun 2026', type: 'Aadhaar', status: 'Submitted', reviewer: '—', id: 13 },
+  { user: 'Ramesh Yadav', submitted: '08 Jun 2026', type: 'PAN', status: 'Expired', reviewer: 'Auto', id: 14 },
 ]
 
 const verifStatusColor: Record<string, string> = {
   Pending: '#F59E0B',
   Verified: '#10B981',
   Rejected: '#EF4444',
+  Submitted: '#3B82F6',
+  Expired: '#9CA3AF',
+}
+
+const verifRowLeft: Record<string, string> = {
+  Pending: '3px solid #F59E0B',
+  Submitted: '3px solid #3B82F6',
+  Expired: '3px solid #9CA3AF',
 }
 
 export function UserVerificationSection() {
   const [search, setSearch] = useState('')
   const [typeFilter, setTypeFilter] = useState('All')
   const [statusFilter, setStatusFilter] = useState('All')
+  const [hoveredRow, setHoveredRow] = useState<number | null>(null)
 
   const filtered = verificationData.filter(v => {
     const matchType = typeFilter === 'All' || v.type === typeFilter
@@ -937,6 +1342,38 @@ export function UserVerificationSection() {
     const matchSearch = search === '' || v.user.toLowerCase().includes(search.toLowerCase())
     return matchType && matchStatus && matchSearch
   })
+
+  const typeFilterCounts: Record<string, number> = {
+    All: verificationData.length,
+    Aadhaar: verificationData.filter(v => v.type === 'Aadhaar').length,
+    PAN: verificationData.filter(v => v.type === 'PAN').length,
+    Phone: verificationData.filter(v => v.type === 'Phone').length,
+  }
+
+  const statusFilterCounts: Record<string, number> = {
+    All: verificationData.length,
+    Submitted: verificationData.filter(v => v.status === 'Submitted').length,
+    Pending: verificationData.filter(v => v.status === 'Pending').length,
+    Verified: verificationData.filter(v => v.status === 'Verified').length,
+    Rejected: verificationData.filter(v => v.status === 'Rejected').length,
+    Expired: verificationData.filter(v => v.status === 'Expired').length,
+  }
+
+  const countBadge = (count: number, active: boolean) => (
+    <span style={{
+      marginLeft: 5,
+      background: active ? 'rgba(0,0,0,0.18)' : 'var(--border)',
+      color: active ? '#000' : 'var(--text-muted)',
+      borderRadius: 99,
+      padding: '0 5px',
+      fontSize: 10,
+      fontWeight: 700,
+      lineHeight: '16px',
+      display: 'inline-block',
+      minWidth: 18,
+      textAlign: 'center' as const,
+    }}>{count}</span>
+  )
 
   return (
     <div>
@@ -946,54 +1383,119 @@ export function UserVerificationSection() {
       />
 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 16, marginBottom: 24 }}>
-        <StatCard label="Pending" value="234" sub="Avg wait: 4h" subColor="#F59E0B" icon={Clock} iconColor="#F59E0B" />
-        <StatCard label="Verified Today" value="89" sub="+23 vs yesterday" icon={UserCheck} iconColor="#10B981" />
+        <StatCard label="Pending Review" value="234" sub="Avg wait: 4h 12m" subColor="#F59E0B" icon={Clock} iconColor="#F59E0B" />
+        <StatCard label="Verified Today" value="89" sub="+23 vs yesterday (+35%)" icon={UserCheck} iconColor="#10B981" />
         <StatCard label="Rejected Today" value="12" sub="5.2% rejection rate" subColor="#EF4444" icon={UserX} iconColor="#EF4444" />
-        <StatCard label="Auto-approved" value="456" sub="Via Aadhaar API" icon={Zap} />
+        <StatCard label="Auto-approved" value="456" sub="Aadhaar API — 73% of total" icon={Zap} iconColor="#3B82F6" />
       </div>
 
       <div style={{ background: 'var(--bg-surface)', border: '1px solid var(--border)', borderRadius: 12, overflow: 'hidden' }}>
-        <div style={{ padding: '12px 20px', borderBottom: '1px solid var(--border)', display: 'flex', gap: 10, flexWrap: 'wrap' as const }}>
+        {/* Toolbar */}
+        <div style={{ padding: '12px 20px', borderBottom: '1px solid var(--border)', display: 'flex', gap: 10, flexWrap: 'wrap' as const, alignItems: 'center' }}>
           <SearchBar value={search} onChange={setSearch} placeholder="Search users..." />
-          {['All', 'Aadhaar', 'PAN', 'Phone'].map(t => (
-            <FilterBtn key={t} active={typeFilter === t} onClick={() => setTypeFilter(t)}>{t}</FilterBtn>
+          {(['All', 'Aadhaar', 'PAN', 'Phone'] as const).map(t => (
+            <FilterBtn key={t} active={typeFilter === t} onClick={() => setTypeFilter(t)}>
+              {t}{countBadge(typeFilterCounts[t], typeFilter === t)}
+            </FilterBtn>
           ))}
-          <div style={{ width: 1, background: 'var(--border)' }} />
-          {['All', 'Pending', 'Verified', 'Rejected'].map(s => (
-            <FilterBtn key={s} active={statusFilter === s} onClick={() => setStatusFilter(s)}>{s}</FilterBtn>
+          <div style={{ width: 1, background: 'var(--border)', alignSelf: 'stretch' }} />
+          {(['All', 'Submitted', 'Pending', 'Verified', 'Rejected', 'Expired'] as const).map(s => (
+            <FilterBtn key={s} active={statusFilter === s} onClick={() => setStatusFilter(s)}>
+              {s}{countBadge(statusFilterCounts[s], statusFilter === s)}
+            </FilterBtn>
           ))}
+          <div style={{ marginLeft: 'auto' }}>
+            <button style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 6,
+              background: 'var(--bg-surface2)',
+              border: '1px solid var(--border)',
+              borderRadius: 8,
+              padding: '6px 12px',
+              fontSize: 12,
+              fontWeight: 600,
+              color: 'var(--text-secondary)',
+              cursor: 'pointer',
+            }}>
+              <FileText size={13} />
+              Export
+            </button>
+          </div>
         </div>
-        <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-          <thead>
-            <tr style={{ borderBottom: '1px solid var(--border)', background: 'var(--bg-surface2)' }}>
-              <TH>User</TH><TH>Submitted</TH><TH>Type</TH><TH>Status</TH><TH>Reviewer</TH><TH>Actions</TH>
-            </tr>
-          </thead>
-          <tbody>
-            {filtered.map((v, i) => (
-              <tr key={i} style={{ borderBottom: '1px solid var(--border)' }}>
-                <TD><span style={{ fontWeight: 600 }}>{v.user}</span></TD>
-                <TD muted>{v.submitted}</TD>
-                <TD>
-                  <span style={{ background: 'var(--bg-surface2)', border: '1px solid var(--border)', fontSize: 11, fontWeight: 600, padding: '2px 8px', borderRadius: 6, color: 'var(--text-secondary)' }}>{v.type}</span>
-                </TD>
-                <TD>{badge(v.status, verifStatusColor[v.status])}</TD>
-                <TD muted>{v.reviewer}</TD>
-                <td style={{ padding: '12px 20px', display: 'flex', gap: 6, alignItems: 'center' }}>
-                  {v.status === 'Pending' && (
-                    <>
-                      <button style={{ background: '#10B98120', color: '#10B981', border: '1px solid #10B98133', fontSize: 11, fontWeight: 600, padding: '3px 8px', borderRadius: 6, cursor: 'pointer' }}>Approve</button>
-                      <button style={{ background: '#EF444420', color: '#EF4444', border: '1px solid #EF444433', fontSize: 11, fontWeight: 600, padding: '3px 8px', borderRadius: 6, cursor: 'pointer' }}>Reject</button>
-                    </>
-                  )}
-                  <button style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)' }}>
-                    <Eye size={13} />
-                  </button>
-                </td>
+
+        {/* Table */}
+        <div style={{ overflowX: 'auto' }}>
+          <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: 700 }}>
+            <thead>
+              <tr style={{ borderBottom: '1px solid var(--border)', background: 'var(--bg-surface2)' }}>
+                <TH>User</TH><TH>Submitted</TH><TH>Type</TH><TH>Status</TH><TH>Reviewer</TH><TH>Actions</TH>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {filtered.map((v, i) => {
+                const isHovered = hoveredRow === i
+                const leftBorder = verifRowLeft[v.status]
+                const isExpired = v.status === 'Expired'
+                return (
+                  <tr
+                    key={i}
+                    onMouseEnter={() => setHoveredRow(i)}
+                    onMouseLeave={() => setHoveredRow(null)}
+                    style={{
+                      borderBottom: '1px solid var(--border)',
+                      borderLeft: leftBorder || 'none',
+                      background: isHovered ? 'var(--bg-surface2)' : 'transparent',
+                      opacity: isExpired ? 0.8 : 1,
+                      transition: 'background 0.15s, opacity 0.15s',
+                    }}
+                  >
+                    <TD><span style={{ fontWeight: 600 }}>{v.user}</span></TD>
+                    <TD muted>{v.submitted}</TD>
+                    <TD>
+                      <span style={{ background: 'var(--bg-surface2)', border: '1px solid var(--border)', fontSize: 11, fontWeight: 600, padding: '2px 8px', borderRadius: 6, color: 'var(--text-secondary)' }}>{v.type}</span>
+                    </TD>
+                    <TD>{badge(v.status, verifStatusColor[v.status] ?? '#6B7280')}</TD>
+                    <TD muted>{v.reviewer}</TD>
+                    <td style={{ padding: '12px 20px' }}>
+                      <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+                        {v.status === 'Pending' && (
+                          <>
+                            <button style={{ background: '#10B98120', color: '#10B981', border: '1px solid #10B98133', fontSize: 11, fontWeight: 600, padding: '3px 8px', borderRadius: 6, cursor: 'pointer' }}>Approve</button>
+                            <button style={{ background: '#EF444420', color: '#EF4444', border: '1px solid #EF444433', fontSize: 11, fontWeight: 600, padding: '3px 8px', borderRadius: 6, cursor: 'pointer' }}>Reject</button>
+                          </>
+                        )}
+                        {v.status === 'Submitted' && (
+                          <button style={{ background: '#3B82F620', color: '#3B82F6', border: '1px solid #3B82F633', fontSize: 11, fontWeight: 600, padding: '3px 8px', borderRadius: 6, cursor: 'pointer' }}>Review</button>
+                        )}
+                        <button style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)' }}>
+                          <Eye size={13} />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                )
+              })}
+            </tbody>
+          </table>
+        </div>
+
+        {/* Pagination footer */}
+        <div style={{
+          padding: '10px 20px',
+          borderTop: '1px solid var(--border)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          fontSize: 12,
+          color: 'var(--text-muted)',
+        }}>
+          <span>Showing <strong style={{ color: 'var(--text-secondary)' }}>{filtered.length}</strong> of <strong style={{ color: 'var(--text-secondary)' }}>791</strong> verifications</span>
+          <div style={{ display: 'flex', gap: 6 }}>
+            <button style={{ background: 'var(--bg-surface2)', border: '1px solid var(--border)', borderRadius: 6, padding: '3px 10px', fontSize: 12, color: 'var(--text-muted)', cursor: 'pointer' }}>Prev</button>
+            <button style={{ background: 'var(--bg-surface2)', border: '1px solid var(--border)', borderRadius: 6, padding: '3px 10px', fontSize: 12, color: 'var(--text-muted)', cursor: 'pointer' }}>Next</button>
+          </div>
+        </div>
       </div>
     </div>
   )

@@ -2190,11 +2190,12 @@ export default function SuperAdminPage() {
   }
 
   const Families = () => {
+    const [familySearch, setFamilySearch] = useState('')
     const familyStats = [
-      { label: 'Total Families', value: '892,341', color: PURPLE },
-      { label: 'Free Plan', value: '45%', color: '#6B7280' },
-      { label: 'Premium', value: '35%', color: '#3B82F6' },
-      { label: 'Family+', value: '20%', color: '#10B981' },
+      { label: 'Total Families', value: '892,341', color: 'var(--gold)', icon: Users, trend: '+12.3% this month' },
+      { label: 'Free Plan', value: '45%', color: '#6B7280', icon: Activity, trend: '+2.1% this week' },
+      { label: 'Premium', value: '35%', color: '#3B82F6', icon: TrendingUp, trend: '+4.2% premium' },
+      { label: 'Family+', value: '20%', color: '#10B981', icon: Crown, trend: '+3.8% this month' },
     ]
     const families = [
       { name: 'Sharma Family', owner: 'Rajesh Sharma', members: 5, plan: 'Family+', created: '12 Jan 2024' },
@@ -2206,6 +2207,10 @@ export default function SuperAdminPage() {
       { name: 'Reddy Circle', owner: 'Suresh Reddy', members: 7, plan: 'Family+', created: '15 May 2024' },
       { name: 'Joshi Family', owner: 'Ankit Joshi', members: 3, plan: 'Premium', created: '28 May 2024' },
     ]
+    const filteredFamilies = families.filter(f =>
+      f.name.toLowerCase().includes(familySearch.toLowerCase()) ||
+      f.owner.toLowerCase().includes(familySearch.toLowerCase())
+    )
     const planColor = (plan: string) => {
       if (plan === 'Family+') return '#10B981'
       if (plan === 'Premium') return '#3B82F6'
@@ -2214,22 +2219,44 @@ export default function SuperAdminPage() {
     return (
       <div>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 14, marginBottom: 20 }}>
-          {familyStats.map((s) => (
-            <GlassCard key={s.label} style={{ padding: 18 }}>
-              <div style={{ fontSize: 11, color: 'var(--text-muted)', marginBottom: 6 }}>{s.label}</div>
-              <div style={{ fontSize: 22, fontWeight: 800, color: 'var(--text-primary)', fontFamily: 'Plus Jakarta Sans, sans-serif', marginBottom: 4 }}>{s.value}</div>
-              <div style={{ width: 32, height: 3, borderRadius: 99, background: s.color }} />
-            </GlassCard>
-          ))}
+          {familyStats.map((s) => {
+            const Icon = s.icon
+            return (
+              <GlassCard key={s.label} style={{ padding: 18 }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
+                  <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>{s.label}</div>
+                  <div style={{ width: 28, height: 28, borderRadius: 8, background: `${s.color === 'var(--gold)' ? 'rgba(212,175,55,0.15)' : s.color + '20'}`, display: 'flex', alignItems: 'center', justifyContent: 'center', color: s.color }}>
+                    <Icon size={14} />
+                  </div>
+                </div>
+                <div style={{ fontSize: 22, fontWeight: 800, color: 'var(--text-primary)', fontFamily: 'Plus Jakarta Sans, sans-serif', marginBottom: 4 }}>{s.value}</div>
+                <div style={{ width: 32, height: 3, borderRadius: 99, background: s.color, marginBottom: 6 }} />
+                <div style={{ fontSize: 11, color: '#10B981' }}>{s.trend}</div>
+              </GlassCard>
+            )
+          })}
         </div>
-        <div style={{ display: 'flex', gap: 10, marginBottom: 14, alignItems: 'center' }}>
+        <div style={{ display: 'flex', gap: 10, marginBottom: 14, alignItems: 'center', flexWrap: 'wrap' }}>
+          <div style={{ position: 'relative', flex: '1 1 220px', minWidth: 180 }}>
+            <Search size={14} style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)', pointerEvents: 'none' }} />
+            <input
+              type="text"
+              placeholder="Search families or owners..."
+              value={familySearch}
+              onChange={e => setFamilySearch(e.target.value)}
+              style={{ width: '100%', padding: '8px 12px 8px 32px', borderRadius: 6, border: '1px solid var(--border)', background: 'var(--bg-surface2)', color: 'var(--text-primary)', fontSize: 13, outline: 'none', boxSizing: 'border-box' }}
+            />
+          </div>
           <select style={{ padding: '8px 12px', borderRadius: 10, border: '1px solid var(--border)', background: 'var(--bg-surface2)', color: 'var(--text-primary)', fontSize: 13, outline: 'none', cursor: 'pointer' }}>
             <option style={{ background: '#1a1030' }}>All Plans</option>
             <option style={{ background: '#1a1030' }}>Free</option>
             <option style={{ background: '#1a1030' }}>Premium</option>
             <option style={{ background: '#1a1030' }}>Family+</option>
           </select>
-          <button style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 6, padding: '8px 14px', borderRadius: 10, border: 'none', background: `linear-gradient(135deg, ${PURPLE}, ${PURPLE_DARK})`, color: 'var(--text-primary)', cursor: 'pointer', fontSize: 13, fontWeight: 600 }}>
+          <button style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '8px 14px', borderRadius: 10, border: '1px solid var(--border)', background: 'var(--bg-surface2)', color: 'var(--text-primary)', cursor: 'pointer', fontSize: 13, fontWeight: 600 }}>
+            <Download size={14} /> Export
+          </button>
+          <button style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '8px 14px', borderRadius: 10, border: 'none', background: 'var(--gold)', color: '#000', cursor: 'pointer', fontSize: 13, fontWeight: 700 }}>
             <Plus size={14} /> Add Family
           </button>
         </div>
@@ -2244,13 +2271,20 @@ export default function SuperAdminPage() {
                 </tr>
               </thead>
               <tbody>
-                {families.map((f, i) => (
+                {filteredFamilies.map((f, i) => (
                   <motion.tr key={i} initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.04 }}
                     style={{ borderBottom: '1px solid var(--border)', height: 40 }}
                     onMouseEnter={(e) => (e.currentTarget.style.background = 'var(--bg-surface2)')}
                     onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
                   >
-                    <td style={{ padding: '12px 16px', color: 'var(--text-primary)', fontWeight: 500 }}>{f.name}</td>
+                    <td style={{ padding: '12px 16px', color: 'var(--text-primary)', fontWeight: 500 }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                        <div style={{ width: 28, height: 28, borderRadius: '50%', background: 'var(--gold)', color: '#000', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, fontWeight: 800, flexShrink: 0 }}>
+                          {f.name.charAt(0)}
+                        </div>
+                        {f.name}
+                      </div>
+                    </td>
                     <td style={{ padding: '12px 16px', color: 'var(--text-secondary)' }}>{f.owner}</td>
                     <td style={{ padding: '12px 16px', color: 'var(--text-secondary)', fontWeight: 600 }}>{f.members}</td>
                     <td style={{ padding: '12px 16px' }}>
@@ -2270,6 +2304,16 @@ export default function SuperAdminPage() {
                 ))}
               </tbody>
             </table>
+          </div>
+          <div style={{ padding: '12px 16px', borderTop: '1px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>
+              Showing <span style={{ color: 'var(--text-primary)', fontWeight: 600 }}>{filteredFamilies.length}</span> of <span style={{ color: 'var(--text-primary)', fontWeight: 600 }}>892,341</span> families
+            </span>
+            <div style={{ display: 'flex', gap: 6 }}>
+              {['Prev', '1', '2', '3', 'Next'].map((p) => (
+                <button key={p} style={{ padding: '4px 10px', borderRadius: 6, border: '1px solid var(--border)', background: p === '1' ? 'var(--gold)' : 'var(--bg-surface2)', color: p === '1' ? '#000' : 'var(--text-secondary)', fontSize: 12, fontWeight: p === '1' ? 700 : 400, cursor: 'pointer' }}>{p}</button>
+              ))}
+            </div>
           </div>
         </GlassCard>
       </div>
