@@ -41,6 +41,7 @@ class TokenResponse(BaseModel):
     access_token: str
     token_type: str
     user: UserResponse
+    dev_code: Optional[str] = None
 
 class OTPRequest(BaseModel):
     identifier: str   # phone number or email
@@ -113,22 +114,52 @@ def _send_otp_email(email: str, code: str) -> bool:
 def register(request: Request, data: UserRegister, db: Session = Depends(get_db)):
     existing = db.query(models.User).filter(models.User.email == data.email).first()
     if existing:
-        raise HTTPException(status_code=400, detail="Email already registered")
+        if existing.is_active:
+            raise HTTPException(status_code=400, detail="Email already registered")
+        # Pending unverified account — delete and allow re-registration
+        db.delete(existing)
+        db.commit()
+
     user = models.User(
         name=data.name, email=data.email, phone=data.phone,
-        password_hash=get_password_hash(data.password)
+        password_hash=get_password_hash(data.password),
+        is_active=False,  # Activated only after email OTP verification
     )
     db.add(user)
     db.commit()
     db.refresh(user)
+
+    # Invalidate old registration OTPs for this email
+    db.query(models.OTPCode).filter(
+        models.OTPCode.identifier == data.email,
+        models.OTPCode.purpose == "registration",
+        models.OTPCode.is_used == False,
+    ).update({"is_used": True})
+    db.commit()
+
+    # Create and send email verification OTP
+    code = _gen_otp()
+    otp_record = models.OTPCode(
+        identifier=data.email,
+        code=code,
+        purpose="registration",
+        expires_at=datetime.utcnow() + timedelta(minutes=10),
+    )
+    db.add(otp_record)
+    db.commit()
+    _send_otp_email(data.email, code)
+
     token = create_access_token({"sub": user.id})
-    return {"access_token": token, "token_type": "bearer", "user": user}
+    dev_mode = not os.getenv("RESEND_API_KEY")
+    return {"access_token": token, "token_type": "bearer", "user": user, **({"dev_code": code} if dev_mode else {})}
 
 @router.post("/login", response_model=TokenResponse)
 def login(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)):
     user = db.query(models.User).filter(models.User.email == form_data.username).first()
     if not user or not verify_password(form_data.password, user.password_hash):
         raise HTTPException(status_code=401, detail="Invalid credentials")
+    if not user.is_active:
+        raise HTTPException(status_code=401, detail="Account not verified. Please complete signup first.")
     token = create_access_token({"sub": user.id})
     return {"access_token": token, "token_type": "bearer", "user": user}
 
@@ -137,6 +168,8 @@ def login_json(data: UserLogin, db: Session = Depends(get_db)):
     user = db.query(models.User).filter(models.User.email == data.email).first()
     if not user or not verify_password(data.password, user.password_hash):
         raise HTTPException(status_code=401, detail="Invalid credentials")
+    if not user.is_active:
+        raise HTTPException(status_code=401, detail="Account not verified. Please complete signup first.")
     token = create_access_token({"sub": user.id})
     return {"access_token": token, "token_type": "bearer", "user": user}
 
@@ -147,6 +180,8 @@ def login_unified(request: Request, data: UserLogin, db: Session = Depends(get_d
     # Check regular User table (role: user, moderator)
     user = db.query(models.User).filter(models.User.email == data.email).first()
     if user and verify_password(data.password, user.password_hash):
+        if not user.is_active:
+            raise HTTPException(status_code=401, detail="Account not verified. Please complete signup first.")
         token = create_access_token({"sub": user.id})
         return {"access_token": token, "token_type": "bearer", "user": user}
 
@@ -282,14 +317,20 @@ def verify_otp(data: OTPVerify, db: Session = Depends(get_db)):
         user = db.query(models.User).filter(models.User.phone == data.identifier).first()
 
     if not user:
-        # Auto-register user on first OTP login
+        # Auto-register user on first OTP login (non-registration flows)
         user = models.User(
             name=data.identifier.split("@")[0] if is_email else "User",
             email=data.identifier if is_email else f"{data.identifier}@otp.gravity",
             phone=None if is_email else data.identifier,
             password_hash=get_password_hash(secrets.token_hex(16)),
+            is_active=True,
         )
         db.add(user)
+        db.commit()
+        db.refresh(user)
+    elif data.purpose == "registration" and not user.is_active:
+        # Activate the pending account — this is the final step of signup
+        user.is_active = True
         db.commit()
         db.refresh(user)
 

@@ -471,6 +471,7 @@ export default function SignupPage() {
   const [otpLoading, setOtpLoading] = useState(false)
   const [sendLoading, setSendLoading] = useState(false)
   const [countdown, setCountdown] = useState(0)
+  const [devOtp, setDevOtp] = useState('')  // shown in dev mode when no email service configured
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null)
 
   // Step 3 state
@@ -526,6 +527,8 @@ export default function SignupPage() {
   // ── Step 1 submit
   const handleStep1 = async () => {
     setStep1Error('')
+    // Reset OTP state for fresh signup attempt
+    setOtp(''); setOtpSent(false); setOtpError(''); setDevOtp('')
     if (password !== confirmPassword) { setStep1Error('Passwords do not match.'); return }
     if (!step1Valid) return
     setStep1Loading(true)
@@ -538,6 +541,10 @@ export default function SignupPage() {
       const data = await res.json()
       if (!res.ok) throw new Error(data.detail || data.message || 'Registration failed.')
       if (data.access_token) localStorage.setItem('gravity_token', data.access_token)
+      // Backend auto-sends email OTP; mark as sent and show OTP input immediately
+      setOtpSent(true)
+      startCountdown()
+      if (data.dev_code) setDevOtp(data.dev_code)
       goForward(2)
     } catch (err: any) {
       setStep1Error(err.message || 'Something went wrong. Please try again.')
@@ -546,19 +553,19 @@ export default function SignupPage() {
     }
   }
 
-  // ── Send OTP
+  // ── Resend email OTP (backend already sent one on register; this is for resend)
   const handleSendOtp = async () => {
-    if (!phone || phone.length < 10) { setOtpError('Enter a valid 10-digit phone number.'); return }
     setOtpError('')
     setSendLoading(true)
     try {
       const res = await fetch(`/auth/otp/send`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ phone: `+91${phone}` }),
+        body: JSON.stringify({ identifier: email, purpose: 'registration' }),
       })
       const data = await res.json()
       if (!res.ok) throw new Error(data.detail || 'Failed to send OTP.')
+      if (data.dev_code) setDevOtp(data.dev_code)
       setOtpSent(true)
       startCountdown()
     } catch (err: any) {
@@ -577,10 +584,12 @@ export default function SignupPage() {
       const res = await fetch(`/auth/otp/verify`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ phone: `+91${phone}`, otp }),
+        body: JSON.stringify({ identifier: email, code: otp, purpose: 'registration' }),
       })
       const data = await res.json()
       if (!res.ok) throw new Error(data.detail || 'Invalid OTP.')
+      // Replace temp token with the active-user token returned after verification
+      if (data.access_token) localStorage.setItem('gravity_token', data.access_token)
       goForward(3)
     } catch (err: any) {
       setOtpError(err.message || 'Invalid OTP. Please try again.')
@@ -607,7 +616,7 @@ export default function SignupPage() {
     setInviteJoinError('')
     const token = localStorage.getItem('gravity_token') || localStorage.getItem('gv_token') || ''
     try {
-      const res = await fetch(`/families/join/${inviteCode.trim().toUpperCase()}`, {
+      const res = await fetch(`/families/join/${inviteCode.trim()}`, {
         method: 'POST',
         headers: { Authorization: `Bearer ${token}` },
       })
@@ -745,7 +754,7 @@ export default function SignupPage() {
   }
 
   // ── Card labels
-  const stepLabels = ['Create Account', 'Verify Phone', userType === 'child' ? 'Join Family' : 'Choose Plan']
+  const stepLabels = ['Create Account', 'Verify Email', userType === 'child' ? 'Join Family' : 'Choose Plan']
 
   return (
     <div style={{
@@ -1061,7 +1070,7 @@ export default function SignupPage() {
               variants={slideVariants} initial="initial" animate="animate" exit="exit"
               transition={{ duration: 0.34, ease: [0.22, 1, 0.36, 1] }}
             >
-              {/* Phone icon with ring */}
+              {/* Mail icon with ring */}
               <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 20 }}>
                 <div style={{ position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                   {[1, 2].map(ring => (
@@ -1081,81 +1090,18 @@ export default function SignupPage() {
                     border: '1.5px solid rgba(212,168,83,0.4)',
                     display: 'flex', alignItems: 'center', justifyContent: 'center',
                   }}>
-                    <Phone size={26} color="#D4A853" />
+                    <Mail size={26} color="#D4A853" />
                   </div>
                 </div>
               </div>
 
               <p style={{ textAlign: 'center', color: 'rgba(255,255,255,0.45)', fontSize: 13.5, marginBottom: 22, margin: '0 0 22px' }}>
-                Enter your phone number to receive a verification code
+                A 6-digit verification code was sent to<br />
+                <span style={{ color: '#D4A853', fontWeight: 600 }}>{email}</span>
               </p>
 
               <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-                {/* Phone input */}
-                <div>
-                  <label style={{
-                    display: 'block', fontSize: 12.5, fontWeight: 600,
-                    color: 'rgba(255,255,255,0.55)', marginBottom: 7, letterSpacing: '0.03em',
-                  }}>
-                    Phone Number
-                  </label>
-                  <div style={{ display: 'flex', gap: 8 }}>
-                    <div style={{
-                      padding: '11px 14px', borderRadius: 11,
-                      border: '1px solid rgba(255,255,255,0.1)',
-                      background: 'rgba(255,255,255,0.04)',
-                      color: '#D4A853', fontSize: 14, fontWeight: 600,
-                      display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0,
-                    }}>
-                      🇮🇳 +91
-                    </div>
-                    <input
-                      type="tel"
-                      value={phone}
-                      onChange={e => setPhone(e.target.value.replace(/\D/g, '').slice(0, 10))}
-                      placeholder="98765 43210"
-                      disabled={otpSent}
-                      style={{
-                        flex: 1, padding: '11px 14px', borderRadius: 11,
-                        border: '1px solid rgba(255,255,255,0.1)',
-                        background: 'rgba(255,255,255,0.04)',
-                        color: '#F0EDE8', fontSize: 14, outline: 'none',
-                        opacity: otpSent ? 0.5 : 1,
-                      }}
-                      onFocus={e => { e.currentTarget.style.borderColor = 'rgba(212,168,83,0.7)'; e.currentTarget.style.boxShadow = '0 0 0 3px rgba(212,168,83,0.1)' }}
-                      onBlur={e => { e.currentTarget.style.borderColor = 'rgba(255,255,255,0.1)'; e.currentTarget.style.boxShadow = 'none' }}
-                    />
-                  </div>
-                </div>
-
-                {/* Send OTP button */}
-                {!otpSent && (
-                  <motion.button
-                    onClick={handleSendOtp}
-                    disabled={sendLoading || phone.length < 10}
-                    whileHover={phone.length >= 10 && !sendLoading ? { scale: 1.015 } : {}}
-                    whileTap={phone.length >= 10 && !sendLoading ? { scale: 0.985 } : {}}
-                    style={{
-                      width: '100%', padding: '13px', borderRadius: 11, border: 'none',
-                      background: phone.length >= 10
-                        ? 'linear-gradient(135deg,#D4A853,#F5C842)'
-                        : 'rgba(255,255,255,0.06)',
-                      color: phone.length >= 10 ? '#1A0F05' : 'rgba(255,255,255,0.2)',
-                      fontSize: 14.5, fontWeight: 700,
-                      cursor: phone.length >= 10 && !sendLoading ? 'pointer' : 'not-allowed',
-                      display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
-                      boxShadow: phone.length >= 10 ? '0 4px 24px rgba(212,168,83,0.35)' : 'none',
-                      fontFamily: 'Plus Jakarta Sans, sans-serif',
-                    }}
-                  >
-                    {sendLoading
-                      ? <><Loader2 size={16} style={{ animation: 'spin 0.8s linear infinite' }} /> Sending...</>
-                      : 'Send OTP'
-                    }
-                  </motion.button>
-                )}
-
-                {/* OTP boxes */}
+                {/* OTP boxes — shown immediately since backend sends on register */}
                 <AnimatePresence>
                   {otpSent && (
                     <motion.div
@@ -1163,9 +1109,15 @@ export default function SignupPage() {
                       exit={{ opacity: 0, y: -16 }}
                       style={{ display: 'flex', flexDirection: 'column', gap: 14 }}
                     >
-                      <p style={{ textAlign: 'center', fontSize: 13, color: 'rgba(255,255,255,0.4)', margin: 0 }}>
-                        OTP sent to +91 {phone}
-                      </p>
+                      {devOtp && (
+                        <div style={{
+                          background: 'rgba(212,168,83,0.12)', border: '1px solid rgba(212,168,83,0.3)',
+                          borderRadius: 10, padding: '10px 14px', textAlign: 'center',
+                          fontSize: 12.5, color: 'rgba(255,255,255,0.6)',
+                        }}>
+                          Dev mode — your OTP: <span style={{ color: '#D4A853', fontWeight: 700, fontSize: 16, letterSpacing: 3 }}>{devOtp}</span>
+                        </div>
+                      )}
                       <OtpBoxes value={otp} onChange={setOtp} />
 
                       {/* Resend */}
@@ -1228,19 +1180,25 @@ export default function SignupPage() {
                   )}
                 </AnimatePresence>
 
-                {/* Skip */}
-                <button
-                  onClick={() => goForward(3)}
-                  style={{
-                    background: 'transparent', border: 'none', cursor: 'pointer',
-                    color: 'rgba(255,255,255,0.3)', fontSize: 13, textAlign: 'center',
-                    padding: '4px 0', transition: 'color 0.2s',
-                  }}
-                  onMouseEnter={e => (e.currentTarget.style.color = 'rgba(255,255,255,0.6)')}
-                  onMouseLeave={e => (e.currentTarget.style.color = 'rgba(255,255,255,0.3)')}
-                >
-                  Skip for now
-                </button>
+                {!otpSent && (
+                  <motion.button
+                    onClick={() => { handleSendOtp() }}
+                    disabled={sendLoading}
+                    whileHover={{ scale: 1.015 }} whileTap={{ scale: 0.985 }}
+                    style={{
+                      width: '100%', padding: '13px', borderRadius: 11, border: 'none',
+                      background: 'linear-gradient(135deg,#D4A853,#F5C842)',
+                      color: '#1A0F05', fontSize: 14.5, fontWeight: 700,
+                      cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+                      boxShadow: '0 4px 24px rgba(212,168,83,0.35)', fontFamily: 'Plus Jakarta Sans, sans-serif',
+                    }}
+                  >
+                    {sendLoading ? <><Loader2 size={16} style={{ animation: 'spin 0.8s linear infinite' }} /> Sending...</> : 'Send Verification Code'}
+                  </motion.button>
+                )}
+                <p style={{ textAlign: 'center', fontSize: 12, color: 'rgba(255,255,255,0.25)', margin: '4px 0 0' }}>
+                  Didn&apos;t receive it? Check your spam folder or use Resend.
+                </p>
               </div>
             </motion.div>
           )}
