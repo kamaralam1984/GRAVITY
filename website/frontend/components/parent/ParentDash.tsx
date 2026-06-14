@@ -405,24 +405,91 @@ const glassCard: React.CSSProperties = {
 // 1. DashboardSection
 // ─────────────────────────────────────────────────────────────────────────────
 
+const AVATAR_COLORS = ['#B8720A', '#10B981', '#8B5CF6', '#3B82F6', '#EF4444', '#F59E0B', '#06B6D4', '#EC4899'];
+
+function timeAgo(iso: string): string {
+  const diff = Date.now() - new Date(iso).getTime();
+  const m = Math.floor(diff / 60000);
+  if (m < 1) return 'Just now';
+  if (m < 60) return `${m} min ago`;
+  const h = Math.floor(m / 60);
+  if (h < 24) return `${h} hr ago`;
+  return `${Math.floor(h / 24)} days ago`;
+}
+
 export function DashboardSection() {
   const [stats, setStats] = useState({
-    activeMembers: 4,
-    sosAlerts: 1,
+    activeMembers: 0,
+    sosAlerts: 0,
     geofences: 6,
-    devices: 4,
+    devices: 0,
   });
+  const [members, setMembers] = useState<FamilyMember[]>(FAMILY_MEMBERS);
   const [selectedMember, setSelectedMember] = useState<string | null>(null);
   const [events, setEvents] = useState<ActivityEvent[]>(ACTIVITY_EVENTS);
   const [routineAlerts, setRoutineAlerts] = useState<{ member: string; alert: string; severity: string }[]>([]);
   const scrollRef = useRef<HTMLDivElement>(null);
 
-  // Simulate live stat updates
+  // Load real family members and live locations
   useEffect(() => {
-    const interval = setInterval(() => {
-      setStats((prev) => ({ ...prev, activeMembers: 4 }));
-    }, 5000);
-    return () => clearInterval(interval);
+    async function loadFamily() {
+      const token = getToken();
+      if (!token) return;
+      const h = { Authorization: `Bearer ${token}` };
+      try {
+        const famRes = await fetch('/families/my', { headers: h });
+        if (!famRes.ok) return;
+        const fam = await famRes.json();
+        const fid = fam.id ?? fam.family?.id;
+        if (!fid) return;
+
+        const memRes = await fetch(`/families/${fid}/members`, { headers: h });
+        if (!memRes.ok) return;
+        const raw: any[] = await memRes.json();
+        if (!raw.length) return;
+
+        const mapped: FamilyMember[] = raw.map((m, i) => {
+          const name: string = m.name ?? 'Member';
+          const initials = name.split(' ').map((w: string) => w[0] ?? '').join('').slice(0, 2).toUpperCase();
+          const role: MemberRole = m.role === 'owner' ? 'Self' : 'Child';
+          const isOnline: boolean = !!m.is_online;
+          return {
+            id: String(m.user_id ?? i),
+            name,
+            initials,
+            role,
+            status: isOnline ? 'safe' : 'offline',
+            location: m.last_location ?? 'Location unavailable',
+            lastSeen: 'Recently',
+            battery: m.battery ?? 50,
+            avatarColor: AVATAR_COLORS[i % AVATAR_COLORS.length],
+            lat: m.lat ?? 0,
+            lng: m.lng ?? 0,
+            coordinates: m.lat ? `${Number(m.lat).toFixed(4)}° N, ${Number(m.lng).toFixed(4)}° E` : 'Unavailable',
+            distanceFromHome: '—',
+            accurateLocation: !!(m.lat && m.lng),
+          };
+        });
+
+        setMembers(mapped);
+        const online = mapped.filter(mb => mb.status === 'safe').length;
+        setStats(prev => ({ ...prev, activeMembers: online, devices: mapped.length }));
+
+        // Generate live activity events from member locations
+        const acts: ActivityEvent[] = mapped.map((mb, i) => ({
+          id: `live-${i}`,
+          type: 'location' as ActivityEvent['type'],
+          description: `${mb.name} — ${mb.location}`,
+          time: mb.lastSeen,
+          member: mb,
+          read: false,
+        }));
+        setEvents(acts);
+      } catch { /* keep demo fallback */ }
+    }
+    loadFamily();
+    const iv = setInterval(loadFamily, 30000);
+    return () => clearInterval(iv);
   }, []);
 
   // Routine anomaly check via AI
@@ -551,7 +618,7 @@ export function DashboardSection() {
             <div
               style={{
                 fontSize: 13,
-                color: '#10B981',
+                color: stats.activeMembers > 0 ? '#10B981' : 'rgba(255,255,255,0.4)',
                 marginTop: 4,
                 fontWeight: 500,
                 display: 'flex',
@@ -559,8 +626,8 @@ export function DashboardSection() {
                 gap: 6,
               }}
             >
-              <PulseDot color="#10B981" size={7} />
-              All 4 members safe
+              <PulseDot color={stats.activeMembers > 0 ? '#10B981' : '#6B7280'} size={7} />
+              {stats.devices === 0 ? 'Loading family...' : `${stats.activeMembers} of ${stats.devices} members online`}
             </div>
           </div>
 
@@ -655,7 +722,7 @@ export function DashboardSection() {
           msOverflowStyle: 'none',
         }}
       >
-        {FAMILY_MEMBERS.map((member, i) => {
+        {members.map((member, i) => {
           const isSelected = selectedMember === member.id;
           return (
             <motion.div

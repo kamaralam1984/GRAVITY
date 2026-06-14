@@ -75,12 +75,7 @@ const AI_CAPABILITIES = [
 ];
 
 /* ── Initial demo messages (seed state) ─────────────────────────────────────── */
-const DEMO_MESSAGES: { role: 'user' | 'ai'; text: string }[] = [
-  { role: 'user', text: "Where is Vihaan right now?" },
-  { role: 'ai', text: "Vihaan arrived at school at 8:42 AM and has been there for 3h 20min. His battery is at 67% and he is in the school zone. All good!" },
-  { role: 'user', text: "Is anyone running late today?" },
-  { role: 'ai', text: "Priya estimated arrival at office was 9:30 AM. Based on current traffic on her route she may be running around 15 minutes late. No safety concerns detected." },
-];
+const WELCOME_MESSAGE = { role: 'ai' as const, text: "Hi! I'm your Gravity AI Assistant. Ask me about your family's location, safety status, recent activity, or anything else I can help with." };
 
 /* ── Section wrapper ─────────────────────────────────────────────────────────── */
 function Section({ children, bg = "var(--bg)" }: { children: React.ReactNode; bg?: string }) {
@@ -105,7 +100,7 @@ export default function AIAssistant() {
   const heroRef = useRef(null);
   const heroInView = useInView(heroRef, { once: true });
 
-  const [messages, setMessages] = useState<{ role: 'user' | 'ai'; text: string }[]>(DEMO_MESSAGES)
+  const [messages, setMessages] = useState<{ role: 'user' | 'ai'; text: string }[]>([WELCOME_MESSAGE])
   const [inputVal, setInputVal] = useState('')
   const [aiLoading, setAiLoading] = useState(false)
   const [isRecording, setIsRecording] = useState(false)
