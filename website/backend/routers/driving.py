@@ -81,6 +81,70 @@ def get_member_driving(user_id: int, user: models.User = Depends(get_current_use
         "recent_events": recent_events,
     }
 
+@router.get("/summary/{family_id}")
+def driving_summary(family_id: int, user: models.User = Depends(get_current_user), db: Session = Depends(get_db)):
+    """Return driving summary for all members of a family."""
+    members = db.query(models.FamilyMember).filter(models.FamilyMember.family_id == family_id).all()
+    member_summaries = []
+    all_scores = []
+
+    for m in members:
+        member_user = db.query(models.User).filter(models.User.id == m.user_id).first()
+        if not member_user:
+            continue
+
+        journeys = db.query(models.Journey).filter(models.Journey.user_id == m.user_id).order_by(desc(models.Journey.started_at)).limit(10).all()
+        events = db.query(models.DrivingEvent).filter(models.DrivingEvent.user_id == m.user_id).order_by(desc(models.DrivingEvent.occurred_at)).limit(20).all()
+
+        harsh_brakes = sum(1 for e in events if e.type == 'harsh_brake')
+        speeding = sum(1 for e in events if e.type == 'speeding')
+        phone_use_count = sum(1 for e in events if e.type == 'phone_use')
+        rapid_accel = sum(1 for e in events if e.type == 'rapid_accel')
+        total_harsh = harsh_brakes + speeding + phone_use_count + rapid_accel
+
+        score = None
+        if journeys:
+            score = max(0, 100 - harsh_brakes * 5 - speeding * 8 - phone_use_count * 10 - rapid_accel * 4)
+            all_scores.append(score)
+
+        recent_trips = []
+        for j in journeys[:5]:
+            duration_min = None
+            if j.started_at and j.arrived_at:
+                start = j.started_at if j.started_at.tzinfo else j.started_at.replace(tzinfo=timezone.utc)
+                end = j.arrived_at if j.arrived_at.tzinfo else j.arrived_at.replace(tzinfo=timezone.utc)
+                duration_min = int((end - start).total_seconds() / 60)
+            recent_trips.append({
+                "id": j.id,
+                "from_location": j.from_location or "Unknown",
+                "to_location": j.to_location or "Unknown",
+                "started_at": j.started_at.isoformat() if j.started_at else None,
+                "status": j.status,
+                "distance_km": j.distance_km,
+                "duration_min": duration_min,
+            })
+
+        member_summaries.append({
+            "user_id": m.user_id,
+            "name": member_user.name,
+            "role": m.role,
+            "score": score,
+            "total_trips": len(journeys),
+            "harsh_brakes": harsh_brakes,
+            "speeding": speeding,
+            "phone_use": phone_use_count,
+            "rapid_accel": rapid_accel,
+            "total_harsh_events": total_harsh,
+            "recent_trips": recent_trips,
+        })
+
+    overall_score = round(sum(all_scores) / len(all_scores)) if all_scores else None
+    return {
+        "family_id": family_id,
+        "overall_score": overall_score,
+        "members": member_summaries,
+    }
+
 @router.get("/stats")
 def driving_stats(db: Session = Depends(get_db)):
     total = db.query(func.count(models.DrivingEvent.id)).scalar()

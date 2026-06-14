@@ -1,13 +1,14 @@
 'use client'
 
-import { useRef, useState } from 'react'
+import { useRef, useState, useEffect } from 'react'
 import { motion, useInView } from 'framer-motion'
 import {
   Car, Shield, AlertTriangle, Gauge, Phone, Star, ChevronRight,
   CheckCircle, Clock, Zap, TrendingUp, Moon, MapPin, Activity,
-  Bell, Brain, Target, Award,
+  Bell, Brain, Target, Award, LogIn, Users,
 } from 'lucide-react'
 import Link from 'next/link'
+import { getToken } from '@/lib/auth'
 
 /* ── Animation helpers ──────────────────────────────────────────────────────── */
 const fadeUp = {
@@ -116,6 +117,360 @@ const COACH_TIPS = [
   },
 ]
 
+/* ── Types ──────────────────────────────────────────────────────────────────── */
+interface RecentTrip {
+  id: number
+  from_location: string
+  to_location: string
+  started_at: string | null
+  status: string
+  distance_km: number | null
+  duration_min: number | null
+}
+
+interface MemberSummary {
+  user_id: number
+  name: string
+  role: string
+  score: number | null
+  total_trips: number
+  harsh_brakes: number
+  speeding: number
+  phone_use: number
+  rapid_accel: number
+  total_harsh_events: number
+  recent_trips: RecentTrip[]
+}
+
+interface DrivingSummary {
+  family_id: number
+  overall_score: number | null
+  members: MemberSummary[]
+}
+
+/* ── Score color helper ─────────────────────────────────────────────────────── */
+function scoreColor(score: number | null): string {
+  if (score === null) return 'rgba(255,255,255,0.4)'
+  if (score >= 80) return '#10B981'
+  if (score >= 60) return '#F59E0B'
+  return '#EF4444'
+}
+
+function scoreLabel(score: number | null): string {
+  if (score === null) return 'No data'
+  if (score >= 80) return 'Safe'
+  if (score >= 60) return 'Moderate'
+  return 'At Risk'
+}
+
+function formatDate(iso: string | null): string {
+  if (!iso) return '—'
+  try {
+    return new Date(iso).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })
+  } catch {
+    return '—'
+  }
+}
+
+/* ── Your Driving Report (real data) ────────────────────────────────────────── */
+function YourDrivingReport() {
+  const [summary, setSummary] = useState<DrivingSummary | null>(null)
+  const [loading, setLoading] = useState(true)
+  const [loggedIn, setLoggedIn] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+
+  useEffect(() => {
+    async function load() {
+      const token = getToken()
+      if (!token) { setLoading(false); return }
+      setLoggedIn(true)
+
+      try {
+        // Step 1: get families
+        const famRes = await fetch('/families/my', { headers: { Authorization: `Bearer ${token}` } })
+        if (!famRes.ok) { setLoading(false); return }
+        const fams = await famRes.json()
+        const famsArr = Array.isArray(fams) ? fams : [fams]
+        if (!famsArr.length) { setLoading(false); return }
+        const familyId = famsArr[0].id
+
+        // Step 2: get driving summary
+        const sumRes = await fetch(`/driving/summary/${familyId}`, { headers: { Authorization: `Bearer ${token}` } })
+        if (!sumRes.ok) { setError('Could not load driving data'); setLoading(false); return }
+        const data: DrivingSummary = await sumRes.json()
+        setSummary(data)
+      } catch {
+        setError('Failed to load driving report')
+      } finally {
+        setLoading(false)
+      }
+    }
+    load()
+  }, [])
+
+  // Not logged in
+  if (!loading && !loggedIn) {
+    return (
+      <section style={{
+        padding: '48px 24px',
+        background: 'linear-gradient(135deg, rgba(59,130,246,0.06), rgba(6,182,212,0.04))',
+        borderBottom: '1px solid rgba(255,255,255,0.07)',
+      }}>
+        <div style={{ maxWidth: 640, margin: '0 auto', textAlign: 'center' }}>
+          <div style={{
+            width: 56, height: 56, borderRadius: 14,
+            background: 'rgba(59,130,246,0.12)', border: '1px solid rgba(59,130,246,0.25)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            margin: '0 auto 20px',
+          }}>
+            <LogIn size={24} style={{ color: '#60A5FA' }} />
+          </div>
+          <h2 style={{ fontSize: '1.5rem', fontWeight: 800, color: '#F1EDE4', marginBottom: 10 }}>
+            See Your Driving Report
+          </h2>
+          <p style={{ color: 'rgba(255,255,255,0.5)', fontSize: 15, marginBottom: 24, lineHeight: 1.7 }}>
+            Log in to view real driving scores, trip history, and safety alerts for your family.
+          </p>
+          <Link href="/login" style={{
+            display: 'inline-flex', alignItems: 'center', gap: 8,
+            background: 'linear-gradient(135deg, #3B82F6, #1D4ED8)',
+            color: '#fff', padding: '12px 28px', borderRadius: 12,
+            textDecoration: 'none', fontWeight: 700, fontSize: 15,
+          }}>
+            Log In to View <ChevronRight size={16} />
+          </Link>
+        </div>
+      </section>
+    )
+  }
+
+  // Loading
+  if (loading) {
+    return (
+      <section style={{ padding: '48px 24px', borderBottom: '1px solid rgba(255,255,255,0.07)' }}>
+        <div style={{ maxWidth: 1100, margin: '0 auto', textAlign: 'center' }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 12, color: 'rgba(255,255,255,0.4)' }}>
+            <motion.div animate={{ rotate: 360 }} transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}>
+              <Activity size={20} />
+            </motion.div>
+            Loading your driving report…
+          </div>
+        </div>
+      </section>
+    )
+  }
+
+  // Error or no data
+  if (error || !summary) return null
+
+  // Has data — check if any member has trips
+  const hasAnyData = summary.members.some(m => m.total_trips > 0)
+  const allRecentTrips = summary.members.flatMap(m => m.recent_trips.map(t => ({ ...t, member_name: m.name }))).sort((a, b) => {
+    if (!a.started_at) return 1
+    if (!b.started_at) return -1
+    return new Date(b.started_at).getTime() - new Date(a.started_at).getTime()
+  }).slice(0, 5)
+
+  const overallColor = scoreColor(summary.overall_score)
+
+  return (
+    <section style={{
+      padding: '56px 24px',
+      background: 'linear-gradient(135deg, rgba(16,185,129,0.04) 0%, rgba(59,130,246,0.04) 100%)',
+      borderBottom: '1px solid rgba(255,255,255,0.08)',
+    }}>
+      <div style={{ maxWidth: 1100, margin: '0 auto' }}>
+        {/* Section header */}
+        <div style={{ marginBottom: 36 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 8 }}>
+            <div style={{
+              width: 36, height: 36, borderRadius: 10,
+              background: `${overallColor}18`, border: `1px solid ${overallColor}35`,
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+            }}>
+              <Car size={18} style={{ color: overallColor }} />
+            </div>
+            <span style={{
+              fontSize: 11, fontWeight: 700, letterSpacing: '0.12em',
+              color: overallColor, textTransform: 'uppercase',
+            }}>Your Driving Report</span>
+          </div>
+          <h2 style={{ fontSize: 'clamp(1.5rem, 3.5vw, 2.2rem)', fontWeight: 800, color: '#F1EDE4', marginBottom: 8, letterSpacing: '-0.02em' }}>
+            Family Safety Overview
+          </h2>
+          <p style={{ color: 'rgba(255,255,255,0.45)', fontSize: 14 }}>
+            Real data from your family&apos;s drives
+          </p>
+        </div>
+
+        {/* Overall score + member cards */}
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: 20, marginBottom: 28 }}>
+
+          {/* Overall score card */}
+          <div style={{
+            background: 'rgba(255,255,255,0.04)', border: `1px solid ${overallColor}30`,
+            borderRadius: 20, padding: '28px 24px', textAlign: 'center',
+            display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+          }}>
+            <p style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.12em', color: 'rgba(255,255,255,0.4)', marginBottom: 20, textTransform: 'uppercase' }}>
+              Family Safety Score
+            </p>
+            {summary.overall_score !== null ? (
+              <>
+                <motion.div
+                  initial={{ scale: 0.6, opacity: 0 }}
+                  animate={{ scale: 1, opacity: 1 }}
+                  transition={{ duration: 0.6, ease: 'easeOut' }}
+                  style={{
+                    fontSize: 72, fontWeight: 900, color: overallColor,
+                    lineHeight: 1, marginBottom: 8,
+                  }}
+                >
+                  {summary.overall_score}
+                </motion.div>
+                <div style={{ fontSize: 14, color: 'rgba(255,255,255,0.4)', marginBottom: 16 }}>/100</div>
+                <div style={{
+                  display: 'inline-flex', alignItems: 'center', gap: 7,
+                  background: `${overallColor}15`, border: `1px solid ${overallColor}30`,
+                  borderRadius: 999, padding: '7px 18px',
+                }}>
+                  <CheckCircle size={13} style={{ color: overallColor }} />
+                  <span style={{ color: overallColor, fontWeight: 700, fontSize: 13 }}>
+                    {scoreLabel(summary.overall_score)} Driver
+                  </span>
+                </div>
+              </>
+            ) : (
+              <div style={{ color: 'rgba(255,255,255,0.35)', fontSize: 15 }}>
+                No trips recorded yet
+              </div>
+            )}
+          </div>
+
+          {/* Per-member cards */}
+          {summary.members.map(member => {
+            const mc = scoreColor(member.score)
+            const initials = member.name.split(' ').map((n: string) => n[0]).join('').slice(0, 2).toUpperCase()
+            return (
+              <div key={member.user_id} style={{
+                background: 'rgba(255,255,255,0.04)', border: `1px solid ${mc}25`,
+                borderRadius: 20, padding: '24px',
+              }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 20 }}>
+                  <div style={{
+                    width: 44, height: 44, borderRadius: '50%',
+                    background: `linear-gradient(135deg, ${mc}50, ${mc}25)`,
+                    border: `1px solid ${mc}40`,
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    fontSize: 16, fontWeight: 800, color: '#fff',
+                  }}>{initials}</div>
+                  <div>
+                    <p style={{ fontWeight: 700, fontSize: 15, color: '#F1EDE4' }}>{member.name}</p>
+                    <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.4)', textTransform: 'capitalize' }}>{member.role}</p>
+                  </div>
+                  {member.score !== null && (
+                    <div style={{ marginLeft: 'auto', textAlign: 'right' }}>
+                      <div style={{ fontSize: 26, fontWeight: 900, color: mc, lineHeight: 1 }}>{member.score}</div>
+                      <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.35)' }}>/ 100</div>
+                    </div>
+                  )}
+                </div>
+
+                <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+                  {[
+                    { label: 'Trips', value: member.total_trips, icon: Car, color: '#60A5FA' },
+                    { label: 'Harsh Events', value: member.total_harsh_events, icon: AlertTriangle, color: member.total_harsh_events > 0 ? '#F59E0B' : '#10B981' },
+                    { label: 'Phone Use', value: member.phone_use, icon: Phone, color: member.phone_use > 0 ? '#EF4444' : '#10B981' },
+                  ].map(({ label, value, icon: Icon, color }) => (
+                    <div key={label} style={{
+                      flex: 1, minWidth: 70,
+                      background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)',
+                      borderRadius: 10, padding: '10px 10px',
+                      textAlign: 'center',
+                    }}>
+                      <Icon size={13} style={{ color, marginBottom: 4 }} />
+                      <div style={{ fontSize: 18, fontWeight: 800, color, lineHeight: 1 }}>{value}</div>
+                      <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.35)', marginTop: 3 }}>{label}</div>
+                    </div>
+                  ))}
+                </div>
+
+                {member.score === null && member.total_trips === 0 && (
+                  <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.3)', marginTop: 14, textAlign: 'center' }}>
+                    No trips recorded yet
+                  </p>
+                )}
+              </div>
+            )
+          })}
+        </div>
+
+        {/* Recent trips */}
+        {hasAnyData && allRecentTrips.length > 0 && (
+          <div style={{
+            background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)',
+            borderRadius: 18, padding: '24px',
+          }}>
+            <p style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.12em', color: 'rgba(255,255,255,0.4)', marginBottom: 18, textTransform: 'uppercase' }}>
+              Recent Trips
+            </p>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+              {allRecentTrips.map((trip, i) => (
+                <div key={`${trip.id}-${i}`} style={{
+                  display: 'flex', alignItems: 'center', gap: 12,
+                  padding: '12px 14px', borderRadius: 12,
+                  background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)',
+                  flexWrap: 'wrap',
+                }}>
+                  <div style={{
+                    width: 32, height: 32, borderRadius: 8,
+                    background: trip.status === 'completed' ? 'rgba(16,185,129,0.1)' : 'rgba(245,158,11,0.1)',
+                    border: `1px solid ${trip.status === 'completed' ? 'rgba(16,185,129,0.25)' : 'rgba(245,158,11,0.25)'}`,
+                    display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
+                  }}>
+                    <Car size={14} style={{ color: trip.status === 'completed' ? '#10B981' : '#F59E0B' }} />
+                  </div>
+                  <div style={{ flex: 1, minWidth: 120 }}>
+                    <p style={{ fontSize: 13, fontWeight: 600, color: '#F1EDE4', lineHeight: 1.3 }}>
+                      {trip.from_location} → {trip.to_location}
+                    </p>
+                    <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.35)', marginTop: 2 }}>
+                      {formatDate(trip.started_at)}
+                      {trip.distance_km ? ` · ${trip.distance_km.toFixed(1)} km` : ''}
+                      {trip.duration_min ? ` · ${trip.duration_min} min` : ''}
+                    </p>
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                    <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.35)' }}>{trip.member_name}</span>
+                    <span style={{
+                      fontSize: 10, fontWeight: 700,
+                      color: trip.status === 'completed' ? '#10B981' : '#F59E0B',
+                      background: trip.status === 'completed' ? 'rgba(16,185,129,0.1)' : 'rgba(245,158,11,0.1)',
+                      borderRadius: 999, padding: '2px 8px',
+                      textTransform: 'capitalize',
+                    }}>{trip.status}</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {!hasAnyData && (
+          <div style={{
+            textAlign: 'center', padding: '32px',
+            background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)',
+            borderRadius: 18, color: 'rgba(255,255,255,0.35)', fontSize: 14,
+          }}>
+            <Users size={28} style={{ margin: '0 auto 12px', opacity: 0.4 }} />
+            No driving data yet. Start tracking your journeys in the Gravity app.
+          </div>
+        )}
+      </div>
+    </section>
+  )
+}
+
 /* ═══════════════════════════════════════════════════════════════════════════
    PAGE
 ═══════════════════════════════════════════════════════════════════════════ */
@@ -126,6 +481,9 @@ export default function DrivingSafetyPage() {
 
   return (
     <div style={{ background: '#0B0D13', color: '#F1EDE4', minHeight: '100vh' }}>
+
+      {/* ── YOUR DRIVING REPORT (real data) ───────────────────────────────────── */}
+      <YourDrivingReport />
 
       {/* ── HERO ──────────────────────────────────────────────────────────────── */}
       <section
