@@ -242,10 +242,13 @@ function animateTo(marker: any, toLat: number, toLng: number, ms = 800) {
 export default function MapView({
   activeId,
   onMemberClick,
+  members: membersProp,
 }: {
   activeId: string | null
   onMemberClick: (id: string) => void
+  members?: MapMember[]
 }) {
+  const MEMBERS = (membersProp && membersProp.length > 0) ? membersProp : MAP_MEMBERS
   const containerRef   = useRef<HTMLDivElement>(null)
   const mapRef         = useRef<any>(null)
   const personMarkers  = useRef<Record<string, any>>({})
@@ -332,7 +335,7 @@ export default function MapView({
     if (pollRef.current) clearInterval(pollRef.current)
     pollRef.current = setInterval(() => {
       // In production replace with: fetch('/api/locations').then(r=>r.json())
-      MAP_MEMBERS.forEach(m => {
+      MEMBERS.forEach(m => {
         // Simulate tiny drift to demonstrate smooth animation
         const dLat = (Math.random() - 0.5) * 0.0004
         const dLng = (Math.random() - 0.5) * 0.0004
@@ -425,7 +428,7 @@ export default function MapView({
       })
 
       /* ── Member markers + trails ─────────────────────────────── */
-      MAP_MEMBERS.forEach(m => {
+      MEMBERS.forEach(m => {
         const active = activeRef.current === m.id
         const sc = speedColor(m.speed ?? 0)
 
@@ -526,7 +529,7 @@ export default function MapView({
       topBar.onAdd = () => {
         const d = L.DomUtil.create('div', 'gv-ctrl-top')
         d.style.margin = '10px'
-        const onlineCnt = MAP_MEMBERS.filter(m => m.status !== 'offline').length
+        const onlineCnt = MEMBERS.filter(m => m.status !== 'offline').length
         d.innerHTML = `
           <div class="gv-live-dot"></div>
           <span style="font-size:11px;font-weight:700;color:#F0EDE8;font-family:Inter,sans-serif;letter-spacing:0.04em;">GRAVITY LIVE</span>
@@ -551,7 +554,7 @@ export default function MapView({
         zo?.addEventListener('click', () => map.zoomOut())
 
         fa?.addEventListener('click', () => {
-          const pts = MAP_MEMBERS.map(m => L.latLng(m.lat, m.lng))
+          const pts = MEMBERS.map(m => L.latLng(m.lat, m.lng))
           if (pts.length) {
             map.flyToBounds(L.latLngBounds(pts), { padding: [40, 40], duration: 1.5 })
           }
@@ -561,7 +564,7 @@ export default function MapView({
           followRef.current = !followRef.current
           fl.classList.toggle('active', followRef.current)
           if (followRef.current && activeRef.current) {
-            const m = MAP_MEMBERS.find(x => x.id === activeRef.current)
+            const m = MEMBERS.find(x => x.id === activeRef.current)
             if (m) map.flyTo([m.lat, m.lng], 15, { duration: 1.2 })
           }
         })
@@ -613,7 +616,7 @@ export default function MapView({
     if (!L_w) return
     activeRef.current = activeId
 
-    MAP_MEMBERS.forEach(m => {
+    MEMBERS.forEach(m => {
       const active = activeId === m.id
       const size = active ? 60 : 48
       const pm = personMarkers.current[m.id]

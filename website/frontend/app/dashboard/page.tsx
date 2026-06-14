@@ -4,6 +4,26 @@ import { useState, useEffect, useCallback } from 'react'
 import dynamic from 'next/dynamic'
 import { motion, AnimatePresence } from 'framer-motion'
 import { MAP_MEMBERS, MapMember, VehicleType } from '@/lib/mapData'
+
+const MEMBER_COLORS = ['#D4A853','#10B981','#3B82F6','#8B5CF6','#EF4444','#F59E0B','#EC4899']
+function apiToMapMember(m: any, index: number): MapMember {
+  return {
+    id: String(m.user_id),
+    name: m.name,
+    color: MEMBER_COLORS[index % MEMBER_COLORS.length],
+    photo: m.avatar_url || `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(m.name)}&backgroundColor=1e293b&textColor=ffffff`,
+    location: m.place_name || 'Unknown',
+    battery: m.battery ?? 50,
+    lat: m.lat ?? 19.0760,
+    lng: m.lng ?? 72.8777,
+    vehicle: 'car' as VehicleType,
+    speed: 0,
+    gender: 'male' as const,
+    status: m.is_online ? 'safe' : 'offline' as const,
+    lastUpdated: m.recorded_at || new Date().toISOString(),
+    accuracy: 50,
+  }
+}
 import { getUser, getToken, clearAuth, AuthUser } from '@/lib/auth'
 import { useRouter } from 'next/navigation'
 import ThemeToggle from '@/components/ui/ThemeToggle'
@@ -317,14 +337,16 @@ function ProfileTab({ user, toggles, setToggle, logout }:{
 /* ─────────────────────────────────────────────────────────────
    RIGHT PANEL
 ─────────────────────────────────────────────────────────────── */
-function RightPanel({ tab, setTab, expanded, setExpanded, alerts, dismiss, toggles, setToggle, user, logout, onSOS }: {
+function RightPanel({ tab, setTab, expanded, setExpanded, alerts, dismiss, toggles, setToggle, user, logout, onSOS, members }: {
   tab:Tab; setTab:(t:Tab)=>void
   expanded:string|null; setExpanded:(id:string|null)=>void
   alerts:Alert[]; dismiss:(id:string)=>void
   toggles:Record<TKey,boolean>; setToggle:(k:TKey)=>void
   user:AuthUser; logout:()=>void
   onSOS?:()=>void
+  members: MapMember[]
 }) {
+  const MEMBERS = members
   const TABS: {id:Tab;label:string;icon:string;count?:number}[] = [
     {id:'family', label:'Family', icon:'👨‍👩‍👧'},
     {id:'alerts', label:'Alerts', icon:'🔔', count:alerts.length},
@@ -341,7 +363,7 @@ function RightPanel({ tab, setTab, expanded, setExpanded, alerts, dismiss, toggl
            style={{background:'rgba(16,185,129,0.08)',border:'1px solid rgba(16,185,129,0.2)'}}>
         <motion.div animate={{scale:[1,1.3,1]}} transition={{duration:2,repeat:Infinity}}
           className="w-2 h-2 rounded-full bg-emerald-400 flex-shrink-0" />
-        <span className="text-xs font-semibold text-emerald-400 flex-1">All {MAP_MEMBERS.length} members safe</span>
+        <span className="text-xs font-semibold text-emerald-400 flex-1">All {MEMBERS.length} members safe</span>
         <span className="text-lg">🛡️</span>
       </div>
 
@@ -380,7 +402,7 @@ function RightPanel({ tab, setTab, expanded, setExpanded, alerts, dismiss, toggl
         <AnimatePresence mode="wait">
           {tab==='family' && (
             <motion.div key="fam" initial={{opacity:0,y:6}} animate={{opacity:1,y:0}} exit={{opacity:0}} className="space-y-2">
-              {MAP_MEMBERS.map((m,i) => (
+              {MEMBERS.map((m,i) => (
                 <motion.div key={m.id} initial={{opacity:0,y:20}} animate={{opacity:1,y:0}} transition={{delay:i*0.05,duration:0.3}}>
                   <MemberCard m={m} open={expanded===m.id} onToggle={() => setExpanded(expanded===m.id?null:m.id)} onSOS={onSOS} />
                 </motion.div>
@@ -416,7 +438,7 @@ export default function DashboardPage() {
   const [alerts,  setAlerts]  = useState<Alert[]>(INIT_ALERTS)
   const [bell,    setBell]    = useState(false)
   const [toggles, setToggles] = useState<Record<TKey,boolean>>({location:true,push:true,sos:false,battery:true})
-  const [familyMembers, setFamilyMembers] = useState<any[]>([])
+  const [familyMembers, setFamilyMembers] = useState<MapMember[]>([])
   const [realAlerts, setRealAlerts] = useState<Alert[]>([])
   const [familyId, setFamilyId] = useState<number | null>(null)
 
@@ -436,10 +458,22 @@ export default function DashboardPage() {
     if (!token) return
     fetch('/families/my', { headers: { Authorization: 'Bearer ' + token } })
       .then(r => r.ok ? r.json() : [])
-      .then((families: any[]) => {
+      .then(async (families: any[]) => {
         if (families.length > 0) {
-          setFamilyId(families[0].id)
-          fetch('/sos/history/' + families[0].id, { headers: { Authorization: 'Bearer ' + token } })
+          const fid = families[0].id
+          setFamilyId(fid)
+          // Fetch real live locations
+          try {
+            const liveRes = await fetch(`/location/live/${fid}`, { headers: { Authorization: 'Bearer ' + token } })
+            if (liveRes.ok) {
+              const live = await liveRes.json()
+              if (live.length > 0) {
+                setFamilyMembers(live.map((m: any, i: number) => apiToMapMember(m, i)))
+              }
+            }
+          } catch (_) {}
+          // Fetch SOS alerts
+          fetch('/sos/history/' + fid, { headers: { Authorization: 'Bearer ' + token } })
             .then(r => r.ok ? r.json() : [])
             .then((sos: any[]) => {
               if (sos.length > 0) {
@@ -490,7 +524,8 @@ export default function DashboardPage() {
     </div>
   )
 
-  const activeMember = MAP_MEMBERS.find(m => m.id===activeId) ?? null
+  const MEMBERS = familyMembers.length > 0 ? familyMembers : MAP_MEMBERS
+  const activeMember = MEMBERS.find(m => m.id===activeId) ?? null
 
   return (
     <div className="min-h-screen flex flex-col" style={{background:'var(--bg)',color:'var(--text-primary)'}}>
@@ -596,7 +631,7 @@ export default function DashboardPage() {
                     border:'1px solid rgba(255,255,255,0.08)',
                     boxShadow:'0 24px 60px rgba(0,0,0,0.5), 0 0 0 1px rgba(212,168,83,0.04)'}}>
 
-            <MapView activeId={activeId} onMemberClick={onMemberClick} />
+            <MapView activeId={activeId} onMemberClick={onMemberClick} members={familyMembers.length > 0 ? familyMembers : undefined} />
 
             {/* Top gradient fade — premium depth */}
             <div className="absolute top-0 left-0 right-0 pointer-events-none"
@@ -649,7 +684,7 @@ export default function DashboardPage() {
           {/* Member strip */}
           <motion.div initial={{opacity:0,y:16}} animate={{opacity:1,y:0}} transition={{duration:0.5,delay:0.15}}
             className="flex gap-2.5 overflow-x-auto pb-1 scrollbar-none">
-            {MAP_MEMBERS.map((m,i) => (
+            {MEMBERS.map((m,i) => (
               <motion.button key={m.id}
                 initial={{opacity:0,y:12}} animate={{opacity:1,y:0,transition:{delay:i*0.07}}}
                 whileHover={{scale:1.04,y:-2}} whileTap={{scale:0.96}}
@@ -698,7 +733,7 @@ export default function DashboardPage() {
           className="hidden lg:flex flex-col w-[320px] flex-shrink-0">
           <RightPanel tab={tab} setTab={setTab} expanded={expanded} setExpanded={setExpanded}
             alerts={alerts} dismiss={dismiss} toggles={toggles} setToggle={toggleSetting}
-            user={user} logout={logout} onSOS={triggerSOS} />
+            user={user} logout={logout} onSOS={triggerSOS} members={MEMBERS} />
         </motion.div>
 
         {/* RIGHT — Mobile tab content */}
@@ -707,7 +742,7 @@ export default function DashboardPage() {
             <motion.div key={mobTab} initial={{opacity:0,y:8}} animate={{opacity:1,y:0}} exit={{opacity:0}} transition={{duration:0.2}}>
               {mobTab==='family' && (
                 <div className="space-y-2">
-                  {MAP_MEMBERS.map(m => (
+                  {MEMBERS.map(m => (
                     <MemberCard key={m.id} m={m} open={expanded===m.id} onToggle={() => setExpanded(expanded===m.id?null:m.id)} onSOS={triggerSOS} />
                   ))}
                 </div>
