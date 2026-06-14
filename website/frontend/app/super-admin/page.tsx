@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect, useRef } from 'react'
+import { useRouter } from 'next/navigation'
 import { motion, AnimatePresence, useInView } from 'framer-motion'
 import { useAuth } from '@/lib/useAuth'
 import PanelBackground from '@/components/effects/PanelBackground'
@@ -634,8 +635,20 @@ const NAV_GROUPS_SA = [
 // ─── Main Component ───────────────────────────────────────────────────────────
 
 export default function SuperAdminPage() {
-  const { user, logout } = useAuth()
+  const { user, logout, role, isAuthenticated } = useAuth()
+  const router = useRouter()
   const [active, setActive] = useState<NavSection>('command')
+
+  // ── Role guard: only super_admin allowed ──────────────────────
+  useEffect(() => {
+    const t = setTimeout(() => {
+      if (!isAuthenticated) { router.push('/login'); return }
+      if (role && role !== 'super_admin') {
+        router.push(role === 'admin' ? '/admin' : '/dashboard')
+      }
+    }, 400)
+    return () => clearTimeout(t)
+  }, [isAuthenticated, role, router])
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [showAddAdminModal, setShowAddAdminModal] = useState(false)
   const [maintenanceMode, setMaintenanceMode] = useState(false)
