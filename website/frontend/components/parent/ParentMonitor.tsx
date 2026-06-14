@@ -400,15 +400,102 @@ export function ElderlyMonitorSection() {
 // DRIVING SAFETY SECTION
 // ─────────────────────────────────────────────────────────────────────────────
 
+interface DrivingData {
+  score: number | null;
+  total_trips: number;
+  total_km: number;
+  harsh_brakes: number;
+  speeding: number;
+  phone_use: number;
+  journeys: { id: number; from_location: string; to_location: string; started_at: string | null; status: string; distance_km: number | null; duration_min: number | null }[];
+  recent_events: { type: string; severity: string; speed: number | null; occurred_at: string | null }[];
+}
+
+function ScoreRing({ score, color }: { score: number; color: string }) {
+  const r = 28;
+  const circ = 2 * Math.PI * r;
+  const offset = circ * (1 - score / 100);
+  const scoreColor = score >= 80 ? '#10B981' : score >= 60 ? '#F59E0B' : '#EF4444';
+  return (
+    <svg width={72} height={72} className="-rotate-90">
+      <circle cx={36} cy={36} r={r} fill="none" stroke="rgba(255,255,255,0.08)" strokeWidth={6} />
+      <motion.circle
+        cx={36} cy={36} r={r} fill="none"
+        stroke={scoreColor} strokeWidth={6} strokeLinecap="round"
+        strokeDasharray={circ}
+        initial={{ strokeDashoffset: circ }}
+        animate={{ strokeDashoffset: offset }}
+        transition={{ duration: 1.4, ease: 'easeOut' }}
+      />
+      <text x={36} y={36} textAnchor="middle" dominantBaseline="middle"
+        fontSize={14} fontWeight={700} fill={scoreColor}
+        style={{ transform: 'rotate(90deg)', transformOrigin: '36px 36px', fontFamily: 'Inter,sans-serif' }}>
+        {score}
+      </text>
+    </svg>
+  );
+}
+
+function EventIcon({ type }: { type: string }) {
+  const map: Record<string, string> = {
+    harsh_brake: '🛑', speeding: '⚡', phone_use: '📱', rapid_accel: '🚀',
+  };
+  return <span className="text-base">{map[type] || '⚠️'}</span>;
+}
+
+function formatTime(iso: string | null) {
+  if (!iso) return '—';
+  const d = new Date(iso);
+  return d.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' });
+}
+
+function formatDate(iso: string | null) {
+  if (!iso) return '—';
+  const d = new Date(iso);
+  const today = new Date();
+  const diff = Math.floor((today.getTime() - d.getTime()) / 86400000);
+  if (diff === 0) return 'Today';
+  if (diff === 1) return 'Yesterday';
+  return d.toLocaleDateString('en-IN', { day: 'numeric', month: 'short' });
+}
+
 export function DrivingSection() {
   const { members, loading } = useFamilyMembers();
+  const [drivingData, setDrivingData] = useState<Record<number, DrivingData>>({});
+  const [expanded, setExpanded] = useState<number | null>(null);
   const colors = ['#10B981', '#F59E0B', '#3B82F6', '#8B5CF6', '#EF4444'];
+
+  useEffect(() => {
+    if (!members.length) return;
+    const token = localStorage.getItem('gv_token');
+    if (!token) return;
+    members.forEach(async (m) => {
+      try {
+        const res = await fetch(`/driving/member/${m.user_id}`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        if (res.ok) {
+          const data = await res.json();
+          setDrivingData(prev => ({ ...prev, [m.user_id]: data }));
+        }
+      } catch (_) {}
+    });
+  }, [members]);
 
   if (loading) {
     return (
-      <div className={`${glassCard} p-4 animate-pulse`} style={{ height: 120 }}>
-        <div className="h-4 bg-white/10 rounded w-1/3 mb-3" />
-        <div className="h-3 bg-white/10 rounded w-1/2" />
+      <div className="space-y-3">
+        {[1, 2].map(i => (
+          <div key={i} className={`${glassCard} p-4 animate-pulse`} style={{ height: 100 }}>
+            <div className="flex gap-3">
+              <div className="w-10 h-10 rounded-full bg-white/10" />
+              <div className="space-y-2 flex-1">
+                <div className="h-3 bg-white/10 rounded w-1/3" />
+                <div className="h-2 bg-white/10 rounded w-1/2" />
+              </div>
+            </div>
+          </div>
+        ))}
       </div>
     );
   }
@@ -416,69 +503,194 @@ export function DrivingSection() {
   return (
     <div className="space-y-4">
       {/* Header */}
-      <div className="flex items-center gap-3">
-        <div className="w-9 h-9 rounded-xl bg-blue-500/20 flex items-center justify-center">
-          <Car className="w-5 h-5 text-blue-400" />
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <div className="w-9 h-9 rounded-xl bg-blue-500/20 flex items-center justify-center">
+            <Car className="w-5 h-5 text-blue-400" />
+          </div>
+          <div>
+            <h2 className="text-lg font-bold text-white">Driving Safety</h2>
+            <p className="text-xs text-white/50">Trips · Score · Events</p>
+          </div>
         </div>
-        <div>
-          <h2 className="text-lg font-bold text-white">Driving Safety</h2>
-          <p className="text-xs text-white/50">Trip monitoring</p>
-        </div>
+        <span className="text-xs text-white/30">{members.length} drivers</span>
       </div>
 
       {members.length === 0 ? (
-        <EmptyState
-          icon={Car}
-          title="No family members"
-          subtitle="Add members to monitor driving safety and trips."
-        />
+        <EmptyState icon={Car} title="No family members" subtitle="Add members to monitor driving safety." />
       ) : (
         <div className="space-y-3">
           {members.map((m, i) => {
             const color = colors[i % colors.length];
+            const d = drivingData[m.user_id];
+            const isExpanded = expanded === m.user_id;
+            const scoreColor = !d || d.score === null ? 'text-white/30' : d.score >= 80 ? 'text-emerald-400' : d.score >= 60 ? 'text-amber-400' : 'text-red-400';
+            const badge = !d || d.score === null ? 'No trips yet' : d.score >= 85 ? 'Safe Driver' : d.score >= 70 ? 'Good Driver' : 'Needs Improvement';
+            const badgeColor = !d || d.score === null ? 'bg-white/10 text-white/40' : d.score >= 85 ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' : d.score >= 70 ? 'bg-amber-500/20 text-amber-400 border border-amber-500/30' : 'bg-red-500/20 text-red-400 border border-red-500/30';
+
             return (
-              <div key={m.user_id} className={`${glassCard} p-4 space-y-3`}>
-                {/* Member row */}
-                <div className="flex items-center gap-3">
-                  <div
-                    className="w-10 h-10 rounded-full flex items-center justify-center text-base font-bold text-black flex-shrink-0"
-                    style={{ background: color }}
-                  >
-                    {m.name.charAt(0).toUpperCase()}
+              <motion.div key={m.user_id} layout className={`${glassCard} overflow-hidden`}>
+                {/* Collapsed header */}
+                <div
+                  className="flex items-center gap-3 p-4 cursor-pointer"
+                  onClick={() => setExpanded(prev => prev === m.user_id ? null : m.user_id)}
+                >
+                  {/* Score ring */}
+                  <div className="flex-shrink-0">
+                    {d && d.score !== null ? (
+                      <ScoreRing score={d.score} color={color} />
+                    ) : (
+                      <div className="w-[72px] h-[72px] rounded-full border-4 border-white/10 flex items-center justify-center">
+                        <span className="text-xs text-white/25 font-bold">—</span>
+                      </div>
+                    )}
                   </div>
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2">
+
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 flex-wrap mb-1">
+                      <div className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold text-black flex-shrink-0" style={{ background: color }}>
+                        {m.name.charAt(0).toUpperCase()}
+                      </div>
                       <span className="font-semibold text-white text-sm">{m.name}</span>
-                      <StatusBadge status={m.is_online ? 'Online' : 'Offline'} />
+                      <span className={`text-[10px] px-2 py-0.5 rounded-full font-semibold ${badgeColor}`}>{badge}</span>
                     </div>
-                    <span className="text-white/40 text-xs">{m.last_location || 'No recent location'}</span>
+                    <div className="flex items-center gap-4 text-xs text-white/40">
+                      <span>🚗 {d?.total_trips ?? 0} trips</span>
+                      <span>📍 {d?.total_km ?? 0} km</span>
+                      {(d?.harsh_brakes ?? 0) > 0 && <span className="text-amber-400">🛑 {d!.harsh_brakes} harsh</span>}
+                      {(d?.phone_use ?? 0) > 0 && <span className="text-red-400">📱 {d!.phone_use}x phone</span>}
+                    </div>
                   </div>
+
+                  <motion.div animate={{ rotate: isExpanded ? 180 : 0 }} transition={{ duration: 0.2 }}>
+                    <ChevronDown className="w-4 h-4 text-white/30" />
+                  </motion.div>
                 </div>
 
-                {/* No driving data */}
-                <div className="bg-white/5 rounded-xl p-3 flex items-start gap-3">
-                  <Route className="w-5 h-5 text-white/20 flex-shrink-0 mt-0.5" />
-                  <div>
-                    <p className="text-sm font-semibold text-white/40">No trips recorded yet</p>
-                    <p className="text-xs text-white/25 mt-0.5">
-                      Driving trips, speed data, and safety scores will appear here once the member starts a trip with Gravity.
-                    </p>
-                  </div>
-                </div>
-              </div>
+                {/* Expanded: trips + events */}
+                <AnimatePresence>
+                  {isExpanded && (
+                    <motion.div
+                      initial={{ opacity: 0, height: 0 }}
+                      animate={{ opacity: 1, height: 'auto' }}
+                      exit={{ opacity: 0, height: 0 }}
+                      transition={{ duration: 0.3 }}
+                      className="overflow-hidden border-t border-white/10"
+                    >
+                      <div className="p-4 space-y-4">
+                        {/* Stats row */}
+                        {d && d.total_trips > 0 && (
+                          <div className="grid grid-cols-4 gap-2">
+                            {[
+                              { label: 'Score', value: d.score ?? '—', color: scoreColor },
+                              { label: 'Trips', value: d.total_trips, color: 'text-blue-400' },
+                              { label: 'Km', value: d.total_km, color: 'text-emerald-400' },
+                              { label: 'Events', value: (d.harsh_brakes + d.speeding + d.phone_use), color: d.harsh_brakes + d.speeding + d.phone_use > 0 ? 'text-amber-400' : 'text-emerald-400' },
+                            ].map(stat => (
+                              <div key={stat.label} className="bg-white/5 rounded-xl p-2.5 text-center">
+                                <p className={`text-lg font-bold ${stat.color}`}>{stat.value}</p>
+                                <p className="text-[10px] text-white/30 mt-0.5">{stat.label}</p>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+
+                        {/* Safety indicators */}
+                        {d && d.total_trips > 0 && (
+                          <div className="grid grid-cols-3 gap-2">
+                            {[
+                              { label: 'Harsh Brakes', value: d.harsh_brakes, icon: '🛑', good: d.harsh_brakes === 0 },
+                              { label: 'Speeding', value: d.speeding, icon: '⚡', good: d.speeding === 0 },
+                              { label: 'Phone Use', value: d.phone_use, icon: '📱', good: d.phone_use === 0 },
+                            ].map(ind => (
+                              <div key={ind.label} className={`rounded-xl p-2.5 text-center ${ind.good ? 'bg-emerald-500/10 border border-emerald-500/20' : 'bg-amber-500/10 border border-amber-500/20'}`}>
+                                <div className="text-base mb-0.5">{ind.icon}</div>
+                                <div className={`text-sm font-bold ${ind.good ? 'text-emerald-400' : 'text-amber-400'}`}>
+                                  {ind.good ? '✓ None' : ind.value}
+                                </div>
+                                <div className="text-[9px] text-white/30">{ind.label}</div>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+
+                        {/* Trip history */}
+                        <div>
+                          <p className="text-xs font-bold text-white/40 uppercase tracking-wider mb-2">Recent Trips</p>
+                          {!d || d.journeys.length === 0 ? (
+                            <div className="bg-white/5 rounded-xl p-4 flex flex-col items-center gap-2 text-center">
+                              <Route className="w-6 h-6 text-white/15" />
+                              <p className="text-sm text-white/30">No trips yet</p>
+                              <p className="text-xs text-white/20">Start a journey from the Journeys tab to begin tracking</p>
+                            </div>
+                          ) : (
+                            <div className="space-y-2">
+                              {d.journeys.slice(0, 5).map(j => (
+                                <div key={j.id} className="flex items-center gap-3 bg-white/5 rounded-xl px-3 py-2">
+                                  <div className="flex flex-col items-center gap-0.5 flex-shrink-0">
+                                    <div className="w-2 h-2 rounded-full bg-emerald-400" />
+                                    <div className="w-px h-3 bg-white/20" />
+                                    <div className="w-2 h-2 rounded-full" style={{ background: color }} />
+                                  </div>
+                                  <div className="flex-1 min-w-0">
+                                    <p className="text-xs text-white/70 truncate">{j.from_location} → {j.to_location}</p>
+                                    <p className="text-[10px] text-white/30">{formatDate(j.started_at)} · {formatTime(j.started_at)}{j.duration_min ? ` · ${j.duration_min} min` : ''}</p>
+                                  </div>
+                                  <div className="text-right flex-shrink-0">
+                                    {j.distance_km && <p className="text-xs text-white/60 font-semibold">{j.distance_km.toFixed(1)} km</p>}
+                                    <span className={`text-[9px] px-1.5 py-0.5 rounded-full ${j.status === 'completed' ? 'bg-emerald-500/15 text-emerald-400' : 'bg-blue-500/15 text-blue-400'}`}>
+                                      {j.status}
+                                    </span>
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Recent driving events */}
+                        {d && d.recent_events.length > 0 && (
+                          <div>
+                            <p className="text-xs font-bold text-white/40 uppercase tracking-wider mb-2">Recent Events</p>
+                            <div className="space-y-1.5">
+                              {d.recent_events.map((ev, idx) => (
+                                <div key={idx} className="flex items-center gap-2 bg-amber-500/5 border border-amber-500/15 rounded-lg px-3 py-2">
+                                  <EventIcon type={ev.type} />
+                                  <span className="text-xs text-white/60 capitalize flex-1">{ev.type.replace(/_/g, ' ')}</span>
+                                  {ev.speed && <span className="text-xs text-amber-400">{Math.round(ev.speed)} km/h</span>}
+                                  <span className="text-[10px] text-white/25">{formatDate(ev.occurred_at)}</span>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </motion.div>
             );
           })}
         </div>
       )}
 
-      {/* Info card */}
-      <div className="bg-blue-500/10 border border-blue-500/20 rounded-2xl p-4 flex items-center gap-4">
-        <div className="w-10 h-10 rounded-xl bg-blue-500/20 flex items-center justify-center flex-shrink-0">
-          <Gauge className="w-5 h-5 text-blue-400" />
+      {/* How it works */}
+      <div className="bg-blue-500/10 border border-blue-500/20 rounded-2xl p-4 space-y-2">
+        <div className="flex items-center gap-2">
+          <Gauge className="w-4 h-4 text-blue-400" />
+          <p className="text-sm font-semibold text-white">How Driving Safety Works</p>
         </div>
-        <div>
-          <p className="text-sm font-semibold text-white">Driving Safety Coming Soon</p>
-          <p className="text-xs text-white/50">Real-time trip score, harsh brakes, speed alerts and phone detection.</p>
+        <div className="grid grid-cols-3 gap-2 text-center">
+          {[
+            { step: '1', text: 'Start a journey', icon: '🚗' },
+            { step: '2', text: 'Drive with Gravity', icon: '📍' },
+            { step: '3', text: 'See your score', icon: '⭐' },
+          ].map(s => (
+            <div key={s.step} className="bg-white/5 rounded-xl p-2">
+              <div className="text-lg mb-1">{s.icon}</div>
+              <p className="text-[10px] text-white/50">{s.text}</p>
+            </div>
+          ))}
         </div>
       </div>
     </div>
