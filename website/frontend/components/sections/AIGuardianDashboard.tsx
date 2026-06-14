@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   Brain,
@@ -17,6 +17,35 @@ import {
   User,
   Navigation,
 } from 'lucide-react'
+import { getToken } from '@/lib/auth'
+
+/* ── Helpers ────────────────────────────────────────────────────────────────── */
+function getInsightIcon(iconType: string): React.ReactNode {
+  if (iconType === 'check') return <CheckCircle size={12} />
+  if (iconType === 'heart') return <Heart size={12} />
+  if (iconType === 'car') return <Car size={12} />
+  if (iconType === 'map') return <MapPin size={12} />
+  if (iconType === 'alert') return <AlertTriangle size={12} />
+  return <Brain size={12} />
+}
+
+function categoryIcon(cat: string): React.ReactNode {
+  if (cat === 'route_safety') return <Navigation size={14} />
+  if (cat === 'child_risk') return <User size={14} />
+  if (cat === 'elderly_risk') return <Heart size={14} />
+  if (cat === 'driving_risk') return <Car size={14} />
+  if (cat === 'health_risk') return <Activity size={14} />
+  return <Shield size={14} />
+}
+
+function categoryLabel(cat: string): string {
+  if (cat === 'route_safety') return 'Route Safety Score'
+  if (cat === 'child_risk') return 'Child Risk Level'
+  if (cat === 'elderly_risk') return 'Elderly Risk'
+  if (cat === 'driving_risk') return 'Driving Risk'
+  if (cat === 'health_risk') return 'Health Risk'
+  return cat
+}
 
 /* ── Types ──────────────────────────────────────────────────────────────────── */
 interface RiskCard {
@@ -158,101 +187,101 @@ function AnimatedPin({ x, y, color, label }: { x: number; y: number; color: stri
 export default function AIGuardianDashboard() {
   const [chatInput, setChatInput] = useState('')
   const [chatMessages, setChatMessages] = useState<{ role: 'user' | 'ai'; text: string }[]>([])
+  const [familyId, setFamilyId] = useState<number | null>(null)
+  const [aiLoading, setAiLoading] = useState(false)
+  const [signalsCount, setSignalsCount] = useState(0)
 
-  const riskCards: RiskCard[] = [
-    {
-      label: 'Route Safety Score',
-      score: 94,
-      maxScore: 100,
-      color: '#10B981',
-      icon: <Navigation size={14} />,
-    },
-    {
-      label: 'Child Risk Level',
-      score: null,
-      maxScore: 100,
-      badge: 'Low',
-      badgeColor: '#10B981',
-      color: '#10B981',
-      icon: <User size={14} />,
-    },
-    {
-      label: 'Elderly Risk',
-      score: null,
-      maxScore: 100,
-      badge: 'Moderate',
-      badgeColor: '#F59E0B',
-      note: 'High Fall Risk in Rain',
-      color: '#F59E0B',
-      icon: <Heart size={14} />,
-    },
-    {
-      label: 'Driving Risk',
-      score: 23,
-      maxScore: 100,
-      color: '#10B981',
-      icon: <Car size={14} />,
-    },
-    {
-      label: 'Health Risk',
-      score: 12,
-      maxScore: 100,
-      color: '#10B981',
-      icon: <Activity size={14} />,
-    },
-  ]
+  const [riskCards, setRiskCards] = useState<RiskCard[]>([
+    { label: 'Route Safety Score', score: null, maxScore: 100, badge: '…', badgeColor: '#6B7280', color: '#6B7280', icon: <Navigation size={14} /> },
+    { label: 'Child Risk Level', score: null, maxScore: 100, badge: '…', badgeColor: '#6B7280', color: '#6B7280', icon: <User size={14} /> },
+    { label: 'Elderly Risk', score: null, maxScore: 100, badge: '…', badgeColor: '#6B7280', color: '#6B7280', icon: <Heart size={14} /> },
+    { label: 'Driving Risk', score: null, maxScore: 100, badge: '…', badgeColor: '#6B7280', color: '#6B7280', icon: <Car size={14} /> },
+    { label: 'Health Risk', score: null, maxScore: 100, badge: '…', badgeColor: '#6B7280', color: '#6B7280', icon: <Activity size={14} /> },
+  ])
 
-  const insights: InsightItem[] = [
-    {
-      icon: <CheckCircle size={12} />,
-      dotColor: '#10B981',
-      text: 'Aanya arrived at school safely at 8:42 AM',
-      time: '8:42 AM',
-    },
-    {
-      icon: <Heart size={12} />,
-      dotColor: '#F59E0B',
-      text: "Grandma's heartrate elevated — recommend rest",
-      time: '10:15 AM',
-    },
-    {
-      icon: <Car size={12} />,
-      dotColor: '#EF4444',
-      text: 'Teen driver Rohan: 2 harsh brakes detected',
-      time: '11:30 AM',
-    },
-    {
-      icon: <MapPin size={12} />,
-      dotColor: '#A78BFA',
-      text: 'Geofence: Dad entered office zone at 9:15 AM',
-      time: '9:15 AM',
-    },
-  ]
+  const [insights, setInsights] = useState<InsightItem[]>([])
 
-  const handleSendMessage = () => {
-    if (!chatInput.trim()) return
+  useEffect(() => {
+    async function load() {
+      const token = getToken()
+      if (!token) return
+      const h = { Authorization: `Bearer ${token}` }
+      try {
+        const famRes = await fetch('/families/my', { headers: h })
+        if (!famRes.ok) return
+        const famData = await famRes.json()
+        const fid = famData.id ?? famData.family?.id
+        if (!fid) return
+        setFamilyId(fid)
+
+        const [sr, ir] = await Promise.all([
+          fetch(`/api/ai-guardian/safety-scores/${fid}`, { headers: h }),
+          fetch(`/api/ai-guardian/insights/${fid}`, { headers: h }),
+        ])
+
+        if (sr.ok) {
+          const d = await sr.json()
+          const CATS = ['route_safety', 'child_risk', 'elderly_risk', 'driving_risk', 'health_risk']
+          const cards: RiskCard[] = CATS.map(cat => {
+            const s = (d.scores as any[]).find((x: any) => x.category === cat)
+            if (!s) return { label: categoryLabel(cat), score: null, maxScore: 100, badge: 'N/A', badgeColor: '#6B7280', color: '#6B7280', icon: categoryIcon(cat) }
+            return {
+              label: categoryLabel(cat),
+              score: s.score,
+              maxScore: s.max_score,
+              badge: s.badge ?? undefined,
+              badgeColor: s.color,
+              note: s.note ?? undefined,
+              color: s.color,
+              icon: categoryIcon(cat),
+            }
+          })
+          setRiskCards(cards)
+        }
+
+        if (ir.ok) {
+          const d = await ir.json()
+          const mapped: InsightItem[] = (d.insights as any[]).map((i: any) => ({
+            icon: getInsightIcon(i.icon_type),
+            dotColor: i.dot_color,
+            text: i.text,
+            time: i.time,
+          }))
+          setInsights(mapped)
+          setSignalsCount(d.total_signals_processed ?? 0)
+        }
+      } catch { /* silent — show placeholder state */ }
+    }
+    load()
+  }, [])
+
+  const handleSendMessage = async () => {
+    if (!chatInput.trim() || aiLoading) return
     const userMsg = chatInput.trim()
     setChatMessages(prev => [...prev, { role: 'user', text: userMsg }])
     setChatInput('')
+    setAiLoading(true)
 
-    // Simulated AI response
-    setTimeout(() => {
-      const responses: Record<string, string> = {
-        default: 'All family members are safe. No active alerts at this time.',
-        child: 'Aanya arrived at St. Mary\'s School at 8:42 AM. Currently in class. All safe.',
-        grandma: 'Grandma walked 1.4km this morning. Heartrate slightly elevated — recommend rest.',
-        rohan: 'Rohan has 2 harsh brake events logged today. Driving score: 67/100.',
+    try {
+      const token = getToken()
+      const headers: Record<string, string> = { 'Content-Type': 'application/json' }
+      if (token) headers['Authorization'] = `Bearer ${token}`
+      const res = await fetch('/api/ai-guardian/ask', {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({ query: userMsg, family_id: familyId ?? 1 }),
+      })
+      if (res.ok) {
+        const data = await res.json()
+        setChatMessages(prev => [...prev, { role: 'ai', text: data.response }])
+      } else {
+        setChatMessages(prev => [...prev, { role: 'ai', text: 'AI Guardian is processing. Please try again in a moment.' }])
       }
-      const lower = userMsg.toLowerCase()
-      const reply = lower.includes('aanya') || lower.includes('child') || lower.includes('school')
-        ? responses.child
-        : lower.includes('grandma') || lower.includes('elderly')
-        ? responses.grandma
-        : lower.includes('rohan') || lower.includes('driving')
-        ? responses.rohan
-        : responses.default
-      setChatMessages(prev => [...prev, { role: 'ai', text: reply }])
-    }, 700)
+    } catch {
+      setChatMessages(prev => [...prev, { role: 'ai', text: 'Connection error — please check your network.' }])
+    } finally {
+      setAiLoading(false)
+    }
   }
 
   return (
@@ -547,6 +576,11 @@ export default function AIGuardianDashboard() {
             </span>
           </div>
 
+          {insights.length === 0 && (
+            <div style={{ padding: '12px', color: 'rgba(255,255,255,0.3)', fontSize: '0.75rem', textAlign: 'center' }}>
+              Loading AI insights…
+            </div>
+          )}
           {insights.map((item, i) => (
             <motion.div
               key={i}
@@ -603,7 +637,7 @@ export default function AIGuardianDashboard() {
           >
             <Activity size={10} style={{ color: '#A78BFA' }} />
             <span style={{ fontSize: '0.63rem', color: 'rgba(167,139,250,0.8)' }}>
-              AI processed 2,847 signals today
+              {signalsCount > 0 ? `AI processed ${signalsCount.toLocaleString()} signals today` : 'AI Guardian active'}
             </span>
           </div>
         </div>
@@ -659,6 +693,20 @@ export default function AIGuardianDashboard() {
                   </div>
                 </motion.div>
               ))}
+              {aiLoading && (
+                <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} style={{ display: 'flex', justifyContent: 'flex-start' }}>
+                  <div style={{
+                    padding: '8px 14px', borderRadius: '10px 10px 10px 3px',
+                    background: 'rgba(167,139,250,0.1)', border: '1px solid rgba(167,139,250,0.2)',
+                    display: 'flex', gap: 4, alignItems: 'center',
+                  }}>
+                    {[0, 1, 2].map(j => (
+                      <motion.span key={j} animate={{ opacity: [0.3, 1, 0.3] }} transition={{ duration: 1, repeat: Infinity, delay: j * 0.2 }}
+                        style={{ width: 6, height: 6, borderRadius: '50%', background: '#A78BFA', display: 'inline-block' }} />
+                    ))}
+                  </div>
+                </motion.div>
+              )}
             </motion.div>
           )}
         </AnimatePresence>

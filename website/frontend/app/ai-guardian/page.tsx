@@ -1,6 +1,6 @@
 'use client'
 
-import { useRef, useState } from 'react'
+import { useRef, useState, useEffect } from 'react'
 import Link from 'next/link'
 import { motion, useInView, AnimatePresence } from 'framer-motion'
 import {
@@ -28,6 +28,7 @@ import {
 import Navbar from '@/components/layout/Navbar'
 import Footer from '@/components/layout/Footer'
 import AIGuardianDashboard from '@/components/sections/AIGuardianDashboard'
+import { getToken } from '@/lib/auth'
 
 /* ── Animation variants ─────────────────────────────────────────────────────── */
 const fadeUp = {
@@ -401,12 +402,69 @@ function TimelineItem({
   )
 }
 
+/* ── Runtime helpers ─────────────────────────────────────────────────────────── */
+function getScoreByCategory(scores: any[], category: string): number | null {
+  return scores.find((s: any) => s.category === category)?.score ?? null
+}
+function getColorByCategory(scores: any[], category: string): string {
+  return scores.find((s: any) => s.category === category)?.color ?? '#6B7280'
+}
+function eventIcon(category: string): React.ReactNode {
+  if (category === 'health') return <Heart size={10} />
+  if (category === 'driving') return <Car size={10} />
+  if (category === 'location') return <MapPin size={10} />
+  if (category === 'routine') return <CheckCircle size={10} />
+  if (category === 'sos') return <AlertTriangle size={10} />
+  return <Activity size={10} />
+}
+function formatReportDate(iso: string): string {
+  try {
+    const d = new Date(iso + 'T00:00:00')
+    return d.toLocaleDateString('en-IN', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })
+  } catch {
+    return iso
+  }
+}
+
 /* ══════════════════════════════════════════════════════════════════════════════
    PAGE
 ══════════════════════════════════════════════════════════════════════════════ */
 export default function AIGuardianPage() {
   const heroRef = useRef(null)
   const heroInView = useInView(heroRef, { once: true })
+
+  const [safetyScores, setSafetyScores] = useState<any[]>([])
+  const [overallScore, setOverallScore] = useState<number | null>(null)
+  const [dailyReport, setDailyReport] = useState<any | null>(null)
+
+  useEffect(() => {
+    async function load() {
+      const token = getToken()
+      if (!token) return
+      const h = { Authorization: `Bearer ${token}` }
+      try {
+        const famRes = await fetch('/families/my', { headers: h })
+        if (!famRes.ok) return
+        const famData = await famRes.json()
+        const fid = famData.id ?? famData.family?.id
+        if (!fid) return
+        const [sr, rr] = await Promise.all([
+          fetch(`/api/ai-guardian/safety-scores/${fid}`, { headers: h }),
+          fetch(`/api/ai-guardian/daily-report/${fid}`, { headers: h }),
+        ])
+        if (sr.ok) {
+          const d = await sr.json()
+          setSafetyScores(d.scores ?? [])
+          setOverallScore(d.overall_score ?? null)
+        }
+        if (rr.ok) {
+          const d = await rr.json()
+          setDailyReport(d)
+        }
+      } catch { /* silent — keep static fallback */ }
+    }
+    load()
+  }, [])
 
   return (
     <>
@@ -671,18 +729,23 @@ export default function AIGuardianPage() {
             variants={stagger}
             style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(170px, 1fr))', gap: 18 }}
           >
-            <PredictionGauge label="Route Safety" score={94} color="#10B981" icon={<Navigation size={16} />}
-              description="Analyzes real-time traffic, crime data, and deviation patterns for every family route." />
-            <PredictionGauge label="Child Safety" score={97} color="#3B82F6" icon={<User size={16} />}
-              description="Monitors school arrival, route compliance, and unusual contact patterns." />
-            <PredictionGauge label="Elder Wellness" score={72} color="#F59E0B" icon={<Heart size={16} />}
-              description="Tracks mobility patterns, heartrate trends, and fall risk indicators in all weather." />
-            <PredictionGauge label="Driving Risk" score={23} max={100} color="#10B981" icon={<Car size={16} />}
-              description="Detects harsh braking, phone usage, drowsiness signals, and fatigue patterns." />
-            <PredictionGauge label="Health Index" score={88} color="#A78BFA" icon={<Activity size={16} />}
-              description="Combines smartwatch data, mobility trends, and rest patterns into a unified score." />
-            <PredictionGauge label="Emergency Risk" score={8} max={100} color="#10B981" icon={<AlertTriangle size={16} />}
-              description="Cross-references all signals to predict emergency probability in the next 24 hours." />
+            {[
+              { cat: 'route_safety', label: 'Route Safety', fallback: 94, fallbackColor: '#10B981', icon: <Navigation size={16} />, description: 'Analyzes real-time traffic, crime data, and deviation patterns for every family route.' },
+              { cat: 'child_risk', label: 'Child Safety', fallback: 97, fallbackColor: '#3B82F6', icon: <User size={16} />, description: 'Monitors school arrival, route compliance, and unusual contact patterns.' },
+              { cat: 'elderly_risk', label: 'Elder Wellness', fallback: 72, fallbackColor: '#F59E0B', icon: <Heart size={16} />, description: 'Tracks mobility patterns, heartrate trends, and fall risk indicators in all weather.' },
+              { cat: 'driving_risk', label: 'Driving Risk', fallback: 23, fallbackColor: '#10B981', icon: <Car size={16} />, description: 'Detects harsh braking, phone usage, drowsiness signals, and fatigue patterns.' },
+              { cat: 'health_risk', label: 'Health Index', fallback: 88, fallbackColor: '#A78BFA', icon: <Activity size={16} />, description: 'Combines smartwatch data, mobility trends, and rest patterns into a unified score.' },
+              { cat: 'emergency_probability', label: 'Emergency Risk', fallback: 8, fallbackColor: '#10B981', icon: <AlertTriangle size={16} />, description: 'Cross-references all signals to predict emergency probability in the next 24 hours.' },
+            ].map(g => (
+              <PredictionGauge
+                key={g.cat}
+                label={g.label}
+                score={getScoreByCategory(safetyScores, g.cat) ?? g.fallback}
+                color={safetyScores.length > 0 ? getColorByCategory(safetyScores, g.cat) : g.fallbackColor}
+                icon={g.icon}
+                description={g.description}
+              />
+            ))}
           </motion.div>
         </motion.div>
       </Section>
@@ -717,16 +780,33 @@ export default function AIGuardianPage() {
               <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 20 }}>
                 <Calendar size={15} style={{ color: '#D4A853' }} />
                 <span style={{ fontFamily: 'var(--font-display)', fontWeight: 700, color: 'var(--text-primary)', fontSize: '0.95rem' }}>
-                  Today — June 13, 2026
+                  {dailyReport ? `Today — ${formatReportDate(dailyReport.report_date)}` : 'Today\'s Safety Report'}
                 </span>
               </div>
 
-              <TimelineItem time="7:15 AM" member="Grandma" event="Completed morning walk — 1.8km in 28 minutes. Heart rate normal." status="safe" icon={<Heart size={10} />} delay={0.05} />
-              <TimelineItem time="8:42 AM" member="Aanya" event="Arrived at St. Mary's School safely via expected route." status="safe" icon={<User size={10} />} delay={0.1} />
-              <TimelineItem time="9:15 AM" member="Dad" event="Entered office geofence zone. Commute time: 34 minutes." status="safe" icon={<MapPin size={10} />} delay={0.15} />
-              <TimelineItem time="10:15 AM" member="Grandma" event="Elevated heartrate detected — AI recommends rest. Smartwatch alert sent." status="warning" icon={<Activity size={10} />} delay={0.2} />
-              <TimelineItem time="11:30 AM" member="Rohan" event="2 harsh brake events detected during school commute. Driving score: 67/100." status="alert" icon={<Car size={10} />} delay={0.25} />
-              <TimelineItem time="3:45 PM" member="Aanya" event="Left school — on expected route home. ETA: 4:05 PM." status="safe" icon={<Navigation size={10} />} delay={0.3} />
+              {dailyReport && dailyReport.events.length > 0 ? (
+                dailyReport.events.map((ev: any, i: number) => (
+                  <TimelineItem
+                    key={i}
+                    time={ev.time}
+                    member={ev.member}
+                    event={ev.event}
+                    status={ev.status as 'safe' | 'warning' | 'alert'}
+                    icon={eventIcon(ev.category)}
+                    delay={0.05 + i * 0.05}
+                  />
+                ))
+              ) : dailyReport ? (
+                <div style={{ color: 'rgba(255,255,255,0.35)', fontSize: '0.8rem', padding: '12px 0' }}>No events recorded in the last 24 hours.</div>
+              ) : (
+                <>
+                  <TimelineItem time="7:15 AM" member="Grandma" event="Completed morning walk — 1.8km in 28 minutes. Heart rate normal." status="safe" icon={<Heart size={10} />} delay={0.05} />
+                  <TimelineItem time="8:42 AM" member="Aanya" event="Arrived at St. Mary's School safely via expected route." status="safe" icon={<User size={10} />} delay={0.1} />
+                  <TimelineItem time="9:15 AM" member="Dad" event="Entered office geofence zone. Commute time: 34 minutes." status="safe" icon={<MapPin size={10} />} delay={0.15} />
+                  <TimelineItem time="11:30 AM" member="Rohan" event="2 harsh brake events detected during school commute. Driving score: 67/100." status="alert" icon={<Car size={10} />} delay={0.2} />
+                  <TimelineItem time="3:45 PM" member="Aanya" event="Left school — on expected route home. ETA: 4:05 PM." status="safe" icon={<Navigation size={10} />} delay={0.25} />
+                </>
+              )}
             </motion.div>
 
             {/* Summary stats */}
@@ -746,11 +826,11 @@ export default function AIGuardianPage() {
                   </span>
                 </div>
                 {[
-                  { label: 'Family Safety Score', score: 87, color: '#10B981' },
-                  { label: 'Child Protection', score: 97, color: '#3B82F6' },
-                  { label: 'Elder Wellness', score: 72, color: '#F59E0B' },
-                  { label: 'Driving Safety', score: 67, color: '#EF4444' },
-                  { label: 'Routine Adherence', score: 94, color: '#A78BFA' },
+                  { label: 'Family Safety Score', score: overallScore ?? (dailyReport?.overall_score ?? 87), color: '#10B981' },
+                  { label: 'Child Protection', score: getScoreByCategory(safetyScores, 'child_risk') ?? 97, color: '#3B82F6' },
+                  { label: 'Elder Wellness', score: getScoreByCategory(safetyScores, 'elderly_risk') ?? 72, color: '#F59E0B' },
+                  { label: 'Driving Safety', score: getScoreByCategory(safetyScores, 'driving_risk') ?? 67, color: '#EF4444' },
+                  { label: 'Health Index', score: getScoreByCategory(safetyScores, 'health_risk') ?? 88, color: '#A78BFA' },
                 ].map((s) => (
                   <div key={s.label} style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10 }}>
                     <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', width: 130, flexShrink: 0 }}>{s.label}</span>
@@ -782,7 +862,10 @@ export default function AIGuardianPage() {
                   </span>
                 </div>
                 <p style={{ fontSize: '0.83rem', color: 'rgba(255,255,255,0.7)', lineHeight: 1.6, margin: 0 }}>
-                  Rohan&apos;s driving needs attention — schedule a safety review. Grandma should rest this afternoon. Overall family safety is above average today.
+                  {dailyReport?.recommendations?.length > 0
+                    ? dailyReport.recommendations.join(' ')
+                    : dailyReport?.ai_summary
+                    ?? 'AI is analyzing your family\'s safety data. Recommendations will appear here.'}
                 </p>
               </motion.div>
             </div>
