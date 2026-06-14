@@ -445,9 +445,20 @@ export function DashboardSection() {
         const famRes = await fetch('/families/my', { headers: h });
         if (!famRes.ok) return;
         const fam = await famRes.json();
-        const famData = Array.isArray(fam) ? fam[0] : fam;
-        const fid = famData?.id ?? famData?.family?.id;
-        if (!fid) return;
+        let famData = Array.isArray(fam) ? fam[0] : fam;
+        let fid = famData?.id ?? famData?.family?.id;
+        if (!fid) {
+          // Auto-create family if parent has none
+          const cr = await fetch('/families/create', {
+            method: 'POST',
+            headers: { ...h, 'Content-Type': 'application/json' },
+            body: JSON.stringify({ name: 'My Family' }),
+          });
+          if (!cr.ok) return;
+          famData = await cr.json();
+          fid = famData?.id;
+          if (!fid) return;
+        }
         if (famData?.invite_code) setInviteCode(famData.invite_code);
 
         const memRes = await fetch(`/families/${fid}/members`, { headers: h });

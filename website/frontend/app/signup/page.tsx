@@ -631,13 +631,11 @@ export default function SignupPage() {
     try {
       // Create family circle for parent
       if (userType === 'parent' || !userType) {
-        try {
-          await fetch('/families/create', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-            body: JSON.stringify({ name: `${name || 'My'}'s Family` }),
-          })
-        } catch (_) {}
+        await fetch('/families/create', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+          body: JSON.stringify({ name: `${name || 'My'}'s Family` }),
+        }).catch(() => {/* dashboard will auto-create on load */})
         localStorage.setItem('gv_dashboard', 'parent')
       }
       await new Promise(r => setTimeout(r, 600))
