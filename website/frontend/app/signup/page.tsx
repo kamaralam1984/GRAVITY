@@ -1273,7 +1273,7 @@ export default function SignupPage() {
                   <InputField
                     label="Family Invite Code"
                     value={inviteCode}
-                    onChange={v => setInviteCode(v.toUpperCase())}
+                    onChange={v => setInviteCode(v)}
                     placeholder="e.g. FAMILY123"
                     icon={<Star size={15} />}
                   />
