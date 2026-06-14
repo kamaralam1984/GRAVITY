@@ -75,7 +75,7 @@ export const MAP_GEOFENCES: MapGeofence[] = [
 export const MAP_MEMBERS: MapMember[] = [
   {
     id: 'mom', name: 'Mom', color: '#3B82F6', gender: 'female',
-    photo: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=80&h=80&fit=crop&crop=faces&auto=format&q=80',
+    photo: 'https://randomuser.me/api/portraits/women/44.jpg',
     location: 'Home', battery: 87, status: 'safe',
     lat: 19.0760, lng: 72.8777,
     vehicle: 'walk', speed: 3,
@@ -90,7 +90,7 @@ export const MAP_MEMBERS: MapMember[] = [
   },
   {
     id: 'dad', name: 'Dad', color: '#10B981', gender: 'male',
-    photo: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=80&h=80&fit=crop&crop=faces&auto=format&q=80',
+    photo: 'https://randomuser.me/api/portraits/men/32.jpg',
     location: 'Office', battery: 64, status: 'safe',
     lat: 19.0596, lng: 72.8656,
     vehicle: 'car', speed: 42,
@@ -107,7 +107,7 @@ export const MAP_MEMBERS: MapMember[] = [
   },
   {
     id: 'priya', name: 'Priya', color: '#F59E0B', gender: 'female',
-    photo: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=80&h=80&fit=crop&crop=faces&auto=format&q=80',
+    photo: 'https://randomuser.me/api/portraits/women/22.jpg',
     location: 'College', battery: 42, status: 'alert',
     lat: 19.1060, lng: 72.8680,
     vehicle: 'bus', speed: 28,
@@ -124,7 +124,7 @@ export const MAP_MEMBERS: MapMember[] = [
   },
   {
     id: 'anya', name: 'Anya', color: '#8B5CF6', gender: 'female',
-    photo: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=80&h=80&fit=crop&crop=faces&auto=format&q=80',
+    photo: 'https://randomuser.me/api/portraits/girls/10.jpg',
     location: 'School', battery: 95, status: 'safe',
     lat: 19.0650, lng: 72.9040,
     vehicle: 'auto', speed: 18,
@@ -140,7 +140,7 @@ export const MAP_MEMBERS: MapMember[] = [
   },
   {
     id: 'grandpa', name: 'Grandpa', color: '#EF4444', gender: 'male',
-    photo: 'https://images.unsplash.com/photo-1566616213894-2d4e1baee5d8?w=80&h=80&fit=crop&crop=faces&auto=format&q=80',
+    photo: 'https://randomuser.me/api/portraits/men/70.jpg',
     location: 'Market', battery: 71, status: 'safe',
     lat: 19.0820, lng: 72.8900,
     vehicle: 'walk', speed: 4,
