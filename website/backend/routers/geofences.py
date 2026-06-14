@@ -121,6 +121,28 @@ def get_geofence_events(
         })
     return result
 
+@router.patch("/{geofence_id}")
+def toggle_geofence(
+    geofence_id: int,
+    user: models.User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    g = db.query(models.Geofence).filter(models.Geofence.id == geofence_id).first()
+    if not g:
+        raise HTTPException(status_code=404, detail="Not found")
+
+    membership = db.query(models.FamilyMember).filter(
+        models.FamilyMember.family_id == g.family_id,
+        models.FamilyMember.user_id == user.id,
+    ).first()
+    if not membership:
+        raise HTTPException(status_code=403, detail="Not a member of this family")
+
+    g.is_active = not g.is_active
+    db.commit()
+    return {"id": g.id, "is_active": g.is_active}
+
+
 @router.delete("/{geofence_id}")
 def delete_geofence(
     geofence_id: int,
