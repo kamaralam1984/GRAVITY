@@ -29,7 +29,7 @@ import { useRouter } from 'next/navigation'
 import ThemeToggle from '@/components/ui/ThemeToggle'
 import PanelBackground from '@/components/effects/PanelBackground'
 
-/* ── Dynamic MapView (with all controls) ─────────────────────── */
+/* ── Dynamic MapView (desktop — with all controls) ───────────── */
 const MapView = dynamic(() => import('@/components/sections/MapView'), {
   ssr: false,
   loading: () => (
@@ -46,6 +46,9 @@ const MapView = dynamic(() => import('@/components/sections/MapView'), {
     </div>
   ),
 })
+
+/* ── Dynamic UberFamilyMap (mobile) ──────────────────────────── */
+const UberFamilyMap = dynamic(() => import('@/components/shared/UberFamilyMap'), { ssr: false })
 
 /* ── Vehicle emoji ───────────────────────────────────────────── */
 const V: Record<VehicleType, string> = {
@@ -763,7 +766,14 @@ export default function DashboardPage() {
                     border:'1px solid rgba(255,255,255,0.08)',
                     boxShadow:'0 24px 60px rgba(0,0,0,0.5), 0 0 0 1px rgba(212,168,83,0.04)'}}>
 
-            <MapView key={familyLoading ? 'init' : `ready-${familyMembers.length}`} activeId={activeId} onMemberClick={onMemberClick} members={familyMembers} />
+            {/* Desktop: MapView with zoom/style controls */}
+            <div className="hidden lg:block absolute inset-0">
+              <MapView key={familyLoading ? 'init' : `ready-${familyMembers.length}`} activeId={activeId} onMemberClick={onMemberClick} members={familyMembers} />
+            </div>
+            {/* Mobile: UberFamilyMap (better mobile rendering) */}
+            <div className="lg:hidden absolute inset-0">
+              <UberFamilyMap showMemberList={false} height="100%" />
+            </div>
 
             {/* Top gradient fade — premium depth */}
             <div className="absolute top-0 left-0 right-0 pointer-events-none"
@@ -913,7 +923,7 @@ export default function DashboardPage() {
         ] as const).map(item => {
           const active = item.id==='map'?!['alerts','profile'].includes(mobTab):mobTab===item.id
           return (
-            <button key={item.id} onClick={() => { if(item.id!=='map') setMobTab(item.id as Tab) }}
+            <button key={item.id} onClick={() => { if(item.id==='map') { window.scrollTo({top:0,behavior:'smooth'}) } else { setMobTab(item.id as Tab) } }}
               className="flex-1 flex flex-col items-center justify-center gap-0.5 py-3 relative transition-colors"
               style={{color:active?'#D4A853':'rgba(255,255,255,0.35)'}}>
               <span className="text-xl leading-none">{item.icon}</span>
