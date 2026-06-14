@@ -130,35 +130,35 @@ export default function ParentPage() {
     orbC: 'rgba(59,130,246,0.05)',
     star: 'white',
   } : {
-    bg: '#F1F5FB',
-    bgGrad: 'radial-gradient(ellipse at 20% 20%, rgba(212,168,83,0.12) 0%, transparent 50%), radial-gradient(ellipse at 80% 80%, rgba(139,92,246,0.08) 0%, transparent 50%), #EEF2F9',
-    header: 'rgba(255,255,255,0.97)',
-    nav: 'rgba(255,255,255,0.98)',
-    navBorder: 'rgba(0,0,0,0.08)',
-    card: 'rgba(255,255,255,0.85)',
-    cardBorder: 'rgba(0,0,0,0.08)',
-    drawer: 'rgba(248,250,255,0.99)',
-    drawerBorder: 'rgba(0,0,0,0.1)',
-    text: '#1A1D2E',
-    textMuted: 'rgba(0,0,0,0.38)',
-    icon: 'rgba(0,0,0,0.5)',
-    accent: '#C4920A',
-    accentBg: 'rgba(196,146,10,0.1)',
-    accentBorder: 'rgba(196,146,10,0.28)',
+    bg: 'transparent',
+    bgGrad: 'none',
+    header: 'rgba(255,255,255,0.88)',
+    nav: 'rgba(255,255,255,0.92)',
+    navBorder: 'rgba(196,146,10,0.18)',
+    card: 'rgba(255,255,255,0.82)',
+    cardBorder: 'rgba(196,146,10,0.15)',
+    drawer: 'rgba(255,252,245,0.97)',
+    drawerBorder: 'rgba(196,146,10,0.2)',
+    text: '#2C1E0F',
+    textMuted: 'rgba(44,30,15,0.45)',
+    icon: 'rgba(44,30,15,0.5)',
+    accent: '#B8860B',
+    accentBg: 'rgba(184,134,11,0.12)',
+    accentBorder: 'rgba(184,134,11,0.3)',
     badgeBg: '#EF4444',
-    badgeBorder: '#F1F5FB',
-    profileBg: 'rgba(255,255,255,0.99)',
-    profileBorder: 'rgba(196,146,10,0.25)',
-    divider: 'rgba(0,0,0,0.07)',
-    itemHover: 'rgba(0,0,0,0.04)',
-    itemBg: 'rgba(0,0,0,0.04)',
-    itemBorder: 'rgba(0,0,0,0.07)',
+    badgeBorder: 'rgba(255,255,255,0.9)',
+    profileBg: 'rgba(255,252,245,0.98)',
+    profileBorder: 'rgba(184,134,11,0.25)',
+    divider: 'rgba(184,134,11,0.12)',
+    itemHover: 'rgba(184,134,11,0.06)',
+    itemBg: 'rgba(255,255,255,0.6)',
+    itemBorder: 'rgba(184,134,11,0.12)',
     logoutBg: 'rgba(239,68,68,0.06)',
     logoutBorder: 'rgba(239,68,68,0.15)',
-    orbA: 'rgba(212,168,83,0.15)',
-    orbB: 'rgba(139,92,246,0.1)',
-    orbC: 'rgba(59,130,246,0.08)',
-    star: 'rgba(0,0,0,0.12)',
+    orbA: 'transparent',
+    orbB: 'transparent',
+    orbC: 'transparent',
+    star: 'transparent',
   }
 
   function getInitials(name: string) {
@@ -199,9 +199,9 @@ export default function ParentPage() {
   }
 
   return (
-    <div data-theme={isDark ? 'dark' : 'light'} style={{ position: 'fixed', inset: 0, background: T.bg, overflow: 'hidden', transition: 'background 0.3s ease' }}>
+    <div data-theme={isDark ? 'dark' : 'light'} style={{ position: 'fixed', inset: 0, overflow: 'hidden', transition: 'all 0.35s ease' }}>
 
-      {/* ── CSS keyframes + theme overrides ───────────────────── */}
+      {/* ── CSS keyframes ─────────────────────────────────────── */}
       <style>{`
         @keyframes float {
           0%, 100% { transform: translateY(0px) translateX(0px); }
@@ -217,31 +217,31 @@ export default function ParentPage() {
           100% { transform: scale(2.2); opacity: 0; }
         }
         @keyframes spin { to { transform: rotate(360deg); } }
-        [data-theme="light"] .gv-glass {
-          background: rgba(255,255,255,0.75) !important;
-          border-color: rgba(0,0,0,0.09) !important;
-          color: #1A1D2E !important;
-        }
-        [data-theme="light"] .gv-text { color: #1A1D2E !important; }
-        [data-theme="light"] .gv-text-muted { color: rgba(0,0,0,0.42) !important; }
       `}</style>
 
-      {/* ── Background VFX ────────────────────────────────────── */}
-      <div style={{ position: 'fixed', inset: 0, zIndex: 0, background: T.bgGrad, transition: 'background 0.4s ease' }} />
-
-      {/* Floating orbs */}
-      <div style={{ position: 'fixed', inset: 0, zIndex: 0, overflow: 'hidden', pointerEvents: 'none' }}>
-        <div style={{ position: 'absolute', width: 340, height: 340, borderRadius: '50%', background: `radial-gradient(circle, ${T.orbA} 0%, transparent 70%)`, top: '-90px', left: '-90px', animation: 'float 14s ease-in-out infinite' }} />
-        <div style={{ position: 'absolute', width: 300, height: 300, borderRadius: '50%', background: `radial-gradient(circle, ${T.orbB} 0%, transparent 70%)`, bottom: '60px', right: '-70px', animation: 'float 18s ease-in-out infinite reverse' }} />
-        <div style={{ position: 'absolute', width: 240, height: 240, borderRadius: '50%', background: `radial-gradient(circle, ${T.orbC} 0%, transparent 70%)`, top: '40%', left: '30%', animation: 'float 22s ease-in-out infinite 4s' }} />
-      </div>
-
-      {/* Star dots */}
-      <div style={{ position: 'fixed', inset: 0, zIndex: 0, pointerEvents: 'none' }}>
-        {Array.from({ length: 22 }).map((_, i) => (
-          <div key={i} style={{ position: 'absolute', width: i % 3 === 0 ? 2 : 1.5, height: i % 3 === 0 ? 2 : 1.5, borderRadius: '50%', background: T.star, left: `${(i * 37 + 11) % 97}%`, top: `${(i * 53 + 7) % 91}%`, animation: `twinkle ${2.5 + (i % 4) * 0.8}s ease-in-out infinite ${(i * 0.4) % 3}s` }} />
-        ))}
-      </div>
+      {/* ── Background ───────────────────────────────────────── */}
+      {isDark ? (
+        <>
+          <div style={{ position: 'fixed', inset: 0, zIndex: 0, background: 'radial-gradient(ellipse at 20% 20%, rgba(212,168,83,0.06) 0%, transparent 50%), radial-gradient(ellipse at 80% 80%, rgba(139,92,246,0.05) 0%, transparent 50%), #0A0C12' }} />
+          <div style={{ position: 'fixed', inset: 0, zIndex: 0, overflow: 'hidden', pointerEvents: 'none' }}>
+            <div style={{ position: 'absolute', width: 340, height: 340, borderRadius: '50%', background: 'radial-gradient(circle, rgba(212,168,83,0.08) 0%, transparent 70%)', top: '-90px', left: '-90px', animation: 'float 14s ease-in-out infinite' }} />
+            <div style={{ position: 'absolute', width: 300, height: 300, borderRadius: '50%', background: 'radial-gradient(circle, rgba(139,92,246,0.07) 0%, transparent 70%)', bottom: '60px', right: '-70px', animation: 'float 18s ease-in-out infinite reverse' }} />
+            <div style={{ position: 'absolute', width: 240, height: 240, borderRadius: '50%', background: 'radial-gradient(circle, rgba(59,130,246,0.05) 0%, transparent 70%)', top: '40%', left: '30%', animation: 'float 22s ease-in-out infinite 4s' }} />
+          </div>
+          <div style={{ position: 'fixed', inset: 0, zIndex: 0, pointerEvents: 'none' }}>
+            {Array.from({ length: 22 }).map((_, i) => (
+              <div key={i} style={{ position: 'absolute', width: i % 3 === 0 ? 2 : 1.5, height: i % 3 === 0 ? 2 : 1.5, borderRadius: '50%', background: 'white', left: `${(i * 37 + 11) % 97}%`, top: `${(i * 53 + 7) % 91}%`, animation: `twinkle ${2.5 + (i % 4) * 0.8}s ease-in-out infinite ${(i * 0.4) % 3}s` }} />
+            ))}
+          </div>
+        </>
+      ) : (
+        <>
+          {/* Light mode: Moroccan tile wallpaper */}
+          <div style={{ position: 'fixed', inset: 0, zIndex: 0, backgroundImage: 'url(/wall.jpg)', backgroundRepeat: 'repeat', backgroundSize: '420px auto', opacity: 0.55 }} />
+          {/* Warm white overlay for readability */}
+          <div style={{ position: 'fixed', inset: 0, zIndex: 0, background: 'rgba(255,250,240,0.55)' }} />
+        </>
+      )}
 
       {/* ── Fixed Top Header (64px) ────────────────────────────── */}
       <div style={{
