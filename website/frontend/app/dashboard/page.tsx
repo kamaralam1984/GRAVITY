@@ -657,7 +657,7 @@ export default function DashboardPage() {
                     border:'1px solid rgba(255,255,255,0.08)',
                     boxShadow:'0 24px 60px rgba(0,0,0,0.5), 0 0 0 1px rgba(212,168,83,0.04)'}}>
 
-            <MapView activeId={activeId} onMemberClick={onMemberClick} members={familyMembers} />
+            <MapView key={familyLoading ? 'init' : `ready-${familyMembers.length}`} activeId={activeId} onMemberClick={onMemberClick} members={familyMembers} />
 
             {/* Top gradient fade — premium depth */}
             <div className="absolute top-0 left-0 right-0 pointer-events-none"

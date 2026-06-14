@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useRef, useCallback } from 'react'
-import { MAP_MEMBERS, MAP_GEOFENCES, MAP_TILES, HOME_COORDS, MapMember, MapStyle } from '@/lib/mapData'
+import { MAP_TILES, MapMember, MapStyle } from '@/lib/mapData'
 
 /* ── Status colors ────────────────────────────────────────────── */
 const STATUS_COLOR: Record<string, string> = {
@@ -346,13 +346,7 @@ export default function MapView({
         if (pm) {
           animateTo(pm, newLat, newLng, 800)
         }
-        const hl = homeLines.current[m.id]
-        if (hl) {
-          const pts = hl.getLatLngs()
-          if (pts.length >= 2) {
-            hl.setLatLngs([HOME_COORDS, [newLat, newLng]])
-          }
-        }
+        // home line removed
         const vm = vehicleMarkers.current[m.id]
         if (vm && m.vehicleLat && m.vehicleLng) {
           animateTo(vm, m.vehicleLat + dLat, m.vehicleLng + dLng, 800)
@@ -374,9 +368,14 @@ export default function MapView({
       const L = (await import('leaflet')).default
       delete (containerRef.current as any)._leaflet_id
 
+      const mapCenter: [number,number] = MEMBERS.length > 0
+        ? [MEMBERS[0].lat, MEMBERS[0].lng]
+        : [20.5937, 78.9629]
+      const mapZoom = MEMBERS.length > 0 ? 13 : 5
+
       const map = L.map(containerRef.current!, {
-        center: HOME_COORDS,
-        zoom: 13,
+        center: mapCenter,
+        zoom: mapZoom,
         zoomControl: false,
         attributionControl: false,
         scrollWheelZoom: true,
@@ -394,38 +393,7 @@ export default function MapView({
         maxZoom: 20,
       }).addTo(map)
 
-      /* ── Home marker ─────────────────────────────────────────── */
-      L.marker(HOME_COORDS, {
-        icon: L.divIcon({
-          className: 'gv-pin',
-          html: homePin(),
-          iconSize: [44, 60],
-          iconAnchor: [22, 60],
-        }),
-        zIndexOffset: 1000,
-      }).addTo(map)
-
-      /* ── Geofence circles ────────────────────────────────────── */
-      MAP_GEOFENCES.forEach(gf => {
-        L.circle([gf.lat, gf.lng], {
-          radius: gf.radius,
-          color: gf.color,
-          fillColor: gf.color,
-          fillOpacity: 0.04,
-          dashArray: gf.type === 'restricted' ? '4 4' : '8 6',
-          weight: gf.type === 'restricted' ? 2 : 1.5,
-          opacity: 0.6,
-        }).addTo(map)
-        // Geofence label
-        L.marker([gf.lat, gf.lng], {
-          icon: L.divIcon({
-            className: 'gv-pin',
-            html: `<div style="background:rgba(6,9,15,0.7);color:${gf.color};font-size:8px;font-weight:700;padding:2px 7px;border-radius:4px;border:1px solid ${gf.color}40;backdrop-filter:blur(6px);white-space:nowrap;font-family:Inter,sans-serif;letter-spacing:0.07em;">${gf.name.toUpperCase()}</div>`,
-            iconSize: [120, 20],
-            iconAnchor: [60, 10],
-          }),
-        }).addTo(map)
-      })
+      /* ── Home + geofences removed (show real data only) ─────── */
 
       /* ── Member markers + trails ─────────────────────────────── */
       MEMBERS.forEach(m => {
@@ -453,15 +421,6 @@ export default function MapView({
           trailTimers.current.push(timer)
           routeLines.current[m.id] = trail
         }
-
-        // Dashed line home → member
-        const homeLine = L.polyline([HOME_COORDS, [m.lat, m.lng]], {
-          color: m.color,
-          weight: active ? 2 : 1.5,
-          opacity: active ? 0.6 : 0.2,
-          dashArray: '5 8',
-        }).addTo(map)
-        homeLines.current[m.id] = homeLine
 
         // Person marker
         const size = active ? 60 : 48
