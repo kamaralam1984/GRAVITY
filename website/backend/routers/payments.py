@@ -242,6 +242,109 @@ async def razorpay_webhook(request: Request, db: Session = Depends(get_db)):
     return {"status": "ok"}
 
 
+# ── Direct order endpoints (signup flow — no Plan DB record needed) ───────────
+
+class DirectOrderCreate(BaseModel):
+    plan_name: str       # 'family' | 'family_plus' | 'ultimate'
+    amount_inr: int      # actual INR amount
+    currency: str = "INR"
+
+class DirectVerify(BaseModel):
+    razorpay_order_id: str
+    razorpay_payment_id: str
+    razorpay_signature: str
+    plan_name: str
+    amount_inr: int
+
+PLAN_NAME_MAP = {
+    "family": "family",
+    "family_plus": "family",
+    "ultimate": "premium",
+}
+
+@router.post("/razorpay/order-direct")
+async def razorpay_order_direct(
+    data: DirectOrderCreate,
+    user: models.User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    amount_paise = data.amount_inr * 100
+    if not RAZORPAY_KEY_ID:
+        order_id = f"order_direct_{user.id}_{data.plan_name}"
+        payment = models.Payment(
+            user_id=user.id,
+            amount=data.amount_inr,
+            currency=data.currency,
+            gateway="razorpay",
+            billing_cycle="monthly",
+            status="pending",
+            order_id=order_id,
+        )
+        db.add(payment)
+        db.commit()
+        return {"order_id": order_id, "amount": amount_paise, "currency": data.currency, "key_id": "rzp_test_tXD8cP6NSHvKbR"}
+
+    async with httpx.AsyncClient() as client:
+        resp = await client.post(
+            f"{RAZORPAY_BASE}/orders",
+            auth=(RAZORPAY_KEY_ID, RAZORPAY_KEY_SECRET),
+            json={"amount": amount_paise, "currency": data.currency, "receipt": f"rcpt_{user.id}_{data.plan_name}"},
+        )
+    if resp.status_code != 200:
+        raise HTTPException(status_code=502, detail="Payment gateway error")
+    order = resp.json()
+
+    payment = models.Payment(
+        user_id=user.id,
+        amount=data.amount_inr,
+        currency=data.currency,
+        gateway="razorpay",
+        billing_cycle="monthly",
+        status="pending",
+        order_id=order["id"],
+    )
+    db.add(payment)
+    db.commit()
+    return {"order_id": order["id"], "amount": amount_paise, "currency": data.currency, "key_id": RAZORPAY_KEY_ID}
+
+
+@router.post("/razorpay/verify-direct")
+def razorpay_verify_direct(
+    data: DirectVerify,
+    user: models.User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    secret = RAZORPAY_KEY_SECRET.encode() if RAZORPAY_KEY_SECRET else b"test"
+    expected = hmac.new(
+        secret,
+        f"{data.razorpay_order_id}|{data.razorpay_payment_id}".encode(),
+        hashlib.sha256,
+    ).hexdigest()
+    if RAZORPAY_KEY_SECRET and expected != data.razorpay_signature:
+        raise HTTPException(status_code=400, detail="Invalid payment signature")
+
+    payment = db.query(models.Payment).filter(
+        models.Payment.order_id == data.razorpay_order_id,
+        models.Payment.user_id == user.id,
+    ).first()
+    if payment:
+        payment.status = "success"
+        payment.txn_id = data.razorpay_payment_id
+        db.commit()
+
+    family_member = db.query(models.FamilyMember).filter(
+        models.FamilyMember.user_id == user.id,
+        models.FamilyMember.role == "owner",
+    ).first()
+    if family_member:
+        family = db.query(models.Family).filter(models.Family.id == family_member.family_id).first()
+        if family:
+            family.plan = PLAN_NAME_MAP.get(data.plan_name, "premium")
+            db.commit()
+
+    return {"message": "Payment successful", "plan": data.plan_name}
+
+
 # ── Legacy endpoints (kept for backwards compatibility) ───────────────────────
 
 @router.post("/create")

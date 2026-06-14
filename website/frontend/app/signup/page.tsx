@@ -17,6 +17,7 @@ const PLANS = [
     id: 'free',
     name: 'Free',
     price: '₹0',
+    amountInr: 0,
     period: '/mo',
     icon: <Star size={22} />,
     color: '#6B7280',
@@ -26,6 +27,7 @@ const PLANS = [
     id: 'family',
     name: 'Family',
     price: '₹199',
+    amountInr: 199,
     period: '/mo',
     icon: <Shield size={22} />,
     color: '#4B80F0',
@@ -35,6 +37,7 @@ const PLANS = [
     id: 'family_plus',
     name: 'Family Plus',
     price: '₹499',
+    amountInr: 499,
     period: '/mo',
     icon: <Zap size={22} />,
     color: '#D4A853',
@@ -45,6 +48,7 @@ const PLANS = [
     id: 'ultimate',
     name: 'Ultimate',
     price: '₹799',
+    amountInr: 799,
     period: '/mo',
     icon: <Crown size={22} />,
     color: '#9B6BF5',
@@ -474,6 +478,7 @@ export default function SignupPage() {
   // Step 3 state
   const [selectedPlan, setSelectedPlan] = useState('family_plus')
   const [step3Loading, setStep3Loading] = useState(false)
+  const [step3Error, setStep3Error] = useState('')
 
   // ── Countdown timer for OTP resend
   const startCountdown = () => {
@@ -578,13 +583,112 @@ export default function SignupPage() {
     }
   }
 
-  // ── Step 3 complete
-  const handleComplete = async () => {
+  // ── Load Razorpay script once
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    if (document.getElementById('rzp-script')) return
+    const s = document.createElement('script')
+    s.id = 'rzp-script'
+    s.src = 'https://checkout.razorpay.com/v1/checkout.js'
+    s.async = true
+    document.head.appendChild(s)
+  }, [])
+
+  // ── Step 3 — free plan activate
+  const handleActivateFree = async () => {
     setStep3Loading(true)
-    await new Promise(r => setTimeout(r, 900))
+    setStep3Error('')
+    await new Promise(r => setTimeout(r, 600))
     setStep3Loading(false)
     setShowSuccess(true)
     setTimeout(() => router.push('/live-tracking?family=1'), 2800)
+  }
+
+  // ── Step 3 — paid plan → Razorpay
+  const handlePayment = async () => {
+    setStep3Error('')
+    const plan = PLANS.find(p => p.id === selectedPlan)!
+    const token = typeof window !== 'undefined'
+      ? (localStorage.getItem('gravity_token') || localStorage.getItem('gv_token') || '')
+      : ''
+
+    setStep3Loading(true)
+    try {
+      // 1. Create Razorpay order via backend
+      const orderRes = await fetch('/payments/razorpay/order-direct', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ plan_name: selectedPlan, amount_inr: plan.amountInr }),
+      })
+      if (!orderRes.ok) {
+        const err = await orderRes.json()
+        throw new Error(err.detail || 'Failed to create payment order')
+      }
+      const orderData = await orderRes.json()
+
+      // 2. Open Razorpay checkout
+      const rzpOptions = {
+        key: orderData.key_id,
+        amount: orderData.amount,
+        currency: orderData.currency || 'INR',
+        name: 'GRAVITY Family Safety',
+        description: `${plan.name} Plan — Monthly`,
+        order_id: orderData.order_id,
+        prefill: { name, email, contact: phone ? `+91${phone}` : '' },
+        theme: { color: '#D4A853', backdrop_color: 'rgba(6,9,15,0.95)' },
+        modal: {
+          ondismiss: () => { setStep3Loading(false) },
+          escape: true,
+          animation: true,
+        },
+        handler: async (response: { razorpay_order_id: string; razorpay_payment_id: string; razorpay_signature: string }) => {
+          try {
+            // 3. Verify payment with backend
+            const verifyRes = await fetch('/payments/razorpay/verify-direct', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+              body: JSON.stringify({
+                razorpay_order_id: response.razorpay_order_id,
+                razorpay_payment_id: response.razorpay_payment_id,
+                razorpay_signature: response.razorpay_signature,
+                plan_name: selectedPlan,
+                amount_inr: plan.amountInr,
+              }),
+            })
+            if (!verifyRes.ok) {
+              const err = await verifyRes.json()
+              throw new Error(err.detail || 'Payment verification failed')
+            }
+            setStep3Loading(false)
+            setShowSuccess(true)
+            setTimeout(() => router.push('/live-tracking?family=1'), 2800)
+          } catch (err: any) {
+            setStep3Loading(false)
+            setStep3Error(err.message || 'Payment verification failed. Contact support.')
+          }
+        },
+      }
+
+      if (typeof window !== 'undefined' && (window as any).Razorpay) {
+        const rzp = new (window as any).Razorpay(rzpOptions)
+        rzp.on('payment.failed', () => {
+          setStep3Loading(false)
+          setStep3Error('Payment failed. Please try again.')
+        })
+        rzp.open()
+      } else {
+        throw new Error('Payment gateway not loaded. Please refresh and try again.')
+      }
+    } catch (err: any) {
+      setStep3Loading(false)
+      setStep3Error(err.message || 'Something went wrong.')
+    }
+  }
+
+  // ── Step 3 main handler
+  const handleComplete = () => {
+    if (selectedPlan === 'free') handleActivateFree()
+    else handlePayment()
   }
 
   // ── Step slide variants
@@ -1051,7 +1155,7 @@ export default function SignupPage() {
                 ))}
               </div>
 
-              {/* Start trial button */}
+              {/* CTA button — changes based on selected plan */}
               <motion.button
                 onClick={handleComplete}
                 disabled={step3Loading}
@@ -1059,7 +1163,9 @@ export default function SignupPage() {
                 whileTap={!step3Loading ? { scale: 0.985 } : {}}
                 style={{
                   width: '100%', padding: '14px', borderRadius: 11, border: 'none',
-                  background: 'linear-gradient(135deg,#D4A853,#F5C842)',
+                  background: selectedPlan === 'free'
+                    ? 'linear-gradient(135deg,#D4A853,#F5C842)'
+                    : `linear-gradient(135deg, ${PLANS.find(p=>p.id===selectedPlan)?.color ?? '#D4A853'}, #D4A853)`,
                   color: '#1A0F05', fontSize: 15, fontWeight: 800,
                   cursor: step3Loading ? 'not-allowed' : 'pointer',
                   display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
@@ -1069,13 +1175,31 @@ export default function SignupPage() {
                 }}
               >
                 {step3Loading
-                  ? <><Loader2 size={16} style={{ animation: 'spin 0.8s linear infinite' }} /> Setting up...</>
-                  : <><Sparkles size={16} /> Start Free Trial</>
+                  ? <><Loader2 size={16} style={{ animation: 'spin 0.8s linear infinite' }} />
+                      {selectedPlan === 'free' ? 'Setting up...' : 'Opening payment...'}
+                    </>
+                  : selectedPlan === 'free'
+                  ? <><Sparkles size={16} /> Start Free Trial</>
+                  : <>💳 Pay {PLANS.find(p=>p.id===selectedPlan)?.price} & Activate</>
                 }
               </motion.button>
 
+              {/* Error */}
+              {step3Error && (
+                <div style={{
+                  background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.25)',
+                  borderRadius: 10, padding: '10px 14px', fontSize: 13, color: '#EF4444',
+                  display: 'flex', alignItems: 'center', gap: 7,
+                }}>
+                  <AlertCircle size={14} style={{ flexShrink: 0 }} />
+                  {step3Error}
+                </div>
+              )}
+
               <p style={{ textAlign: 'center', fontSize: 11.5, color: 'rgba(255,255,255,0.25)', marginTop: 10 }}>
-                No credit card required for the free plan
+                {selectedPlan === 'free'
+                  ? 'No credit card required for the free plan'
+                  : '🔒 Secured by Razorpay — UPI, Cards, NetBanking accepted'}
               </p>
             </motion.div>
           )}
