@@ -29,8 +29,8 @@ import { useRouter } from 'next/navigation'
 import ThemeToggle from '@/components/ui/ThemeToggle'
 import PanelBackground from '@/components/effects/PanelBackground'
 
-/* ── Dynamic UberFamilyMap ───────────────────────────────────── */
-const UberFamilyMap = dynamic(() => import('@/components/shared/UberFamilyMap'), {
+/* ── Dynamic MapView (with all controls) ─────────────────────── */
+const MapView = dynamic(() => import('@/components/sections/MapView'), {
   ssr: false,
   loading: () => (
     <div className="w-full h-full flex items-center justify-center"
@@ -657,7 +657,7 @@ export default function DashboardPage() {
                     border:'1px solid rgba(255,255,255,0.08)',
                     boxShadow:'0 24px 60px rgba(0,0,0,0.5), 0 0 0 1px rgba(212,168,83,0.04)'}}>
 
-            <UberFamilyMap showMemberList={false} height="100%" />
+            <MapView activeId={activeId} onMemberClick={onMemberClick} members={familyMembers} />
 
             {/* Top gradient fade — premium depth */}
             <div className="absolute top-0 left-0 right-0 pointer-events-none"

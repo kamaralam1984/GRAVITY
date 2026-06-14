@@ -248,7 +248,7 @@ export default function MapView({
   onMemberClick: (id: string) => void
   members?: MapMember[]
 }) {
-  const MEMBERS = (membersProp && membersProp.length > 0) ? membersProp : MAP_MEMBERS
+  const MEMBERS = (membersProp && membersProp.length > 0) ? membersProp : []
   const containerRef   = useRef<HTMLDivElement>(null)
   const mapRef         = useRef<any>(null)
   const personMarkers  = useRef<Record<string, any>>({})
@@ -533,7 +533,7 @@ export default function MapView({
         d.innerHTML = `
           <div class="gv-live-dot"></div>
           <span style="font-size:11px;font-weight:700;color:#F0EDE8;font-family:Inter,sans-serif;letter-spacing:0.04em;">GRAVITY LIVE</span>
-          <span style="font-size:10px;color:rgba(255,255,255,0.4);margin-left:4px;">${onlineCnt}/${MAP_MEMBERS.length} online</span>
+          <span style="font-size:10px;color:rgba(255,255,255,0.4);margin-left:4px;">${onlineCnt}/${MEMBERS.length} online</span>
         `
         L.DomEvent.disableClickPropagation(d)
         return d
