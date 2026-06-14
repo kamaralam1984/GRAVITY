@@ -190,7 +190,7 @@ export default function LiveMapDemoSection() {
         style={{ height: 580, boxShadow: '0 40px 100px rgba(0,0,0,0.5)' }}
       >
         {/* Real Leaflet map — fills 100% */}
-        <MapView activeId={activeId} onMemberClick={handlePin} />
+        <MapView activeId={activeId} onMemberClick={handlePin} members={MAP_MEMBERS} />
 
         {/* Radar + scan overlays */}
         <RadarSweep />
