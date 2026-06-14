@@ -124,7 +124,7 @@ export const MAP_MEMBERS: MapMember[] = [
   },
   {
     id: 'anya', name: 'Anya', color: '#8B5CF6', gender: 'female',
-    photo: 'https://randomuser.me/api/portraits/girls/10.jpg',
+    photo: 'https://randomuser.me/api/portraits/women/18.jpg',
     location: 'School', battery: 95, status: 'safe',
     lat: 19.0650, lng: 72.9040,
     vehicle: 'auto', speed: 18,
