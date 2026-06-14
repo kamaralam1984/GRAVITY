@@ -608,69 +608,113 @@ interface Journey {
   date: 'today' | 'yesterday' | 'week';
 }
 
-const ALL_JOURNEYS: Journey[] = [
-  {
-    id: 'j1',
-    member: 'Aarav',
-    initials: 'A',
-    memberColor: '#a855f7',
-    from: 'Home',
-    to: 'School',
-    startTime: '7:45 AM',
-    mode: 'bus',
-    distance: 4.2,
-    status: 'completed',
-    progress: 100,
-    score: 95,
-    date: 'today',
-  },
-  {
-    id: 'j2',
-    member: 'Rahul',
-    initials: 'R',
-    memberColor: '#3b82f6',
-    from: 'Home',
-    to: 'Office',
-    startTime: '8:30 AM',
-    mode: 'car',
-    distance: 12,
-    status: 'active',
-    progress: 65,
-    eta: '9:15 AM',
-    speed: 42,
-    date: 'today',
-  },
-  {
-    id: 'j3',
-    member: 'Aarav',
-    initials: 'A',
-    memberColor: '#a855f7',
-    from: 'School',
-    to: 'Home',
-    startTime: '3:30 PM',
-    mode: 'bus',
-    distance: 4.2,
-    status: 'completed',
-    progress: 100,
-    score: 88,
-    date: 'yesterday',
-  },
-];
-
 const MODE_CONFIG = {
   bus: { icon: '🚌', label: 'Bus', color: '#3b82f6' },
   car: { icon: '🚗', label: 'Car', color: '#f59e0b' },
   walk: { icon: '🚶', label: 'Walk', color: '#22c55e' },
 };
 
+const MEMBER_COLORS = ['#a855f7','#3b82f6','#10b981','#f59e0b','#ef4444','#D4AF37'];
+function nameToColor(name: string) {
+  let h = 0; for (let i = 0; i < name.length; i++) h = (h * 31 + name.charCodeAt(i)) % MEMBER_COLORS.length;
+  return MEMBER_COLORS[h];
+}
+function formatTime(iso: string | null) {
+  if (!iso) return '--';
+  const d = new Date(iso);
+  return d.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', hour12: true });
+}
+function getDateLabel(iso: string | null): 'today' | 'yesterday' | 'week' {
+  if (!iso) return 'week';
+  const d = new Date(iso); const now = new Date();
+  const daysDiff = Math.floor((now.getTime() - d.getTime()) / 86400000);
+  if (daysDiff === 0) return 'today';
+  if (daysDiff === 1) return 'yesterday';
+  return 'week';
+}
+
+interface ApiJourney { id: number; from_location: string; to_location: string; started_at: string; arrived_at: string | null; status: string; distance_km: number | null; speed: number | null; user_name?: string; from?: string; to?: string; }
+
+function apiToJourney(j: ApiJourney, memberName: string): Journey {
+  return {
+    id: String(j.id),
+    member: j.user_name || memberName,
+    initials: (j.user_name || memberName).charAt(0).toUpperCase(),
+    memberColor: nameToColor(j.user_name || memberName),
+    from: j.from_location || j.from || 'Unknown',
+    to: j.to_location || j.to || 'Unknown',
+    startTime: formatTime(j.started_at),
+    mode: 'car',
+    distance: j.distance_km ?? 0,
+    status: j.status === 'active' ? 'active' : 'completed',
+    progress: j.status === 'active' ? 50 : 100,
+    speed: j.speed ?? undefined,
+    date: getDateLabel(j.started_at),
+  };
+}
+
 export function JourneySection() {
-  const [selectedJourney, setSelectedJourney] = useState<string | null>('j2');
+  const [selectedJourney, setSelectedJourney] = useState<string | null>(null);
+  const [journeys, setJourneys] = useState<Journey[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [showStart, setShowStart] = useState(false);
+  const [startForm, setStartForm] = useState({ from: '', to: '' });
+  const [starting, setStarting] = useState(false);
 
-  const activeJourneys = ALL_JOURNEYS.filter((j) => j.status === 'active');
-  const historyJourneys = ALL_JOURNEYS.filter((j) => j.status === 'completed');
+  async function fetchJourneys() {
+    setLoading(true);
+    try {
+      const token = typeof window !== 'undefined' ? localStorage.getItem('gv_token') || '' : '';
+      const headers: Record<string,string> = token ? { Authorization: `Bearer ${token}` } : {};
+      const [activeRes, myRes] = await Promise.all([
+        fetch('/journeys/active', { headers }),
+        fetch('/journeys/my', { headers }),
+      ]);
+      const allMap = new Map<string, Journey>();
+      if (activeRes.ok) {
+        const data = await activeRes.json();
+        (data.journeys || []).forEach((j: ApiJourney) => {
+          const journey = apiToJourney(j, j.user_name || 'Member');
+          allMap.set(journey.id, journey);
+        });
+      }
+      if (myRes.ok) {
+        const data = await myRes.json();
+        (data.journeys || []).forEach((j: ApiJourney) => {
+          if (!allMap.has(String(j.id))) {
+            const user = typeof window !== 'undefined' ? JSON.parse(localStorage.getItem('gv_user') || '{}') : {};
+            const journey = apiToJourney(j, user.name || 'You');
+            allMap.set(journey.id, journey);
+          }
+        });
+      }
+      setJourneys(Array.from(allMap.values()));
+    } catch (_) {}
+    setLoading(false);
+  }
 
+  useEffect(() => { fetchJourneys(); }, []);
+
+  async function handleStartJourney() {
+    if (!startForm.from || !startForm.to) return;
+    setStarting(true);
+    try {
+      const token = localStorage.getItem('gv_token') || '';
+      const res = await fetch('/journeys/start', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ from_location: startForm.from, to_location: startForm.to }),
+      });
+      if (res.ok) { setShowStart(false); setStartForm({ from: '', to: '' }); fetchJourneys(); }
+    } catch (_) {}
+    setStarting(false);
+  }
+
+  const activeJourneys = journeys.filter((j) => j.status === 'active');
+  const historyJourneys = journeys.filter((j) => j.status === 'completed');
   const todayJourneys = historyJourneys.filter((j) => j.date === 'today');
   const yesterdayJourneys = historyJourneys.filter((j) => j.date === 'yesterday');
+  const weekJourneys = historyJourneys.filter((j) => j.date === 'week');
 
   return (
     <div className="space-y-6">
@@ -685,20 +729,92 @@ export function JourneySection() {
             <p className="text-white/50 text-sm">Live tracking & history</p>
           </div>
         </div>
-        {activeJourneys.length > 0 && (
-          <motion.div
-            animate={{ scale: [1, 1.05, 1] }}
-            transition={{ duration: 1.5, repeat: Infinity }}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-green-500/20 border border-green-500/30"
+        <div className="flex items-center gap-2">
+          {activeJourneys.length > 0 && (
+            <motion.div
+              animate={{ scale: [1, 1.05, 1] }}
+              transition={{ duration: 1.5, repeat: Infinity }}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-green-500/20 border border-green-500/30"
+            >
+              <div className="w-1.5 h-1.5 rounded-full bg-green-400" />
+              <span className="text-green-400 text-xs font-semibold">{activeJourneys.length} Active</span>
+            </motion.div>
+          )}
+          <motion.button
+            whileTap={{ scale: 0.95 }}
+            onClick={() => setShowStart(true)}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#D4AF37] text-black text-xs font-bold"
           >
-            <div className="w-1.5 h-1.5 rounded-full bg-green-400" />
-            <span className="text-green-400 text-xs font-semibold">{activeJourneys.length} Active</span>
-          </motion.div>
-        )}
+            <Zap className="w-3.5 h-3.5" />
+            Start
+          </motion.button>
+        </div>
       </div>
 
+      {/* Start Journey Modal */}
+      <AnimatePresence>
+        {showStart && (
+          <>
+            <motion.div
+              initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+              className="fixed inset-0 z-50 bg-black/60"
+              onClick={() => setShowStart(false)}
+            />
+            <motion.div
+              initial={{ opacity: 0, scale: 0.92, y: 20 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.92, y: 20 }}
+              className="fixed inset-x-4 top-1/2 -translate-y-1/2 z-50 rounded-2xl p-5 space-y-4"
+              style={{ background: 'rgba(18,22,36,0.98)', border: '1px solid rgba(212,175,55,0.2)' }}
+            >
+              <h3 className="text-white font-bold text-lg">Start New Journey</h3>
+              <div className="space-y-3">
+                <input
+                  value={startForm.from}
+                  onChange={e => setStartForm(p => ({ ...p, from: e.target.value }))}
+                  placeholder="From (e.g. Home)"
+                  className="w-full px-4 py-3 rounded-xl text-white text-sm outline-none"
+                  style={{ background: 'rgba(255,255,255,0.07)', border: '1px solid rgba(255,255,255,0.1)' }}
+                />
+                <input
+                  value={startForm.to}
+                  onChange={e => setStartForm(p => ({ ...p, to: e.target.value }))}
+                  placeholder="To (e.g. School)"
+                  className="w-full px-4 py-3 rounded-xl text-white text-sm outline-none"
+                  style={{ background: 'rgba(255,255,255,0.07)', border: '1px solid rgba(255,255,255,0.1)' }}
+                />
+              </div>
+              <div className="flex gap-3">
+                <button onClick={() => setShowStart(false)} className="flex-1 py-3 rounded-xl text-white/50 text-sm font-semibold border border-white/10">Cancel</button>
+                <motion.button
+                  whileTap={{ scale: 0.97 }}
+                  onClick={handleStartJourney}
+                  disabled={starting || !startForm.from || !startForm.to}
+                  className="flex-1 py-3 rounded-xl bg-[#D4AF37] text-black text-sm font-bold disabled:opacity-50"
+                >{starting ? 'Starting...' : 'Start Journey'}</motion.button>
+              </div>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
+
+      {/* Loading */}
+      {loading && (
+        <div className="flex items-center justify-center py-12">
+          <div className="w-8 h-8 rounded-full border-2 border-[#D4AF37] border-t-transparent animate-spin" />
+        </div>
+      )}
+
+      {/* Empty state */}
+      {!loading && journeys.length === 0 && (
+        <div className="rounded-2xl p-8 text-center space-y-3" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)' }}>
+          <div className="text-4xl">🗺️</div>
+          <p className="text-white font-semibold">No journeys yet</p>
+          <p className="text-white/40 text-sm">Tap "Start" to begin tracking a journey. Your family will see it live.</p>
+          <motion.button whileTap={{ scale: 0.97 }} onClick={() => setShowStart(true)} className="mt-2 px-6 py-2.5 rounded-xl bg-[#D4AF37] text-black text-sm font-bold">Start First Journey</motion.button>
+        </div>
+      )}
+
       {/* Active Journeys */}
-      {activeJourneys.length > 0 && (
+      {!loading && activeJourneys.length > 0 && (
         <div className="space-y-3">
           <h3 className="text-white/50 text-xs font-semibold uppercase tracking-wider">Live Now</h3>
           {activeJourneys.map((journey) => {
@@ -828,41 +944,49 @@ export function JourneySection() {
       )}
 
       {/* Journey History */}
-      <div>
-        <h3 className="text-white/50 text-xs font-semibold uppercase tracking-wider mb-4">Journey History</h3>
-        <div className="relative">
-          {/* Vertical timeline line */}
-          <div className="absolute left-3.5 top-2 bottom-2 w-0.5 bg-white/10 rounded-full" />
-
-          <div className="space-y-0">
-            {/* Today group */}
-            {todayJourneys.length > 0 && (
-              <>
-                <div className="flex items-center gap-3 mb-3 pl-10">
-                  <Calendar className="w-3.5 h-3.5 text-[#D4AF37]" />
-                  <span className="text-[#D4AF37] text-xs font-bold uppercase tracking-widest">Today</span>
-                </div>
-                {todayJourneys.map((journey) => (
-                  <JourneyHistoryItem key={journey.id} journey={journey} />
-                ))}
-              </>
-            )}
-
-            {/* Yesterday group */}
-            {yesterdayJourneys.length > 0 && (
-              <>
-                <div className="flex items-center gap-3 mb-3 mt-4 pl-10">
-                  <Calendar className="w-3.5 h-3.5 text-white/30" />
-                  <span className="text-white/30 text-xs font-bold uppercase tracking-widest">Yesterday</span>
-                </div>
-                {yesterdayJourneys.map((journey) => (
-                  <JourneyHistoryItem key={journey.id} journey={journey} />
-                ))}
-              </>
-            )}
+      {!loading && historyJourneys.length > 0 && (
+        <div>
+          <h3 className="text-white/50 text-xs font-semibold uppercase tracking-wider mb-4">Journey History</h3>
+          <div className="relative">
+            <div className="absolute left-3.5 top-2 bottom-2 w-0.5 bg-white/10 rounded-full" />
+            <div className="space-y-0">
+              {todayJourneys.length > 0 && (
+                <>
+                  <div className="flex items-center gap-3 mb-3 pl-10">
+                    <Calendar className="w-3.5 h-3.5 text-[#D4AF37]" />
+                    <span className="text-[#D4AF37] text-xs font-bold uppercase tracking-widest">Today</span>
+                  </div>
+                  {todayJourneys.map((journey) => (
+                    <JourneyHistoryItem key={journey.id} journey={journey} />
+                  ))}
+                </>
+              )}
+              {yesterdayJourneys.length > 0 && (
+                <>
+                  <div className="flex items-center gap-3 mb-3 mt-4 pl-10">
+                    <Calendar className="w-3.5 h-3.5 text-white/30" />
+                    <span className="text-white/30 text-xs font-bold uppercase tracking-widest">Yesterday</span>
+                  </div>
+                  {yesterdayJourneys.map((journey) => (
+                    <JourneyHistoryItem key={journey.id} journey={journey} />
+                  ))}
+                </>
+              )}
+              {weekJourneys.length > 0 && (
+                <>
+                  <div className="flex items-center gap-3 mb-3 mt-4 pl-10">
+                    <Calendar className="w-3.5 h-3.5 text-white/20" />
+                    <span className="text-white/20 text-xs font-bold uppercase tracking-widest">Earlier</span>
+                  </div>
+                  {weekJourneys.map((journey) => (
+                    <JourneyHistoryItem key={journey.id} journey={journey} />
+                  ))}
+                </>
+              )}
+            </div>
           </div>
         </div>
-      </div>
+      )}
     </div>
   );
 }

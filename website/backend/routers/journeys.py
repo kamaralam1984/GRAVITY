@@ -60,6 +60,35 @@ def get_active_journeys(db: Session = Depends(get_db)):
         result.append({"id": j.id, "user_name": user.name if user else "Unknown", "from": j.from_location, "to": j.to_location, "started_at": j.started_at.isoformat() if j.started_at else None, "status": j.status})
     return {"total": len(result), "journeys": result}
 
+@router.get("/my")
+def get_my_journeys(
+    limit: int = 30,
+    user: models.User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    journeys = (
+        db.query(models.Journey)
+        .filter(models.Journey.user_id == user.id)
+        .order_by(desc(models.Journey.started_at))
+        .limit(limit)
+        .all()
+    )
+    result = []
+    for j in journeys:
+        points = db.query(models.JourneyPoint).filter(models.JourneyPoint.journey_id == j.id).order_by(desc(models.JourneyPoint.recorded_at)).all()
+        last_speed = points[0].speed if points else None
+        result.append({
+            "id": j.id,
+            "from_location": j.from_location or "Unknown",
+            "to_location": j.to_location or "Unknown",
+            "started_at": j.started_at.isoformat() if j.started_at else None,
+            "arrived_at": j.arrived_at.isoformat() if j.arrived_at else None,
+            "status": j.status,
+            "distance_km": j.distance_km,
+            "speed": last_speed,
+        })
+    return {"journeys": result, "total": len(result)}
+
 @router.get("/stats")
 def journey_stats(db: Session = Depends(get_db)):
     total = db.query(func.count(models.Journey.id)).scalar()

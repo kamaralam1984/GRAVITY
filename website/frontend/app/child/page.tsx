@@ -113,19 +113,64 @@ function Starfield() {
 
 // ─── Main Page ────────────────────────────────────────────────────────────────
 
+import { getUser, getToken, type AuthUser } from '@/lib/auth'
+
 export default function ChildPage() {
   const router = useRouter()
   const [activeTab, setActiveTab] = useState<Tab>('home')
   const [drawerOpen, setDrawerOpen] = useState(false)
   const [notifCount] = useState(3)
   const [prevTab, setPrevTab] = useState<Tab>('home')
+  const [authUser, setAuthUser] = useState<AuthUser | null>(null)
+  const [battery, setBattery] = useState<number>(0)
+  const [familyOnline, setFamilyOnline] = useState<number>(0)
+  const [dataLoaded, setDataLoaded] = useState(false)
 
-  // Auth check
   useEffect(() => {
-    const token = localStorage.getItem('gv_token')
-    if (!token) {
-      router.replace('/login')
+    const token = getToken()
+    if (!token) { router.replace('/login'); return }
+    const user = getUser()
+    if (!user) { router.replace('/login'); return }
+    setAuthUser(user)
+
+    async function loadData() {
+      try {
+        const headers = { Authorization: `Bearer ${token}` }
+        // Get user's family
+        const famRes = await fetch('/families/my', { headers })
+        if (famRes.ok) {
+          const families = await famRes.json()
+          if (families.length > 0) {
+            const familyId = families[0].id
+            // Get live family members (online count + user's battery)
+            const liveRes = await fetch(`/location/live/${familyId}`, { headers })
+            if (liveRes.ok) {
+              const live = await liveRes.json()
+              setFamilyOnline(live.length)
+              const me = live.find((m: { user_id: number; battery?: number }) => m.user_id === user!.id)
+              if (me?.battery != null) setBattery(me.battery)
+            }
+          }
+        }
+        // Fallback: get battery from device via family members endpoint
+        if (battery === 0) {
+          const famRes2 = await fetch('/families/my', { headers })
+          if (famRes2.ok) {
+            const families2 = await famRes2.json()
+            if (families2.length > 0) {
+              const membersRes = await fetch(`/families/${families2[0].id}/members`, { headers })
+              if (membersRes.ok) {
+                const members = await membersRes.json()
+                const me = members.find((m: { user_id: number; battery?: number }) => m.user_id === user!.id)
+                if (me?.battery != null) setBattery(me.battery)
+              }
+            }
+          }
+        }
+      } catch (_) {}
+      setDataLoaded(true)
     }
+    loadData()
   }, [router])
 
   function handleTabChange(tab: Tab) {
@@ -139,11 +184,11 @@ export default function ChildPage() {
       case 'home':
         return (
           <ChildHome
-            childName="Aarav"
+            childName={authUser?.name ?? 'You'}
             safeStatus="safe"
-            steps={8234}
-            battery={87}
-            familyOnline={3}
+            steps={0}
+            battery={battery}
+            familyOnline={familyOnline}
           />
         )
       case 'sos':
