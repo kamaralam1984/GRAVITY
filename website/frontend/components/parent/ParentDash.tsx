@@ -32,6 +32,9 @@ import {
   AlertCircle,
   Star,
   RefreshCw,
+  Copy,
+  CheckCheck,
+  UserPlus,
 } from 'lucide-react';
 
 // ─── Shared types ─────────────────────────────────────────────────────────────
@@ -428,6 +431,8 @@ export function DashboardSection() {
   const [selectedMember, setSelectedMember] = useState<string | null>(null);
   const [events, setEvents] = useState<ActivityEvent[]>(ACTIVITY_EVENTS);
   const [routineAlerts, setRoutineAlerts] = useState<{ member: string; alert: string; severity: string }[]>([]);
+  const [inviteCode, setInviteCode] = useState<string>('');
+  const [copied, setCopied] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
 
   // Load real family members and live locations
@@ -440,8 +445,10 @@ export function DashboardSection() {
         const famRes = await fetch('/families/my', { headers: h });
         if (!famRes.ok) return;
         const fam = await famRes.json();
-        const fid = Array.isArray(fam) ? fam[0]?.id : (fam.id ?? fam.family?.id);
+        const famData = Array.isArray(fam) ? fam[0] : fam;
+        const fid = famData?.id ?? famData?.family?.id;
         if (!fid) return;
+        if (famData?.invite_code) setInviteCode(famData.invite_code);
 
         const memRes = await fetch(`/families/${fid}/members`, { headers: h });
         if (!memRes.ok) return;
@@ -502,7 +509,8 @@ export function DashboardSection() {
         const famRes = await fetch('/families/my', { headers: h });
         if (!famRes.ok) return;
         const fam = await famRes.json();
-        const fid = Array.isArray(fam) ? fam[0]?.id : (fam.id ?? fam.family?.id);
+        const famData2 = Array.isArray(fam) ? fam[0] : fam;
+        const fid = famData2?.id ?? famData2?.family?.id;
         if (!fid) return;
         const locRes = await fetch(`/location/live/${fid}`, { headers: h });
         if (!locRes.ok) return;
@@ -534,6 +542,14 @@ export function DashboardSection() {
     }
     checkRoutines();
   }, []);
+
+  function copyInviteCode() {
+    if (!inviteCode) return;
+    navigator.clipboard.writeText(inviteCode).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2500);
+    });
+  }
 
   function markAllRead() {
     setEvents((prev) => prev.map((e) => ({ ...e, read: true })));
@@ -693,6 +709,78 @@ export function DashboardSection() {
             </div>
           ))}
         </div>
+      </motion.div>
+
+      {/* ── Invite Code Card ──────────────────────────────────────────── */}
+      <motion.div
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.45, delay: 0.1 }}
+        style={{
+          ...glassCard,
+          background: 'linear-gradient(135deg, rgba(139,92,246,0.18) 0%, rgba(59,130,246,0.10) 100%)',
+          border: '1px solid rgba(139,92,246,0.35)',
+          padding: '16px 18px',
+          position: 'relative',
+          overflow: 'hidden',
+        }}
+      >
+        {/* Glow orb */}
+        <div style={{ position: 'absolute', right: -20, top: -20, width: 100, height: 100, borderRadius: '50%', background: 'radial-gradient(circle, rgba(139,92,246,0.25) 0%, transparent 70%)', pointerEvents: 'none' }} />
+
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10 }}>
+          <UserPlus size={16} style={{ color: '#8B5CF6' }} />
+          <span style={{ fontSize: 12, fontWeight: 600, color: 'rgba(255,255,255,0.6)', textTransform: 'uppercase', letterSpacing: '0.8px' }}>Family Invite Code</span>
+          <motion.div
+            animate={{ opacity: [1, 0.3, 1] }}
+            transition={{ duration: 1.4, repeat: Infinity, ease: 'easeInOut' }}
+            style={{ width: 7, height: 7, borderRadius: '50%', background: '#8B5CF6', marginLeft: 2 }}
+          />
+        </div>
+
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+          <motion.div
+            animate={{ boxShadow: ['0 0 0px rgba(139,92,246,0)', '0 0 18px rgba(139,92,246,0.6)', '0 0 0px rgba(139,92,246,0)'] }}
+            transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}
+            style={{
+              flex: 1,
+              background: 'rgba(139,92,246,0.12)',
+              border: '1.5px solid rgba(139,92,246,0.4)',
+              borderRadius: 10,
+              padding: '10px 14px',
+              fontFamily: 'monospace',
+              fontSize: 22,
+              fontWeight: 800,
+              color: '#C4B5FD',
+              letterSpacing: '0.25em',
+              textAlign: 'center' as const,
+            }}
+          >
+            {inviteCode || '——————'}
+          </motion.div>
+
+          <motion.button
+            onClick={copyInviteCode}
+            whileHover={{ scale: 1.06 }}
+            whileTap={{ scale: 0.94 }}
+            style={{
+              display: 'flex', alignItems: 'center', gap: 6,
+              background: copied ? 'rgba(16,185,129,0.2)' : 'rgba(139,92,246,0.25)',
+              border: `1.5px solid ${copied ? 'rgba(16,185,129,0.5)' : 'rgba(139,92,246,0.5)'}`,
+              borderRadius: 10, padding: '10px 14px', cursor: 'pointer',
+              color: copied ? '#10B981' : '#C4B5FD', fontSize: 13, fontWeight: 600,
+              transition: 'all 0.25s',
+              whiteSpace: 'nowrap' as const,
+            }}
+          >
+            {copied ? <CheckCheck size={16} /> : <Copy size={16} />}
+            {copied ? 'Copied!' : 'Copy'}
+          </motion.button>
+        </div>
+
+        <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.35)', marginTop: 10, textAlign: 'center' as const }}>
+          Share this code with family members so they can join your circle
+        </p>
       </motion.div>
 
       {/* ── Section label ─────────────────────────────────────────────── */}
