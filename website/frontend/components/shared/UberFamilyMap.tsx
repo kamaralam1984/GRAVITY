@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { MapPin, RefreshCw, Navigation, Users, Wifi, WifiOff, ChevronDown, ChevronUp } from 'lucide-react'
 import { getToken } from '@/lib/auth'
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:8000'
+const API_BASE = ''  // relative URLs go through Next.js proxy → port 8001
 
 const MEMBER_COLORS = ['#D4A853', '#10B981', '#3B82F6', '#8B5CF6', '#EF4444', '#F59E0B', '#EC4899']
 
@@ -162,10 +162,12 @@ export default function UberFamilyMap({
       if (!fid) {
         const famRes = await fetch(`${API_BASE}/families/my`, { headers })
         if (!famRes.ok) { setLoading(false); return }
-        const fam = await famRes.json()
-        fid = fam.id
+        const famData = await famRes.json()
+        const famsArr = Array.isArray(famData) ? famData : [famData]
+        if (!famsArr.length) { setLoading(false); return }
+        fid = famsArr[0].id
         setFamilyId(fid)
-        setFamilyName(fam.name || 'My Family')
+        setFamilyName(famsArr[0].name || 'My Family')
       }
       if (!fid) { setLoading(false); return }
 
