@@ -10,8 +10,6 @@ import {
 } from 'lucide-react'
 
 // ─── Constants ────────────────────────────────────────────────────────────────
-const API = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'
-
 const PLANS = [
   {
     id: 'free',
@@ -532,7 +530,7 @@ export default function SignupPage() {
     if (!step1Valid) return
     setStep1Loading(true)
     try {
-      const res = await fetch(`${API}/auth/register`, {
+      const res = await fetch(`/auth/register`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ name, email, password }),
@@ -554,7 +552,7 @@ export default function SignupPage() {
     setOtpError('')
     setSendLoading(true)
     try {
-      const res = await fetch(`${API}/auth/otp/send`, {
+      const res = await fetch(`/auth/otp/send`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ phone: `+91${phone}` }),
@@ -576,7 +574,7 @@ export default function SignupPage() {
     setOtpError('')
     setOtpLoading(true)
     try {
-      const res = await fetch(`${API}/auth/otp/verify`, {
+      const res = await fetch(`/auth/otp/verify`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ phone: `+91${phone}`, otp }),

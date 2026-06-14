@@ -14,7 +14,7 @@ import Footer from '@/components/layout/Footer'
 import { getToken } from '@/lib/auth'
 
 /* ─── config ─────────────────────────────────────────────────── */
-const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:8000'
+const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? ''
 function getWsBase(): string {
   if (typeof window === 'undefined') return 'ws://localhost:8001'
   const proto = window.location.protocol === 'https:' ? 'wss:' : 'ws:'

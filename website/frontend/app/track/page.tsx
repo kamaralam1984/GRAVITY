@@ -12,7 +12,7 @@ import {
 import { getUser, getToken } from '@/lib/auth'
 
 /* ─── config ─────────────────────────────────────────────────── */
-const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:8000'
+const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? ''
 const UPDATE_INTERVAL_MS = 8000
 const GOOD_ACCURACY_M   = 50    // below this = good GPS
 const POOR_ACCURACY_M   = 500   // above this = network-only, warn user
