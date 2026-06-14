@@ -459,6 +459,7 @@ export default function DashboardPage() {
     fetch('/families/my', { headers: { Authorization: 'Bearer ' + token } })
       .then(r => r.ok ? r.json() : [])
       .then(async (families: any[]) => {
+        if (!Array.isArray(families)) return
         if (families.length > 0) {
           const fid = families[0].id
           setFamilyId(fid)
@@ -629,11 +630,16 @@ export default function DashboardPage() {
             </AnimatePresence>
           </div>
 
-          {/* Avatar 30px gold gradient */}
-          <div className="w-[30px] h-[30px] rounded-full flex items-center justify-center text-xs font-black flex-shrink-0"
-               style={{background:'linear-gradient(135deg,#D4A853,#92580A)',color:'#fff',
-                       boxShadow:'0 3px 10px rgba(212,168,83,0.35)'}}>
-            {user.name.charAt(0).toUpperCase()}
+          {/* Avatar — clickable profile dropdown */}
+          <div className="relative">
+            <motion.button
+              whileTap={{ scale: 0.88 }}
+              onClick={() => { setTab('profile'); setMobTab('profile'); setBell(false) }}
+              className="w-[32px] h-[32px] rounded-full flex items-center justify-center text-xs font-black flex-shrink-0"
+              style={{background:'linear-gradient(135deg,#D4A853,#92580A)',color:'#fff',
+                      boxShadow:'0 3px 10px rgba(212,168,83,0.35)',border:'2px solid rgba(212,168,83,0.4)',cursor:'pointer'}}>
+              {user.name.charAt(0).toUpperCase()}
+            </motion.button>
           </div>
         </div>
       </header>
