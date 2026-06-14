@@ -6,11 +6,12 @@ import { Suspense } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import Link from 'next/link'
 import {
-  MapPin, Navigation, Battery, Wifi, WifiOff, Smartphone,
-  Shield, ChevronRight, Users, Clock, Zap, RefreshCw,
+  MapPin, Navigation, Battery, Smartphone,
+  Shield, ChevronRight, Users, Clock, Zap, RefreshCw, ChevronDown, ChevronUp, History,
 } from 'lucide-react'
 import Navbar from '@/components/layout/Navbar'
 import Footer from '@/components/layout/Footer'
+import { getToken } from '@/lib/auth'
 
 /* ─── config ─────────────────────────────────────────────────── */
 const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:8000'
@@ -39,6 +40,24 @@ interface FamilyMember {
   status?: 'safe' | 'sos' | 'unknown'
 }
 
+interface LocationHistoryEntry {
+  lat: number
+  lng: number
+  place_name?: string | null
+  speed?: number | null
+  recorded_at?: string | null
+}
+
+/* ─── time helper ─────────────────────────────────────────────── */
+function timeAgoStr(isoDate: string | null | undefined): string {
+  if (!isoDate) return 'Just now'
+  const diff = Math.floor((Date.now() - new Date(isoDate).getTime()) / 1000)
+  if (diff < 60) return `${diff}s ago`
+  if (diff < 3600) return `${Math.floor(diff / 60)}m ago`
+  if (diff < 86400) return `${Math.floor(diff / 3600)}h ago`
+  return `${Math.floor(diff / 86400)}d ago`
+}
+
 /* ─── avatar helper ──────────────────────────────────────────── */
 function Avatar({ name, url, size = 40 }: { name: string; url?: string | null; size?: number }) {
   const initials = name.split(' ').map((n) => n[0]).join('').slice(0, 2).toUpperCase()
@@ -53,72 +72,178 @@ function Avatar({ name, url, size = 40 }: { name: string; url?: string | null; s
   )
 }
 
-/* ─── MemberCard ─────────────────────────────────────────────── */
-function MemberCard({ m, selected, onClick }: { m: FamilyMember; selected: boolean; onClick: () => void }) {
-  const timeAgo = m.recorded_at
-    ? (() => {
-        const diff = Math.floor((Date.now() - new Date(m.recorded_at!).getTime()) / 1000)
-        if (diff < 60) return `${diff}s ago`
-        if (diff < 3600) return `${Math.floor(diff / 60)}m ago`
-        return `${Math.floor(diff / 3600)}h ago`
-      })()
-    : 'Just now'
+/* ─── LocationHistoryPanel ───────────────────────────────────── */
+function LocationHistoryPanel({ userId }: { userId: number | string }) {
+  const [history, setHistory] = useState<LocationHistoryEntry[]>([])
+  const [loading, setLoading] = useState(true)
 
-  const speedKmh = m.speed !== null && m.speed !== undefined ? Math.round(m.speed * 3.6) : null
+  useEffect(() => {
+    const token = getToken()
+    if (!token) { setLoading(false); return }
+
+    fetch(`${API_BASE}/location/history/${userId}?limit=20`, {
+      headers: { Authorization: `Bearer ${token}` },
+    })
+      .then((r) => r.ok ? r.json() : [])
+      .then((data: LocationHistoryEntry[]) => setHistory(data))
+      .catch(() => setHistory([]))
+      .finally(() => setLoading(false))
+  }, [userId])
+
+  if (loading) {
+    return (
+      <div className="py-4 text-center text-xs" style={{ color: 'rgba(255,255,255,0.3)' }}>
+        Loading history…
+      </div>
+    )
+  }
+
+  if (!history.length) {
+    return (
+      <div className="py-4 text-center text-xs" style={{ color: 'rgba(255,255,255,0.3)' }}>
+        No location history available
+      </div>
+    )
+  }
 
   return (
-    <motion.div
-      layout
-      onClick={onClick}
-      whileTap={{ scale: 0.97 }}
-      className="flex items-center gap-3 p-3 rounded-2xl cursor-pointer transition-all"
-      style={{
-        background: selected ? 'rgba(212,168,83,0.1)' : 'rgba(255,255,255,0.03)',
-        border: `1px solid ${selected ? 'rgba(212,168,83,0.35)' : 'rgba(255,255,255,0.06)'}`,
-      }}
-    >
-      <div className="relative">
-        <Avatar name={m.name} url={m.avatar_url} size={42} />
-        <span
-          className="absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full border-2"
-          style={{
-            background: m.is_online ? '#22c55e' : '#6b7280',
-            borderColor: '#111420',
-            boxShadow: m.is_online ? '0 0 6px #22c55e' : 'none',
-          }}
-        />
-      </div>
-      <div className="flex-1 min-w-0">
-        <p className="text-sm font-semibold text-white truncate">{m.name}</p>
-        <p className="text-xs truncate" style={{ color: 'rgba(255,255,255,0.4)' }}>
-          {m.place_name ?? `${m.lat.toFixed(4)}, ${m.lng.toFixed(4)}`}
-        </p>
-        <p className="text-xs mt-0.5" style={{ color: 'rgba(255,255,255,0.3)' }}>{timeAgo}</p>
-      </div>
-      <div className="flex flex-col items-end gap-1">
-        {m.battery !== null && m.battery !== undefined && (
-          <div className="flex items-center gap-1">
-            <Battery className="w-3 h-3" style={{ color: m.battery < 20 ? '#ef4444' : '#D4A853' }} />
-            <span className="text-xs" style={{ color: m.battery < 20 ? '#ef4444' : '#D4A853' }}>
-              {m.battery}%
-            </span>
-          </div>
-        )}
-        {speedKmh !== null && speedKmh > 0 && (
-          <div className="flex items-center gap-1">
-            <Zap className="w-3 h-3 text-blue-400" />
-            <span className="text-xs text-blue-400">{speedKmh} km/h</span>
-          </div>
-        )}
-        {m.activity && (
-          <span
-            className="text-[10px] px-2 py-0.5 rounded-full capitalize"
-            style={{ background: 'rgba(212,168,83,0.15)', color: '#D4A853' }}
+    <div className="mt-3 space-y-2">
+      {history.map((entry, idx) => {
+        const speedKmh = entry.speed != null ? Math.round(entry.speed * 3.6) : null
+        return (
+          <div
+            key={idx}
+            className="flex items-start gap-3 px-2 py-2 rounded-xl"
+            style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)' }}
           >
-            {m.activity}
-          </span>
-        )}
+            {/* timeline dot */}
+            <div className="flex flex-col items-center mt-1 flex-shrink-0">
+              <div
+                className="w-2 h-2 rounded-full"
+                style={{ background: idx === 0 ? '#D4A853' : 'rgba(212,168,83,0.35)' }}
+              />
+              {idx < history.length - 1 && (
+                <div className="w-px flex-1 mt-1" style={{ background: 'rgba(255,255,255,0.08)', minHeight: 12 }} />
+              )}
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-xs font-medium text-white truncate">
+                {entry.place_name ?? `${entry.lat.toFixed(4)}, ${entry.lng.toFixed(4)}`}
+              </p>
+              <div className="flex items-center gap-2 mt-0.5">
+                <span className="text-[10px]" style={{ color: 'rgba(255,255,255,0.35)' }}>
+                  {timeAgoStr(entry.recorded_at)}
+                </span>
+                {speedKmh !== null && speedKmh > 0 && (
+                  <span className="text-[10px] flex items-center gap-1 text-blue-400">
+                    <Zap className="w-2.5 h-2.5" />
+                    {speedKmh} km/h
+                  </span>
+                )}
+              </div>
+            </div>
+          </div>
+        )
+      })}
+    </div>
+  )
+}
+
+/* ─── MemberCard ─────────────────────────────────────────────── */
+function MemberCard({ m, selected, onClick }: { m: FamilyMember; selected: boolean; onClick: () => void }) {
+  const [historyOpen, setHistoryOpen] = useState(false)
+  const timeAgo = timeAgoStr(m.recorded_at)
+  const speedKmh = m.speed !== null && m.speed !== undefined ? Math.round(m.speed * 3.6) : null
+
+  const toggleHistory = (e: React.MouseEvent) => {
+    e.stopPropagation()
+    setHistoryOpen((v) => !v)
+  }
+
+  return (
+    <motion.div layout>
+      <div
+        onClick={onClick}
+        className="flex items-center gap-3 p-3 rounded-2xl cursor-pointer transition-all"
+        style={{
+          background: selected ? 'rgba(212,168,83,0.1)' : 'rgba(255,255,255,0.03)',
+          border: `1px solid ${selected ? 'rgba(212,168,83,0.35)' : 'rgba(255,255,255,0.06)'}`,
+        }}
+      >
+        <div className="relative">
+          <Avatar name={m.name} url={m.avatar_url} size={42} />
+          <span
+            className="absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full border-2"
+            style={{
+              background: m.is_online ? '#22c55e' : '#6b7280',
+              borderColor: '#111420',
+              boxShadow: m.is_online ? '0 0 6px #22c55e' : 'none',
+            }}
+          />
+        </div>
+        <div className="flex-1 min-w-0">
+          <p className="text-sm font-semibold text-white truncate">{m.name}</p>
+          <p className="text-xs truncate" style={{ color: 'rgba(255,255,255,0.4)' }}>
+            {m.place_name ?? `${m.lat.toFixed(4)}, ${m.lng.toFixed(4)}`}
+          </p>
+          <p className="text-xs mt-0.5" style={{ color: 'rgba(255,255,255,0.3)' }}>{timeAgo}</p>
+        </div>
+        <div className="flex flex-col items-end gap-1">
+          {m.battery !== null && m.battery !== undefined && (
+            <div className="flex items-center gap-1">
+              <Battery className="w-3 h-3" style={{ color: m.battery < 20 ? '#ef4444' : '#D4A853' }} />
+              <span className="text-xs" style={{ color: m.battery < 20 ? '#ef4444' : '#D4A853' }}>
+                {m.battery}%
+              </span>
+            </div>
+          )}
+          {speedKmh !== null && speedKmh > 0 && (
+            <div className="flex items-center gap-1">
+              <Zap className="w-3 h-3 text-blue-400" />
+              <span className="text-xs text-blue-400">{speedKmh} km/h</span>
+            </div>
+          )}
+          {m.activity && (
+            <span
+              className="text-[10px] px-2 py-0.5 rounded-full capitalize"
+              style={{ background: 'rgba(212,168,83,0.15)', color: '#D4A853' }}
+            >
+              {m.activity}
+            </span>
+          )}
+        </div>
       </div>
+
+      {/* History toggle — visible when this card is selected */}
+      {selected && (
+        <div
+          className="rounded-b-2xl px-3 pb-3"
+          style={{ background: 'rgba(212,168,83,0.05)', border: '1px solid rgba(212,168,83,0.2)', borderTop: 'none', marginTop: -6 }}
+        >
+          <button
+            onClick={toggleHistory}
+            className="flex items-center gap-1.5 pt-3 text-xs font-semibold w-full hover:opacity-80 transition-opacity"
+            style={{ color: '#D4A853' }}
+          >
+            <History className="w-3.5 h-3.5" />
+            Location History
+            {historyOpen ? <ChevronUp className="w-3.5 h-3.5 ml-auto" /> : <ChevronDown className="w-3.5 h-3.5 ml-auto" />}
+          </button>
+          <AnimatePresence>
+            {historyOpen && (
+              <motion.div
+                initial={{ height: 0, opacity: 0 }}
+                animate={{ height: 'auto', opacity: 1 }}
+                exit={{ height: 0, opacity: 0 }}
+                transition={{ duration: 0.2 }}
+                className="overflow-hidden"
+              >
+                <LocationHistoryPanel userId={m.user_id} />
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
+      )}
     </motion.div>
   )
 }
@@ -157,7 +282,7 @@ function TileToggleButton() {
   )
 }
 
-/* ─── MapPlaceholder (Leaflet loads client-side only) ────────── */
+/* ─── MapView (Leaflet loads client-side only) ───────────────── */
 function MapView({ members, selected }: { members: FamilyMember[]; selected: FamilyMember | null }) {
   const mapRef = useRef<HTMLDivElement>(null)
   const leafletRef = sharedLeafletRef          // shared so TileToggleButton can access the map
@@ -252,19 +377,56 @@ function MapView({ members, selected }: { members: FamilyMember[]; selected: Fam
 /* ─── Live Map Page ──────────────────────────────────────────── */
 function LiveTrackingInner() {
   const searchParams = useSearchParams()
-  const FAMILY_ID = Number(searchParams.get('family') ?? '1')
+  const paramFamilyId = searchParams.get('family')
 
-  const [members, setMembers]     = useState<FamilyMember[]>([])
-  const [selected, setSelected]   = useState<FamilyMember | null>(null)
-  const [wsStatus, setWsStatus]   = useState<'connecting' | 'connected' | 'disconnected'>('disconnected')
-  const [onlineCount, setOnlineCount] = useState(0)
-  const [lastUpdate, setLastUpdate]   = useState<Date | null>(null)
+  const [familyId, setFamilyId]         = useState<number | null>(paramFamilyId ? Number(paramFamilyId) : null)
+  const [members, setMembers]           = useState<FamilyMember[]>([])
+  const [selected, setSelected]         = useState<FamilyMember | null>(null)
+  const [wsStatus, setWsStatus]         = useState<'connecting' | 'connected' | 'disconnected'>('disconnected')
+  const [onlineCount, setOnlineCount]   = useState(0)
+  const [lastUpdate, setLastUpdate]     = useState<Date | null>(null)
   const wsRef = useRef<WebSocket | null>(null)
+  const familyIdRef = useRef<number | null>(null)
+
+  /* ── resolve family ID: ?family param → own family → fallback 1 ── */
+  useEffect(() => {
+    if (paramFamilyId) {
+      const id = Number(paramFamilyId)
+      setFamilyId(id)
+      familyIdRef.current = id
+      return
+    }
+    const token = getToken()
+    if (!token) {
+      setFamilyId(1)
+      familyIdRef.current = 1
+      return
+    }
+    fetch(`${API_BASE}/families/my`, {
+      headers: { Authorization: `Bearer ${token}` },
+    })
+      .then((r) => r.ok ? r.json() : null)
+      .then((data) => {
+        // data is an array of { id, name, ... }
+        const id: number = (Array.isArray(data) && data.length > 0) ? (data[0].id as number) : 1
+        setFamilyId(id)
+        familyIdRef.current = id
+      })
+      .catch(() => {
+        setFamilyId(1)
+        familyIdRef.current = 1
+      })
+  }, [paramFamilyId])
 
   /* load initial snapshot via REST */
   const loadSnapshot = useCallback(async () => {
+    const fid = familyIdRef.current
+    if (!fid) return
+    const token = getToken()
     try {
-      const res = await fetch(`${API_BASE}/location/live/${FAMILY_ID}`)
+      const res = await fetch(`${API_BASE}/location/live/${fid}`, {
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+      })
       if (res.ok) {
         const data: FamilyMember[] = await res.json()
         setMembers(data)
@@ -275,6 +437,8 @@ function LiveTrackingInner() {
 
   /* connect WebSocket for live updates */
   const connectWS = useCallback(() => {
+    const fid = familyIdRef.current
+    if (!fid) return () => {}
     const token = typeof window !== 'undefined'
       ? (localStorage.getItem('gv_token') || localStorage.getItem('gravity_token') || '')
       : ''
@@ -282,14 +446,14 @@ function LiveTrackingInner() {
       ? (localStorage.getItem('gravity_user_id') ?? 'viewer')
       : 'viewer'
     const wsBase = getWsBase()
-    const ws = new WebSocket(`${wsBase}/location/ws/${FAMILY_ID}?token=${encodeURIComponent(token)}&user_id=${userId}`)
+    const ws = new WebSocket(`${wsBase}/location/ws/${fid}?token=${encodeURIComponent(token)}&user_id=${userId}`)
     wsRef.current = ws
     setWsStatus('connecting')
 
     ws.onopen = () => setWsStatus('connected')
     ws.onclose = () => {
       setWsStatus('disconnected')
-      setTimeout(connectWS, 3000)
+      setTimeout(() => connectWS(), 3000)
     }
     ws.onerror = () => setWsStatus('disconnected')
 
@@ -346,16 +510,20 @@ function LiveTrackingInner() {
     return () => { clearInterval(ping); ws.close() }
   }, [])
 
+  /* Bootstrap once family ID is resolved */
   useEffect(() => {
+    if (familyId === null) return   // waiting for resolution
+
+    familyIdRef.current = familyId
     loadSnapshot()
     const cleanup = connectWS()
     // REST polling fallback — refresh every 15s regardless of WS state
     const pollInterval = setInterval(loadSnapshot, 15000)
     return () => {
-      cleanup?.()
+      if (cleanup) cleanup()
       clearInterval(pollInterval)
     }
-  }, [loadSnapshot, connectWS])
+  }, [familyId, loadSnapshot, connectWS])
 
   const wsColor = wsStatus === 'connected' ? '#22c55e' : wsStatus === 'connecting' ? '#D4A853' : '#ef4444'
   const wsLabel = wsStatus === 'connected' ? 'Live' : wsStatus === 'connecting' ? 'Connecting…' : 'Reconnecting…'
