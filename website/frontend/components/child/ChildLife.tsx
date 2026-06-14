@@ -28,6 +28,7 @@ import {
   Edit,
   LogOut,
 } from 'lucide-react';
+import { getToken } from '@/lib/auth';
 
 // ─── Shared Styles ────────────────────────────────────────────────────────────
 
@@ -279,23 +280,14 @@ export function SchoolSection() {
         </div>
 
         {/* Map placeholder */}
-        <div style={{
-          borderRadius: '12px', overflow: 'hidden',
-          background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(255,255,255,0.06)',
-          height: '100px', position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center',
-        }}>
-          {/* Road lines decoration */}
-          <svg width="100%" height="100%" style={{ position: 'absolute', inset: 0 }}>
-            <line x1="0" y1="50%" x2="100%" y2="50%" stroke="rgba(255,255,255,0.06)" strokeWidth="2" strokeDasharray="12,8" />
-            <line x1="30%" y1="0" x2="30%" y2="100%" stroke="rgba(255,255,255,0.04)" strokeWidth="1" />
-            <line x1="70%" y1="0" x2="70%" y2="100%" stroke="rgba(255,255,255,0.04)" strokeWidth="1" />
-          </svg>
-          <div style={{ position: 'relative', zIndex: 1, textAlign: 'center' }}>
-            <Bus size={20} color={GOLD} />
-            <div style={{ fontSize: '12px', color: GOLD, fontWeight: 600, marginTop: '4px' }}>
-              Arrives in {countdown} min
-            </div>
-          </div>
+        <div style={{ height: '300px', width: '100%', minHeight: 300, borderRadius: '12px', overflow: 'hidden' }}>
+          {typeof window !== 'undefined' && (
+            <iframe
+              src="https://www.openstreetmap.org/export/embed.html?bbox=72.7,18.9,72.9,19.1&layer=mapnik"
+              style={{ width: '100%', height: '100%', border: 'none', borderRadius: 8 }}
+              title="Location Map"
+            />
+          )}
         </div>
       </div>
 
@@ -374,22 +366,18 @@ export function SchoolSection() {
 const WEEKLY_STEPS = [6200, 8100, 7400, 9800, 5600, 8234, 0];
 const DAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 
-function ActivityRings() {
+function ActivityRings({ steps, goalSteps, calories, goalCalories, activeMin, goalActiveMin }: {
+  steps: number; goalSteps: number; calories: number; goalCalories: number; activeMin: number; goalActiveMin: number;
+}) {
   const [animated, setAnimated] = useState(false);
-
-  useEffect(() => {
-    const t = setTimeout(() => setAnimated(true), 400);
-    return () => clearTimeout(t);
-  }, []);
+  useEffect(() => { const t = setTimeout(() => setAnimated(true), 400); return () => clearTimeout(t); }, []);
 
   const rings = [
-    { label: 'Steps',   color: '#3B82F6', pct: 0.823, r: 88, width: 12 },
-    { label: 'Calories',color: '#F97316', pct: 0.70,  r: 68, width: 12 },
-    { label: 'Active',  color: '#10B981', pct: 0.60,  r: 48, width: 12 },
+    { label: 'Steps',    color: '#3B82F6', pct: Math.min(1, steps / Math.max(goalSteps, 1)),       r: 88, width: 12 },
+    { label: 'Calories', color: '#F97316', pct: Math.min(1, calories / Math.max(goalCalories, 1)), r: 68, width: 12 },
+    { label: 'Active',   color: '#10B981', pct: Math.min(1, activeMin / Math.max(goalActiveMin, 1)),r: 48, width: 12 },
   ];
-
-  const cx = 100;
-  const cy = 100;
+  const cx = 100; const cy = 100;
 
   return (
     <div style={{ position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '8px' }}>
@@ -399,40 +387,23 @@ function ActivityRings() {
           const offset = animated ? circumference * (1 - ring.pct) : circumference;
           return (
             <g key={ring.label}>
-              {/* track */}
-              <circle
-                cx={cx} cy={cy} r={ring.r}
-                fill="none"
-                stroke="rgba(255,255,255,0.07)"
-                strokeWidth={ring.width}
-              />
-              {/* progress */}
+              <circle cx={cx} cy={cy} r={ring.r} fill="none" stroke="rgba(255,255,255,0.07)" strokeWidth={ring.width} />
               <motion.circle
-                cx={cx} cy={cy} r={ring.r}
-                fill="none"
-                stroke={ring.color}
-                strokeWidth={ring.width}
-                strokeLinecap="round"
-                strokeDasharray={circumference}
-                initial={{ strokeDashoffset: circumference }}
-                animate={{ strokeDashoffset: offset }}
+                cx={cx} cy={cy} r={ring.r} fill="none" stroke={ring.color} strokeWidth={ring.width}
+                strokeLinecap="round" strokeDasharray={circumference}
+                initial={{ strokeDashoffset: circumference }} animate={{ strokeDashoffset: offset }}
                 transition={{ duration: 1.4, ease: 'easeOut', delay: 0.3 }}
-                transform={`rotate(-90 ${cx} ${cy})`}
-                style={{ filter: `drop-shadow(0 0 6px ${ring.color})` }}
+                transform={`rotate(-90 ${cx} ${cy})`} style={{ filter: `drop-shadow(0 0 6px ${ring.color})` }}
               />
             </g>
           );
         })}
-        {/* center text */}
-        <text x={cx} y={cy - 8} textAnchor="middle" fill="#fff" fontSize="24" fontWeight="700">8,234</text>
+        <text x={cx} y={cy - 8} textAnchor="middle" fill="#fff" fontSize="24" fontWeight="700">
+          {steps > 0 ? steps.toLocaleString() : '—'}
+        </text>
         <text x={cx} y={cy + 12} textAnchor="middle" fill="rgba(255,255,255,0.45)" fontSize="11">steps today</text>
       </svg>
-
-      {/* ring labels outside */}
-      <div style={{
-        position: 'absolute', top: '10px', right: '-60px',
-        display: 'flex', flexDirection: 'column', gap: '18px',
-      }}>
+      <div style={{ position: 'absolute', top: '10px', right: '-60px', display: 'flex', flexDirection: 'column', gap: '18px' }}>
         {rings.map(ring => (
           <div key={ring.label} style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
             <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: ring.color }} />
@@ -466,17 +437,61 @@ function AnimatedCount({ value }: { value: number }) {
   return <>{display}</>;
 }
 
-export function HealthSection() {
-  const steps = 8234;
+export function HealthSection({ userId }: { userId?: number }) {
+  const [steps, setSteps] = useState(0);
+  const [heartRate, setHeartRate] = useState(0);
+  const [calories, setCalories] = useState(0);
+  const [sleepHrs, setSleepHrs] = useState(0);
+  const [activeMin, setActiveMin] = useState(0);
+  const [weeklySteps, setWeeklySteps] = useState(WEEKLY_STEPS);
+  const [dataLoaded, setDataLoaded] = useState(false);
+  const [aiTip, setAiTip] = useState('');
+
   const goalSteps = 10000;
-  const heartRate = 78;
-  const calories = 420;
-  const sleep = 7.5;
   const water = 1200;
   const waterGoal = 2000;
-  const activeMin = 45;
+  const todayIdx = (new Date().getDay() + 6) % 7; // 0=Mon … 6=Sun
 
-  const maxWeekly = Math.max(...WEEKLY_STEPS, 1);
+  useEffect(() => {
+    if (!userId) { setDataLoaded(true); return; }
+    const token = getToken();
+    fetch(`/health/records/${userId}`, { headers: { Authorization: `Bearer ${token}` } })
+      .then(r => r.ok ? r.json() : [])
+      .then((records: Record<string, number>[]) => {
+        if (records.length > 0) {
+          const rec = records[0];
+          const s = rec.steps ?? 0;
+          setSteps(s); setHeartRate(rec.heart_rate ?? 0);
+          setCalories(rec.calories_burned ?? 0); setSleepHrs(rec.sleep_hours ?? 0);
+          setActiveMin(rec.active_minutes ?? 0);
+          setWeeklySteps(prev => { const w = [...prev]; w[todayIdx] = s; return w; });
+        }
+        setDataLoaded(true);
+      })
+      .catch(() => setDataLoaded(true));
+  }, [userId]);
+
+  useEffect(() => {
+    if (!dataLoaded) return;
+    const prompt = steps > 0
+      ? `Child today: ${steps} steps, HR ${heartRate} bpm, ${sleepHrs}h sleep. One short encouraging health tip, max 15 words.`
+      : 'One short health tip for a child to stay active today, max 12 words.';
+    fetch('/ai/chat', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ messages: [{ role: 'user', content: prompt }] }),
+    })
+      .then(r => r.ok ? r.json() : null)
+      .then(d => { if (d?.content) setAiTip(d.content); })
+      .catch(() => {});
+  }, [dataLoaded]);
+
+  const s = steps > 0 ? steps : 0;
+  const hr = heartRate > 0 ? heartRate : 78;
+  const cal = calories > 0 ? calories : 0;
+  const slp = sleepHrs > 0 ? sleepHrs : 0;
+  const act = activeMin > 0 ? activeMin : 0;
+  const maxWeekly = Math.max(...weeklySteps, 1);
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
@@ -501,12 +516,12 @@ export function HealthSection() {
         <span style={{ fontSize: '13px', fontWeight: 600, color: GOLD, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '12px', alignSelf: 'flex-start' }}>
           Activity Rings
         </span>
-        <ActivityRings />
+        <ActivityRings steps={s} goalSteps={goalSteps} calories={cal} goalCalories={600} activeMin={act} goalActiveMin={75} />
         <div style={{ display: 'flex', gap: '24px', marginTop: '12px' }}>
           {[
-            { label: 'Steps',    value: `${steps.toLocaleString()} / ${goalSteps.toLocaleString()}`, color: '#3B82F6' },
-            { label: 'Calories', value: `${calories} / 600 kcal`,  color: '#F97316' },
-            { label: 'Active',   value: `${activeMin} / 75 min`,   color: '#10B981' },
+            { label: 'Steps',    value: s > 0 ? `${s.toLocaleString()} / ${goalSteps.toLocaleString()}` : `— / ${goalSteps.toLocaleString()}`, color: '#3B82F6' },
+            { label: 'Calories', value: cal > 0 ? `${cal} / 600 kcal` : '— / 600 kcal', color: '#F97316' },
+            { label: 'Active',   value: act > 0 ? `${act} / 75 min` : '— / 75 min',     color: '#10B981' },
           ].map(item => (
             <div key={item.label} style={{ textAlign: 'center' }}>
               <div style={{ fontSize: '12px', color: item.color, fontWeight: 600 }}>{item.label}</div>
@@ -530,7 +545,7 @@ export function HealthSection() {
               transition={{ repeat: Infinity, duration: 0.85 }}
               style={{ fontSize: '28px', fontWeight: 800, color: '#EF4444' }}
             >
-              <AnimatedCount value={heartRate} />
+              {hr > 0 ? <AnimatedCount value={hr} /> : '—'}
             </motion.span>
             <span style={{ fontSize: '12px', color: 'rgba(255,255,255,0.4)' }}>bpm</span>
           </div>
@@ -553,14 +568,14 @@ export function HealthSection() {
             <span style={{ fontSize: '11px', color: 'rgba(255,255,255,0.45)', fontWeight: 600 }}>SLEEP</span>
           </div>
           <div style={{ display: 'flex', alignItems: 'baseline', gap: '4px' }}>
-            <span style={{ fontSize: '28px', fontWeight: 800, color: '#8B5CF6' }}>{sleep}</span>
+            <span style={{ fontSize: '28px', fontWeight: 800, color: '#8B5CF6' }}>{slp > 0 ? slp : '—'}</span>
             <span style={{ fontSize: '12px', color: 'rgba(255,255,255,0.4)' }}>hrs</span>
           </div>
           <div style={{ marginTop: '8px' }}>
             <div style={{ height: '4px', borderRadius: '2px', background: 'rgba(255,255,255,0.08)' }}>
               <motion.div
                 initial={{ width: 0 }}
-                animate={{ width: `${(sleep / 9) * 100}%` }}
+                animate={{ width: `${(slp / 9) * 100}%` }}
                 transition={{ duration: 1 }}
                 style={{ height: '100%', borderRadius: '2px', background: '#8B5CF6' }}
               />
@@ -599,14 +614,14 @@ export function HealthSection() {
             <span style={{ fontSize: '11px', color: 'rgba(255,255,255,0.45)', fontWeight: 600 }}>CALORIES</span>
           </div>
           <div style={{ display: 'flex', alignItems: 'baseline', gap: '4px' }}>
-            <span style={{ fontSize: '28px', fontWeight: 800, color: '#F97316' }}>{calories}</span>
+            <span style={{ fontSize: '28px', fontWeight: 800, color: '#F97316' }}>{cal > 0 ? cal : '—'}</span>
             <span style={{ fontSize: '12px', color: 'rgba(255,255,255,0.4)' }}>kcal</span>
           </div>
           <div style={{ marginTop: '8px' }}>
             <div style={{ height: '4px', borderRadius: '2px', background: 'rgba(255,255,255,0.08)' }}>
               <motion.div
                 initial={{ width: 0 }}
-                animate={{ width: `${(calories / 600) * 100}%` }}
+                animate={{ width: `${(cal / 600) * 100}%` }}
                 transition={{ duration: 1 }}
                 style={{ height: '100%', borderRadius: '2px', background: '#F97316' }}
               />
@@ -625,8 +640,8 @@ export function HealthSection() {
           </span>
         </div>
         <div style={{ display: 'flex', alignItems: 'flex-end', gap: '8px', height: '80px' }}>
-          {WEEKLY_STEPS.map((val, i) => {
-            const isToday = i === 5;
+          {weeklySteps.map((val, i) => {
+            const isToday = i === todayIdx;
             const pct = val / maxWeekly;
             return (
               <div key={i} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '6px', height: '100%', justifyContent: 'flex-end' }}>
@@ -665,25 +680,43 @@ export function HealthSection() {
             <span style={{ fontSize: '14px', fontWeight: 700, color: '#fff' }}>10K Step Challenge</span>
           </div>
           <span style={{ fontSize: '13px', fontWeight: 600, color: GOLD }}>
-            {Math.round((steps / goalSteps) * 100)}%
+            {s > 0 ? `${Math.round((s / goalSteps) * 100)}%` : '0%'}
           </span>
         </div>
         <div style={{ height: '8px', borderRadius: '4px', background: 'rgba(255,255,255,0.08)', marginBottom: '10px' }}>
           <motion.div
             initial={{ width: 0 }}
-            animate={{ width: `${(steps / goalSteps) * 100}%` }}
+            animate={{ width: `${Math.min(100, (s / goalSteps) * 100)}%` }}
             transition={{ duration: 1.2 }}
-            style={{
-              height: '100%', borderRadius: '4px',
-              background: 'linear-gradient(90deg, #3B82F6, #8B5CF6)',
-              boxShadow: '0 0 8px rgba(59,130,246,0.4)',
-            }}
+            style={{ height: '100%', borderRadius: '4px', background: 'linear-gradient(90deg, #3B82F6, #8B5CF6)', boxShadow: '0 0 8px rgba(59,130,246,0.4)' }}
           />
         </div>
         <p style={{ margin: 0, fontSize: '13px', color: 'rgba(255,255,255,0.6)' }}>
-          You&apos;re {(goalSteps - steps).toLocaleString()} steps away from your goal! Keep going! 🔥
+          {s > 0
+            ? `You're ${(goalSteps - s).toLocaleString()} steps away from your goal! Keep going! 🔥`
+            : 'Start moving to reach your 10,000 step goal today! 🔥'}
         </p>
       </div>
+
+      {/* AI Health Tip */}
+      {aiTip && (
+        <div style={{
+          ...CARD,
+          background: 'linear-gradient(135deg, rgba(139,92,246,0.12), rgba(59,130,246,0.08))',
+          border: '1px solid rgba(139,92,246,0.25)',
+          display: 'flex', alignItems: 'flex-start', gap: '12px',
+        }}>
+          <div style={{
+            width: 36, height: 36, borderRadius: '10px', flexShrink: 0,
+            background: 'linear-gradient(135deg, #8B5CF6, #3B82F6)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '18px',
+          }}>🤖</div>
+          <div>
+            <div style={{ fontSize: '11px', fontWeight: 700, color: '#A78BFA', marginBottom: '4px', letterSpacing: '0.06em' }}>AI HEALTH TIP</div>
+            <p style={{ margin: 0, fontSize: '13px', color: 'rgba(255,255,255,0.8)', lineHeight: 1.5 }}>{aiTip}</p>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -941,76 +974,124 @@ const QUICK_REPLIES = [
   { text: "Need Help ❗",  color: '#EF4444' },
 ];
 
-export function ChatSection() {
+const AI_WELCOME: Message = {
+  id: 0, sender: 'AI Buddy 🤖', initials: '🤖', color: '#8B5CF6',
+  text: "Hi! I'm your AI Buddy 🤖 Ask me about homework, safety tips, or anything else!",
+  time: '', mine: false,
+};
+
+export function ChatSection({ familyId, userId, userName }: {
+  familyId?: number; userId?: number; userName?: string;
+}) {
   const [messages, setMessages] = useState<Message[]>(INITIAL_MESSAGES);
   const [inputText, setInputText] = useState('');
-  const [isTyping, setIsTyping] = useState(false);
+  const [aiBuddyMode, setAiBuddyMode] = useState(false);
+  const [aiLoading, setAiLoading] = useState(false);
+  const [aiHistory, setAiHistory] = useState<{ role: string; content: string }[]>([]);
   const listRef = useRef<HTMLDivElement>(null);
-  const msgId = useRef(INITIAL_MESSAGES.length + 1);
+  const msgId = useRef(100);
+
+  // Fetch real family messages
+  useEffect(() => {
+    if (!familyId || aiBuddyMode) return;
+    const token = getToken();
+    fetch(`/chat/family/${familyId}`, { headers: { Authorization: `Bearer ${token}` } })
+      .then(r => r.ok ? r.json() : [])
+      .then((msgs: Record<string, unknown>[]) => {
+        if (msgs.length > 0) {
+          const mapped: Message[] = msgs.slice().reverse().map((m) => ({
+            id: m.id as number,
+            sender: m.sender_name as string,
+            initials: ((m.sender_name as string)?.[0] ?? '?').toUpperCase(),
+            color: (m.sender_id as number) === userId ? GOLD : '#3B82F6',
+            text: (m.content as string) ?? '',
+            time: m.sent_at ? new Date(m.sent_at as string).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '',
+            mine: (m.sender_id as number) === userId,
+          }));
+          setMessages(mapped);
+        }
+      })
+      .catch(() => {});
+  }, [familyId, userId, aiBuddyMode]);
 
   useEffect(() => {
-    if (listRef.current) {
-      listRef.current.scrollTop = listRef.current.scrollHeight;
-    }
-  }, [messages]);
+    if (listRef.current) listRef.current.scrollTop = listRef.current.scrollHeight;
+  }, [messages, aiLoading]);
 
-  const sendMessage = (text: string) => {
+  const sendMessage = async (text: string) => {
     if (!text.trim()) return;
-    const newMsg: Message = {
-      id: msgId.current++,
-      sender: 'You',
-      initials: 'Y',
-      color: GOLD,
-      text: text.trim(),
-      time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-      mine: true,
-    };
-    setMessages(prev => [...prev, newMsg]);
+    const now = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    const myMsg: Message = { id: msgId.current++, sender: userName ?? 'You', initials: (userName?.[0] ?? 'Y').toUpperCase(), color: GOLD, text: text.trim(), time: now, mine: true };
+    setMessages(prev => [...prev, myMsg]);
     setInputText('');
 
-    // Simulate response
-    setIsTyping(true);
-    setTimeout(() => {
-      setIsTyping(false);
-      const response: Message = {
-        id: msgId.current++,
-        sender: 'Mom',
-        initials: 'M',
-        color: '#3B82F6',
-        text: 'Got it! Stay safe beta ❤️',
-        time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-        mine: false,
-      };
-      setMessages(prev => [...prev, response]);
-    }, 2000);
+    if (aiBuddyMode) {
+      setAiLoading(true);
+      const newHistory = [...aiHistory, { role: 'user', content: text }];
+      setAiHistory(newHistory);
+      try {
+        const r = await fetch('/ai/chat', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ messages: newHistory }),
+        });
+        if (r.ok) {
+          const d = await r.json();
+          const aiMsg: Message = { id: msgId.current++, sender: 'AI Buddy 🤖', initials: '🤖', color: '#8B5CF6', text: d.content, time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }), mine: false };
+          setMessages(prev => [...prev, aiMsg]);
+          setAiHistory(prev => [...prev, { role: 'assistant', content: d.content }]);
+        }
+      } catch { /* ignore */ }
+      setAiLoading(false);
+    } else if (familyId) {
+      const token = getToken();
+      fetch('/chat/send', {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ family_id: familyId, content: text, type: 'text' }),
+      }).catch(() => {});
+    }
   };
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '0', height: '100%' }}>
       {/* Header */}
-      <div style={{
-        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-        padding: '0 0 16px',
-        borderBottom: '1px solid rgba(255,255,255,0.07)',
-        marginBottom: '16px',
-      }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 0 16px', borderBottom: '1px solid rgba(255,255,255,0.07)', marginBottom: '16px' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
           <div style={{
             width: 44, height: 44, borderRadius: '12px',
-            background: 'linear-gradient(135deg, #10B981, #3B82F6)',
+            background: aiBuddyMode ? 'linear-gradient(135deg, #8B5CF6, #A78BFA)' : 'linear-gradient(135deg, #10B981, #3B82F6)',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
-            boxShadow: '0 4px 16px rgba(16,185,129,0.4)',
+            boxShadow: aiBuddyMode ? '0 4px 16px rgba(139,92,246,0.4)' : '0 4px 16px rgba(16,185,129,0.4)',
+            transition: 'all 0.3s', fontSize: '22px',
           }}>
-            <MessageCircle size={22} color="#fff" />
+            {aiBuddyMode ? '🤖' : <MessageCircle size={22} color="#fff" />}
           </div>
           <div>
-            <h2 style={{ margin: 0, fontSize: '20px', fontWeight: 700, color: '#fff' }}>Family Chat</h2>
+            <h2 style={{ margin: 0, fontSize: '20px', fontWeight: 700, color: '#fff' }}>{aiBuddyMode ? 'AI Buddy' : 'Family Chat'}</h2>
             <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginTop: '2px' }}>
-              <div style={{ width: 7, height: 7, borderRadius: '50%', background: '#10B981' }} />
-              <span style={{ fontSize: '12px', color: '#10B981' }}>3 online</span>
+              <div style={{ width: 7, height: 7, borderRadius: '50%', background: aiBuddyMode ? '#8B5CF6' : '#10B981' }} />
+              <span style={{ fontSize: '12px', color: aiBuddyMode ? '#A78BFA' : '#10B981' }}>
+                {aiBuddyMode ? 'Powered by AI' : (familyId ? 'Connected' : '3 online')}
+              </span>
             </div>
           </div>
         </div>
+        <motion.button
+          whileTap={{ scale: 0.92 }}
+          onClick={() => {
+            const next = !aiBuddyMode;
+            setAiBuddyMode(next);
+            setAiHistory([]);
+            setMessages(next ? [{ ...AI_WELCOME, time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) }] : INITIAL_MESSAGES);
+          }}
+          style={{
+            padding: '7px 13px', borderRadius: '20px', border: `1px solid ${aiBuddyMode ? 'rgba(139,92,246,0.5)' : 'rgba(139,92,246,0.25)'}`,
+            background: aiBuddyMode ? 'rgba(139,92,246,0.2)' : 'rgba(139,92,246,0.1)',
+            fontSize: '12px', fontWeight: 600, color: '#A78BFA', cursor: 'pointer',
+          }}
+        >
+          {aiBuddyMode ? '👨‍👩‍👧 Family' : '🤖 AI Buddy'}
+        </motion.button>
       </div>
 
       {/* Message Thread */}
@@ -1077,31 +1158,16 @@ export function ChatSection() {
           );
         })}
 
-        {/* Typing Indicator */}
+        {/* Typing / AI Loading Indicator */}
         <AnimatePresence>
-          {isTyping && (
-            <motion.div
-              initial={{ opacity: 0, y: 8 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0 }}
-              style={{ display: 'flex', alignItems: 'center', gap: '8px' }}
-            >
-              <div style={{
-                width: 30, height: 30, borderRadius: '50%',
-                background: '#3B82F6', display: 'flex', alignItems: 'center', justifyContent: 'center',
-                fontSize: '12px', fontWeight: 700, color: '#fff',
-              }}>M</div>
-              <div style={{
-                padding: '10px 14px', borderRadius: '16px 16px 16px 4px',
-                background: 'rgba(255,255,255,0.08)', display: 'flex', gap: '4px', alignItems: 'center',
-              }}>
+          {aiLoading && (
+            <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
+              style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <div style={{ width: 30, height: 30, borderRadius: '50%', background: '#8B5CF6', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '14px' }}>🤖</div>
+              <div style={{ padding: '10px 14px', borderRadius: '16px 16px 16px 4px', background: 'rgba(139,92,246,0.15)', border: '1px solid rgba(139,92,246,0.2)', display: 'flex', gap: '4px', alignItems: 'center' }}>
                 {[0, 1, 2].map(dot => (
-                  <motion.div
-                    key={dot}
-                    animate={{ y: [0, -5, 0] }}
-                    transition={{ repeat: Infinity, duration: 0.6, delay: dot * 0.15 }}
-                    style={{ width: 6, height: 6, borderRadius: '50%', background: 'rgba(255,255,255,0.4)' }}
-                  />
+                  <motion.div key={dot} animate={{ y: [0, -5, 0] }} transition={{ repeat: Infinity, duration: 0.6, delay: dot * 0.15 }}
+                    style={{ width: 6, height: 6, borderRadius: '50%', background: '#A78BFA' }} />
                 ))}
               </div>
             </motion.div>
@@ -1250,7 +1316,7 @@ function SettingsRow({ icon, iconColor, label, sublabel, hasToggle, toggleOn, on
   );
 }
 
-export function SettingsSection() {
+export function SettingsSection({ user }: { user?: { name: string; email?: string } | null }) {
   const [locationSharing, setLocationSharing] = useState(true);
   const [geofenceAlerts, setGeofenceAlerts] = useState(true);
   const [sosAutocall, setSosAutocall] = useState(false);
@@ -1335,11 +1401,11 @@ export function SettingsSection() {
           boxShadow: '0 0 20px rgba(245,158,11,0.4)',
           flexShrink: 0,
         }}>
-          A
+          {(user?.name?.[0] ?? 'U').toUpperCase()}
         </div>
 
         <div style={{ flex: 1 }}>
-          <div style={{ fontSize: '18px', fontWeight: 700, color: '#fff' }}>Aarav Sharma</div>
+          <div style={{ fontSize: '18px', fontWeight: 700, color: '#fff' }}>{user?.name ?? 'My Profile'}</div>
           <div style={{
             fontSize: '12px', fontWeight: 600, color: GOLD,
             background: 'rgba(245,158,11,0.12)', borderRadius: '6px', padding: '2px 8px',

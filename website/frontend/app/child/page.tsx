@@ -124,6 +124,8 @@ export default function ChildPage() {
   const [authUser, setAuthUser] = useState<AuthUser | null>(null)
   const [battery, setBattery] = useState<number>(0)
   const [familyOnline, setFamilyOnline] = useState<number>(0)
+  const [familyId, setFamilyId] = useState<number | undefined>()
+  const [steps, setSteps] = useState(0)
   const [dataLoaded, setDataLoaded] = useState(false)
 
   useEffect(() => {
@@ -141,9 +143,10 @@ export default function ChildPage() {
         if (famRes.ok) {
           const families = await famRes.json()
           if (families.length > 0) {
-            const familyId = families[0].id
+            const fid = families[0].id
+            setFamilyId(fid)
             // Get live family members (online count + user's battery)
-            const liveRes = await fetch(`/location/live/${familyId}`, { headers })
+            const liveRes = await fetch(`/location/live/${fid}`, { headers })
             if (liveRes.ok) {
               const live = await liveRes.json()
               setFamilyOnline(live.length)
@@ -151,6 +154,16 @@ export default function ChildPage() {
               if (me?.battery != null) setBattery(me.battery)
             }
           }
+        }
+        // Fetch today's health record for step count
+        if (user) {
+          try {
+            const hRes = await fetch(`/health/records/${user.id}`, { headers })
+            if (hRes.ok) {
+              const recs = await hRes.json()
+              if (recs.length > 0) setSteps(recs[0].steps ?? 0)
+            }
+          } catch { /* ignore */ }
         }
         // Fallback: get battery from device via family members endpoint
         if (battery === 0) {
@@ -186,7 +199,7 @@ export default function ChildPage() {
           <ChildHome
             childName={authUser?.name ?? 'You'}
             safeStatus="safe"
-            steps={0}
+            steps={steps}
             battery={battery}
             familyOnline={familyOnline}
           />
@@ -200,13 +213,13 @@ export default function ChildPage() {
       case 'school':
         return <SchoolSection />
       case 'health':
-        return <HealthSection />
+        return <HealthSection userId={authUser?.id} />
       case 'achievements':
         return <AchievementsSection />
       case 'chat':
-        return <ChatSection />
+        return <ChatSection familyId={familyId} userId={authUser?.id} userName={authUser?.name} />
       case 'settings':
-        return <SettingsSection />
+        return <SettingsSection user={authUser} />
       default:
         return null
     }
