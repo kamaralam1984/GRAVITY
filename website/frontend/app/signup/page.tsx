@@ -480,6 +480,14 @@ export default function SignupPage() {
   const [step3Loading, setStep3Loading] = useState(false)
   const [step3Error, setStep3Error] = useState('')
 
+  // Role selection (before steps)
+  const [userType, setUserType] = useState<'parent' | 'child' | null>(null)
+
+  // Child join state
+  const [inviteCode, setInviteCode] = useState('')
+  const [inviteJoinLoading, setInviteJoinLoading] = useState(false)
+  const [inviteJoinError, setInviteJoinError] = useState('')
+
   // ── Countdown timer for OTP resend
   const startCountdown = () => {
     setCountdown(30)
@@ -594,14 +602,55 @@ export default function SignupPage() {
     document.head.appendChild(s)
   }, [])
 
+  // ── Child join family via invite code
+  const handleChildJoin = async () => {
+    if (!inviteCode.trim()) { setInviteJoinError('Please enter the invite code'); return }
+    setInviteJoinLoading(true)
+    setInviteJoinError('')
+    const token = localStorage.getItem('gravity_token') || localStorage.getItem('gv_token') || ''
+    try {
+      const res = await fetch(`/families/join/${inviteCode.trim().toUpperCase()}`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}` },
+      })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.detail || 'Invalid invite code')
+      localStorage.setItem('gv_dashboard', 'child')
+      setShowSuccess(true)
+      setTimeout(() => router.push('/child'), 2800)
+    } catch (err: any) {
+      setInviteJoinError(err.message || 'Failed to join family')
+    } finally {
+      setInviteJoinLoading(false)
+    }
+  }
+
   // ── Step 3 — free plan activate
   const handleActivateFree = async () => {
     setStep3Loading(true)
     setStep3Error('')
-    await new Promise(r => setTimeout(r, 600))
-    setStep3Loading(false)
-    setShowSuccess(true)
-    setTimeout(() => router.push('/live-tracking?family=1'), 2800)
+    const token = localStorage.getItem('gravity_token') || localStorage.getItem('gv_token') || ''
+    try {
+      // Create family circle for parent
+      if (userType === 'parent' || !userType) {
+        try {
+          await fetch('/families/create', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+            body: JSON.stringify({ name: `${name || 'My'}'s Family` }),
+          })
+        } catch (_) {}
+        localStorage.setItem('gv_dashboard', 'parent')
+      }
+      await new Promise(r => setTimeout(r, 600))
+      setStep3Loading(false)
+      setShowSuccess(true)
+      setTimeout(() => router.push('/parent'), 2800)
+    } catch (_) {
+      setStep3Loading(false)
+      setShowSuccess(true)
+      setTimeout(() => router.push('/parent'), 2800)
+    }
   }
 
   // ── Step 3 — paid plan → Razorpay
@@ -659,9 +708,10 @@ export default function SignupPage() {
               const err = await verifyRes.json()
               throw new Error(err.detail || 'Payment verification failed')
             }
+            localStorage.setItem('gv_dashboard', 'parent')
             setStep3Loading(false)
             setShowSuccess(true)
-            setTimeout(() => router.push('/live-tracking?family=1'), 2800)
+            setTimeout(() => router.push('/parent'), 2800)
           } catch (err: any) {
             setStep3Loading(false)
             setStep3Error(err.message || 'Payment verification failed. Contact support.')
@@ -699,7 +749,7 @@ export default function SignupPage() {
   }
 
   // ── Card labels
-  const stepLabels = ['Create Account', 'Verify Phone', 'Choose Plan']
+  const stepLabels = ['Create Account', 'Verify Phone', userType === 'child' ? 'Join Family' : 'Choose Plan']
 
   return (
     <div style={{
@@ -767,8 +817,76 @@ export default function SignupPage() {
           transition: 'max-width 0.4s ease',
         }}
       >
+        {/* ── Role Selection (before steps) ── */}
+        <AnimatePresence mode="wait">
+          {userType === null && (
+            <motion.div
+              key="role-select"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              transition={{ duration: 0.3 }}
+            >
+              <div style={{ textAlign: 'center', marginBottom: 24 }}>
+                <div style={{ fontSize: 22, fontWeight: 800, color: '#fff', marginBottom: 6 }}>Join as…</div>
+                <div style={{ fontSize: 13, color: 'rgba(255,255,255,0.4)' }}>Choose your role to get started</div>
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                {/* Parent card */}
+                <motion.button
+                  whileHover={{ scale: 1.02, borderColor: 'rgba(212,168,83,0.6)' }}
+                  whileTap={{ scale: 0.98 }}
+                  onClick={() => setUserType('parent')}
+                  style={{
+                    padding: '20px 20px', borderRadius: 16, border: '1.5px solid rgba(255,255,255,0.08)',
+                    background: 'rgba(212,168,83,0.06)', cursor: 'pointer', textAlign: 'left',
+                    display: 'flex', alignItems: 'center', gap: 16, transition: 'all 0.2s',
+                  }}
+                >
+                  <div style={{ width: 48, height: 48, borderRadius: 14, background: 'rgba(212,168,83,0.2)', border: '1px solid rgba(212,168,83,0.4)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                    <Shield size={24} color="#D4A853" />
+                  </div>
+                  <div style={{ flex: 1 }}>
+                    <div style={{ fontSize: 15, fontWeight: 700, color: '#fff', marginBottom: 3 }}>I&apos;m a Parent</div>
+                    <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.4)', lineHeight: 1.4 }}>Create a family circle & monitor everyone</div>
+                  </div>
+                  <ChevronRight size={18} color="rgba(212,168,83,0.6)" />
+                </motion.button>
+
+                {/* Child card */}
+                <motion.button
+                  whileHover={{ scale: 1.02, borderColor: 'rgba(139,92,246,0.6)' }}
+                  whileTap={{ scale: 0.98 }}
+                  onClick={() => setUserType('child')}
+                  style={{
+                    padding: '20px 20px', borderRadius: 16, border: '1.5px solid rgba(255,255,255,0.08)',
+                    background: 'rgba(139,92,246,0.06)', cursor: 'pointer', textAlign: 'left',
+                    display: 'flex', alignItems: 'center', gap: 16, transition: 'all 0.2s',
+                  }}
+                >
+                  <div style={{ width: 48, height: 48, borderRadius: 14, background: 'rgba(139,92,246,0.2)', border: '1px solid rgba(139,92,246,0.4)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                    <Star size={24} color="#8B5CF6" />
+                  </div>
+                  <div style={{ flex: 1 }}>
+                    <div style={{ fontSize: 15, fontWeight: 700, color: '#fff', marginBottom: 3 }}>I&apos;m a Child / Teen</div>
+                    <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.4)', lineHeight: 1.4 }}>Join your family&apos;s Gravity circle</div>
+                  </div>
+                  <ChevronRight size={18} color="rgba(139,92,246,0.6)" />
+                </motion.button>
+              </div>
+              <p style={{ textAlign: 'center', fontSize: 13, color: 'rgba(255,255,255,0.3)', marginTop: 20, margin: '20px 0 0' }}>
+                Already have an account?{' '}
+                <Link href="/login" style={{ color: '#D4A853', textDecoration: 'none', fontWeight: 600 }}>Sign in</Link>
+              </p>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* Steps (only visible when role is chosen) */}
+        {userType !== null && <>
+
         {/* Step indicator */}
-        <StepIndicator current={step} total={3} />
+        <StepIndicator current={step} total={userType === 'child' ? 3 : 3} />
 
         {/* Step title */}
         <AnimatePresence mode="wait" custom={dir}>
@@ -1137,73 +1255,152 @@ export default function SignupPage() {
               variants={slideVariants} initial="initial" animate="animate" exit="exit"
               transition={{ duration: 0.34, ease: [0.22, 1, 0.36, 1] }}
             >
-              <p style={{ textAlign: 'center', color: 'rgba(255,255,255,0.4)', fontSize: 13, marginBottom: 20, margin: '0 0 20px' }}>
-                Select the plan that best fits your family
-              </p>
+              {userType === 'child' ? (
+                /* ── CHILD: Join family with invite code ── */
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+                  {/* Invite icon */}
+                  <div style={{ display: 'flex', justifyContent: 'center' }}>
+                    <div style={{
+                      width: 72, height: 72, borderRadius: '50%',
+                      background: 'rgba(139,92,246,0.12)',
+                      border: '1.5px solid rgba(139,92,246,0.4)',
+                      display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    }}>
+                      <Star size={30} color="#8B5CF6" />
+                    </div>
+                  </div>
 
-              {/* 2x2 plan grid */}
-              <div style={{
-                display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 10, marginBottom: 20,
-              }}>
-                {PLANS.map(plan => (
-                  <PlanCard
-                    key={plan.id}
-                    plan={plan}
-                    selected={selectedPlan === plan.id}
-                    onSelect={() => setSelectedPlan(plan.id)}
+                  <p style={{ textAlign: 'center', color: 'rgba(255,255,255,0.45)', fontSize: 13.5, margin: 0 }}>
+                    Ask your parent for the family invite code and enter it below
+                  </p>
+
+                  <InputField
+                    label="Family Invite Code"
+                    value={inviteCode}
+                    onChange={v => setInviteCode(v.toUpperCase())}
+                    placeholder="e.g. FAMILY123"
+                    icon={<Star size={15} />}
                   />
-                ))}
-              </div>
 
-              {/* CTA button — changes based on selected plan */}
-              <motion.button
-                onClick={handleComplete}
-                disabled={step3Loading}
-                whileHover={!step3Loading ? { scale: 1.015 } : {}}
-                whileTap={!step3Loading ? { scale: 0.985 } : {}}
-                style={{
-                  width: '100%', padding: '14px', borderRadius: 11, border: 'none',
-                  background: selectedPlan === 'free'
-                    ? 'linear-gradient(135deg,#D4A853,#F5C842)'
-                    : `linear-gradient(135deg, ${PLANS.find(p=>p.id===selectedPlan)?.color ?? '#D4A853'}, #D4A853)`,
-                  color: '#1A0F05', fontSize: 15, fontWeight: 800,
-                  cursor: step3Loading ? 'not-allowed' : 'pointer',
-                  display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
-                  boxShadow: '0 4px 28px rgba(212,168,83,0.4)',
-                  fontFamily: 'Plus Jakarta Sans, sans-serif',
-                  letterSpacing: '0.01em',
-                }}
-              >
-                {step3Loading
-                  ? <><Loader2 size={16} style={{ animation: 'spin 0.8s linear infinite' }} />
-                      {selectedPlan === 'free' ? 'Setting up...' : 'Opening payment...'}
-                    </>
-                  : selectedPlan === 'free'
-                  ? <><Sparkles size={16} /> Start Free Trial</>
-                  : <>💳 Pay {PLANS.find(p=>p.id===selectedPlan)?.price} & Activate</>
-                }
-              </motion.button>
+                  <AnimatePresence>
+                    {inviteJoinError && (
+                      <motion.div
+                        initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }}
+                        exit={{ opacity: 0, height: 0 }} transition={{ duration: 0.2 }}
+                        style={{
+                          background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.25)',
+                          borderRadius: 10, padding: '10px 14px', fontSize: 13, color: '#EF4444',
+                          display: 'flex', alignItems: 'center', gap: 7, overflow: 'hidden',
+                        }}
+                      >
+                        <AlertCircle size={14} style={{ flexShrink: 0 }} />
+                        {inviteJoinError}
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
 
-              {/* Error */}
-              {step3Error && (
-                <div style={{
-                  background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.25)',
-                  borderRadius: 10, padding: '10px 14px', fontSize: 13, color: '#EF4444',
-                  display: 'flex', alignItems: 'center', gap: 7,
-                }}>
-                  <AlertCircle size={14} style={{ flexShrink: 0 }} />
-                  {step3Error}
+                  <motion.button
+                    onClick={handleChildJoin}
+                    disabled={inviteJoinLoading || !inviteCode.trim()}
+                    whileHover={inviteCode.trim() && !inviteJoinLoading ? { scale: 1.015 } : {}}
+                    whileTap={inviteCode.trim() && !inviteJoinLoading ? { scale: 0.985 } : {}}
+                    style={{
+                      width: '100%', padding: '14px', borderRadius: 11, border: 'none',
+                      background: inviteCode.trim()
+                        ? 'linear-gradient(135deg,#8B5CF6,#7C3AED)'
+                        : 'rgba(255,255,255,0.06)',
+                      color: inviteCode.trim() ? '#fff' : 'rgba(255,255,255,0.2)',
+                      fontSize: 15, fontWeight: 800,
+                      cursor: inviteCode.trim() && !inviteJoinLoading ? 'pointer' : 'not-allowed',
+                      display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+                      boxShadow: inviteCode.trim() ? '0 4px 28px rgba(139,92,246,0.35)' : 'none',
+                      fontFamily: 'Plus Jakarta Sans, sans-serif',
+                    }}
+                  >
+                    {inviteJoinLoading
+                      ? <><Loader2 size={16} style={{ animation: 'spin 0.8s linear infinite' }} /> Joining...</>
+                      : <><Star size={16} /> Join Family</>
+                    }
+                  </motion.button>
+
+                  <p style={{ textAlign: 'center', fontSize: 12, color: 'rgba(255,255,255,0.25)', margin: 0 }}>
+                    Get the invite code from your parent&apos;s Gravity app
+                  </p>
                 </div>
-              )}
+              ) : (
+                /* ── PARENT: Choose plan ── */
+                <>
+                  <p style={{ textAlign: 'center', color: 'rgba(255,255,255,0.4)', fontSize: 13, marginBottom: 20, margin: '0 0 20px' }}>
+                    Select the plan that best fits your family
+                  </p>
 
-              <p style={{ textAlign: 'center', fontSize: 11.5, color: 'rgba(255,255,255,0.25)', marginTop: 10 }}>
-                {selectedPlan === 'free'
-                  ? 'No credit card required for the free plan'
-                  : '🔒 Secured by Razorpay — UPI, Cards, NetBanking accepted'}
-              </p>
+                  {/* 2x2 plan grid */}
+                  <div style={{
+                    display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 10, marginBottom: 20,
+                  }}>
+                    {PLANS.map(plan => (
+                      <PlanCard
+                        key={plan.id}
+                        plan={plan}
+                        selected={selectedPlan === plan.id}
+                        onSelect={() => setSelectedPlan(plan.id)}
+                      />
+                    ))}
+                  </div>
+
+                  {/* CTA button */}
+                  <motion.button
+                    onClick={handleComplete}
+                    disabled={step3Loading}
+                    whileHover={!step3Loading ? { scale: 1.015 } : {}}
+                    whileTap={!step3Loading ? { scale: 0.985 } : {}}
+                    style={{
+                      width: '100%', padding: '14px', borderRadius: 11, border: 'none',
+                      background: selectedPlan === 'free'
+                        ? 'linear-gradient(135deg,#D4A853,#F5C842)'
+                        : `linear-gradient(135deg, ${PLANS.find(p=>p.id===selectedPlan)?.color ?? '#D4A853'}, #D4A853)`,
+                      color: '#1A0F05', fontSize: 15, fontWeight: 800,
+                      cursor: step3Loading ? 'not-allowed' : 'pointer',
+                      display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+                      boxShadow: '0 4px 28px rgba(212,168,83,0.4)',
+                      fontFamily: 'Plus Jakarta Sans, sans-serif',
+                      letterSpacing: '0.01em',
+                    }}
+                  >
+                    {step3Loading
+                      ? <><Loader2 size={16} style={{ animation: 'spin 0.8s linear infinite' }} />
+                          {selectedPlan === 'free' ? 'Setting up...' : 'Opening payment...'}
+                        </>
+                      : selectedPlan === 'free'
+                      ? <><Sparkles size={16} /> Start Free Trial</>
+                      : <>💳 Pay {PLANS.find(p=>p.id===selectedPlan)?.price} & Activate</>
+                    }
+                  </motion.button>
+
+                  {/* Error */}
+                  {step3Error && (
+                    <div style={{
+                      background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.25)',
+                      borderRadius: 10, padding: '10px 14px', fontSize: 13, color: '#EF4444',
+                      display: 'flex', alignItems: 'center', gap: 7, marginTop: 12,
+                    }}>
+                      <AlertCircle size={14} style={{ flexShrink: 0 }} />
+                      {step3Error}
+                    </div>
+                  )}
+
+                  <p style={{ textAlign: 'center', fontSize: 11.5, color: 'rgba(255,255,255,0.25)', marginTop: 10 }}>
+                    {selectedPlan === 'free'
+                      ? 'No credit card required for the free plan'
+                      : '🔒 Secured by Razorpay — UPI, Cards, NetBanking accepted'}
+                  </p>
+                </>
+              )}
             </motion.div>
           )}
         </AnimatePresence>
+
+        </>}
 
         {/* ── SUCCESS OVERLAY ── */}
         <AnimatePresence>

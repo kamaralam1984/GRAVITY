@@ -494,7 +494,52 @@ export default function LoginPage() {
     // SameSite=Lax ensures cookies are sent on full navigations (required for middleware)
     document.cookie = `gv_token=${token}; path=/; max-age=604800; SameSite=Lax`
     document.cookie = `gv_user=${encodeURIComponent(JSON.stringify(user))}; path=/; max-age=604800; SameSite=Lax`
-    await new Promise((r) => setTimeout(r, 1500))
+
+    // For user role: auto-detect parent vs child dashboard
+    if (user.role === 'user') {
+      await new Promise((r) => setTimeout(r, 900))
+
+      // 1. Stored preference from signup/choose-dashboard
+      const pref = localStorage.getItem('gv_dashboard')
+      if (pref === 'parent') { window.location.href = '/parent'; return }
+      if (pref === 'child') { window.location.href = '/child'; return }
+
+      // 2. Check family membership role via API
+      try {
+        const famRes = await fetch('/families/my', {
+          headers: { Authorization: `Bearer ${token}` },
+        })
+        if (famRes.ok) {
+          const fams = await famRes.json()
+          const famsArr = Array.isArray(fams) ? fams : [fams]
+          if (famsArr.length > 0) {
+            const famId = famsArr[0].id
+            const memRes = await fetch(`/families/${famId}/members`, {
+              headers: { Authorization: `Bearer ${token}` },
+            })
+            if (memRes.ok) {
+              const members = await memRes.json()
+              const me = members.find((m: { user_id: number; role: string }) => m.user_id === user.id)
+              if (me?.role === 'child') {
+                localStorage.setItem('gv_dashboard', 'child')
+                window.location.href = '/child'
+                return
+              }
+              // owner or member → parent dashboard
+              localStorage.setItem('gv_dashboard', 'parent')
+              window.location.href = '/parent'
+              return
+            }
+          }
+        }
+      } catch (_) {}
+
+      // 3. No family yet → let user choose
+      window.location.href = '/choose-dashboard'
+      return
+    }
+
+    await new Promise((r) => setTimeout(r, 800))
     // Hard navigation so the browser sends fresh cookies to the middleware
     window.location.href = getRoleRedirect(user.role)
   }
