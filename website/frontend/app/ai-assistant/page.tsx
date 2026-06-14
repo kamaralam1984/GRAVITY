@@ -1,6 +1,6 @@
 'use client';
 
-import { useRef } from 'react';
+import { useRef, useState, useCallback } from 'react';
 import Link from 'next/link';
 import { motion, useInView } from 'framer-motion';
 import {
@@ -17,6 +17,8 @@ import {
   Activity,
   Heart,
   Lock,
+  Mic,
+  Send,
 } from 'lucide-react';
 import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
@@ -72,35 +74,12 @@ const AI_CAPABILITIES = [
   },
 ];
 
-/* ── Chat messages ───────────────────────────────────────────────────────────── */
-const CHAT_MESSAGES = [
-  {
-    type: "user",
-    text: "Where is Vihaan right now?",
-  },
-  {
-    type: "ai",
-    text: "Vihaan arrived at school at 8:42 AM and has been there for 3h 20min. His battery is at 67% and he is in the school zone. All good!",
-    icon: <Brain size={14} />,
-  },
-  {
-    type: "user",
-    text: "Has Dadi taken her medicine today?",
-  },
-  {
-    type: "ai",
-    text: "Yes! Dadi acknowledged her morning medication reminder at 9:15 AM. Evening reminder is scheduled for 8:00 PM. I will notify you if it goes unacknowledged.",
-    icon: <Heart size={14} />,
-  },
-  {
-    type: "user",
-    text: "Is anyone running late today?",
-  },
-  {
-    type: "ai",
-    text: "Priya estimated arrival at office was 9:30 AM. Based on current traffic on her route she may be running around 15 minutes late. No safety concerns detected.",
-    icon: <Clock size={14} />,
-  },
+/* ── Initial demo messages (seed state) ─────────────────────────────────────── */
+const DEMO_MESSAGES: { role: 'user' | 'ai'; text: string }[] = [
+  { role: 'user', text: "Where is Vihaan right now?" },
+  { role: 'ai', text: "Vihaan arrived at school at 8:42 AM and has been there for 3h 20min. His battery is at 67% and he is in the school zone. All good!" },
+  { role: 'user', text: "Is anyone running late today?" },
+  { role: 'ai', text: "Priya estimated arrival at office was 9:30 AM. Based on current traffic on her route she may be running around 15 minutes late. No safety concerns detected." },
 ];
 
 /* ── Section wrapper ─────────────────────────────────────────────────────────── */
@@ -125,6 +104,60 @@ function Section({ children, bg = "var(--bg)" }: { children: React.ReactNode; bg
 export default function AIAssistant() {
   const heroRef = useRef(null);
   const heroInView = useInView(heroRef, { once: true });
+
+  const [messages, setMessages] = useState<{ role: 'user' | 'ai'; text: string }[]>(DEMO_MESSAGES)
+  const [inputVal, setInputVal] = useState('')
+  const [aiLoading, setAiLoading] = useState(false)
+  const [isRecording, setIsRecording] = useState(false)
+  const chatEndRef = useRef<HTMLDivElement>(null)
+
+  const sendMsg = useCallback(async (text?: string) => {
+    const q = (text ?? inputVal).trim()
+    if (!q || aiLoading) return
+    setMessages(prev => [...prev, { role: 'user', text: q }])
+    setInputVal('')
+    setAiLoading(true)
+    try {
+      const history = [...messages, { role: 'user' as const, content: q }].map(m => ({
+        role: m.role === 'ai' ? 'assistant' : 'user',
+        content: (m as any).text ?? (m as any).content,
+      }))
+      const res = await fetch('/ai/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ messages: history }),
+      })
+      if (res.ok) {
+        const d = await res.json()
+        setMessages(prev => [...prev, { role: 'ai', text: d.content }])
+      } else {
+        setMessages(prev => [...prev, { role: 'ai', text: "I'm having trouble connecting right now. Please try again in a moment." }])
+      }
+    } catch {
+      setMessages(prev => [...prev, { role: 'ai', text: "Connection error. Please check your network." }])
+    } finally {
+      setAiLoading(false)
+      setTimeout(() => chatEndRef.current?.scrollIntoView({ behavior: 'smooth' }), 100)
+    }
+  }, [inputVal, messages, aiLoading])
+
+  const startMic = () => {
+    const SR = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition
+    if (!SR) { alert('Voice input not supported in this browser. Try Chrome.'); return }
+    const rec = new SR()
+    rec.lang = 'en-IN'
+    rec.continuous = false
+    rec.interimResults = false
+    setIsRecording(true)
+    rec.onresult = (e: any) => {
+      const t = e.results[0][0].transcript
+      setInputVal(t)
+      setIsRecording(false)
+    }
+    rec.onerror = () => setIsRecording(false)
+    rec.onend = () => setIsRecording(false)
+    rec.start()
+  }
 
   return (
     <>
@@ -414,135 +447,91 @@ export default function AIAssistant() {
             </div>
 
             {/* Messages */}
-            <div style={{ padding: "24px 20px", display: "flex", flexDirection: "column", gap: 16 }}>
-              {CHAT_MESSAGES.map((msg, i) => (
+            <div style={{ padding: "20px", display: "flex", flexDirection: "column", gap: 14, maxHeight: 340, overflowY: 'auto' }}>
+              {messages.map((msg, i) => (
                 <motion.div
                   key={i}
-                  initial={{ opacity: 0, y: 12 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  transition={{ delay: i * 0.15 }}
-                  style={{
-                    display: "flex",
-                    justifyContent: msg.type === "user" ? "flex-end" : "flex-start",
-                    gap: 10,
-                    alignItems: "flex-start",
-                  }}
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.3 }}
+                  style={{ display: "flex", justifyContent: msg.role === "user" ? "flex-end" : "flex-start", gap: 8, alignItems: "flex-start" }}
                 >
-                  {msg.type === "ai" && (
-                    <div
-                      style={{
-                        width: 28,
-                        height: 28,
-                        borderRadius: "50%",
-                        background: "linear-gradient(135deg, #A78BFA, #EC4899)",
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        flexShrink: 0,
-                        marginTop: 2,
-                        color: "#fff",
-                      }}
-                    >
-                      {msg.icon}
+                  {msg.role === "ai" && (
+                    <div style={{ width: 28, height: 28, borderRadius: "50%", background: "linear-gradient(135deg, #A78BFA, #EC4899)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, marginTop: 2, color: "#fff" }}>
+                      <Brain size={13} />
                     </div>
                   )}
-                  <div
-                    style={{
-                      maxWidth: "80%",
-                      padding: "10px 14px",
-                      borderRadius: msg.type === "user" ? "12px 12px 4px 12px" : "12px 12px 12px 4px",
-                      background: msg.type === "user"
-                        ? "rgba(212,168,83,0.15)"
-                        : "rgba(167,139,250,0.1)",
-                      border: msg.type === "user"
-                        ? "1px solid rgba(212,168,83,0.25)"
-                        : "1px solid rgba(167,139,250,0.2)",
-                      color: msg.type === "user" ? "var(--gold)" : "rgba(255,255,255,0.85)",
-                      fontSize: "0.88rem",
-                      lineHeight: 1.6,
-                    }}
-                  >
+                  <div style={{
+                    maxWidth: "80%", padding: "10px 14px",
+                    borderRadius: msg.role === "user" ? "12px 12px 4px 12px" : "12px 12px 12px 4px",
+                    background: msg.role === "user" ? "rgba(212,168,83,0.15)" : "rgba(167,139,250,0.1)",
+                    border: msg.role === "user" ? "1px solid rgba(212,168,83,0.25)" : "1px solid rgba(167,139,250,0.2)",
+                    color: msg.role === "user" ? "var(--gold)" : "rgba(255,255,255,0.85)",
+                    fontSize: "0.88rem", lineHeight: 1.6,
+                  }}>
                     {msg.text}
                   </div>
                 </motion.div>
               ))}
 
               {/* Typing indicator */}
-              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                <div
-                  style={{
-                    width: 28,
-                    height: 28,
-                    borderRadius: "50%",
-                    background: "linear-gradient(135deg, #A78BFA, #EC4899)",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    flexShrink: 0,
-                    color: "#fff",
-                  }}
-                >
-                  <Brain size={12} />
+              {aiLoading && (
+                <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                  <div style={{ width: 28, height: 28, borderRadius: "50%", background: "linear-gradient(135deg, #A78BFA, #EC4899)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, color: "#fff" }}>
+                    <Brain size={12} />
+                  </div>
+                  <div style={{ padding: "10px 16px", borderRadius: "12px 12px 12px 4px", background: "rgba(167,139,250,0.1)", border: "1px solid rgba(167,139,250,0.2)", display: "flex", gap: 5, alignItems: "center" }}>
+                    {[0, 0.2, 0.4].map((d) => (
+                      <motion.div key={d} animate={{ y: [0, -4, 0], opacity: [0.4, 1, 0.4] }} transition={{ duration: 0.8, repeat: Infinity, delay: d }} style={{ width: 6, height: 6, borderRadius: "50%", background: "#A78BFA" }} />
+                    ))}
+                  </div>
                 </div>
-                <div
-                  style={{
-                    padding: "10px 16px",
-                    borderRadius: "12px 12px 12px 4px",
-                    background: "rgba(167,139,250,0.1)",
-                    border: "1px solid rgba(167,139,250,0.2)",
-                    display: "flex",
-                    gap: 5,
-                    alignItems: "center",
-                  }}
-                >
-                  {[0, 0.2, 0.4].map((d) => (
-                    <motion.div
-                      key={d}
-                      animate={{ y: [0, -4, 0], opacity: [0.4, 1, 0.4] }}
-                      transition={{ duration: 0.8, repeat: Infinity, delay: d }}
-                      style={{ width: 6, height: 6, borderRadius: "50%", background: "#A78BFA" }}
-                    />
-                  ))}
-                </div>
-              </div>
+              )}
+              <div ref={chatEndRef} />
             </div>
 
             {/* Input bar */}
-            <div
-              style={{
-                borderTop: "1px solid rgba(167,139,250,0.15)",
-                padding: "14px 20px",
-                display: "flex",
-                gap: 10,
-                alignItems: "center",
-              }}
-            >
-              <div
+            <div style={{ borderTop: "1px solid rgba(167,139,250,0.15)", padding: "14px 20px", display: "flex", gap: 10, alignItems: "center" }}>
+              <motion.button
+                whileHover={{ scale: 1.08 }} whileTap={{ scale: 0.93 }}
+                onClick={startMic}
                 style={{
-                  flex: 1,
-                  background: "rgba(255,255,255,0.05)",
-                  border: "1px solid rgba(167,139,250,0.2)",
-                  borderRadius: 10,
-                  padding: "9px 14px",
-                  color: "rgba(255,255,255,0.3)",
-                  fontSize: "0.85rem",
+                  width: 36, height: 36, borderRadius: 10, cursor: 'pointer', flexShrink: 0,
+                  background: isRecording ? 'rgba(239,68,68,0.2)' : 'rgba(167,139,250,0.1)',
+                  border: isRecording ? '1px solid rgba(239,68,68,0.5)' : '1px solid rgba(167,139,250,0.2)',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  color: isRecording ? '#EF4444' : '#A78BFA',
                 }}
+                aria-label="Voice input"
               >
-                Ask about your family...
-              </div>
-              <div
+                <Mic size={15} />
+              </motion.button>
+              <input
+                type="text"
+                value={inputVal}
+                onChange={e => setInputVal(e.target.value)}
+                onKeyDown={e => { if (e.key === 'Enter') sendMsg() }}
+                placeholder={isRecording ? "Listening…" : "Ask about your family — 'Where is Vihaan?'"}
                 style={{
-                  width: 36,
-                  height: 36,
-                  borderRadius: 10,
+                  flex: 1, background: "rgba(255,255,255,0.05)", border: "1px solid rgba(167,139,250,0.2)",
+                  borderRadius: 10, padding: "9px 14px", color: "rgba(255,255,255,0.85)",
+                  fontSize: "0.85rem", outline: 'none', fontFamily: 'inherit',
+                }}
+              />
+              <motion.button
+                whileHover={{ scale: 1.08 }} whileTap={{ scale: 0.93 }}
+                onClick={() => sendMsg()}
+                disabled={aiLoading || !inputVal.trim()}
+                style={{
+                  width: 36, height: 36, borderRadius: 10, border: 'none', cursor: 'pointer', flexShrink: 0,
                   background: "linear-gradient(135deg, var(--gold), #B8860B)",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
+                  display: "flex", alignItems: "center", justifyContent: "center",
+                  opacity: aiLoading || !inputVal.trim() ? 0.5 : 1,
                 }}
+                aria-label="Send"
               >
-                <ChevronRight size={16} style={{ color: "#0a0900" }} />
-              </div>
+                <Send size={15} style={{ color: "#0a0900" }} />
+              </motion.button>
             </div>
           </motion.div>
         </motion.div>

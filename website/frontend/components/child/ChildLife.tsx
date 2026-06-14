@@ -1044,6 +1044,26 @@ export function ChatSection({ familyId, userId, userName }: {
       setAiLoading(false);
     } else if (familyId) {
       const token = getToken();
+      // Moderate content before sending
+      try {
+        const modRes = await fetch('/ai/moderate', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ text: text.trim() }),
+        });
+        if (modRes.ok) {
+          const modData = await modRes.json();
+          if (!modData.safe) {
+            const warnMsg: Message = {
+              id: msgId.current++, sender: 'Safety Filter', initials: '🛡️',
+              color: '#EF4444', text: `Message blocked — ${modData.reason}`,
+              time: now, mine: false,
+            };
+            setMessages(prev => [...prev, warnMsg]);
+            return;
+          }
+        }
+      } catch { /* if moderation fails, allow message through */ }
       fetch('/chat/send', {
         method: 'POST',
         headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },

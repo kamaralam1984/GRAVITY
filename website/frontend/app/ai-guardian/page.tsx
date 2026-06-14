@@ -436,6 +436,7 @@ export default function AIGuardianPage() {
   const [safetyScores, setSafetyScores] = useState<any[]>([])
   const [overallScore, setOverallScore] = useState<number | null>(null)
   const [dailyReport, setDailyReport] = useState<any | null>(null)
+  const [riskPredictions, setRiskPredictions] = useState<any | null>(null)
 
   useEffect(() => {
     async function load() {
@@ -443,24 +444,28 @@ export default function AIGuardianPage() {
       if (!token) return
       const h = { Authorization: `Bearer ${token}` }
       try {
-        const famRes = await fetch('/families/my', { headers: h })
+        const [meRes, famRes] = await Promise.all([
+          fetch('/auth/me', { headers: h }),
+          fetch('/families/my', { headers: h }),
+        ])
+        let uid: number | null = null
+        if (meRes.ok) { const md = await meRes.json(); uid = md.user?.id ?? md.id ?? null }
         if (!famRes.ok) return
         const famData = await famRes.json()
         const fid = famData.id ?? famData.family?.id
         if (!fid) return
-        const [sr, rr] = await Promise.all([
+
+        const fetches: Promise<Response>[] = [
           fetch(`/api/ai-guardian/safety-scores/${fid}`, { headers: h }),
           fetch(`/api/ai-guardian/daily-report/${fid}`, { headers: h }),
-        ])
-        if (sr.ok) {
-          const d = await sr.json()
-          setSafetyScores(d.scores ?? [])
-          setOverallScore(d.overall_score ?? null)
-        }
-        if (rr.ok) {
-          const d = await rr.json()
-          setDailyReport(d)
-        }
+        ]
+        if (uid) fetches.push(fetch(`/api/ai-guardian/risk-predictions/${uid}`, { headers: h }))
+
+        const results = await Promise.all(fetches)
+        const [sr, rr, prRes] = results
+        if (sr?.ok) { const d = await sr.json(); setSafetyScores(d.scores ?? []); setOverallScore(d.overall_score ?? null) }
+        if (rr?.ok) { const d = await rr.json(); setDailyReport(d) }
+        if (prRes?.ok) { const d = await prRes.json(); setRiskPredictions(d) }
       } catch { /* silent — keep static fallback */ }
     }
     load()
@@ -1050,6 +1055,70 @@ export default function AIGuardianPage() {
           </motion.div>
         </motion.div>
       </Section>
+
+      {/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+          RISK PREDICTIONS — real AI predictions for next 24h
+      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
+      {riskPredictions && (
+        <Section bg="var(--bg)">
+          <motion.div variants={stagger}>
+            <motion.div variants={fadeUp} style={{ textAlign: 'center', marginBottom: 52 }}>
+              <h2 style={{ fontFamily: 'var(--font-display)', fontSize: 'clamp(1.8rem, 4vw, 2.8rem)', fontWeight: 700, color: 'var(--text-primary)', marginBottom: 16 }}>
+                AI Risk Predictions — Next 24 Hours
+              </h2>
+              <p style={{ color: 'var(--text-muted)', maxWidth: 560, margin: '0 auto', lineHeight: 1.75 }}>
+                Real-time AI analysis of your family&apos;s patterns, predicting risks before they become emergencies.
+              </p>
+              {riskPredictions.next_24h_risk_score !== undefined && (
+                <div style={{ marginTop: 20, display: 'inline-flex', alignItems: 'center', gap: 10, background: 'rgba(212,168,83,0.08)', border: '1px solid rgba(212,168,83,0.25)', borderRadius: 12, padding: '10px 22px' }}>
+                  <Shield size={15} style={{ color: '#D4A853' }} />
+                  <span style={{ color: '#D4A853', fontWeight: 700, fontSize: '0.9rem' }}>
+                    24h Risk Score: {riskPredictions.next_24h_risk_score}/100
+                    {riskPredictions.next_24h_risk_score < 30 ? ' — Low Risk' : riskPredictions.next_24h_risk_score < 60 ? ' — Moderate' : ' — High Risk'}
+                  </span>
+                </div>
+              )}
+            </motion.div>
+
+            <motion.div variants={stagger} style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: 18 }}>
+              {(riskPredictions.predictions as any[]).map((pred: any, i: number) => {
+                const sevColor = pred.severity === 'critical' ? '#EF4444' : pred.severity === 'high' ? '#F59E0B' : pred.severity === 'medium' ? '#A78BFA' : '#10B981'
+                const pct = Math.round(pred.probability * 100)
+                return (
+                  <motion.div key={i} variants={fadeUp} whileHover={{ y: -3 }} style={{ background: 'var(--bg-surface)', border: `1px solid ${sevColor}25`, borderRadius: 16, padding: '22px 20px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}>
+                      <div style={{ width: 36, height: 36, borderRadius: 10, background: `${sevColor}15`, border: `1px solid ${sevColor}30`, display: 'flex', alignItems: 'center', justifyContent: 'center', color: sevColor, flexShrink: 0 }}>
+                        <AlertTriangle size={16} />
+                      </div>
+                      <div style={{ flex: 1 }}>
+                        <h4 style={{ fontFamily: 'var(--font-display)', fontWeight: 700, color: 'var(--text-primary)', fontSize: '0.9rem', margin: 0 }}>{pred.title}</h4>
+                        {pred.affected_member && <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', marginTop: 2 }}>Affects: {pred.affected_member}</div>}
+                      </div>
+                      <span style={{ fontSize: '0.62rem', fontWeight: 700, padding: '3px 9px', borderRadius: 999, background: `${sevColor}15`, border: `1px solid ${sevColor}35`, color: sevColor }}>
+                        {pred.severity.toUpperCase()}
+                      </span>
+                    </div>
+                    <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', lineHeight: 1.55, margin: '0 0 14px' }}>{pred.description}</p>
+                    {/* Probability bar */}
+                    <div style={{ marginBottom: 12 }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
+                        <span style={{ fontSize: '0.68rem', color: 'var(--text-muted)' }}>Probability</span>
+                        <span style={{ fontSize: '0.68rem', fontWeight: 700, color: sevColor }}>{pct}%</span>
+                      </div>
+                      <div style={{ height: 4, borderRadius: 2, background: 'rgba(255,255,255,0.06)', overflow: 'hidden' }}>
+                        <motion.div initial={{ width: 0 }} whileInView={{ width: `${pct}%` }} transition={{ duration: 1.2, ease: 'easeOut' }} style={{ height: '100%', borderRadius: 2, background: sevColor, boxShadow: `0 0 6px ${sevColor}60` }} />
+                      </div>
+                    </div>
+                    <div style={{ padding: '9px 12px', background: `${sevColor}08`, border: `1px solid ${sevColor}20`, borderRadius: 8, fontSize: '0.75rem', color: 'rgba(255,255,255,0.65)', lineHeight: 1.5 }}>
+                      <strong style={{ color: sevColor }}>Recommendation:</strong> {pred.recommendation}
+                    </div>
+                  </motion.div>
+                )
+              })}
+            </motion.div>
+          </motion.div>
+        </Section>
+      )}
 
       {/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
           BOTTOM CTA — Enable AI Guardian ₹299/month

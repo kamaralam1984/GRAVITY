@@ -255,6 +255,20 @@ export default function AIGuardianDashboard() {
     load()
   }, [])
 
+  const [isRecording, setIsRecording] = useState(false)
+
+  const startVoiceInput = () => {
+    const SR = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition
+    if (!SR) return
+    const rec = new SR()
+    rec.lang = 'en-IN'; rec.continuous = false; rec.interimResults = false
+    setIsRecording(true)
+    rec.onresult = (e: any) => { setChatInput(e.results[0][0].transcript); setIsRecording(false) }
+    rec.onerror = () => setIsRecording(false)
+    rec.onend = () => setIsRecording(false)
+    rec.start()
+  }
+
   const handleSendMessage = async () => {
     if (!chatInput.trim() || aiLoading) return
     const userMsg = chatInput.trim()
@@ -717,14 +731,15 @@ export default function AIGuardianDashboard() {
           <motion.button
             whileHover={{ scale: 1.08 }}
             whileTap={{ scale: 0.93 }}
+            onClick={startVoiceInput}
             style={{
               width: 38, height: 38, borderRadius: 10, cursor: 'pointer',
-              background: 'rgba(212,168,83,0.1)',
-              border: '1px solid rgba(212,168,83,0.25)',
+              background: isRecording ? 'rgba(239,68,68,0.15)' : 'rgba(212,168,83,0.1)',
+              border: isRecording ? '1px solid rgba(239,68,68,0.5)' : '1px solid rgba(212,168,83,0.25)',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
-              color: '#D4A853', flexShrink: 0,
+              color: isRecording ? '#EF4444' : '#D4A853', flexShrink: 0,
             }}
-            aria-label="Voice input"
+            aria-label={isRecording ? 'Listening…' : 'Voice input'}
           >
             <Mic size={15} />
           </motion.button>
