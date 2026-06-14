@@ -14,7 +14,11 @@ import Footer from '@/components/layout/Footer'
 
 /* ─── config ─────────────────────────────────────────────────── */
 const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:8000'
-const WS_BASE  = process.env.NEXT_PUBLIC_WS_URL ?? API_BASE.replace(/^http/, 'ws')
+function getWsBase(): string {
+  if (typeof window === 'undefined') return 'ws://localhost:8001'
+  const proto = window.location.protocol === 'https:' ? 'wss:' : 'ws:'
+  return `${proto}//${window.location.host}`
+}
 
 /* ─── types ──────────────────────────────────────────────────── */
 interface FamilyMember {
@@ -271,10 +275,14 @@ function LiveTrackingInner() {
 
   /* connect WebSocket for live updates */
   const connectWS = useCallback(() => {
+    const token = typeof window !== 'undefined'
+      ? (localStorage.getItem('gv_token') || localStorage.getItem('gravity_token') || '')
+      : ''
     const userId = typeof window !== 'undefined'
       ? (localStorage.getItem('gravity_user_id') ?? 'viewer')
       : 'viewer'
-    const ws = new WebSocket(`${WS_BASE}/location/ws/${FAMILY_ID}?user_id=${userId}`)
+    const wsBase = getWsBase()
+    const ws = new WebSocket(`${wsBase}/location/ws/${FAMILY_ID}?token=${encodeURIComponent(token)}&user_id=${userId}`)
     wsRef.current = ws
     setWsStatus('connecting')
 
@@ -341,7 +349,12 @@ function LiveTrackingInner() {
   useEffect(() => {
     loadSnapshot()
     const cleanup = connectWS()
-    return cleanup
+    // REST polling fallback — refresh every 15s regardless of WS state
+    const pollInterval = setInterval(loadSnapshot, 15000)
+    return () => {
+      cleanup?.()
+      clearInterval(pollInterval)
+    }
   }, [loadSnapshot, connectWS])
 
   const wsColor = wsStatus === 'connected' ? '#22c55e' : wsStatus === 'connecting' ? '#D4A853' : '#ef4444'

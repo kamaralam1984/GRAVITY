@@ -73,7 +73,7 @@ function SosButton({ lat, lng, familyId }: { lat: number | null; lng: number | n
     if (!lat || !lng || pressed) return
     setPressed(true)
 
-    const token = typeof window !== 'undefined' ? localStorage.getItem('gravity_token') : null
+    const token = typeof window !== 'undefined' ? (localStorage.getItem('gv_token') || localStorage.getItem('gravity_token') || '') : ''
     await fetch(`${API_BASE}/location/sos`, {
       method: 'POST',
       headers: {
@@ -153,7 +153,7 @@ function TrackInner() {
   /* ── send location to backend ── */
   const sendLocation = useCallback(async (loc: GpsState) => {
     if (!loc.lat || !loc.lng) return
-    const token = typeof window !== 'undefined' ? localStorage.getItem('gravity_token') : null
+    const token = typeof window !== 'undefined' ? (localStorage.getItem('gv_token') || localStorage.getItem('gravity_token') || '') : ''
 
     try {
       const res = await fetch(`${API_BASE}/location/update?family_id=${FAMILY_ID}`, {
@@ -212,12 +212,13 @@ function TrackInner() {
       { enableHighAccuracy: true, maximumAge: 5000, timeout: 15000 },
     )
 
-    /* send REST update every UPDATE_INTERVAL_MS */
+    setIsSharing(true)
+
+    /* send first update immediately, then every UPDATE_INTERVAL_MS */
+    setTimeout(() => sendLocation(latestGps.current), 1500)
     intervalId.current = setInterval(() => {
       sendLocation(latestGps.current)
     }, UPDATE_INTERVAL_MS)
-
-    setIsSharing(true)
   }
 
   function stopTracking() {
