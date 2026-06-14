@@ -452,6 +452,10 @@ export default function SignupPage() {
   const [dir, setDir] = useState(1) // 1 = forward, -1 = back
   const [showSuccess, setShowSuccess] = useState(false)
 
+  // Demo payment modal (when no Razorpay keys configured on backend)
+  const [demoPayOrder, setDemoPayOrder] = useState<{order_id:string;amount:number;plan:string;plan_amountInr:number;token:string}|null>(null)
+  const [demoPayLoading, setDemoPayLoading] = useState(false)
+
   // Step 1 state
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
@@ -680,7 +684,20 @@ export default function SignupPage() {
       }
       const orderData = await orderRes.json()
 
-      // 2. Open Razorpay checkout
+      // 2a. Dev/demo mode — no real Razorpay keys on server
+      if (orderData.demo_mode) {
+        setStep3Loading(false)
+        setDemoPayOrder({
+          order_id: orderData.order_id,
+          amount: orderData.amount,
+          plan: plan.name,
+          plan_amountInr: plan.amountInr,
+          token,
+        })
+        return
+      }
+
+      // 2b. Open Razorpay checkout (live/test mode)
       const rzpOptions = {
         key: orderData.key_id,
         amount: orderData.amount,
@@ -1355,6 +1372,153 @@ export default function SignupPage() {
         </AnimatePresence>
 
         </>}
+
+        {/* ── DEMO PAYMENT MODAL ── */}
+        <AnimatePresence>
+          {demoPayOrder && (
+            <motion.div
+              initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+              style={{
+                position: 'absolute', inset: 0, background: 'rgba(6,9,15,0.92)',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                borderRadius: 'inherit', zIndex: 50, padding: 24,
+              }}
+            >
+              <motion.div
+                initial={{ y: 40, opacity: 0 }} animate={{ y: 0, opacity: 1 }}
+                transition={{ delay: 0.05, ease: [0.22,1,0.36,1] }}
+                style={{
+                  background: 'linear-gradient(135deg,#12151f,#0e1120)',
+                  border: '1px solid rgba(212,168,83,0.3)',
+                  borderRadius: 18, padding: 28, width: '100%', maxWidth: 380,
+                }}
+              >
+                {/* Header */}
+                <div style={{ display:'flex', alignItems:'center', gap:12, marginBottom:20 }}>
+                  <div style={{
+                    width:42,height:42,borderRadius:'50%',
+                    background:'rgba(212,168,83,0.12)',border:'1px solid rgba(212,168,83,0.4)',
+                    display:'flex',alignItems:'center',justifyContent:'center',fontSize:20,
+                  }}>💳</div>
+                  <div>
+                    <div style={{fontSize:15,fontWeight:700,color:'#F0EDE8'}}>Secure Payment</div>
+                    <div style={{fontSize:12,color:'rgba(255,255,255,0.4)'}}>Demo Mode — Test Transactions</div>
+                  </div>
+                </div>
+
+                {/* Plan summary */}
+                <div style={{
+                  background:'rgba(212,168,83,0.07)',border:'1px solid rgba(212,168,83,0.15)',
+                  borderRadius:12,padding:'12px 16px',marginBottom:20,
+                  display:'flex',justifyContent:'space-between',alignItems:'center',
+                }}>
+                  <div>
+                    <div style={{fontSize:13,color:'rgba(255,255,255,0.5)'}}>Plan</div>
+                    <div style={{fontSize:15,fontWeight:700,color:'#F0EDE8'}}>{demoPayOrder.plan}</div>
+                  </div>
+                  <div style={{fontSize:22,fontWeight:800,color:'#D4A853'}}>
+                    ₹{demoPayOrder.plan_amountInr}<span style={{fontSize:13,fontWeight:400,color:'rgba(255,255,255,0.4)'}}>/mo</span>
+                  </div>
+                </div>
+
+                {/* Fake card fields (visual only) */}
+                <div style={{display:'flex',flexDirection:'column',gap:12,marginBottom:20}}>
+                  <div>
+                    <label style={{fontSize:12,color:'rgba(255,255,255,0.4)',display:'block',marginBottom:5}}>Card Number</label>
+                    <input
+                      defaultValue="4111 1111 1111 1111"
+                      readOnly
+                      style={{
+                        width:'100%',padding:'11px 14px',borderRadius:10,border:'1px solid rgba(255,255,255,0.1)',
+                        background:'rgba(255,255,255,0.04)',color:'#F0EDE8',fontSize:14,outline:'none',
+                        boxSizing:'border-box',letterSpacing:2,
+                      }}
+                    />
+                  </div>
+                  <div style={{display:'flex',gap:10}}>
+                    <div style={{flex:1}}>
+                      <label style={{fontSize:12,color:'rgba(255,255,255,0.4)',display:'block',marginBottom:5}}>Expiry</label>
+                      <input defaultValue="12/26" readOnly style={{width:'100%',padding:'11px 14px',borderRadius:10,border:'1px solid rgba(255,255,255,0.1)',background:'rgba(255,255,255,0.04)',color:'#F0EDE8',fontSize:14,outline:'none',boxSizing:'border-box'}} />
+                    </div>
+                    <div style={{flex:1}}>
+                      <label style={{fontSize:12,color:'rgba(255,255,255,0.4)',display:'block',marginBottom:5}}>CVV</label>
+                      <input defaultValue="123" readOnly style={{width:'100%',padding:'11px 14px',borderRadius:10,border:'1px solid rgba(255,255,255,0.1)',background:'rgba(255,255,255,0.04)',color:'#F0EDE8',fontSize:14,outline:'none',boxSizing:'border-box'}} />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Demo notice */}
+                <div style={{
+                  background:'rgba(251,191,36,0.08)',border:'1px solid rgba(251,191,36,0.2)',
+                  borderRadius:10,padding:'9px 13px',marginBottom:18,fontSize:12,
+                  color:'rgba(255,255,255,0.5)',display:'flex',gap:8,alignItems:'center',
+                }}>
+                  <span>🔒</span>
+                  <span>Demo mode — no real charge. Click Pay to activate plan.</span>
+                </div>
+
+                {/* Pay button */}
+                <motion.button
+                  onClick={async () => {
+                    setDemoPayLoading(true)
+                    const { order_id, plan_amountInr, token } = demoPayOrder!
+                    const planId = selectedPlan
+                    try {
+                      const verifyRes = await fetch('/payments/razorpay/verify-direct', {
+                        method:'POST',
+                        headers:{'Content-Type':'application/json',Authorization:`Bearer ${token}`},
+                        body:JSON.stringify({
+                          razorpay_order_id: order_id,
+                          razorpay_payment_id: `pay_demo_${Date.now()}`,
+                          razorpay_signature: 'demo_signature',
+                          plan_name: planId,
+                          amount_inr: plan_amountInr,
+                        }),
+                      })
+                      if (!verifyRes.ok) throw new Error('Payment failed')
+                      setDemoPayOrder(null)
+                      localStorage.setItem('gv_dashboard','parent')
+                      setDemoPayLoading(false)
+                      setShowSuccess(true)
+                      setTimeout(() => router.push('/parent'), 2800)
+                    } catch {
+                      setDemoPayLoading(false)
+                      setStep3Error('Payment failed. Please try again.')
+                      setDemoPayOrder(null)
+                    }
+                  }}
+                  disabled={demoPayLoading}
+                  whileHover={{ scale: 1.015 }} whileTap={{ scale: 0.985 }}
+                  style={{
+                    width:'100%',padding:'14px',borderRadius:12,border:'none',
+                    background:'linear-gradient(135deg,#D4A853,#F5C842)',
+                    color:'#1A0F05',fontSize:15,fontWeight:800,
+                    cursor: demoPayLoading ? 'not-allowed' : 'pointer',
+                    display:'flex',alignItems:'center',justifyContent:'center',gap:8,
+                    boxShadow:'0 4px 24px rgba(212,168,83,0.4)',
+                    fontFamily:'Plus Jakarta Sans, sans-serif',marginBottom:12,
+                  }}
+                >
+                  {demoPayLoading
+                    ? <><Loader2 size={16} style={{animation:'spin 0.8s linear infinite'}} /> Processing...</>
+                    : <>💳 Pay ₹{demoPayOrder.plan_amountInr} (Demo)</>
+                  }
+                </motion.button>
+
+                {/* Cancel */}
+                <button
+                  onClick={() => setDemoPayOrder(null)}
+                  style={{
+                    width:'100%',background:'transparent',border:'none',cursor:'pointer',
+                    color:'rgba(255,255,255,0.35)',fontSize:13,padding:'8px',
+                  }}
+                >
+                  Cancel
+                </button>
+              </motion.div>
+            </motion.div>
+          )}
+        </AnimatePresence>
 
         {/* ── SUCCESS OVERLAY ── */}
         <AnimatePresence>

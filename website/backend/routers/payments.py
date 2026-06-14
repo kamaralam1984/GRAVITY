@@ -282,7 +282,13 @@ async def razorpay_order_direct(
         )
         db.add(payment)
         db.commit()
-        return {"order_id": order_id, "amount": amount_paise, "currency": data.currency, "key_id": "rzp_test_tXD8cP6NSHvKbR"}
+        return {
+            "order_id": order_id,
+            "amount": amount_paise,
+            "currency": data.currency,
+            "key_id": "rzp_test_demo",
+            "demo_mode": True,  # No real Razorpay keys configured
+        }
 
     async with httpx.AsyncClient() as client:
         resp = await client.post(
