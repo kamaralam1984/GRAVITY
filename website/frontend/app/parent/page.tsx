@@ -33,11 +33,11 @@ import { DashboardSection, AlertsSection } from '@/components/parent/ParentDash'
 import dynamic from 'next/dynamic'
 const UberFamilyMap = dynamic(() => import('@/components/shared/UberFamilyMap'), { ssr: false })
 import { ChildrenMonitorSection, ElderlyMonitorSection, DrivingSection } from '@/components/parent/ParentMonitor'
-import { GeofenceSection, JourneySection, FamilyChatSection, ParentSettingsSection } from '@/components/parent/ParentControl'
+import { GeofenceSection, JourneySection, FamilyChatSection, ParentSettingsSection, FamilySection } from '@/components/parent/ParentControl'
 import { useRouter } from 'next/navigation'
 import { getUser, clearAuth, type AuthUser } from '@/lib/auth'
 
-type Tab = 'dashboard' | 'map' | 'alerts' | 'children' | 'elderly' | 'driving' | 'geofences' | 'journeys' | 'chat' | 'settings'
+type Tab = 'dashboard' | 'map' | 'alerts' | 'children' | 'elderly' | 'driving' | 'geofences' | 'journeys' | 'chat' | 'settings' | 'family'
 
 const BOTTOM_TABS = [
   { id: 'dashboard' as Tab, icon: Home, label: 'Home' },
@@ -48,6 +48,7 @@ const BOTTOM_TABS = [
 ] as const
 
 const DRAWER_ITEMS = [
+  { id: 'family' as Tab, icon: Users, label: 'Family' },
   { id: 'elderly' as Tab, icon: Heart, label: 'Elderly Care' },
   { id: 'driving' as Tab, icon: Car, label: 'Driving Safety' },
   { id: 'geofences' as Tab, icon: Shield, label: 'Geofences' },
@@ -67,6 +68,7 @@ const SECTION_TITLES: Record<Tab, string> = {
   journeys: 'Journeys',
   chat: 'Family Chat',
   settings: 'Settings',
+  family: 'Family Management',
 }
 
 export default function ParentPage() {
@@ -340,6 +342,7 @@ export default function ParentPage() {
             {activeTab === 'journeys' && <JourneySection />}
             {activeTab === 'chat' && <FamilyChatSection />}
             {activeTab === 'settings' && <ParentSettingsSection />}
+            {activeTab === 'family' && <FamilySection />}
           </motion.div>
         </AnimatePresence>
       </div>

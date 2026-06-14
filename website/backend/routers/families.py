@@ -60,6 +60,38 @@ def my_families(user: models.User = Depends(get_current_user), db: Session = Dep
             result.append({"id": family.id, "name": family.name, "plan": family.plan, "role": m.role, "member_count": len(members), "invite_code": family.invite_code})
     return result
 
+@router.patch("/{family_id}/rename")
+def rename_family(family_id: int, data: dict, user: models.User = Depends(get_current_user), db: Session = Depends(get_db)):
+    family = db.query(models.Family).filter(models.Family.id == family_id, models.Family.owner_id == user.id).first()
+    if not family:
+        raise HTTPException(status_code=404, detail="Family not found or not owner")
+    family.name = data.get("name", family.name)
+    db.commit()
+    return {"id": family.id, "name": family.name, "invite_code": family.invite_code}
+
+@router.delete("/{family_id}/members/{user_id}")
+def remove_member(family_id: int, user_id: int, user: models.User = Depends(get_current_user), db: Session = Depends(get_db)):
+    family = db.query(models.Family).filter(models.Family.id == family_id, models.Family.owner_id == user.id).first()
+    if not family:
+        raise HTTPException(status_code=403, detail="Only the owner can remove members")
+    if user_id == user.id:
+        raise HTTPException(status_code=400, detail="Cannot remove yourself")
+    member = db.query(models.FamilyMember).filter(models.FamilyMember.family_id == family_id, models.FamilyMember.user_id == user_id).first()
+    if not member:
+        raise HTTPException(status_code=404, detail="Member not found")
+    db.delete(member)
+    db.commit()
+    return {"message": "Member removed"}
+
+@router.post("/{family_id}/regenerate-code")
+def regenerate_invite_code(family_id: int, user: models.User = Depends(get_current_user), db: Session = Depends(get_db)):
+    family = db.query(models.Family).filter(models.Family.id == family_id, models.Family.owner_id == user.id).first()
+    if not family:
+        raise HTTPException(status_code=403, detail="Only the owner can regenerate the code")
+    family.invite_code = secrets.token_urlsafe(6)
+    db.commit()
+    return {"invite_code": family.invite_code}
+
 @router.get("/{family_id}/members")
 def get_members(family_id: int, db: Session = Depends(get_db)):
     members = db.query(models.FamilyMember).filter(models.FamilyMember.family_id == family_id).all()

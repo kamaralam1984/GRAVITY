@@ -33,6 +33,8 @@ import {
   Calendar,
   Route,
   Zap,
+  Copy,
+  RefreshCw,
 } from 'lucide-react';
 
 // ─── Shared Utilities ──────────────────────────────────────────────────────────
@@ -1698,6 +1700,228 @@ function SettingsRow({
       ) : (
         <ChevronRight className="w-4 h-4 text-white/20 flex-shrink-0" />
       )}
+    </div>
+  );
+}
+
+// ─── Family Management Section ────────────────────────────────────────────────
+export function FamilySection() {
+  const [family, setFamily] = useState<{ id: number; name: string; invite_code: string; plan: string } | null>(null);
+  const [members, setMembers] = useState<{ user_id: number; name: string; role: string; is_online: boolean; last_location: string | null; battery: number | null }[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [copied, setCopied] = useState(false);
+  const [regenLoading, setRegenLoading] = useState(false);
+  const [renaming, setRenaming] = useState(false);
+  const [newName, setNewName] = useState('');
+  const [renameLoading, setRenameLoading] = useState(false);
+  const [removingId, setRemovingId] = useState<number | null>(null);
+  const [error, setError] = useState('');
+
+  function getToken() {
+    if (typeof window === 'undefined') return '';
+    return localStorage.getItem('gv_token') || '';
+  }
+
+  async function load() {
+    setLoading(true);
+    const h = { Authorization: `Bearer ${getToken()}` };
+    try {
+      const famRes = await fetch('/families/my', { headers: h });
+      if (!famRes.ok) { setLoading(false); return; }
+      const fam = await famRes.json();
+      let famData = Array.isArray(fam) ? fam[0] : fam;
+      if (!famData?.id) {
+        // Auto-create
+        const cr = await fetch('/families/create', {
+          method: 'POST', headers: { ...h, 'Content-Type': 'application/json' },
+          body: JSON.stringify({ name: 'My Family' }),
+        });
+        if (!cr.ok) { setLoading(false); return; }
+        famData = await cr.json();
+      }
+      setFamily(famData);
+      setNewName(famData.name);
+      const memRes = await fetch(`/families/${famData.id}/members`, { headers: h });
+      if (memRes.ok) setMembers(await memRes.json());
+    } catch { setError('Failed to load family'); }
+    setLoading(false);
+  }
+
+  useEffect(() => { load(); }, []);
+
+  function copyCode() {
+    if (!family?.invite_code) return;
+    navigator.clipboard.writeText(family.invite_code).then(() => {
+      setCopied(true); setTimeout(() => setCopied(false), 2500);
+    });
+  }
+
+  async function regenCode() {
+    if (!family) return;
+    setRegenLoading(true);
+    const h = { Authorization: `Bearer ${getToken()}` };
+    const res = await fetch(`/families/${family.id}/regenerate-code`, { method: 'POST', headers: h });
+    if (res.ok) { const d = await res.json(); setFamily(f => f ? { ...f, invite_code: d.invite_code } : f); }
+    setRegenLoading(false);
+  }
+
+  async function saveRename() {
+    if (!family || !newName.trim()) return;
+    setRenameLoading(true);
+    const h = { Authorization: `Bearer ${getToken()}`, 'Content-Type': 'application/json' };
+    const res = await fetch(`/families/${family.id}/rename`, { method: 'PATCH', headers: h, body: JSON.stringify({ name: newName.trim() }) });
+    if (res.ok) { const d = await res.json(); setFamily(f => f ? { ...f, name: d.name } : f); setRenaming(false); }
+    setRenameLoading(false);
+  }
+
+  async function removeMember(userId: number) {
+    if (!family) return;
+    setRemovingId(userId);
+    const h = { Authorization: `Bearer ${getToken()}` };
+    const res = await fetch(`/families/${family.id}/members/${userId}`, { method: 'DELETE', headers: h });
+    if (res.ok) setMembers(m => m.filter(mb => mb.user_id !== userId));
+    setRemovingId(null);
+  }
+
+  const ROLE_COLORS: Record<string, string> = { owner: '#D4AF37', member: '#8B5CF6', child: '#3B82F6' };
+
+  if (loading) return (
+    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: 200 }}>
+      <div style={{ width: 32, height: 32, border: '3px solid rgba(139,92,246,0.3)', borderTopColor: '#8B5CF6', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
+    </div>
+  );
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 20, paddingBottom: 40 }}>
+      {/* Header */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '4px 0' }}>
+        <div style={{ width: 44, height: 44, borderRadius: 14, background: 'rgba(139,92,246,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <Users className="w-6 h-6" style={{ color: '#8B5CF6' }} />
+        </div>
+        <div>
+          {renaming ? (
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <input
+                value={newName}
+                onChange={e => setNewName(e.target.value)}
+                style={{ background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(139,92,246,0.4)', borderRadius: 8, padding: '4px 10px', color: '#fff', fontSize: 16, fontWeight: 700, width: 160 }}
+                autoFocus
+              />
+              <button onClick={saveRename} disabled={renameLoading} style={{ background: '#8B5CF6', border: 'none', borderRadius: 8, padding: '4px 10px', color: '#fff', cursor: 'pointer', fontSize: 12 }}>
+                {renameLoading ? '...' : 'Save'}
+              </button>
+              <button onClick={() => setRenaming(false)} style={{ background: 'transparent', border: 'none', color: 'rgba(255,255,255,0.4)', cursor: 'pointer', fontSize: 12 }}>Cancel</button>
+            </div>
+          ) : (
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <h2 style={{ fontSize: 20, fontWeight: 700, color: '#fff', margin: 0 }}>{family?.name || 'My Family'}</h2>
+              <button onClick={() => setRenaming(true)} style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: 0 }}>
+                <Edit className="w-4 h-4" style={{ color: 'rgba(255,255,255,0.3)' }} />
+              </button>
+            </div>
+          )}
+          <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.4)', margin: 0 }}>{members.length} member{members.length !== 1 ? 's' : ''} · {family?.plan || 'free'} plan</p>
+        </div>
+      </div>
+
+      {/* Invite Code Card */}
+      <motion.div
+        style={{ background: 'linear-gradient(135deg,rgba(139,92,246,0.2) 0%,rgba(59,130,246,0.12) 100%)', border: '1.5px solid rgba(139,92,246,0.4)', borderRadius: 18, padding: '18px 20px', position: 'relative', overflow: 'hidden' }}
+      >
+        <div style={{ position: 'absolute', right: -20, top: -20, width: 110, height: 110, borderRadius: '50%', background: 'radial-gradient(circle,rgba(139,92,246,0.3) 0%,transparent 70%)', pointerEvents: 'none' }} />
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 14 }}>
+          <span style={{ fontSize: 11, fontWeight: 700, color: 'rgba(255,255,255,0.5)', textTransform: 'uppercase', letterSpacing: '1px' }}>Family Invite Code</span>
+          <motion.div animate={{ opacity: [1, 0.2, 1] }} transition={{ duration: 1.4, repeat: Infinity }} style={{ width: 7, height: 7, borderRadius: '50%', background: '#8B5CF6' }} />
+        </div>
+
+        <motion.div
+          animate={{ boxShadow: ['0 0 0px rgba(139,92,246,0)', '0 0 24px rgba(139,92,246,0.6)', '0 0 0px rgba(139,92,246,0)'] }}
+          transition={{ duration: 2, repeat: Infinity }}
+          style={{ background: 'rgba(139,92,246,0.15)', border: '1.5px solid rgba(139,92,246,0.5)', borderRadius: 12, padding: '14px 20px', fontFamily: 'monospace', fontSize: 28, fontWeight: 800, color: '#C4B5FD', letterSpacing: '0.3em', textAlign: 'center' as const, marginBottom: 14 }}
+        >
+          {family?.invite_code || '──────'}
+        </motion.div>
+
+        <div style={{ display: 'flex', gap: 10 }}>
+          <motion.button
+            onClick={copyCode}
+            whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}
+            style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, background: copied ? 'rgba(16,185,129,0.2)' : 'rgba(139,92,246,0.25)', border: `1.5px solid ${copied ? 'rgba(16,185,129,0.5)' : 'rgba(139,92,246,0.5)'}`, borderRadius: 12, padding: '11px 0', color: copied ? '#10B981' : '#C4B5FD', fontSize: 14, fontWeight: 600, cursor: 'pointer', transition: 'all 0.25s' }}
+          >
+            {copied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
+            {copied ? 'Copied!' : 'Copy Code'}
+          </motion.button>
+          <motion.button
+            onClick={regenCode}
+            whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}
+            disabled={regenLoading}
+            style={{ display: 'flex', alignItems: 'center', gap: 6, background: 'rgba(255,255,255,0.06)', border: '1.5px solid rgba(255,255,255,0.12)', borderRadius: 12, padding: '11px 16px', color: 'rgba(255,255,255,0.5)', fontSize: 13, fontWeight: 500, cursor: 'pointer' }}
+          >
+            <RefreshCw className={`w-4 h-4 ${regenLoading ? 'animate-spin' : ''}`} />
+            New
+          </motion.button>
+        </div>
+        <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.3)', textAlign: 'center' as const, marginTop: 12 }}>Share this code with family members to let them join</p>
+      </motion.div>
+
+      {/* Members List */}
+      <div>
+        <p style={{ fontSize: 12, fontWeight: 600, color: 'rgba(255,255,255,0.45)', textTransform: 'uppercase', letterSpacing: '0.8px', marginBottom: 12 }}>Members ({members.length})</p>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+          {members.length === 0 && (
+            <div style={{ textAlign: 'center', padding: '32px 0', color: 'rgba(255,255,255,0.3)', fontSize: 14 }}>
+              No members yet. Share your invite code!
+            </div>
+          )}
+          {members.map((m, i) => {
+            const initials = m.name.split(' ').map((w: string) => w[0]).join('').toUpperCase().slice(0, 2);
+            const COLORS = ['#D4AF37', '#8B5CF6', '#3B82F6', '#10B981', '#EF4444'];
+            const roleColor = ROLE_COLORS[m.role] || '#8B5CF6';
+            return (
+              <motion.div
+                key={m.user_id}
+                initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.05 }}
+                style={{ display: 'flex', alignItems: 'center', gap: 14, background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 14, padding: '14px 16px' }}
+              >
+                {/* Avatar */}
+                <div style={{ position: 'relative', flexShrink: 0 }}>
+                  <div style={{ width: 44, height: 44, borderRadius: '50%', background: COLORS[i % COLORS.length] + '33', border: `2px solid ${COLORS[i % COLORS.length]}55`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 15, fontWeight: 700, color: COLORS[i % COLORS.length] }}>
+                    {initials}
+                  </div>
+                  <div style={{ position: 'absolute', bottom: 1, right: 1, width: 10, height: 10, borderRadius: '50%', background: m.is_online ? '#10B981' : '#4B5563', border: '2px solid #111' }} />
+                </div>
+
+                {/* Info */}
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                    <span style={{ fontSize: 15, fontWeight: 600, color: '#fff' }}>{m.name}</span>
+                    <span style={{ fontSize: 10, fontWeight: 600, color: roleColor, background: roleColor + '22', borderRadius: 6, padding: '2px 7px', textTransform: 'capitalize' as const }}>{m.role}</span>
+                  </div>
+                  <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.4)', marginTop: 3, display: 'flex', alignItems: 'center', gap: 6 }}>
+                    <MapPin className="w-3 h-3" style={{ flexShrink: 0 }} />
+                    <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' as const }}>{m.last_location || 'Location unavailable'}</span>
+                    {m.battery !== null && <span style={{ marginLeft: 4, color: m.battery > 20 ? 'rgba(255,255,255,0.4)' : '#EF4444' }}>· 🔋{m.battery}%</span>}
+                  </div>
+                </div>
+
+                {/* Remove (not for owner) */}
+                {m.role !== 'owner' && (
+                  <motion.button
+                    onClick={() => removeMember(m.user_id)}
+                    disabled={removingId === m.user_id}
+                    whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}
+                    style={{ background: 'rgba(239,68,68,0.12)', border: '1px solid rgba(239,68,68,0.25)', borderRadius: 10, padding: '8px 10px', cursor: 'pointer', color: '#EF4444', flexShrink: 0 }}
+                  >
+                    {removingId === m.user_id ? '...' : <Trash2 className="w-4 h-4" />}
+                  </motion.button>
+                )}
+              </motion.div>
+            );
+          })}
+        </div>
+      </div>
+
+      {error && <p style={{ color: '#EF4444', fontSize: 13, textAlign: 'center' as const }}>{error}</p>}
     </div>
   );
 }
