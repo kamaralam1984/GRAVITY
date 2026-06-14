@@ -29,7 +29,9 @@ import {
   HelpCircle,
   CreditCard,
 } from 'lucide-react'
-import { DashboardSection, FamilyMapSection, AlertsSection } from '@/components/parent/ParentDash'
+import { DashboardSection, AlertsSection } from '@/components/parent/ParentDash'
+import dynamic from 'next/dynamic'
+const UberFamilyMap = dynamic(() => import('@/components/shared/UberFamilyMap'), { ssr: false })
 import { ChildrenMonitorSection, ElderlyMonitorSection, DrivingSection } from '@/components/parent/ParentMonitor'
 import { GeofenceSection, JourneySection, FamilyChatSection, ParentSettingsSection } from '@/components/parent/ParentControl'
 import { useRouter } from 'next/navigation'
@@ -288,17 +290,37 @@ export default function ParentPage() {
         </div>
       </div>
 
-      {/* ── Main Content Area (scrollable) ────────────────────── */}
+      {/* ── Full-screen Uber Map (map tab) ───────────────────────── */}
+      <AnimatePresence>
+        {activeTab === 'map' && (
+          <motion.div
+            key="uber-map"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.25 }}
+            style={{
+              position: 'fixed', top: 64, left: 0, right: 0, bottom: 68,
+              zIndex: 20,
+            }}
+          >
+            <UberFamilyMap height="100%" showMemberList />
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* ── Main Content Area (scrollable, hidden when map active) ── */}
       <div style={{
         position: 'fixed',
         top: 64,
         left: 0,
         right: 0,
         bottom: 68,
-        overflowY: 'auto',
+        overflowY: activeTab === 'map' ? 'hidden' : 'auto',
         overflowX: 'hidden',
         zIndex: 10,
         padding: '0 0 8px 0',
+        visibility: activeTab === 'map' ? 'hidden' : 'visible',
       }}>
         <AnimatePresence mode="wait">
           <motion.div
@@ -310,7 +332,6 @@ export default function ParentPage() {
             style={{ padding: '0 16px 80px 16px', minHeight: '100%' }}
           >
             {activeTab === 'dashboard' && <DashboardSection />}
-            {activeTab === 'map' && <FamilyMapSection />}
             {activeTab === 'alerts' && <AlertsSection />}
             {activeTab === 'children' && <ChildrenMonitorSection />}
             {activeTab === 'elderly' && <ElderlyMonitorSection />}
