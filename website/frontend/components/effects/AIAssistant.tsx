@@ -103,7 +103,7 @@ export default function AIAssistant() {
     setIsLoading(true)
 
     try {
-      const res = await fetch('/ai/chat', {
+      const res = await fetch('/api/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

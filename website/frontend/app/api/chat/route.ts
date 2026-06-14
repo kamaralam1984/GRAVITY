@@ -1,7 +1,4 @@
 import { NextRequest, NextResponse } from 'next/server'
-import Anthropic from '@anthropic-ai/sdk'
-
-const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY || '' })
 
 const SYSTEM_PROMPT = `You are a warm, helpful support advisor for Trackalways Gravity — a family safety and connection app.
 Help users understand how the app works, set up family circles, use safety features, and get peace of mind.
@@ -17,11 +14,13 @@ Key product facts:
 - Works in 50+ countries; regional pricing for Kenya (KES), India (INR), UAE (AED), UK (GBP)
 - Privacy-first: consent required, privacy hours, transparent sharing
 - SOS: hold 3 seconds, broadcasts live location every 5 seconds to all circle members + SMS to emergency contacts
-- Elderly care: fall detection via accelerometer, daily wellness check-in (Good/Okay/Need Help), medication reminders, caregiver mode with restricted permissions
+- Elderly care: fall detection via accelerometer, daily wellness check-in (Good/Okay/Need Help), medication reminders
 - Journey sharing: share live route with ETA; auto-closes when destination reached
 - Geofencing: set safe zones (Home, School, Office etc.) with enter/exit alerts
 
 Keep responses under 3 sentences unless a detailed explanation is genuinely needed.`
+
+const STATIC_FALLBACK = "Thanks for reaching out! I'm your Gravity AI assistant — here to help with family safety, location tracking, SOS alerts, and more. What would you like to know?"
 
 export async function POST(req: NextRequest) {
   try {
@@ -29,33 +28,78 @@ export async function POST(req: NextRequest) {
     const messages: Array<{ role: 'user' | 'assistant'; content: string }> = body.messages || []
 
     if (!messages.length) {
-      return NextResponse.json({ content: "Hi there! How can I help you with Trackalways Gravity today?" })
+      return NextResponse.json({ content: "Hi! 👋 I'm Gravity AI. How can I help you today?" })
     }
 
-    const apiKey = process.env.ANTHROPIC_API_KEY
-    if (!apiKey) {
-      return NextResponse.json({
-        content: "Thanks for reaching out! Our support team will get back to you shortly. In the meantime, check out our Help Centre for quick answers.",
+    // 1. Try Python backend (has Groq/Mistral/DeepSeek/Together/OpenRouter keys)
+    const backendUrl = process.env.INTERNAL_API_URL || 'http://127.0.0.1:8001'
+    try {
+      const backendRes = await fetch(`${backendUrl}/ai/chat`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ messages }),
+        signal: AbortSignal.timeout(20000),
       })
+      if (backendRes.ok) {
+        const data = await backendRes.json()
+        if (data.content) return NextResponse.json({ content: data.content })
+      }
+    } catch {
+      // backend down or timeout — fall through
     }
 
-    const response = await client.messages.create({
-      model: 'claude-haiku-4-5-20251001',
-      max_tokens: 400,
-      system: SYSTEM_PROMPT,
-      messages: messages.slice(-10).map((m) => ({
-        role: m.role,
-        content: m.content,
-      })),
-    })
+    // 2. Try Anthropic Claude (if key is configured)
+    const anthropicKey = process.env.ANTHROPIC_API_KEY
+    if (anthropicKey) {
+      try {
+        const { default: Anthropic } = await import('@anthropic-ai/sdk')
+        const client = new Anthropic({ apiKey: anthropicKey })
+        const response = await client.messages.create({
+          model: 'claude-haiku-4-5-20251001',
+          max_tokens: 400,
+          system: SYSTEM_PROMPT,
+          messages: messages.slice(-10).map((m) => ({ role: m.role, content: m.content })),
+        })
+        const text = response.content[0].type === 'text' ? response.content[0].text : ''
+        if (text) return NextResponse.json({ content: text })
+      } catch {
+        // Anthropic failed — fall through
+      }
+    }
 
-    const text = response.content[0].type === 'text' ? response.content[0].text : ''
-    return NextResponse.json({ content: text })
-  } catch (error) {
-    console.error('Chat API error:', error)
-    return NextResponse.json(
-      { content: "Sorry, I'm having a brief hiccup. Please try again in a moment!" },
-      { status: 200 }
-    )
+    // 3. Try Groq directly (if key is configured)
+    const groqKey = process.env.GROQ_API_KEY
+    if (groqKey) {
+      try {
+        const groqRes = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${groqKey}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            model: 'llama-3.3-70b-versatile',
+            max_tokens: 400,
+            messages: [
+              { role: 'system', content: SYSTEM_PROMPT },
+              ...messages.slice(-10).map((m) => ({ role: m.role, content: m.content })),
+            ],
+          }),
+          signal: AbortSignal.timeout(15000),
+        })
+        if (groqRes.ok) {
+          const data = await groqRes.json()
+          const text = data.choices?.[0]?.message?.content
+          if (text) return NextResponse.json({ content: text })
+        }
+      } catch {
+        // Groq failed — fall through
+      }
+    }
+
+    // 4. Static fallback — always returns something useful, never an error
+    return NextResponse.json({ content: STATIC_FALLBACK })
+  } catch {
+    return NextResponse.json({ content: STATIC_FALLBACK })
   }
 }
