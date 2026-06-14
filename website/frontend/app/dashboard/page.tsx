@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import dynamic from 'next/dynamic'
 import { motion, AnimatePresence } from 'framer-motion'
-import { MAP_MEMBERS, MapMember, VehicleType } from '@/lib/mapData'
+import { MapMember, VehicleType } from '@/lib/mapData'
 
 const MEMBER_COLORS = ['#D4A853','#10B981','#3B82F6','#8B5CF6','#EF4444','#F59E0B','#EC4899']
 function apiToMapMember(m: any, index: number): MapMember {
@@ -29,8 +29,8 @@ import { useRouter } from 'next/navigation'
 import ThemeToggle from '@/components/ui/ThemeToggle'
 import PanelBackground from '@/components/effects/PanelBackground'
 
-/* ── Dynamic MapView ─────────────────────────────────────────── */
-const MapView = dynamic(() => import('@/components/sections/MapView'), {
+/* ── Dynamic UberFamilyMap ───────────────────────────────────── */
+const UberFamilyMap = dynamic(() => import('@/components/shared/UberFamilyMap'), {
   ssr: false,
   loading: () => (
     <div className="w-full h-full flex items-center justify-center"
@@ -439,6 +439,7 @@ export default function DashboardPage() {
   const [bell,    setBell]    = useState(false)
   const [toggles, setToggles] = useState<Record<TKey,boolean>>({location:true,push:true,sos:false,battery:true})
   const [familyMembers, setFamilyMembers] = useState<MapMember[]>([])
+  const [familyLoading, setFamilyLoading] = useState(true)
   const [realAlerts, setRealAlerts] = useState<Alert[]>([])
   const [familyId, setFamilyId] = useState<number | null>(null)
 
@@ -455,65 +456,64 @@ export default function DashboardPage() {
 
   useEffect(() => {
     const token = getToken()
-    if (!token) return
+    if (!token) { setFamilyLoading(false); return }
     fetch('/families/my', { headers: { Authorization: 'Bearer ' + token } })
-      .then(r => r.ok ? r.json() : [])
-      .then(async (families: any[]) => {
-        if (!Array.isArray(families)) return
-        if (families.length > 0) {
-          const fid = families[0].id
-          setFamilyId(fid)
-          try {
-            // Step 1: Get all family member names (always available)
-            const membersRes = await fetch(`/families/${fid}/members`, { headers: { Authorization: 'Bearer ' + token } })
-            const baseMembers = membersRes.ok ? await membersRes.json() : []
-
-            // Step 2: Get live GPS locations (only members who are sharing)
-            const liveRes = await fetch(`/location/live/${fid}`, { headers: { Authorization: 'Bearer ' + token } })
-            const live = liveRes.ok ? await liveRes.json() : []
-            const liveMap: Record<number, any> = {}
-            live.forEach((l: any) => { liveMap[l.user_id] = l })
-
-            if (baseMembers.length > 0) {
-              // Merge: use live GPS if available, otherwise show member at unknown location
-              const merged = baseMembers.map((bm: any, i: number) => {
-                const liveData = liveMap[bm.user_id]
-                return apiToMapMember({
-                  user_id: bm.user_id,
-                  name: bm.name,
-                  avatar_url: null,
-                  lat: liveData?.lat ?? 19.0760 + (i * 0.002),
-                  lng: liveData?.lng ?? 72.8777 + (i * 0.002),
-                  place_name: liveData ? (liveData.place_name || 'Sharing location') : 'Location unknown',
-                  battery: liveData?.battery ?? bm.battery ?? 50,
-                  is_online: !!liveData,
-                  recorded_at: liveData?.recorded_at ?? null,
-                }, i)
-              })
-              setFamilyMembers(merged)
-            }
-          } catch (_) {}
-          // Fetch SOS alerts
-          fetch('/sos/history/' + fid, { headers: { Authorization: 'Bearer ' + token } })
-            .then(r => r.ok ? r.json() : [])
-            .then((sos: any[]) => {
-              if (sos.length > 0) {
-                const mapped: Alert[] = sos.slice(0, 4).map((s: any) => ({
-                  id: String(s.id),
-                  icon: s.status === 'active' ? '🚨' : '✅',
-                  title: s.status === 'active' ? 'SOS Alert Active' : 'SOS Resolved',
-                  msg: s.place_name || 'Location shared',
-                  time: new Date(s.triggered_at).toLocaleTimeString(),
-                  sev: (s.status === 'active' ? 'sos' : 'safe') as Sev,
-                }))
-                setRealAlerts(mapped)
-              }
-            })
-            .catch(() => {})
-        }
+      .then(r => {
+        if (r.status === 401) { clearAuth(); router.replace('/login'); return [] }
+        return r.ok ? r.json() : []
       })
-      .catch(() => {})
-  }, [])
+      .then(async (families: any[]) => {
+        if (!Array.isArray(families) || families.length === 0) { setFamilyLoading(false); return }
+        const fid = families[0].id
+        setFamilyId(fid)
+        try {
+          const [membersRes, liveRes] = await Promise.all([
+            fetch(`/families/${fid}/members`, { headers: { Authorization: 'Bearer ' + token } }),
+            fetch(`/location/live/${fid}`, { headers: { Authorization: 'Bearer ' + token } }),
+          ])
+          const baseMembers = membersRes.ok ? await membersRes.json() : []
+          const live = liveRes.ok ? await liveRes.json() : []
+          const liveMap: Record<number, any> = {}
+          live.forEach((l: any) => { liveMap[l.user_id] = l })
+          if (Array.isArray(baseMembers) && baseMembers.length > 0) {
+            const merged = baseMembers.map((bm: any, i: number) => {
+              const liveData = liveMap[bm.user_id]
+              return apiToMapMember({
+                user_id: bm.user_id,
+                name: bm.name,
+                avatar_url: null,
+                lat: liveData?.lat ?? 19.0760 + (i * 0.002),
+                lng: liveData?.lng ?? 72.8777 + (i * 0.002),
+                place_name: liveData ? (liveData.place_name || 'Sharing location') : 'Location unknown',
+                battery: liveData?.battery ?? bm.battery ?? 50,
+                is_online: !!liveData,
+                recorded_at: liveData?.recorded_at ?? null,
+              }, i)
+            })
+            setFamilyMembers(merged)
+          }
+        } catch (_) {}
+        finally { setFamilyLoading(false) }
+        // Fetch SOS alerts
+        fetch('/sos/history/' + fid, { headers: { Authorization: 'Bearer ' + token } })
+          .then(r => r.ok ? r.json() : [])
+          .then((sos: any[]) => {
+            if (sos.length > 0) {
+              const mapped: Alert[] = sos.slice(0, 4).map((s: any) => ({
+                id: String(s.id),
+                icon: s.status === 'active' ? '🚨' : '✅',
+                title: s.status === 'active' ? 'SOS Alert Active' : 'SOS Resolved',
+                msg: s.place_name || 'Location shared',
+                time: new Date(s.triggered_at).toLocaleTimeString(),
+                sev: (s.status === 'active' ? 'sos' : 'safe') as Sev,
+              }))
+              setRealAlerts(mapped)
+            }
+          })
+          .catch(() => {})
+      })
+      .catch(() => { setFamilyLoading(false) })
+  }, [router])
 
   const onMemberClick = useCallback((id:string) => {
     setActiveId(p => p===id?null:id)
@@ -545,7 +545,7 @@ export default function DashboardPage() {
     </div>
   )
 
-  const MEMBERS = familyMembers.length > 0 ? familyMembers : MAP_MEMBERS
+  const MEMBERS = familyMembers
   const activeMember = MEMBERS.find(m => m.id===activeId) ?? null
 
   return (
@@ -657,7 +657,7 @@ export default function DashboardPage() {
                     border:'1px solid rgba(255,255,255,0.08)',
                     boxShadow:'0 24px 60px rgba(0,0,0,0.5), 0 0 0 1px rgba(212,168,83,0.04)'}}>
 
-            <MapView activeId={activeId} onMemberClick={onMemberClick} members={familyMembers.length > 0 ? familyMembers : undefined} />
+            <UberFamilyMap showMemberList={false} height="100%" />
 
             {/* Top gradient fade — premium depth */}
             <div className="absolute top-0 left-0 right-0 pointer-events-none"
@@ -710,6 +710,18 @@ export default function DashboardPage() {
           {/* Member strip */}
           <motion.div initial={{opacity:0,y:16}} animate={{opacity:1,y:0}} transition={{duration:0.5,delay:0.15}}
             className="flex gap-2.5 overflow-x-auto pb-1 scrollbar-none">
+            {MEMBERS.length === 0 && familyLoading && [0,1,2].map(i => (
+              <div key={i} className="flex-shrink-0 w-20 h-24 rounded-2xl animate-pulse"
+                   style={{background:'var(--bg-surface2)',border:'1px solid var(--border)'}} />
+            ))}
+            {MEMBERS.length === 0 && !familyLoading && (
+              <div className="py-3 px-4 rounded-2xl"
+                   style={{background:'var(--bg-surface2)',border:'1px solid var(--border)'}}>
+                <p className="text-xs whitespace-nowrap" style={{color:'var(--text-muted)'}}>
+                  No family members sharing location
+                </p>
+              </div>
+            )}
             {MEMBERS.map((m,i) => (
               <motion.button key={m.id}
                 initial={{opacity:0,y:12}} animate={{opacity:1,y:0,transition:{delay:i*0.07}}}
