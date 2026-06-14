@@ -1107,27 +1107,116 @@ export function DashboardSection() {
 // 2. FamilyMapSection
 // ─────────────────────────────────────────────────────────────────────────────
 
-// Map pin positions (percentage-based within the map card)
-const PIN_POSITIONS: Record<string, { x: number; y: number }> = {
-  m1: { x: 48, y: 55 },
-  m2: { x: 65, y: 30 },
-  m3: { x: 75, y: 65 },
-  m4: { x: 25, y: 70 },
-};
-
 export function FamilyMapSection() {
+  const [members, setMembers] = useState<FamilyMember[]>(FAMILY_MEMBERS);
+  const [familyId, setFamilyId] = useState<number | null>(null);
   const [refreshing, setRefreshing] = useState(false);
-  const [accurateToggles, setAccurateToggles] = useState<Record<string, boolean>>(
-    Object.fromEntries(FAMILY_MEMBERS.map((m) => [m.id, m.accurateLocation]))
-  );
 
-  function handleRefresh() {
-    setRefreshing(true);
-    setTimeout(() => setRefreshing(false), 1200);
+  const mapDivRef = useRef<HTMLDivElement>(null);
+  const mapRef = useRef<any>(null);
+  const markersRef = useRef<Record<string, any>>({});
+
+  function mapRaw(raw: any[]): FamilyMember[] {
+    return raw.map((m, i) => {
+      const name: string = m.name ?? 'Member';
+      const initials = name.split(' ').map((w: string) => w[0] ?? '').join('').slice(0, 2).toUpperCase();
+      return {
+        id: String(m.user_id ?? i),
+        name,
+        initials,
+        role: (m.role === 'owner' ? 'Self' : 'Child') as MemberRole,
+        status: (m.is_online ? 'safe' : 'offline') as MemberStatus,
+        location: m.last_location ?? 'Unknown',
+        lastSeen: 'Recently',
+        battery: m.battery ?? 50,
+        avatarColor: AVATAR_COLORS[i % AVATAR_COLORS.length],
+        lat: m.lat ?? 0,
+        lng: m.lng ?? 0,
+        coordinates: m.lat ? `${Number(m.lat).toFixed(4)}° N, ${Number(m.lng).toFixed(4)}° E` : 'Unavailable',
+        distanceFromHome: '—',
+        accurateLocation: !!(m.lat && m.lng),
+      };
+    });
   }
 
-  function toggleAccurate(id: string) {
-    setAccurateToggles((prev) => ({ ...prev, [id]: !prev[id] }));
+  async function fetchMembers(fid: number) {
+    const token = getToken();
+    if (!token) return;
+    try {
+      const res = await fetch(`/families/${fid}/members`, { headers: { Authorization: `Bearer ${token}` } });
+      if (!res.ok) return;
+      const raw: any[] = await res.json();
+      if (raw.length) setMembers(mapRaw(raw));
+    } catch {}
+  }
+
+  useEffect(() => {
+    async function init() {
+      const token = getToken();
+      if (!token) return;
+      try {
+        const res = await fetch('/families/my', { headers: { Authorization: `Bearer ${token}` } });
+        if (!res.ok) return;
+        const fam = await res.json();
+        const fid = fam.id ?? fam.family?.id;
+        if (!fid) return;
+        setFamilyId(fid);
+        await fetchMembers(fid);
+      } catch {}
+    }
+    init();
+  }, []);
+
+  // Init Leaflet map + update markers
+  useEffect(() => {
+    if (typeof window === 'undefined' || !mapDivRef.current) return;
+    import('leaflet').then((Lmod) => {
+      const L = (Lmod as any).default ?? Lmod;
+      if (!mapRef.current && mapDivRef.current) {
+        try { (L.Icon.Default.prototype as any)._getIconUrl = undefined; } catch {}
+        const first = members.find(m => m.lat && m.lng);
+        const center: [number, number] = first ? [first.lat, first.lng] : [28.6139, 77.209];
+        const map = L.map(mapDivRef.current, { zoomControl: false, attributionControl: false, scrollWheelZoom: false }).setView(center, 12);
+        L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', { subdomains: 'abcd', maxZoom: 20 }).addTo(map);
+        mapRef.current = { map, L };
+      }
+      if (!mapRef.current) return;
+      const { map, L: Lx } = mapRef.current;
+
+      // Remove old markers
+      Object.values(markersRef.current).forEach((mk: any) => { try { mk.remove(); } catch {} });
+      markersRef.current = {};
+
+      const valid = members.filter(m => m.lat && m.lng);
+      valid.forEach(m => {
+        const icon = Lx.divIcon({
+          className: '',
+          html: `<div style="width:30px;height:30px;border-radius:50%;background:${m.avatarColor};color:#fff;font-weight:800;font-size:11px;display:flex;align-items:center;justify-content:center;border:2.5px solid rgba(255,255,255,0.9);box-shadow:0 0 10px ${m.avatarColor}99;cursor:pointer;">${m.initials}</div>`,
+          iconSize: [30, 30],
+          iconAnchor: [15, 15],
+        });
+        const marker = Lx.marker([m.lat, m.lng], { icon })
+          .addTo(map)
+          .bindPopup(`<div style="font-size:12px;padding:2px 4px;"><b>${m.name}</b><br/><span style="color:#777;">${m.location}</span></div>`);
+        markersRef.current[m.id] = marker;
+      });
+
+      if (valid.length > 1) {
+        map.fitBounds(Lx.latLngBounds(valid.map((m: FamilyMember) => [m.lat, m.lng])), { padding: [40, 40], maxZoom: 14 });
+      } else if (valid.length === 1) {
+        map.setView([valid[0].lat, valid[0].lng], 14);
+      }
+    });
+  }, [members]);
+
+  useEffect(() => {
+    return () => { if (mapRef.current?.map) { mapRef.current.map.remove(); mapRef.current = null; } };
+  }, []);
+
+  function handleRefresh() {
+    if (!familyId || refreshing) return;
+    setRefreshing(true);
+    fetchMembers(familyId).finally(() => setRefreshing(false));
   }
 
   return (
@@ -1186,7 +1275,10 @@ export function FamilyMapSection() {
         </motion.button>
       </motion.div>
 
-      {/* Map card */}
+      {/* Leaflet CSS */}
+      <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+
+      {/* Map card — real Leaflet map */}
       <motion.div
         initial={{ opacity: 0, scale: 0.98 }}
         animate={{ opacity: 1, scale: 1 }}
@@ -1197,187 +1289,41 @@ export function FamilyMapSection() {
           height: 280,
           borderRadius: 18,
           overflow: 'hidden',
-          background: '#0D1B2A',
           border: '1px solid rgba(255,255,255,0.08)',
         }}
       >
-        {/* Grid lines (CSS map grid) */}
-        <div
-          style={{
-            position: 'absolute',
-            inset: 0,
-            backgroundImage: `
-              repeating-linear-gradient(0deg, rgba(255,255,255,0.03) 0px, rgba(255,255,255,0.03) 1px, transparent 1px, transparent 40px),
-              repeating-linear-gradient(90deg, rgba(255,255,255,0.03) 0px, rgba(255,255,255,0.03) 1px, transparent 1px, transparent 40px)
-            `,
-          }}
-        />
+        <div ref={mapDivRef} style={{ width: '100%', height: '100%' }} />
 
-        {/* Road-like lines */}
-        <svg
-          style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', opacity: 0.12 }}
-          viewBox="0 0 400 280"
-          preserveAspectRatio="none"
-        >
-          <path d="M0 140 Q100 120 200 130 T400 140" stroke="#B8720A" strokeWidth="3" fill="none" />
-          <path d="M180 0 Q190 70 185 140 T200 280" stroke="#3B82F6" strokeWidth="2" fill="none" />
-          <path d="M0 200 Q80 190 160 195 T400 200" stroke="#10B981" strokeWidth="1.5" fill="none" />
-          <path d="M300 0 Q310 60 305 140 T300 280" stroke="#8B5CF6" strokeWidth="1.5" fill="none" />
-          <path d="M0 60 Q200 50 400 70" stroke="#B8720A" strokeWidth="1" fill="none" />
-        </svg>
-
-        {/* Home marker */}
-        <div
-          style={{
-            position: 'absolute',
-            left: '46%',
-            top: '50%',
-            transform: 'translate(-50%, -50%)',
-            zIndex: 5,
-          }}
-        >
-          <div
-            style={{
-              width: 22,
-              height: 22,
-              borderRadius: '50%',
-              background: 'rgba(184,114,10,0.2)',
-              border: '1.5px solid rgba(184,114,10,0.5)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-            }}
-          >
-            <Home size={11} style={{ color: '#B8720A' }} />
-          </div>
-        </div>
-
-        {/* Member pins */}
-        {FAMILY_MEMBERS.map((member) => {
-          const pos = PIN_POSITIONS[member.id];
-          return (
-            <div
-              key={member.id}
+        {/* Open full map button */}
+        <div style={{ position: 'absolute', bottom: 12, right: 12, zIndex: 999 }}>
+          <a href="/live-tracking" style={{ textDecoration: 'none' }}>
+            <motion.div
+              whileTap={{ scale: 0.95 }}
               style={{
-                position: 'absolute',
-                left: `${pos.x}%`,
-                top: `${pos.y}%`,
-                transform: 'translate(-50%, -50%)',
-                zIndex: 10,
+                background: 'rgba(11,13,19,0.85)',
+                backdropFilter: 'blur(8px)',
+                border: '1px solid rgba(184,114,10,0.5)',
+                borderRadius: 10,
+                padding: '7px 12px',
+                display: 'flex',
+                alignItems: 'center',
+                gap: 6,
+                cursor: 'pointer',
+                color: '#B8720A',
+                fontSize: 11,
+                fontWeight: 600,
               }}
             >
-              {/* Ping animation */}
-              <motion.div
-                animate={{ scale: [1, 3], opacity: [0.5, 0] }}
-                transition={{ duration: 1.8, repeat: Infinity, ease: 'easeOut' }}
-                style={{
-                  position: 'absolute',
-                  inset: 0,
-                  borderRadius: '50%',
-                  background: member.avatarColor,
-                  width: 12,
-                  height: 12,
-                  top: '50%',
-                  left: '50%',
-                  transform: 'translate(-50%, -50%)',
-                }}
-              />
-
-              {/* Pin dot */}
-              <div
-                style={{
-                  width: 12,
-                  height: 12,
-                  borderRadius: '50%',
-                  background: member.avatarColor,
-                  border: '2px solid rgba(255,255,255,0.9)',
-                  boxShadow: `0 0 8px ${member.avatarColor}88`,
-                  position: 'relative',
-                  zIndex: 2,
-                }}
-              />
-
-              {/* Name label */}
-              <div
-                style={{
-                  position: 'absolute',
-                  top: 14,
-                  left: '50%',
-                  transform: 'translateX(-50%)',
-                  background: 'rgba(11,13,19,0.85)',
-                  border: `1px solid ${member.avatarColor}55`,
-                  borderRadius: 5,
-                  padding: '2px 6px',
-                  fontSize: 9,
-                  fontWeight: 600,
-                  color: '#fff',
-                  whiteSpace: 'nowrap',
-                  zIndex: 3,
-                }}
-              >
-                {member.name}
-              </div>
-            </div>
-          );
-        })}
-
-        {/* "Open full map" overlay button */}
-        <div
-          style={{
-            position: 'absolute',
-            bottom: 12,
-            right: 12,
-            zIndex: 20,
-          }}
-        >
-          <motion.button
-            whileTap={{ scale: 0.95 }}
-            style={{
-              background: 'rgba(11,13,19,0.85)',
-              backdropFilter: 'blur(8px)',
-              border: '1px solid rgba(184,114,10,0.5)',
-              borderRadius: 10,
-              padding: '7px 12px',
-              display: 'flex',
-              alignItems: 'center',
-              gap: 6,
-              cursor: 'pointer',
-              color: '#B8720A',
-              fontSize: 11,
-              fontWeight: 600,
-            }}
-          >
-            <Navigation size={12} />
-            Open full map
-          </motion.button>
-        </div>
-
-        {/* Scale indicator */}
-        <div
-          style={{
-            position: 'absolute',
-            bottom: 12,
-            left: 14,
-            display: 'flex',
-            alignItems: 'center',
-            gap: 4,
-          }}
-        >
-          <div
-            style={{
-              width: 30,
-              height: 2,
-              background: 'rgba(255,255,255,0.35)',
-              borderRadius: 1,
-            }}
-          />
-          <span style={{ fontSize: 9, color: 'rgba(255,255,255,0.35)' }}>500m</span>
+              <Navigation size={12} />
+              Full map
+            </motion.div>
+          </a>
         </div>
       </motion.div>
 
       {/* Member location cards */}
       <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-        {FAMILY_MEMBERS.map((member, i) => (
+        {members.map((member, i) => (
           <motion.div
             key={member.id}
             initial={{ opacity: 0, x: -16 }}
@@ -1435,50 +1381,52 @@ export function FamilyMapSection() {
                 </span>
               </div>
               <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.3)' }}>
-                {accurateToggles[member.id] ? member.coordinates : '~' + member.distanceFromHome + ' from home'} · {member.lastSeen}
+                {member.accurateLocation ? member.coordinates : 'Approx. location'} · {member.lastSeen}
               </div>
             </div>
 
             {/* Right side */}
             <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 6 }}>
-              {/* Accurate toggle */}
-              <motion.button
-                whileTap={{ scale: 0.9 }}
-                onClick={() => toggleAccurate(member.id)}
+              {/* Accuracy indicator */}
+              <div
                 style={{
-                  background: accurateToggles[member.id]
-                    ? 'rgba(16,185,129,0.15)'
-                    : 'rgba(255,255,255,0.05)',
-                  border: `1px solid ${accurateToggles[member.id] ? 'rgba(16,185,129,0.4)' : 'rgba(255,255,255,0.1)'}`,
+                  background: member.accurateLocation ? 'rgba(16,185,129,0.15)' : 'rgba(255,255,255,0.05)',
+                  border: `1px solid ${member.accurateLocation ? 'rgba(16,185,129,0.4)' : 'rgba(255,255,255,0.1)'}`,
                   borderRadius: 6,
                   padding: '3px 7px',
                   fontSize: 9,
                   fontWeight: 600,
-                  color: accurateToggles[member.id] ? '#10B981' : 'rgba(255,255,255,0.4)',
-                  cursor: 'pointer',
+                  color: member.accurateLocation ? '#10B981' : 'rgba(255,255,255,0.4)',
                   whiteSpace: 'nowrap',
                 }}
               >
-                {accurateToggles[member.id] ? 'Accurate' : 'Approx.'}
-              </motion.button>
+                {member.accurateLocation ? 'Accurate' : 'Approx.'}
+              </div>
 
               {/* Navigate button */}
-              <motion.button
-                whileTap={{ scale: 0.9 }}
-                style={{
-                  background: 'rgba(184,114,10,0.12)',
-                  border: '1px solid rgba(184,114,10,0.3)',
-                  borderRadius: 6,
-                  padding: '3px 7px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 4,
-                  cursor: 'pointer',
-                }}
+              <a
+                href={member.lat && member.lng ? `https://www.google.com/maps?q=${member.lat},${member.lng}` : '#'}
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{ textDecoration: 'none' }}
               >
-                <Navigation size={10} style={{ color: '#B8720A' }} />
-                <span style={{ fontSize: 9, fontWeight: 600, color: '#B8720A' }}>Navigate</span>
-              </motion.button>
+                <motion.div
+                  whileTap={{ scale: 0.9 }}
+                  style={{
+                    background: 'rgba(184,114,10,0.12)',
+                    border: '1px solid rgba(184,114,10,0.3)',
+                    borderRadius: 6,
+                    padding: '3px 7px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 4,
+                    cursor: 'pointer',
+                  }}
+                >
+                  <Navigation size={10} style={{ color: '#B8720A' }} />
+                  <span style={{ fontSize: 9, fontWeight: 600, color: '#B8720A' }}>Navigate</span>
+                </motion.div>
+              </a>
             </div>
           </motion.div>
         ))}
