@@ -7,6 +7,7 @@ from typing import Optional, List
 from database import get_db
 import models, secrets
 from auth import get_current_user
+from datetime import datetime, timezone, timedelta
 
 router = APIRouter()
 
@@ -68,5 +69,15 @@ def get_members(family_id: int, db: Session = Depends(get_db)):
         if user:
             loc = db.query(models.Location).filter(models.Location.user_id == user.id).order_by(models.Location.recorded_at.desc()).first()
             device = db.query(models.Device).filter(models.Device.user_id == user.id).first()
-            result.append({"user_id": user.id, "name": user.name, "role": m.role, "last_location": loc.place_name if loc else None, "lat": loc.lat if loc else None, "lng": loc.lng if loc else None, "battery": device.battery_level if device else None, "is_online": device.is_online if device else False})
+            # Consider online if location shared within last 30 minutes
+            is_online = False
+            if loc and loc.recorded_at:
+                try:
+                    rec = loc.recorded_at if loc.recorded_at.tzinfo else loc.recorded_at.replace(tzinfo=timezone.utc)
+                    is_online = (datetime.now(timezone.utc) - rec).total_seconds() < 1800
+                except Exception:
+                    is_online = bool(device and device.is_online)
+            elif device:
+                is_online = device.is_online
+            result.append({"user_id": user.id, "name": user.name, "role": m.role, "last_location": loc.place_name if loc else None, "lat": loc.lat if loc else None, "lng": loc.lng if loc else None, "battery": device.battery_level if device else None, "is_online": is_online})
     return result
