@@ -591,6 +591,11 @@ export default function MapView({
 
       setTimeout(() => map.invalidateSize(), 100)
       setTimeout(() => map.invalidateSize(), 500)
+      setTimeout(() => map.invalidateSize(), 1200)
+      // Mobile: force resize on visibility change
+      const onResize = () => map.invalidateSize()
+      window.addEventListener('resize', onResize)
+      document.addEventListener('visibilitychange', onResize)
     }
 
     init()

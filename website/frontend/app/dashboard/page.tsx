@@ -462,14 +462,34 @@ export default function DashboardPage() {
         if (families.length > 0) {
           const fid = families[0].id
           setFamilyId(fid)
-          // Fetch real live locations
           try {
+            // Step 1: Get all family member names (always available)
+            const membersRes = await fetch(`/families/${fid}/members`, { headers: { Authorization: 'Bearer ' + token } })
+            const baseMembers = membersRes.ok ? await membersRes.json() : []
+
+            // Step 2: Get live GPS locations (only members who are sharing)
             const liveRes = await fetch(`/location/live/${fid}`, { headers: { Authorization: 'Bearer ' + token } })
-            if (liveRes.ok) {
-              const live = await liveRes.json()
-              if (live.length > 0) {
-                setFamilyMembers(live.map((m: any, i: number) => apiToMapMember(m, i)))
-              }
+            const live = liveRes.ok ? await liveRes.json() : []
+            const liveMap: Record<number, any> = {}
+            live.forEach((l: any) => { liveMap[l.user_id] = l })
+
+            if (baseMembers.length > 0) {
+              // Merge: use live GPS if available, otherwise show member at unknown location
+              const merged = baseMembers.map((bm: any, i: number) => {
+                const liveData = liveMap[bm.user_id]
+                return apiToMapMember({
+                  user_id: bm.user_id,
+                  name: bm.name,
+                  avatar_url: null,
+                  lat: liveData?.lat ?? 19.0760 + (i * 0.002),
+                  lng: liveData?.lng ?? 72.8777 + (i * 0.002),
+                  place_name: liveData ? (liveData.place_name || 'Sharing location') : 'Location unknown',
+                  battery: liveData?.battery ?? bm.battery ?? 50,
+                  is_online: !!liveData,
+                  recorded_at: liveData?.recorded_at ?? null,
+                }, i)
+              })
+              setFamilyMembers(merged)
             }
           } catch (_) {}
           // Fetch SOS alerts
