@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { getToken } from '@/lib/auth';
 import {
   Shield,
   MapPin,
@@ -413,6 +414,7 @@ export function DashboardSection() {
   });
   const [selectedMember, setSelectedMember] = useState<string | null>(null);
   const [events, setEvents] = useState<ActivityEvent[]>(ACTIVITY_EVENTS);
+  const [routineAlerts, setRoutineAlerts] = useState<{ member: string; alert: string; severity: string }[]>([]);
   const scrollRef = useRef<HTMLDivElement>(null);
 
   // Simulate live stat updates
@@ -421,6 +423,49 @@ export function DashboardSection() {
       setStats((prev) => ({ ...prev, activeMembers: 4 }));
     }, 5000);
     return () => clearInterval(interval);
+  }, []);
+
+  // Routine anomaly check via AI
+  useEffect(() => {
+    async function checkRoutines() {
+      const token = getToken();
+      if (!token) return;
+      const h = { Authorization: `Bearer ${token}` };
+      try {
+        const famRes = await fetch('/families/my', { headers: h });
+        if (!famRes.ok) return;
+        const fam = await famRes.json();
+        const fid = fam.id ?? fam.family?.id;
+        if (!fid) return;
+        const locRes = await fetch(`/location/live/${fid}`, { headers: h });
+        if (!locRes.ok) return;
+        const locData = await locRes.json();
+        const members: any[] = locData.members ?? locData ?? [];
+        const alerts: { member: string; alert: string; severity: string }[] = [];
+        for (const m of members) {
+          const hrs = m.hours_since_last_location ?? m.hours_inactive ?? 0;
+          if (hrs >= 2) {
+            const r = await fetch('/ai/analyze-routine', {
+              method: 'POST',
+              headers: { ...h, 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                user_id: String(m.user_id ?? m.id ?? ''),
+                user_name: m.name ?? m.user_name ?? 'Member',
+                hours_inactive: hrs,
+                last_location: m.location ?? m.last_location ?? 'Unknown',
+                usual_pattern: 'Active during daytime hours',
+              }),
+            });
+            if (r.ok) {
+              const d = await r.json();
+              alerts.push({ member: m.name ?? 'Member', alert: d.alert, severity: d.severity });
+            }
+          }
+        }
+        if (alerts.length > 0) setRoutineAlerts(alerts);
+      } catch { /* silent */ }
+    }
+    checkRoutines();
   }, []);
 
   function markAllRead() {
@@ -783,6 +828,25 @@ export function DashboardSection() {
           );
         })}
       </div>
+
+      {/* ── AI Routine Alerts ────────────────────────────────────────── */}
+      {routineAlerts.length > 0 && (
+        <div style={{ ...glassCard, padding: '14px 16px', border: '1px solid rgba(245,158,11,0.25)' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10 }}>
+            <AlertTriangle size={14} style={{ color: '#F59E0B' }} />
+            <span style={{ fontSize: '0.78rem', fontWeight: 700, color: '#F59E0B', letterSpacing: '0.06em', textTransform: 'uppercase' }}>AI Routine Alerts</span>
+          </div>
+          {routineAlerts.map((a, i) => (
+            <div key={i} style={{ padding: '9px 12px', background: 'rgba(245,158,11,0.06)', border: '1px solid rgba(245,158,11,0.15)', borderRadius: 8, marginBottom: i < routineAlerts.length - 1 ? 8 : 0, display: 'flex', gap: 8, alignItems: 'flex-start' }}>
+              <div style={{ width: 6, height: 6, borderRadius: '50%', background: a.severity === 'high' ? '#EF4444' : '#F59E0B', flexShrink: 0, marginTop: 5 }} />
+              <div>
+                <span style={{ fontSize: '0.72rem', fontWeight: 700, color: 'rgba(255,255,255,0.6)', marginRight: 6 }}>{a.member}</span>
+                <span style={{ fontSize: '0.78rem', color: 'rgba(255,255,255,0.75)' }}>{a.alert}</span>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
 
       {/* ── Live Activity Feed ────────────────────────────────────────── */}
       <div
