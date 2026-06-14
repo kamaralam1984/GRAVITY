@@ -117,7 +117,7 @@ function BattBar({ pct, color }: { pct:number; color:string }) {
 /* ─────────────────────────────────────────────────────────────
    MEMBER CARD (Family tab)
 ─────────────────────────────────────────────────────────────── */
-function MemberCard({ m, open, onToggle, onSOS }: { m:MapMember; open:boolean; onToggle:()=>void; onSOS?:()=>void }) {
+function MemberCard({ m, open, onToggle, onSOS, onMap }: { m:MapMember; open:boolean; onToggle:()=>void; onSOS?:()=>void; onMap?:()=>void }) {
   return (
     <motion.div layout className="rounded-2xl overflow-hidden cursor-pointer"
       style={{ background: open?`${m.color}0D`:'var(--bg-surface2)',
@@ -183,7 +183,7 @@ function MemberCard({ m, open, onToggle, onSOS }: { m:MapMember; open:boolean; o
               </div>
 
               {/* Journey */}
-              <div>
+              {(JOURNEY[m.id]??[]).length > 0 && <div>
                 <p className="text-[9px] font-bold uppercase tracking-[0.15em] mb-2" style={{color:'var(--text-muted)'}}>Today's Journey</p>
                 {(JOURNEY[m.id]??[]).map((step,i,arr) => (
                   <div key={i} className="flex items-center gap-2.5 mb-1.5">
@@ -200,14 +200,15 @@ function MemberCard({ m, open, onToggle, onSOS }: { m:MapMember; open:boolean; o
                     <span className="text-[9px] tabular-nums" style={{color:'var(--text-muted)'}}>{step.time}</span>
                   </div>
                 ))}
-              </div>
+              </div>}
 
               {/* Actions */}
               <div className="flex gap-2">
-                <button className="flex-1 py-2 rounded-xl text-[11px] font-bold transition-all hover:opacity-80 flex items-center justify-center gap-1.5"
+                <a href={`/track`}
+                  className="flex-1 py-2 rounded-xl text-[11px] font-bold transition-all hover:opacity-80 flex items-center justify-center gap-1.5 no-underline"
                   style={{background:'rgba(59,130,246,0.12)',border:'1px solid rgba(59,130,246,0.3)',color:'#60A5FA'}}>
-                  📞 Call
-                </button>
+                  📍 Track
+                </a>
                 <motion.button
                   onClick={() => onSOS?.()}
                   className="flex-1 py-2 rounded-xl text-[11px] font-bold transition-all hover:opacity-80 flex items-center justify-center gap-1.5"
@@ -216,7 +217,9 @@ function MemberCard({ m, open, onToggle, onSOS }: { m:MapMember; open:boolean; o
                   transition={{duration:2,repeat:Infinity}}>
                   🚨 SOS
                 </motion.button>
-                <button className="flex-1 py-2 rounded-xl text-[11px] font-bold transition-all hover:opacity-80 flex items-center justify-center gap-1.5"
+                <button
+                  onClick={() => { onMap?.(); window.scrollTo({ top: 0, behavior: 'smooth' }) }}
+                  className="flex-1 py-2 rounded-xl text-[11px] font-bold transition-all hover:opacity-80 flex items-center justify-center gap-1.5"
                   style={{background:`${m.color}10`,border:`1px solid ${m.color}30`,color:m.color}}>
                   🗺️ Map
                 </button>
@@ -337,13 +340,14 @@ function ProfileTab({ user, toggles, setToggle, logout }:{
 /* ─────────────────────────────────────────────────────────────
    RIGHT PANEL
 ─────────────────────────────────────────────────────────────── */
-function RightPanel({ tab, setTab, expanded, setExpanded, alerts, dismiss, toggles, setToggle, user, logout, onSOS, members }: {
+function RightPanel({ tab, setTab, expanded, setExpanded, alerts, dismiss, toggles, setToggle, user, logout, onSOS, onMap, members }: {
   tab:Tab; setTab:(t:Tab)=>void
   expanded:string|null; setExpanded:(id:string|null)=>void
   alerts:Alert[]; dismiss:(id:string)=>void
   toggles:Record<TKey,boolean>; setToggle:(k:TKey)=>void
   user:AuthUser; logout:()=>void
   onSOS?:()=>void
+  onMap?:(id:string)=>void
   members: MapMember[]
 }) {
   const MEMBERS = members
@@ -404,7 +408,7 @@ function RightPanel({ tab, setTab, expanded, setExpanded, alerts, dismiss, toggl
             <motion.div key="fam" initial={{opacity:0,y:6}} animate={{opacity:1,y:0}} exit={{opacity:0}} className="space-y-2">
               {MEMBERS.map((m,i) => (
                 <motion.div key={m.id} initial={{opacity:0,y:20}} animate={{opacity:1,y:0}} transition={{delay:i*0.05,duration:0.3}}>
-                  <MemberCard m={m} open={expanded===m.id} onToggle={() => setExpanded(expanded===m.id?null:m.id)} onSOS={onSOS} />
+                  <MemberCard m={m} open={expanded===m.id} onToggle={() => setExpanded(expanded===m.id?null:m.id)} onSOS={onSOS} onMap={() => onMap?.(m.id)} />
                 </motion.div>
               ))}
             </motion.div>
@@ -435,7 +439,7 @@ export default function DashboardPage() {
   const [tab,     setTab]     = useState<Tab>('family')
   const [mobTab,  setMobTab]  = useState<Tab>('family')
   const [expanded,setExpanded]= useState<string|null>(null)
-  const [alerts,  setAlerts]  = useState<Alert[]>(INIT_ALERTS)
+  const [alerts,  setAlerts]  = useState<Alert[]>([])
   const [bell,    setBell]    = useState(false)
   const [toggles, setToggles] = useState<Record<TKey,boolean>>({location:true,push:true,sos:false,battery:true})
   const [familyMembers, setFamilyMembers] = useState<MapMember[]>([])
@@ -771,7 +775,7 @@ export default function DashboardPage() {
           className="hidden lg:flex flex-col w-[320px] flex-shrink-0">
           <RightPanel tab={tab} setTab={setTab} expanded={expanded} setExpanded={setExpanded}
             alerts={alerts} dismiss={dismiss} toggles={toggles} setToggle={toggleSetting}
-            user={user} logout={logout} onSOS={triggerSOS} members={MEMBERS} />
+            user={user} logout={logout} onSOS={triggerSOS} onMap={onMemberClick} members={MEMBERS} />
         </motion.div>
 
         {/* RIGHT — Mobile tab content */}
@@ -781,7 +785,7 @@ export default function DashboardPage() {
               {mobTab==='family' && (
                 <div className="space-y-2">
                   {MEMBERS.map(m => (
-                    <MemberCard key={m.id} m={m} open={expanded===m.id} onToggle={() => setExpanded(expanded===m.id?null:m.id)} onSOS={triggerSOS} />
+                    <MemberCard key={m.id} m={m} open={expanded===m.id} onToggle={() => setExpanded(expanded===m.id?null:m.id)} onSOS={triggerSOS} onMap={() => onMemberClick(m.id)} />
                   ))}
                 </div>
               )}
