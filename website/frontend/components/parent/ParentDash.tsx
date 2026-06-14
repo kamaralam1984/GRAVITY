@@ -440,7 +440,7 @@ export function DashboardSection() {
         const famRes = await fetch('/families/my', { headers: h });
         if (!famRes.ok) return;
         const fam = await famRes.json();
-        const fid = fam.id ?? fam.family?.id;
+        const fid = Array.isArray(fam) ? fam[0]?.id : (fam.id ?? fam.family?.id);
         if (!fid) return;
 
         const memRes = await fetch(`/families/${fid}/members`, { headers: h });
@@ -502,7 +502,7 @@ export function DashboardSection() {
         const famRes = await fetch('/families/my', { headers: h });
         if (!famRes.ok) return;
         const fam = await famRes.json();
-        const fid = fam.id ?? fam.family?.id;
+        const fid = Array.isArray(fam) ? fam[0]?.id : (fam.id ?? fam.family?.id);
         if (!fid) return;
         const locRes = await fetch(`/location/live/${fid}`, { headers: h });
         if (!locRes.ok) return;
@@ -1108,9 +1108,10 @@ export function DashboardSection() {
 // ─────────────────────────────────────────────────────────────────────────────
 
 export function FamilyMapSection() {
-  const [members, setMembers] = useState<FamilyMember[]>(FAMILY_MEMBERS);
+  const [members, setMembers] = useState<FamilyMember[]>([]);
   const [familyId, setFamilyId] = useState<number | null>(null);
   const [refreshing, setRefreshing] = useState(false);
+  const [mapReady, setMapReady] = useState(false);
 
   const mapDivRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<any>(null);
@@ -1158,7 +1159,7 @@ export function FamilyMapSection() {
         const res = await fetch('/families/my', { headers: { Authorization: `Bearer ${token}` } });
         if (!res.ok) return;
         const fam = await res.json();
-        const fid = fam.id ?? fam.family?.id;
+        const fid = Array.isArray(fam) ? fam[0]?.id : (fam.id ?? fam.family?.id);
         if (!fid) return;
         setFamilyId(fid);
         await fetchMembers(fid);
@@ -1167,51 +1168,55 @@ export function FamilyMapSection() {
     init();
   }, []);
 
-  // Init Leaflet map + update markers
+  // Init Leaflet map ONCE (separate from markers)
   useEffect(() => {
-    if (typeof window === 'undefined' || !mapDivRef.current) return;
+    if (typeof window === 'undefined' || !mapDivRef.current || mapRef.current) return;
     import('leaflet').then((Lmod) => {
+      if (mapRef.current || !mapDivRef.current) return; // guard double-init
       const L = (Lmod as any).default ?? Lmod;
-      if (!mapRef.current && mapDivRef.current) {
-        try { (L.Icon.Default.prototype as any)._getIconUrl = undefined; } catch {}
-        const first = members.find(m => m.lat && m.lng);
-        const center: [number, number] = first ? [first.lat, first.lng] : [28.6139, 77.209];
-        const map = L.map(mapDivRef.current, { zoomControl: false, attributionControl: false, scrollWheelZoom: false }).setView(center, 12);
-        L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', { subdomains: 'abcd', maxZoom: 20 }).addTo(map);
-        mapRef.current = { map, L };
-      }
-      if (!mapRef.current) return;
-      const { map, L: Lx } = mapRef.current;
-
-      // Remove old markers
-      Object.values(markersRef.current).forEach((mk: any) => { try { mk.remove(); } catch {} });
-      markersRef.current = {};
-
-      const valid = members.filter(m => m.lat && m.lng);
-      valid.forEach(m => {
-        const icon = Lx.divIcon({
-          className: '',
-          html: `<div style="width:30px;height:30px;border-radius:50%;background:${m.avatarColor};color:#fff;font-weight:800;font-size:11px;display:flex;align-items:center;justify-content:center;border:2.5px solid rgba(255,255,255,0.9);box-shadow:0 0 10px ${m.avatarColor}99;cursor:pointer;">${m.initials}</div>`,
-          iconSize: [30, 30],
-          iconAnchor: [15, 15],
-        });
-        const marker = Lx.marker([m.lat, m.lng], { icon })
-          .addTo(map)
-          .bindPopup(`<div style="font-size:12px;padding:2px 4px;"><b>${m.name}</b><br/><span style="color:#777;">${m.location}</span></div>`);
-        markersRef.current[m.id] = marker;
-      });
-
-      if (valid.length > 1) {
-        map.fitBounds(Lx.latLngBounds(valid.map((m: FamilyMember) => [m.lat, m.lng])), { padding: [40, 40], maxZoom: 14 });
-      } else if (valid.length === 1) {
-        map.setView([valid[0].lat, valid[0].lng], 14);
-      }
+      try { (L.Icon.Default.prototype as any)._getIconUrl = undefined; } catch {}
+      const map = L.map(mapDivRef.current, { zoomControl: false, attributionControl: false, scrollWheelZoom: false }).setView([28.6139, 77.209], 12);
+      L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', { subdomains: 'abcd', maxZoom: 20 }).addTo(map);
+      mapRef.current = { map, L };
+      setMapReady(true);
     });
-  }, [members]);
-
-  useEffect(() => {
-    return () => { if (mapRef.current?.map) { mapRef.current.map.remove(); mapRef.current = null; } };
+    return () => {
+      if (mapRef.current?.map) {
+        mapRef.current.map.remove();
+        mapRef.current = null;
+        markersRef.current = {};
+      }
+    };
   }, []);
+
+  // Update markers when members change (only after map is ready)
+  useEffect(() => {
+    if (!mapReady || !mapRef.current) return;
+    const { map, L } = mapRef.current;
+
+    Object.values(markersRef.current).forEach((mk: any) => { try { mk.remove(); } catch {} });
+    markersRef.current = {};
+
+    const valid = members.filter(m => m.lat && m.lng);
+    valid.forEach(m => {
+      const icon = L.divIcon({
+        className: '',
+        html: `<div style="width:30px;height:30px;border-radius:50%;background:${m.avatarColor};color:#fff;font-weight:800;font-size:11px;display:flex;align-items:center;justify-content:center;border:2.5px solid rgba(255,255,255,0.9);box-shadow:0 0 10px ${m.avatarColor}99;cursor:pointer;">${m.initials}</div>`,
+        iconSize: [30, 30],
+        iconAnchor: [15, 15],
+      });
+      const marker = L.marker([m.lat, m.lng], { icon })
+        .addTo(map)
+        .bindPopup(`<div style="font-size:12px;padding:2px 4px;"><b>${m.name}</b><br/><span style="color:#777;">${m.location}</span></div>`);
+      markersRef.current[m.id] = marker;
+    });
+
+    if (valid.length > 1) {
+      map.fitBounds(L.latLngBounds(valid.map((m: FamilyMember) => [m.lat, m.lng])), { padding: [40, 40], maxZoom: 14 });
+    } else if (valid.length === 1) {
+      map.setView([valid[0].lat, valid[0].lng], 14);
+    }
+  }, [members, mapReady]);
 
   function handleRefresh() {
     if (!familyId || refreshing) return;

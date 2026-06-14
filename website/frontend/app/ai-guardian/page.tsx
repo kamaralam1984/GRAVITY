@@ -452,7 +452,7 @@ export default function AIGuardianPage() {
         if (meRes.ok) { const md = await meRes.json(); uid = md.user?.id ?? md.id ?? null }
         if (!famRes.ok) return
         const famData = await famRes.json()
-        const fid = famData.id ?? famData.family?.id
+        const fid = Array.isArray(famData) ? famData[0]?.id : (famData.id ?? famData.family?.id)
         if (!fid) return
 
         const fetches: Promise<Response>[] = [

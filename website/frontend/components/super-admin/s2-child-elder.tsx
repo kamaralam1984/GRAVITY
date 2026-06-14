@@ -817,9 +817,14 @@ export function FallDetectionSection() {
       </div>
 
       {/* Map placeholder */}
-      <div style={{ ...card, marginBottom: 24, display: 'flex', alignItems: 'center', justifyContent: 'center', height: 120, flexDirection: 'column', gap: 8 }}>
-        <MapPin size={28} style={{ color: 'var(--text-muted)' }} />
-        <span style={{ fontSize: 13, color: 'var(--text-muted)' }}>Live fall event map — real-time geolocation of active events</span>
+      <div style={{ ...card, marginBottom: 24, height: 300, minHeight: 300, overflow: 'hidden' }}>
+        {typeof window !== 'undefined' && (
+          <iframe
+            src="https://www.openstreetmap.org/export/embed.html?bbox=72.7,18.9,72.9,19.1&layer=mapnik"
+            style={{ width: '100%', height: '100%', border: 'none', borderRadius: 8 }}
+            title="Child Safety Map"
+          />
+        )}
       </div>
 
       <TableWrap

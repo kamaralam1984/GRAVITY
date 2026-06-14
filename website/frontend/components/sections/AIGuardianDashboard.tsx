@@ -210,7 +210,7 @@ export default function AIGuardianDashboard() {
         const famRes = await fetch('/families/my', { headers: h })
         if (!famRes.ok) return
         const famData = await famRes.json()
-        const fid = famData.id ?? famData.family?.id
+        const fid = Array.isArray(famData) ? famData[0]?.id : (famData.id ?? famData.family?.id)
         if (!fid) return
         setFamilyId(fid)
 

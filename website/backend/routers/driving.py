@@ -27,12 +27,23 @@ def log_driving_event(data: DrivingEventCreate, user: models.User = Depends(get_
 
 @router.get("/events")
 def get_driving_events(limit: int = 50, db: Session = Depends(get_db)):
-    events = db.query(models.DrivingEvent).order_by(desc(models.DrivingEvent.occurred_at)).limit(limit).all()
-    result = []
-    for e in events:
-        user = db.query(models.User).filter(models.User.id == e.user_id).first()
-        result.append({"id": e.id, "type": e.type, "severity": e.severity, "speed": e.speed, "user_name": user.name if user else "Unknown", "occurred_at": e.occurred_at.isoformat() if e.occurred_at else None, "resolved": e.resolved})
-    return result
+    # Single JOIN query: events + user name in one round-trip
+    rows = (
+        db.query(models.DrivingEvent, models.User)
+        .join(models.User, models.User.id == models.DrivingEvent.user_id)
+        .order_by(desc(models.DrivingEvent.occurred_at))
+        .limit(limit)
+        .all()
+    )
+    return [
+        {
+            "id": e.id, "type": e.type, "severity": e.severity, "speed": e.speed,
+            "user_name": user.name if user else "Unknown",
+            "occurred_at": e.occurred_at.isoformat() if e.occurred_at else None,
+            "resolved": e.resolved,
+        }
+        for e, user in rows
+    ]
 
 @router.get("/member/{user_id}")
 def get_member_driving(user_id: int, user: models.User = Depends(get_current_user), db: Session = Depends(get_db)):
@@ -84,6 +95,9 @@ def get_member_driving(user_id: int, user: models.User = Depends(get_current_use
 @router.get("/summary/{family_id}")
 def driving_summary(family_id: int, user: models.User = Depends(get_current_user), db: Session = Depends(get_db)):
     """Return driving summary for all members of a family."""
+    membership = db.query(models.FamilyMember).filter(models.FamilyMember.family_id == family_id, models.FamilyMember.user_id == user.id).first()
+    if not membership:
+        raise HTTPException(status_code=403, detail="Not a member of this family")
     members = db.query(models.FamilyMember).filter(models.FamilyMember.family_id == family_id).all()
     member_summaries = []
     all_scores = []

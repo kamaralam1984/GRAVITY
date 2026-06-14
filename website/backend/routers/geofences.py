@@ -96,30 +96,26 @@ def get_geofence_events(
             models.FamilyMember.user_id == user.id
         ).all()
     ]
-    geofence_ids = [
-        g.id for g in db.query(models.Geofence).filter(
-            models.Geofence.family_id.in_(user_family_ids)
-        ).all()
-    ]
-    events = (
-        db.query(models.GeofenceEvent)
-        .filter(models.GeofenceEvent.geofence_id.in_(geofence_ids))
+    # Single JOIN query: events + user name + geofence name
+    rows = (
+        db.query(models.GeofenceEvent, models.User, models.Geofence)
+        .join(models.User, models.User.id == models.GeofenceEvent.user_id)
+        .join(models.Geofence, models.Geofence.id == models.GeofenceEvent.geofence_id)
+        .filter(models.Geofence.family_id.in_(user_family_ids))
         .order_by(desc(models.GeofenceEvent.occurred_at))
         .limit(limit)
         .all()
     )
-    result = []
-    for e in events:
-        member = db.query(models.User).filter(models.User.id == e.user_id).first()
-        geofence = db.query(models.Geofence).filter(models.Geofence.id == e.geofence_id).first()
-        result.append({
+    return [
+        {
             "id": e.id,
             "event_type": e.event_type,
             "user_name": member.name if member else "Unknown",
             "geofence_name": geofence.name if geofence else "Unknown",
             "occurred_at": e.occurred_at.isoformat() if e.occurred_at else None,
-        })
-    return result
+        }
+        for e, member, geofence in rows
+    ]
 
 @router.patch("/{geofence_id}")
 def toggle_geofence(

@@ -5,7 +5,7 @@ from sqlalchemy import desc
 from pydantic import BaseModel
 from typing import Optional
 from database import get_db
-import models, json
+import models, json, math
 from auth import get_current_user
 from datetime import datetime
 from ws_manager import manager
@@ -94,7 +94,57 @@ async def update_location(
 
     db.commit()
 
+    # After saving location, check geofences
     if family_id:
+        geofences = db.query(models.Geofence).filter(
+            models.Geofence.family_id == family_id,
+            models.Geofence.is_active == True
+        ).all()
+        for fence in geofences:
+            # Haversine distance calculation
+            R = 6371000  # Earth radius in meters
+            lat1, lng1 = math.radians(data.lat), math.radians(data.lng)
+            lat2, lng2 = math.radians(fence.center_lat), math.radians(fence.center_lng)
+            dlat = lat2 - lat1
+            dlng = lng2 - lng1
+            a = math.sin(dlat/2)**2 + math.cos(lat1)*math.cos(lat2)*math.sin(dlng/2)**2
+            distance_m = 2 * R * math.asin(math.sqrt(a))
+
+            is_inside = distance_m <= fence.radius_meters
+
+            # Check last geofence event for this user+geofence
+            last_event = db.query(models.GeofenceEvent).filter(
+                models.GeofenceEvent.geofence_id == fence.id,
+                models.GeofenceEvent.user_id == user.id
+            ).order_by(desc(models.GeofenceEvent.occurred_at)).first()
+
+            last_was_inside = last_event and last_event.event_type == "enter"
+
+            if is_inside and not last_was_inside and fence.alert_on_enter:
+                event = models.GeofenceEvent(
+                    geofence_id=fence.id, user_id=user.id,
+                    event_type="enter", lat=data.lat, lng=data.lng
+                )
+                db.add(event)
+                # Broadcast geofence enter via WebSocket
+                await manager.broadcast_to_room(str(family_id), {
+                    "type": "geofence_enter",
+                    "user_id": user.id, "user_name": user.name,
+                    "geofence_name": fence.name, "geofence_id": fence.id,
+                })
+            elif not is_inside and last_was_inside and fence.alert_on_exit:
+                event = models.GeofenceEvent(
+                    geofence_id=fence.id, user_id=user.id,
+                    event_type="exit", lat=data.lat, lng=data.lng
+                )
+                db.add(event)
+                await manager.broadcast_to_room(str(family_id), {
+                    "type": "geofence_exit",
+                    "user_id": user.id, "user_name": user.name,
+                    "geofence_name": fence.name, "geofence_id": fence.id,
+                })
+        db.commit()
+
         await manager.broadcast_to_room(
             room_id=str(family_id),
             message={

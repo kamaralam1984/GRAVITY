@@ -6,10 +6,14 @@ from pydantic import BaseModel
 from typing import Optional, List
 from database import get_db
 import models, os, random, string, secrets, hashlib
-from auth import get_password_hash, verify_password, create_access_token, get_current_user
+from auth import get_password_hash, verify_password, create_access_token, get_current_user, SECRET_KEY, ALGORITHM
+from jose import JWTError, jwt
 from datetime import datetime, timedelta
+from slowapi import Limiter
+from slowapi.util import get_remote_address
 
 router = APIRouter()
+limiter = Limiter(key_func=get_remote_address)
 
 # ── Pydantic schemas ─────────────────────────────────────────────────────────
 
@@ -105,7 +109,8 @@ def _send_otp_email(email: str, code: str) -> bool:
 # ── Standard auth endpoints (keep existing) ─────────────────────────────────
 
 @router.post("/register", response_model=TokenResponse)
-def register(data: UserRegister, db: Session = Depends(get_db)):
+@limiter.limit("5/minute")
+def register(request: Request, data: UserRegister, db: Session = Depends(get_db)):
     existing = db.query(models.User).filter(models.User.email == data.email).first()
     if existing:
         raise HTTPException(status_code=400, detail="Email already registered")
@@ -136,7 +141,8 @@ def login_json(data: UserLogin, db: Session = Depends(get_db)):
     return {"access_token": token, "token_type": "bearer", "user": user}
 
 @router.post("/login/unified", response_model=TokenResponse)
-def login_unified(data: UserLogin, db: Session = Depends(get_db)):
+@limiter.limit("10/minute")
+def login_unified(request: Request, data: UserLogin, db: Session = Depends(get_db)):
     """Unified login for all roles. Checks User table first, then AdminUser table."""
     # Check regular User table (role: user, moderator)
     user = db.query(models.User).filter(models.User.email == data.email).first()
@@ -167,6 +173,54 @@ def login_unified(data: UserLogin, db: Session = Depends(get_db)):
 @router.get("/me", response_model=UserResponse)
 def get_me(current_user: models.User = Depends(get_current_user)):
     return current_user
+
+# ── Password reset endpoints ─────────────────────────────────────────────────
+
+class ForgotPasswordRequest(BaseModel):
+    email: str
+
+class ResetPasswordRequest(BaseModel):
+    token: str
+    new_password: str
+
+@router.post("/forgot-password")
+def forgot_password(data: ForgotPasswordRequest, db: Session = Depends(get_db)):
+    user = db.query(models.User).filter(models.User.email == data.email).first()
+    # Always return success (don't leak if email exists)
+    if user:
+        # Generate reset token (use existing create_access_token with short expiry)
+        import secrets
+        reset_token = secrets.token_urlsafe(32)
+        # Store in user's updated_at or a simple approach: encode in JWT
+        token = create_access_token(
+            {"sub": str(user.id), "type": "password_reset"},
+            expires_delta=timedelta(hours=1)
+        )
+        # TODO: Send email with token (email service not yet configured)
+        # For now, return token in response for testing
+        return {"message": "If this email exists, a reset link has been sent.", "debug_token": token}
+    return {"message": "If this email exists, a reset link has been sent."}
+
+@router.post("/reset-password")
+def reset_password(data: ResetPasswordRequest, db: Session = Depends(get_db)):
+    try:
+        payload = jwt.decode(data.token, SECRET_KEY, algorithms=[ALGORITHM], options={"verify_sub": False})
+        if payload.get("type") != "password_reset":
+            raise HTTPException(status_code=400, detail="Invalid reset token")
+        user_id = int(payload.get("sub"))
+    except (JWTError, ValueError):
+        raise HTTPException(status_code=400, detail="Invalid or expired reset token")
+
+    user = db.query(models.User).filter(models.User.id == user_id).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    if len(data.new_password) < 8:
+        raise HTTPException(status_code=400, detail="Password must be at least 8 characters")
+
+    user.password_hash = get_password_hash(data.new_password)
+    db.commit()
+    return {"message": "Password reset successful"}
 
 # ── OTP endpoints ────────────────────────────────────────────────────────────
 

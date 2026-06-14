@@ -21,7 +21,10 @@ def platform_stats(admin=Depends(get_current_admin), db: Session = Depends(get_d
     premium_subs = db.query(func.count(models.Subscription.id)).filter(models.Subscription.plan == "premium").scalar() or 0
     family_subs = db.query(func.count(models.Subscription.id)).filter(models.Subscription.plan == "family").scalar() or 0
     total_payments = db.query(func.coalesce(func.sum(models.Payment.amount), 0)).filter(models.Payment.status == "success").scalar() or 0
-    mrr = (premium_subs * 299) + (family_subs * 499)
+    # Compute MRR from actual subscription prices instead of hardcoded values
+    mrr = db.query(func.coalesce(func.sum(models.Subscription.price_inr), 0)).filter(
+        models.Subscription.status == "active"
+    ).scalar() or 0
     total_support = db.query(func.count(models.SupportTicket.id)).scalar() or 0
     open_tickets = db.query(func.count(models.SupportTicket.id)).filter(models.SupportTicket.status == "open").scalar() or 0
     return {
@@ -42,31 +45,48 @@ def all_users(skip: int = 0, limit: int = 50, search: str = "", admin=Depends(ge
         q = q.filter((models.User.name.ilike(f"%{search}%")) | (models.User.email.ilike(f"%{search}%")))
     total = q.count()
     users = q.order_by(desc(models.User.created_at)).offset(skip).limit(limit).all()
+    user_ids = [u.id for u in users]
+
+    # Single query: device counts grouped by user_id
+    device_counts = dict(
+        db.query(models.Device.user_id, func.count(models.Device.id))
+        .filter(models.Device.user_id.in_(user_ids))
+        .group_by(models.Device.user_id)
+        .all()
+    )
+
+    # Single query: family memberships + family names for these users
+    family_rows = (
+        db.query(models.FamilyMember.user_id, models.Family.name)
+        .join(models.Family, models.Family.id == models.FamilyMember.family_id)
+        .filter(models.FamilyMember.user_id.in_(user_ids))
+        .all()
+    )
+    family_names = {row.user_id: row.name for row in family_rows}
+
     result = []
     for u in users:
-        fam = db.query(models.FamilyMember).filter(models.FamilyMember.user_id == u.id).first()
-        family_name = None
-        if fam:
-            f = db.query(models.Family).filter(models.Family.id == fam.family_id).first()
-            family_name = f.name if f else None
-        dev_count = db.query(func.count(models.Device.id)).filter(models.Device.user_id == u.id).scalar()
         result.append({
             "id": u.id, "name": u.name, "email": u.email, "phone": u.phone,
             "role": u.role, "is_active": u.is_active,
-            "family_name": family_name, "device_count": dev_count,
+            "family_name": family_names.get(u.id),
+            "device_count": device_counts.get(u.id, 0),
             "created_at": u.created_at.isoformat() if u.created_at else None,
         })
     return {"total": total, "users": result}
 
 @router.get("/sos")
 def sos_alerts(status: str = "all", limit: int = 50, admin=Depends(get_current_admin), db: Session = Depends(get_db)):
-    q = db.query(models.SOSAlert)
-    if status != "all": q = q.filter(models.SOSAlert.status == status)
-    alerts = q.order_by(desc(models.SOSAlert.triggered_at)).limit(limit).all()
+    q = (
+        db.query(models.SOSAlert, models.User, models.Family)
+        .join(models.User, models.User.id == models.SOSAlert.user_id)
+        .join(models.Family, models.Family.id == models.SOSAlert.family_id)
+    )
+    if status != "all":
+        q = q.filter(models.SOSAlert.status == status)
+    rows = q.order_by(desc(models.SOSAlert.triggered_at)).limit(limit).all()
     result = []
-    for a in alerts:
-        user = db.query(models.User).filter(models.User.id == a.user_id).first()
-        family = db.query(models.Family).filter(models.Family.id == a.family_id).first()
+    for a, user, family in rows:
         result.append({
             "id": a.id, "status": a.status, "lat": a.lat, "lng": a.lng,
             "place_name": a.place_name, "message": a.message,
@@ -80,13 +100,19 @@ def sos_alerts(status: str = "all", limit: int = 50, admin=Depends(get_current_a
 
 @router.get("/revenue")
 def revenue_stats(admin=Depends(get_current_admin), db: Session = Depends(get_db)):
-    payments = db.query(models.Payment).order_by(desc(models.Payment.created_at)).limit(100).all()
     total_success = db.query(func.coalesce(func.sum(models.Payment.amount), 0)).filter(models.Payment.status == "success").scalar() or 0
     total_count = db.query(func.count(models.Payment.id)).scalar() or 0
     success_count = db.query(func.count(models.Payment.id)).filter(models.Payment.status == "success").scalar() or 0
+    # Single JOIN query: payments + user in one round-trip
+    rows = (
+        db.query(models.Payment, models.User)
+        .join(models.User, models.User.id == models.Payment.user_id)
+        .order_by(desc(models.Payment.created_at))
+        .limit(100)
+        .all()
+    )
     result = []
-    for p in payments:
-        user = db.query(models.User).filter(models.User.id == p.user_id).first()
+    for p, user in rows:
         result.append({
             "id": p.id, "amount": p.amount, "currency": p.currency,
             "gateway": p.gateway, "status": p.status,
@@ -102,10 +128,15 @@ def revenue_stats(admin=Depends(get_current_admin), db: Session = Depends(get_db
 
 @router.get("/subscriptions")
 def all_subscriptions(admin=Depends(get_current_admin), db: Session = Depends(get_db)):
-    subs = db.query(models.Subscription).order_by(desc(models.Subscription.started_at)).all()
+    # Single JOIN query: subscriptions + family names in one round-trip
+    rows = (
+        db.query(models.Subscription, models.Family)
+        .join(models.Family, models.Family.id == models.Subscription.family_id)
+        .order_by(desc(models.Subscription.started_at))
+        .all()
+    )
     result = []
-    for s in subs:
-        family = db.query(models.Family).filter(models.Family.id == s.family_id).first()
+    for s, family in rows:
         result.append({
             "id": s.id, "plan": s.plan, "status": s.status,
             "price_inr": s.price_inr, "payment_method": s.payment_method,

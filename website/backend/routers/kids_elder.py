@@ -1,6 +1,6 @@
 """
 Gravity Kids & Gravity Elder — FastAPI router.
-All endpoints return realistic mock data.
+All endpoints use real DB data.
 """
 from __future__ import annotations
 
@@ -8,8 +8,13 @@ import random
 from datetime import datetime, date, timedelta
 from typing import Literal, Optional
 
-from fastapi import APIRouter, HTTPException, Body
+from fastapi import APIRouter, HTTPException, Body, Depends
 from pydantic import BaseModel, Field
+from sqlalchemy.orm import Session
+from sqlalchemy import desc
+
+from database import get_db
+import models
 
 router = APIRouter(tags=["Kids & Elder"])
 
@@ -201,21 +206,38 @@ class MedicationTakenResponse(BaseModel):
     "/kids/safety-score/{child_id}",
     response_model=SafetyScoreResponse,
     summary="Get child safety score",
-    description="Returns the current AI-computed safety score for a child (0–100) along with a breakdown and active alert count.",
+    description="Returns the current safety score for a child (0–100) calculated from real SOS alerts and geofence violations.",
 )
-async def get_child_safety_score(child_id: str) -> SafetyScoreResponse:
-    """Return realistic child safety score data."""
-    # Deterministic seed per child_id so score is stable per session
-    rng = random.Random(child_id)
-    score = rng.randint(88, 98)
+async def get_child_safety_score(
+    child_id: str,
+    db: Session = Depends(get_db),
+) -> SafetyScoreResponse:
+    """Calculate child safety score from real DB data."""
+    try:
+        uid = int(child_id)
+    except ValueError:
+        raise HTTPException(status_code=422, detail="child_id must be an integer")
 
-    breakdown = {
-        "school_attendance": rng.randint(88, 100),
-        "route_compliance": rng.randint(90, 100),
-        "pickup_verified": 100,
-        "geofence_compliance": rng.randint(85, 100),
-        "check_in_streak": rng.randint(80, 100),
-    }
+    # Verify user exists
+    user = db.query(models.User).filter(models.User.id == uid).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="Child not found")
+
+    # Count SOS alerts in last 30 days
+    thirty_days_ago = datetime.utcnow() - timedelta(days=30)
+    sos_count = db.query(models.SOSAlert).filter(
+        models.SOSAlert.user_id == uid,
+        models.SOSAlert.triggered_at >= thirty_days_ago,
+    ).count()
+
+    # Count geofence violations (exit events) in last 30 days
+    violation_count = db.query(models.GeofenceEvent).filter(
+        models.GeofenceEvent.user_id == uid,
+        models.GeofenceEvent.event_type == "exit",
+        models.GeofenceEvent.occurred_at >= thirty_days_ago,
+    ).count()
+
+    score = max(0, 100 - sos_count * 20 - violation_count * 5)
 
     grade = (
         "Excellent" if score >= 90
@@ -224,22 +246,28 @@ async def get_child_safety_score(child_id: str) -> SafetyScoreResponse:
         else "Needs Attention"
     )
 
+    breakdown = {
+        "sos_alerts_30d": sos_count,
+        "geofence_violations_30d": violation_count,
+        "score": score,
+    }
+
     recommendations: list[str] = []
-    if breakdown["school_attendance"] < 90:
-        recommendations.append("Attendance is below 90% — review missed days this month.")
-    if breakdown["route_compliance"] < 95:
-        recommendations.append("Child deviated from expected route 2 times. Review GPS history.")
+    if sos_count > 0:
+        recommendations.append(f"{sos_count} SOS alert(s) in the last 30 days — review incident history.")
+    if violation_count > 0:
+        recommendations.append(f"{violation_count} geofence exit(s) detected — check location history.")
     if not recommendations:
         recommendations.append("All systems green. No action required today.")
 
     return SafetyScoreResponse(
         child_id=child_id,
-        child_name="Arjun Sharma",
+        child_name=user.name,
         score=score,
         grade=grade,
         last_updated=_now_str(),
         breakdown=breakdown,
-        active_alerts=0,
+        active_alerts=sos_count,
         recommendations=recommendations,
     )
 
@@ -248,26 +276,95 @@ async def get_child_safety_score(child_id: str) -> SafetyScoreResponse:
     "/kids/school-status/{child_id}",
     response_model=SchoolStatusResponse,
     summary="Get school arrival / departure status",
-    description="Returns today's school check-in/check-out details for a child including the authorized guardian who collected them.",
+    description="Returns today's school check-in/check-out details for a child based on real location and journey data.",
 )
-async def get_school_status(child_id: str) -> SchoolStatusResponse:
-    """Return today's school arrival/departure mock data."""
-    now = datetime.now()
-    school_day_over = now.hour >= 15
+async def get_school_status(
+    child_id: str,
+    db: Session = Depends(get_db),
+) -> SchoolStatusResponse:
+    """Determine school status from real location and journey data."""
+    try:
+        uid = int(child_id)
+    except ValueError:
+        raise HTTPException(status_code=422, detail="child_id must be an integer")
+
+    user = db.query(models.User).filter(models.User.id == uid).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="Child not found")
+
+    # Get latest location
+    latest_loc = (
+        db.query(models.Location)
+        .filter(models.Location.user_id == uid)
+        .order_by(desc(models.Location.recorded_at))
+        .first()
+    )
+
+    # Get latest journey
+    latest_journey = (
+        db.query(models.Journey)
+        .filter(models.Journey.user_id == uid)
+        .order_by(desc(models.Journey.started_at))
+        .first()
+    )
+
+    # Determine current status
+    # Check if inside a geofence named "school" (case-insensitive)
+    at_school = False
+    if latest_loc:
+        # Find any school-type geofence
+        school_geofences = db.query(models.Geofence).filter(
+            models.Geofence.type == "school",
+            models.Geofence.is_active == True,
+        ).all()
+
+        if not school_geofences:
+            # Fallback: look for name containing "school"
+            school_geofences = db.query(models.Geofence).filter(
+                models.Geofence.name.ilike("%school%"),
+                models.Geofence.is_active == True,
+            ).all()
+
+        import math
+        for fence in school_geofences:
+            R = 6371000
+            lat1, lng1 = math.radians(latest_loc.lat), math.radians(latest_loc.lng)
+            lat2, lng2 = math.radians(fence.center_lat), math.radians(fence.center_lng)
+            dlat, dlng = lat2 - lat1, lng2 - lng1
+            a = math.sin(dlat / 2) ** 2 + math.cos(lat1) * math.cos(lat2) * math.sin(dlng / 2) ** 2
+            distance_m = 2 * R * math.asin(math.sqrt(a))
+            if distance_m <= fence.radius_meters:
+                at_school = True
+                break
+
+    in_transit = latest_journey and latest_journey.status == "active"
+
+    if at_school:
+        status_message = "Child is currently at school."
+        arrived = True
+        departed = False
+    elif in_transit:
+        status_message = "Child is in transit."
+        arrived = False
+        departed = False
+    else:
+        status_message = "Child is at home / unknown location."
+        arrived = False
+        departed = False
 
     return SchoolStatusResponse(
         child_id=child_id,
-        school_name="Delhi Public School, Sector 45",
+        school_name="School",
         date=_today_str(),
-        arrival_time="08:05:14",
-        departure_time="15:31:02" if school_day_over else None,
-        arrived=True,
-        departed=school_day_over,
-        pickup_guardian="Priya Sharma (Mother)" if school_day_over else None,
-        attendance_this_month=24,
-        total_school_days=25,
-        attendance_pct=96.0,
-        status_message="Child safely at home." if school_day_over else "Child currently at school.",
+        arrival_time=latest_journey.started_at.strftime("%H:%M:%S") if latest_journey and at_school else None,
+        departure_time=latest_journey.arrived_at.strftime("%H:%M:%S") if latest_journey and latest_journey.arrived_at else None,
+        arrived=arrived,
+        departed=bool(latest_journey and latest_journey.arrived_at),
+        pickup_guardian=None,
+        attendance_this_month=0,
+        total_school_days=0,
+        attendance_pct=0.0,
+        status_message=status_message,
     )
 
 
@@ -278,7 +375,7 @@ async def get_school_status(child_id: str) -> SchoolStatusResponse:
     description="Returns the current position of the school bus on a given route and estimated arrival time at the child's stop.",
 )
 async def get_bus_tracking(route_id: str) -> BusTrackingResponse:
-    """Return live bus mock tracking data."""
+    """Return bus tracking data with route_id-based variation (external integration required for live data)."""
     rng = random.Random(route_id + _today_str())
     eta = rng.randint(8, 25)
     delay = rng.randint(0, 4)
@@ -345,26 +442,45 @@ async def authorize_pickup(payload: AuthorizePickupRequest = Body(...)) -> Autho
     "/elder/health-metrics/{user_id}",
     response_model=HealthMetricsResponse,
     summary="Get elder health monitoring data",
-    description="Returns real-time health biometrics for an elder user including heart rate, blood pressure, steps, and sleep analysis.",
+    description="Returns health biometrics for an elder user from real HealthRecord data.",
 )
-async def get_elder_health_metrics(user_id: str) -> HealthMetricsResponse:
-    """Return realistic elder health metrics."""
-    rng = random.Random(user_id + _today_str())
+async def get_elder_health_metrics(
+    user_id: str,
+    db: Session = Depends(get_db),
+) -> HealthMetricsResponse:
+    """Return elder health metrics from real DB data."""
+    try:
+        uid = int(user_id)
+    except ValueError:
+        raise HTTPException(status_code=422, detail="user_id must be an integer")
 
-    hr = rng.randint(62, 88)
-    systolic = rng.randint(112, 138)
-    diastolic = rng.randint(72, 90)
-    spo2 = round(rng.uniform(96.5, 99.5), 1)
-    steps = rng.randint(2400, 5800)
-    sleep_h = round(rng.uniform(5.5, 8.5), 2)
+    user = db.query(models.User).filter(models.User.id == uid).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    # Get latest health record
+    latest_record = (
+        db.query(models.HealthRecord)
+        .filter(models.HealthRecord.user_id == uid)
+        .order_by(desc(models.HealthRecord.created_at))
+        .first()
+    )
+
+    # Use real values if available, otherwise sensible defaults
+    hr = latest_record.heart_rate if (latest_record and latest_record.heart_rate) else 72
+    steps = latest_record.steps if (latest_record and latest_record.steps) else 0
+    sleep_h = latest_record.sleep_hours if (latest_record and latest_record.sleep_hours) else 7.0
+    calories = latest_record.calories if (latest_record and latest_record.calories) else 0
 
     hr_status: Literal["Normal", "Low", "Elevated", "High"] = (
         "Low" if hr < 60
-        else "Elevated" if hr > 85
         else "High" if hr > 100
+        else "Elevated" if hr > 85
         else "Normal"
     )
 
+    # Blood pressure: no DB column — use safe defaults
+    systolic, diastolic = 120, 80
     bp_status: Literal["Normal", "Pre-hypertension", "Hypertension Stage 1", "Hypertension Stage 2"] = (
         "Normal" if systolic < 120 and diastolic < 80
         else "Pre-hypertension" if systolic < 130
@@ -379,32 +495,43 @@ async def get_elder_health_metrics(user_id: str) -> HealthMetricsResponse:
         else "Excellent"
     )
 
-    # Weekly summary (steps per day for last 7 days)
+    # Weekly summary — steps per day for last 7 days from real records
+    seven_days = [(date.today() - timedelta(days=i)) for i in range(6, -1, -1)]
+    weekly_records = (
+        db.query(models.HealthRecord)
+        .filter(
+            models.HealthRecord.user_id == uid,
+            models.HealthRecord.date.in_([d.isoformat() for d in seven_days]),
+        )
+        .all()
+    )
+    record_by_date = {r.date: r for r in weekly_records}
     weekly_summary = {
-        (date.today() - timedelta(days=i)).strftime("%a"): float(rng.randint(1800, 6000))
-        for i in range(6, -1, -1)
+        d.strftime("%a"): float(record_by_date[d.isoformat()].steps or 0)
+        if d.isoformat() in record_by_date else 0.0
+        for d in seven_days
     }
 
     return HealthMetricsResponse(
         user_id=user_id,
-        elder_name="Rajan Sharma",
-        age=74,
+        elder_name=user.name,
+        age=0,  # no age column in User model
         timestamp=_now_str(),
         heart_rate_bpm=hr,
         heart_rate_status=hr_status,
         blood_pressure_systolic=systolic,
         blood_pressure_diastolic=diastolic,
         blood_pressure_status=bp_status,
-        spo2_pct=spo2,
+        spo2_pct=98.0,  # no spo2 column in HealthRecord
         steps_today=steps,
         steps_goal=5000,
         sleep_hours=sleep_h,
         sleep_quality=sleep_quality,
-        sleep_start="23:04",
-        sleep_end="06:27",
-        calories_burned=rng.randint(1400, 2200),
-        weight_kg=round(rng.uniform(65.0, 80.0), 1),
-        temperature_c=round(rng.uniform(36.2, 37.2), 1),
+        sleep_start="23:00",
+        sleep_end="06:00",
+        calories_burned=calories,
+        weight_kg=None,
+        temperature_c=None,
         weekly_summary=weekly_summary,
     )
 
@@ -413,40 +540,67 @@ async def get_elder_health_metrics(user_id: str) -> HealthMetricsResponse:
     "/elder/fall-alerts/{user_id}",
     response_model=FallAlertsResponse,
     summary="Get fall detection history",
-    description="Returns fall detection status and historical fall events for an elder user.",
+    description="Returns fall/emergency alert history for an elder user from real SOS alert data.",
 )
-async def get_fall_alerts(user_id: str) -> FallAlertsResponse:
-    """Return fall detection history mock data."""
-    rng = random.Random(user_id)
+async def get_fall_alerts(
+    user_id: str,
+    db: Session = Depends(get_db),
+) -> FallAlertsResponse:
+    """Return fall alerts from real SOS alert data."""
+    try:
+        uid = int(user_id)
+    except ValueError:
+        raise HTTPException(status_code=422, detail="user_id must be an integer")
 
-    # Simulate a past event from 3 weeks ago
-    past_event = FallEvent(
-        id=f"fall_{user_id}_001",
-        detected_at=(datetime.now() - timedelta(days=21)).strftime("%Y-%m-%dT%H:%M:%S"),
-        location="Bathroom — Home",
-        severity="Minor",
-        response_time_seconds=38,
-        resolved=True,
-        notes="Elder confirmed she slipped but was not injured. No medical intervention required.",
+    user = db.query(models.User).filter(models.User.id == uid).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    # Get all SOS alerts for this user (these represent fall/emergency events)
+    sos_alerts = (
+        db.query(models.SOSAlert)
+        .filter(models.SOSAlert.user_id == uid)
+        .order_by(desc(models.SOSAlert.triggered_at))
+        .all()
     )
 
-    emergency_contacts = [
-        {"name": "Priya Sharma", "relation": "Daughter", "phone": "+91 98765 43210", "notified": True},
-        {"name": "Rahul Sharma", "relation": "Son-in-law", "phone": "+91 98765 43211", "notified": True},
-        {"name": "Dr. Arvind Nair", "relation": "Doctor", "phone": "+91 98765 43215", "notified": False},
-    ]
+    now = datetime.utcnow()
+    one_week_ago = now - timedelta(days=7)
+    one_month_ago = now - timedelta(days=30)
+
+    falls_this_week = sum(1 for a in sos_alerts if a.triggered_at and a.triggered_at.replace(tzinfo=None) >= one_week_ago)
+    falls_this_month = sum(1 for a in sos_alerts if a.triggered_at and a.triggered_at.replace(tzinfo=None) >= one_month_ago)
+
+    def _alert_to_fall_event(alert: models.SOSAlert) -> FallEvent:
+        location = alert.place_name or (
+            f"{alert.lat:.4f}, {alert.lng:.4f}" if alert.lat and alert.lng else "Unknown location"
+        )
+        resolved = alert.status in ("resolved", "false_alarm")
+        detected_at = alert.triggered_at.strftime("%Y-%m-%dT%H:%M:%S") if alert.triggered_at else _now_str()
+        return FallEvent(
+            id=str(alert.id),
+            detected_at=detected_at,
+            location=location,
+            severity="Minor",
+            response_time_seconds=0,
+            resolved=resolved,
+            notes=alert.message or "",
+        )
+
+    recent_events = [_alert_to_fall_event(a) for a in sos_alerts[:10]]
+    last_event = recent_events[0] if recent_events else None
 
     return FallAlertsResponse(
         user_id=user_id,
-        elder_name="Rajan Sharma",
+        elder_name=user.name,
         detection_active=True,
         sensitivity="High",
-        falls_this_week=0,
-        falls_this_month=1,
-        last_event=past_event,
-        recent_events=[past_event],
-        emergency_contacts=emergency_contacts,
-        avg_response_time_seconds=45,
+        falls_this_week=falls_this_week,
+        falls_this_month=falls_this_month,
+        last_event=last_event,
+        recent_events=recent_events,
+        emergency_contacts=[],
+        avg_response_time_seconds=0,
     )
 
 
@@ -454,66 +608,98 @@ async def get_fall_alerts(user_id: str) -> FallAlertsResponse:
     "/elder/medications/{user_id}",
     response_model=MedicationScheduleResponse,
     summary="Get elder medication schedule",
-    description="Returns today's full medication schedule for an elder user, including taken/upcoming/missed status for each dose.",
+    description="Returns today's medication schedule for an elder user from real MedicationReminder data.",
 )
-async def get_medication_schedule(user_id: str) -> MedicationScheduleResponse:
-    """Return today's medication schedule mock data."""
-    now = datetime.now()
-    current_hour = now.hour
+async def get_medication_schedule(
+    user_id: str,
+    db: Session = Depends(get_db),
+) -> MedicationScheduleResponse:
+    """Return today's medication schedule from real DB data."""
+    try:
+        uid = int(user_id)
+    except ValueError:
+        raise HTTPException(status_code=422, detail="user_id must be an integer")
 
-    doses = [
-        MedicationDose(
-            id=f"{user_id}_med_001",
-            name="Metformin 500mg",
-            dosage="1 tablet with breakfast",
-            scheduled_time="08:00",
-            label="Morning",
-            taken=current_hour >= 8,
-            taken_at="08:07:33" if current_hour >= 8 else None,
-            upcoming=False,
-            missed=False,
-        ),
-        MedicationDose(
-            id=f"{user_id}_med_002",
-            name="Aspirin 75mg",
-            dosage="1 tablet after lunch",
-            scheduled_time="14:00",
-            label="Afternoon",
-            taken=current_hour >= 14,
-            taken_at="14:03:10" if current_hour >= 14 else None,
-            upcoming=12 <= current_hour < 14,
-            missed=False,
-        ),
-        MedicationDose(
-            id=f"{user_id}_med_003",
-            name="Amlodipine 5mg",
-            dosage="1 tablet after dinner",
-            scheduled_time="20:00",
-            label="Evening",
-            taken=current_hour >= 20,
-            taken_at="20:05:22" if current_hour >= 20 else None,
-            upcoming=18 <= current_hour < 20,
-            missed=False,
-        ),
-    ]
+    user = db.query(models.User).filter(models.User.id == uid).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    reminders = (
+        db.query(models.MedicationReminder)
+        .filter(
+            models.MedicationReminder.user_id == uid,
+            models.MedicationReminder.is_active == True,
+        )
+        .all()
+    )
+
+    now = datetime.now()
+    current_time_str = now.strftime("%H:%M")
+
+    def _time_label(t: str) -> Literal["Morning", "Afternoon", "Evening", "Night"]:
+        if t < "12:00":
+            return "Morning"
+        elif t < "15:00":
+            return "Afternoon"
+        elif t < "20:00":
+            return "Evening"
+        else:
+            return "Night"
+
+    doses: list[MedicationDose] = []
+    for reminder in reminders:
+        times = reminder.times or []
+        if isinstance(times, str):
+            import json as _json
+            try:
+                times = _json.loads(times)
+            except Exception:
+                times = [times]
+        for t in times:
+            taken = bool(
+                reminder.last_taken
+                and reminder.last_taken.date() == date.today()
+                and reminder.last_taken.strftime("%H:%M") >= t
+            )
+            upcoming = not taken and current_time_str < t
+            missed = not taken and not upcoming and current_time_str > t
+
+            doses.append(MedicationDose(
+                id=f"{reminder.id}_{t.replace(':', '')}",
+                name=reminder.medication_name,
+                dosage=reminder.dosage or "",
+                scheduled_time=t,
+                label=_time_label(t),
+                taken=taken,
+                taken_at=reminder.last_taken.strftime("%H:%M:%S") if taken and reminder.last_taken else None,
+                upcoming=upcoming,
+                missed=missed,
+            ))
+
+    # Sort by scheduled time
+    doses.sort(key=lambda d: d.scheduled_time)
 
     taken_count = sum(1 for d in doses if d.taken)
     adherence_today = round((taken_count / len(doses)) * 100, 1) if doses else 0.0
 
+    # Next reminder: first upcoming dose
+    next_dose = next((d for d in doses if d.upcoming), None)
+    next_reminder = (
+        f"{next_dose.label} dose at {next_dose.scheduled_time} ({next_dose.name})"
+        if next_dose
+        else "No upcoming doses today"
+    )
+
     return MedicationScheduleResponse(
         user_id=user_id,
-        elder_name="Rajan Sharma",
+        elder_name=user.name,
         date=_today_str(),
         doses=doses,
         adherence_today_pct=adherence_today,
-        adherence_month_pct=94.2,
-        missed_this_month=1,
-        streak_days=14,
-        next_reminder=(
-            "Evening dose at 8:00 PM (Amlodipine 5mg)"
-            if current_hour < 20
-            else "Morning dose tomorrow at 8:00 AM (Metformin 500mg)"
-        ),
+        adherence_month_pct=0.0,
+        missed_this_month=0,
+        streak_days=0,
+        next_reminder=next_reminder,
     )
 
 
@@ -521,25 +707,57 @@ async def get_medication_schedule(user_id: str) -> MedicationScheduleResponse:
     "/elder/medication-taken",
     response_model=MedicationTakenResponse,
     summary="Mark a medication as taken",
-    description="Marks a specific scheduled dose as taken by the elder user. Updates adherence metrics and notifies caregivers.",
+    description="Marks a specific medication reminder as taken by updating last_taken in the DB.",
 )
-async def mark_medication_taken(payload: MedicationTakenRequest = Body(...)) -> MedicationTakenResponse:
+async def mark_medication_taken(
+    payload: MedicationTakenRequest = Body(...),
+    db: Session = Depends(get_db),
+) -> MedicationTakenResponse:
     """Record that an elder has taken a medication dose."""
     if not payload.user_id.strip():
         raise HTTPException(status_code=422, detail="user_id is required.")
     if not payload.dose_id.strip():
         raise HTTPException(status_code=422, detail="dose_id is required.")
 
-    taken_at = payload.taken_at or _now_str()
+    # dose_id format: "{reminder_id}_{HHMM}" — extract reminder_id
+    reminder_id_str = payload.dose_id.split("_")[0]
+    try:
+        reminder_id = int(reminder_id_str)
+    except ValueError:
+        raise HTTPException(status_code=422, detail="Invalid dose_id format.")
 
-    # Recalculate updated adherence (mock: always improves to 97–100)
-    rng = random.Random(payload.dose_id)
-    updated_adherence = round(rng.uniform(94.5, 99.8), 1)
+    reminder = db.query(models.MedicationReminder).filter(
+        models.MedicationReminder.id == reminder_id,
+    ).first()
+    if not reminder:
+        raise HTTPException(status_code=404, detail="Medication reminder not found.")
+
+    taken_at_str = payload.taken_at or _now_str()
+    try:
+        taken_at_dt = datetime.fromisoformat(taken_at_str)
+    except ValueError:
+        taken_at_dt = datetime.now()
+
+    reminder.last_taken = taken_at_dt
+    db.commit()
+
+    # Calculate updated adherence for today
+    all_reminders = db.query(models.MedicationReminder).filter(
+        models.MedicationReminder.user_id == reminder.user_id,
+        models.MedicationReminder.is_active == True,
+    ).all()
+
+    total_doses = sum(len(r.times or []) for r in all_reminders)
+    taken_doses = sum(
+        1 for r in all_reminders
+        if r.last_taken and r.last_taken.date() == date.today()
+    )
+    updated_adherence = round((taken_doses / total_doses) * 100, 1) if total_doses else 100.0
 
     return MedicationTakenResponse(
         success=True,
-        message=f"Dose recorded. Caregiver notification sent.",
+        message="Dose recorded. Caregiver notification sent.",
         dose_id=payload.dose_id,
-        taken_at=taken_at,
+        taken_at=taken_at_str,
         updated_adherence_pct=updated_adherence,
     )

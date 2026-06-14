@@ -303,28 +303,19 @@ export function SpeedViolationsSection() {
       </div>
 
       {/* Map placeholder */}
-      <Card style={{ marginBottom: 24, minHeight: 140 }}>
+      <Card style={{ marginBottom: 24, minHeight: 300 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12 }}>
           <BarChart2 size={16} color="var(--gold)" />
           <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--text-primary)' }}>Violation Heatmap</div>
         </div>
-        <div style={{
-          height: 100,
-          background: 'var(--bg-surface2)',
-          borderRadius: 8,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          border: '1px dashed var(--border)',
-        }}>
-          <div style={{ textAlign: 'center' }}>
-            <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>Live map — hotspots in Mumbai, Delhi, Bangalore</div>
-            <div style={{ display: 'flex', gap: 16, justifyContent: 'center', marginTop: 8 }}>
-              {['Mumbai (312)', 'Delhi (289)', 'Bangalore (198)', 'Hyderabad (145)'].map(c => (
-                <span key={c} style={{ fontSize: 11, color: '#EF4444', fontWeight: 600 }}>{c}</span>
-              ))}
-            </div>
-          </div>
+        <div style={{ height: 250, width: '100%', minHeight: 250 }}>
+          {typeof window !== 'undefined' && (
+            <iframe
+              src="https://www.openstreetmap.org/export/embed.html?bbox=72.7,18.9,72.9,19.1&layer=mapnik"
+              style={{ width: '100%', height: '100%', border: 'none', borderRadius: 8 }}
+              title="Driving Safety Map"
+            />
+          )}
         </div>
       </Card>
 

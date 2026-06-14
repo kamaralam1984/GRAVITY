@@ -1700,22 +1700,14 @@ export function EmergencySection() {
       </div>
 
       {/* Map placeholder */}
-      <div style={{
-        background: 'var(--bg-surface)',
-        border: '1px solid var(--border)',
-        borderRadius: 12,
-        height: 120,
-        marginBottom: 16,
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        gap: 10,
-        color: 'var(--text-muted)',
-        fontSize: 13,
-      }}>
-        <Map size={18} color="var(--text-muted)" />
-        <span>Live emergency map — 23 active incidents across India</span>
-        <span style={{ background: '#EF444420', color: '#EF4444', border: '1px solid #EF444433', fontSize: 11, fontWeight: 600, padding: '2px 8px', borderRadius: 99 }}>3 Critical</span>
+      <div style={{ height: 300, width: '100%', minHeight: 300, marginBottom: 16, borderRadius: 12, overflow: 'hidden' }}>
+        {typeof window !== 'undefined' && (
+          <iframe
+            src="https://www.openstreetmap.org/export/embed.html?bbox=72.7,18.9,72.9,19.1&layer=mapnik"
+            style={{ width: '100%', height: '100%', border: 'none', borderRadius: 8 }}
+            title="Family Location Map"
+          />
+        )}
       </div>
 
       <div style={{ background: 'var(--bg-surface)', border: '1px solid var(--border)', borderRadius: 12, overflow: 'hidden' }}>

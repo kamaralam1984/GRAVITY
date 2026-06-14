@@ -42,7 +42,9 @@ def dashboard_stats(admin=Depends(get_current_admin), db: Session = Depends(get_
 
     premium_subs = db.query(func.count(models.Subscription.id)).filter(models.Subscription.plan == "premium").scalar()
     family_subs = db.query(func.count(models.Subscription.id)).filter(models.Subscription.plan == "family").scalar()
-    mrr = (premium_subs * 299) + (family_subs * 499)
+    mrr = db.query(func.coalesce(func.sum(models.Subscription.price_inr), 0)).filter(
+        models.Subscription.status == "active"
+    ).scalar() or 0
 
     recent_sos = db.query(models.SOSAlert).order_by(desc(models.SOSAlert.triggered_at)).limit(5).all()
     recent_families = db.query(models.Family).order_by(desc(models.Family.created_at)).limit(5).all()
@@ -71,15 +73,32 @@ def list_families(skip: int = 0, limit: int = 20, plan: Optional[str] = None, ad
     q = db.query(models.Family)
     if plan:
         q = q.filter(models.Family.plan == plan)
-    families = q.offset(skip).limit(limit).all()
     total = db.query(func.count(models.Family.id)).scalar()
+    families = q.offset(skip).limit(limit).all()
+    family_ids = [f.id for f in families]
+
+    # Single query: member counts grouped by family_id
+    member_counts = dict(
+        db.query(models.FamilyMember.family_id, func.count(models.FamilyMember.id))
+        .filter(models.FamilyMember.family_id.in_(family_ids))
+        .group_by(models.FamilyMember.family_id)
+        .all()
+    )
+
+    # Single query: subscriptions for these families
+    subs = {
+        s.family_id: s
+        for s in db.query(models.Subscription)
+        .filter(models.Subscription.family_id.in_(family_ids))
+        .all()
+    }
+
     result = []
     for f in families:
-        member_count = db.query(func.count(models.FamilyMember.id)).filter(models.FamilyMember.family_id == f.id).scalar()
-        sub = db.query(models.Subscription).filter(models.Subscription.family_id == f.id).first()
+        sub = subs.get(f.id)
         result.append({
             "id": f.id, "name": f.name, "plan": f.plan,
-            "member_count": member_count,
+            "member_count": member_counts.get(f.id, 0),
             "created_at": f.created_at.isoformat() if f.created_at else None,
             "monthly_spend": sub.price_inr if sub else 0,
             "status": "active",
@@ -88,18 +107,17 @@ def list_families(skip: int = 0, limit: int = 20, plan: Optional[str] = None, ad
 
 @router.get("/devices")
 def list_devices(skip: int = 0, limit: int = 20, status: Optional[str] = None, admin=Depends(get_current_admin), db: Session = Depends(get_db)):
-    q = db.query(models.Device)
+    q = db.query(models.Device, models.User).join(models.User, models.User.id == models.Device.user_id)
     if status == "online":
         q = q.filter(models.Device.is_online == True)
     elif status == "offline":
         q = q.filter(models.Device.is_online == False)
     elif status == "low_battery":
         q = q.filter(models.Device.battery_level < 20)
-    devices = q.offset(skip).limit(limit).all()
     total = db.query(func.count(models.Device.id)).scalar()
+    rows = q.offset(skip).limit(limit).all()
     result = []
-    for d in devices:
-        user = db.query(models.User).filter(models.User.id == d.user_id).first()
+    for d, user in rows:
         result.append({
             "id": d.id, "device_name": d.device_name, "os": d.os,
             "os_version": d.os_version, "app_version": d.app_version,
@@ -112,14 +130,16 @@ def list_devices(skip: int = 0, limit: int = 20, status: Optional[str] = None, a
 
 @router.get("/sos-alerts")
 def list_sos_alerts(status: Optional[str] = None, admin=Depends(get_current_admin), db: Session = Depends(get_db)):
-    q = db.query(models.SOSAlert)
+    q = (
+        db.query(models.SOSAlert, models.User, models.Family)
+        .join(models.User, models.User.id == models.SOSAlert.user_id)
+        .join(models.Family, models.Family.id == models.SOSAlert.family_id)
+    )
     if status:
         q = q.filter(models.SOSAlert.status == status)
-    alerts = q.order_by(desc(models.SOSAlert.triggered_at)).all()
+    rows = q.order_by(desc(models.SOSAlert.triggered_at)).all()
     result = []
-    for a in alerts:
-        user = db.query(models.User).filter(models.User.id == a.user_id).first()
-        family = db.query(models.Family).filter(models.Family.id == a.family_id).first()
+    for a, user, family in rows:
         result.append({
             "id": a.id, "status": a.status, "place_name": a.place_name,
             "lat": a.lat, "lng": a.lng, "message": a.message,
@@ -217,20 +237,34 @@ def list_users(
         q = q.filter(models.User.is_active == False)
     total = q.count()
     users = q.order_by(desc(models.User.created_at)).offset(skip).limit(limit).all()
+    user_ids = [u.id for u in users]
+
+    # Single query: device counts grouped by user_id
+    device_counts = dict(
+        db.query(models.Device.user_id, func.count(models.Device.id))
+        .filter(models.Device.user_id.in_(user_ids))
+        .group_by(models.Device.user_id)
+        .all()
+    )
+
+    # Single query: family memberships + family names for these users
+    family_rows = (
+        db.query(models.FamilyMember.user_id, models.Family.name)
+        .join(models.Family, models.Family.id == models.FamilyMember.family_id)
+        .filter(models.FamilyMember.user_id.in_(user_ids))
+        .all()
+    )
+    family_names = {row.user_id: row.name for row in family_rows}
+
     result = []
     for u in users:
-        device_count = db.query(func.count(models.Device.id)).filter(models.Device.user_id == u.id).scalar()
-        membership = db.query(models.FamilyMember).filter(models.FamilyMember.user_id == u.id).first()
-        family_name = ""
-        if membership:
-            family = db.query(models.Family).filter(models.Family.id == membership.family_id).first()
-            family_name = family.name if family else ""
         result.append({
             "id": u.id, "name": u.name, "email": u.email,
             "phone": u.phone or "", "is_active": u.is_active,
             "status": "active" if u.is_active else "inactive",
             "role": u.role or "user",
-            "devices": device_count, "family_name": family_name,
+            "devices": device_counts.get(u.id, 0),
+            "family_name": family_names.get(u.id, ""),
             "created_at": u.created_at.isoformat() if u.created_at else None,
             "avatar": (u.name[:2].upper() if u.name and len(u.name) >= 2 else (u.name[0].upper() if u.name else "?")),
         })
@@ -331,23 +365,39 @@ def list_children(
         q = q.filter(models.User.name.ilike(f"%{search}%"))
     total = q.count()
     rows = q.order_by(desc(models.User.created_at)).offset(skip).limit(limit).all()
+    child_user_ids = [user.id for user, member, family in rows]
+    family_ids_for_children = list({family.id for user, member, family in rows})
+
+    # Single query: device counts for child users
+    device_counts = dict(
+        db.query(models.Device.user_id, func.count(models.Device.id))
+        .filter(models.Device.user_id.in_(child_user_ids))
+        .group_by(models.Device.user_id)
+        .all()
+    )
+
+    # Single query: owner members + their user names for each family
+    owner_rows = (
+        db.query(models.FamilyMember.family_id, models.User.name)
+        .join(models.User, models.User.id == models.FamilyMember.user_id)
+        .filter(
+            models.FamilyMember.family_id.in_(family_ids_for_children),
+            models.FamilyMember.role == "owner",
+        )
+        .all()
+    )
+    owner_names = {row.family_id: row.name for row in owner_rows}
+
     result = []
     for user, member, family in rows:
-        # find parent (owner of family)
-        owner_member = db.query(models.FamilyMember).filter(
-            models.FamilyMember.family_id == family.id,
-            models.FamilyMember.role == "owner"
-        ).first()
-        parent = db.query(models.User).filter(models.User.id == owner_member.user_id).first() if owner_member else None
-        device_count = db.query(func.count(models.Device.id)).filter(models.Device.user_id == user.id).scalar() or 0
-        has_device = device_count > 0
+        device_count = device_counts.get(user.id, 0)
         result.append({
             "id": user.id,
             "name": user.name,
             "family_name": family.name,
-            "parent_name": parent.name if parent else "—",
+            "parent_name": owner_names.get(family.id, "—"),
             "device_count": device_count,
-            "device": "GravityWatch" if has_device else "No Device",
+            "device": "GravityWatch" if device_count > 0 else "No Device",
             "status": "Safe" if user.is_active else "Offline",
             "is_active": user.is_active,
             "joined_at": user.created_at.isoformat() if user.created_at else None,
