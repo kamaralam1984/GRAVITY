@@ -56,7 +56,7 @@ def my_families(user: models.User = Depends(get_current_user), db: Session = Dep
         family = db.query(models.Family).filter(models.Family.id == m.family_id).first()
         if family:
             members = db.query(models.FamilyMember).filter(models.FamilyMember.family_id == family.id).all()
-            result.append({"id": family.id, "name": family.name, "plan": family.plan, "role": m.role, "member_count": len(members)})
+            result.append({"id": family.id, "name": family.name, "plan": family.plan, "role": m.role, "member_count": len(members), "invite_code": family.invite_code})
     return result
 
 @router.get("/{family_id}/members")

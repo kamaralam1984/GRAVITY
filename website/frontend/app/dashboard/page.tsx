@@ -274,15 +274,49 @@ function AlertsTab({ alerts,dismiss }: { alerts:Alert[]; dismiss:(id:string)=>vo
 /* ─────────────────────────────────────────────────────────────
    PROFILE TAB
 ─────────────────────────────────────────────────────────────── */
-function ProfileTab({ user, toggles, setToggle, logout }:{
+function ProfileTab({ user, toggles, setToggle, logout, familyRole, familyInviteCode, familyName }:{
   user:AuthUser; toggles:Record<TKey,boolean>; setToggle:(k:TKey)=>void; logout:()=>void
+  familyRole:string; familyInviteCode:string; familyName:string
 }) {
+  const [copied, setCopied] = useState(false)
+  const [joinCode, setJoinCode] = useState('')
+  const [joinMsg, setJoinMsg] = useState<{text:string;ok:boolean}|null>(null)
+  const isOwner = familyRole === 'owner'
+
+  function copyCode() {
+    if (!familyInviteCode) return
+    navigator.clipboard.writeText(familyInviteCode).then(() => {
+      setCopied(true)
+      setTimeout(() => setCopied(false), 2000)
+    })
+  }
+
+  async function joinFamily() {
+    if (!joinCode.trim()) return
+    const token = localStorage.getItem('gv_token')
+    if (!token) return
+    try {
+      const res = await fetch(`/families/join/${joinCode.trim()}`, {
+        method: 'POST',
+        headers: { Authorization: 'Bearer ' + token },
+      })
+      if (res.ok) {
+        setJoinMsg({ text: 'Joined! Please refresh.', ok: true })
+        setJoinCode('')
+      } else {
+        const d = await res.json().catch(() => ({}))
+        setJoinMsg({ text: d.detail || 'Invalid code', ok: false })
+      }
+    } catch { setJoinMsg({ text: 'Network error', ok: false }) }
+  }
+
   const SETTINGS: {key:TKey;label:string;desc:string;icon:string}[] = [
     {key:'location',label:'Location Sharing',  desc:'Share your live location with family', icon:'📍'},
     {key:'push',    label:'Push Notifications',desc:'Receive instant alerts on device',      icon:'🔔'},
     {key:'sos',     label:'SOS Auto-Call',     desc:'Auto-call emergency contacts on SOS',  icon:'🚨'},
     {key:'battery', label:'Battery Alerts',    desc:'Notify family when battery is low',    icon:'🔋'},
   ]
+
   return (
     <div className="flex flex-col gap-3">
       {/* User card */}
@@ -301,12 +335,72 @@ function ProfileTab({ user, toggles, setToggle, logout }:{
             <p className="text-sm font-bold truncate" style={{color:'var(--text-primary)'}}>{user.name}</p>
             <p className="text-[11px] mt-0.5 truncate" style={{color:'var(--text-muted)'}}>{user.email}</p>
             <span className="inline-block mt-1.5 text-[9px] px-2.5 py-0.5 rounded-full font-bold uppercase tracking-wider"
-                  style={{background:'rgba(212,168,83,0.18)',color:'#D4A853',border:'1px solid rgba(212,168,83,0.35)'}}>
-              ● Member
+                  style={{background: isOwner ? 'rgba(212,168,83,0.18)' : 'rgba(16,185,129,0.12)',
+                          color: isOwner ? '#D4A853' : '#10B981',
+                          border: isOwner ? '1px solid rgba(212,168,83,0.35)' : '1px solid rgba(16,185,129,0.3)'}}>
+              {isOwner ? '👑 Owner' : '● Member'}
             </span>
           </div>
         </div>
       </div>
+
+      {/* Add Member — show invite code (owner only) */}
+      {isOwner && familyInviteCode && (
+        <div className="rounded-2xl p-3.5"
+             style={{background:'rgba(16,185,129,0.06)',border:'1px solid rgba(16,185,129,0.25)'}}>
+          <p className="text-[9px] font-bold uppercase tracking-[0.15em] mb-2" style={{color:'#10B981'}}>
+            👥 Add Member to {familyName || 'Family'}
+          </p>
+          <p className="text-[10px] mb-2.5" style={{color:'var(--text-muted)'}}>
+            Share this invite code with family members:
+          </p>
+          <div className="flex items-center gap-2">
+            <div className="flex-1 rounded-xl px-3 py-2.5 text-center font-mono text-sm font-bold tracking-[0.2em]"
+                 style={{background:'var(--bg-surface2)',border:'1px solid rgba(16,185,129,0.3)',color:'#10B981',
+                         letterSpacing:'0.25em'}}>
+              {familyInviteCode}
+            </div>
+            <motion.button whileTap={{scale:0.93}} onClick={copyCode}
+              className="px-3 py-2.5 rounded-xl text-[11px] font-bold flex-shrink-0"
+              style={{background: copied ? 'rgba(16,185,129,0.25)' : 'rgba(16,185,129,0.12)',
+                      border:'1px solid rgba(16,185,129,0.35)',color:'#10B981',
+                      transition:'background 0.2s'}}>
+              {copied ? '✓ Copied' : '📋 Copy'}
+            </motion.button>
+          </div>
+          <p className="text-[9px] mt-2" style={{color:'var(--text-muted)'}}>
+            They can enter this code in their app → Profile → Join Family
+          </p>
+        </div>
+      )}
+
+      {/* Join Family — for non-owner users without family */}
+      {!isOwner && (
+        <div className="rounded-2xl p-3.5"
+             style={{background:'rgba(59,130,246,0.06)',border:'1px solid rgba(59,130,246,0.2)'}}>
+          <p className="text-[9px] font-bold uppercase tracking-[0.15em] mb-2" style={{color:'#60A5FA'}}>
+            🔗 Join a Family
+          </p>
+          <div className="flex gap-2">
+            <input
+              value={joinCode} onChange={e => setJoinCode(e.target.value)}
+              placeholder="Enter invite code"
+              className="flex-1 rounded-xl px-3 py-2 text-[12px] font-mono outline-none"
+              style={{background:'var(--bg-surface2)',border:'1px solid rgba(59,130,246,0.3)',
+                      color:'var(--text-primary)'}} />
+            <motion.button whileTap={{scale:0.93}} onClick={joinFamily}
+              className="px-3 py-2 rounded-xl text-[11px] font-bold flex-shrink-0"
+              style={{background:'rgba(59,130,246,0.15)',border:'1px solid rgba(59,130,246,0.35)',color:'#60A5FA'}}>
+              Join
+            </motion.button>
+          </div>
+          {joinMsg && (
+            <p className="text-[10px] mt-1.5" style={{color: joinMsg.ok ? '#10B981' : '#F87171'}}>
+              {joinMsg.text}
+            </p>
+          )}
+        </div>
+      )}
 
       {/* Settings */}
       <p className="text-[9px] font-bold uppercase tracking-[0.15em] px-1" style={{color:'var(--text-muted)'}}>Preferences</p>
@@ -340,7 +434,7 @@ function ProfileTab({ user, toggles, setToggle, logout }:{
 /* ─────────────────────────────────────────────────────────────
    RIGHT PANEL
 ─────────────────────────────────────────────────────────────── */
-function RightPanel({ tab, setTab, expanded, setExpanded, alerts, dismiss, toggles, setToggle, user, logout, onSOS, onMap, members }: {
+function RightPanel({ tab, setTab, expanded, setExpanded, alerts, dismiss, toggles, setToggle, user, logout, onSOS, onMap, members, familyRole, familyInviteCode, familyName }: {
   tab:Tab; setTab:(t:Tab)=>void
   expanded:string|null; setExpanded:(id:string|null)=>void
   alerts:Alert[]; dismiss:(id:string)=>void
@@ -349,6 +443,7 @@ function RightPanel({ tab, setTab, expanded, setExpanded, alerts, dismiss, toggl
   onSOS?:()=>void
   onMap?:(id:string)=>void
   members: MapMember[]
+  familyRole:string; familyInviteCode:string; familyName:string
 }) {
   const MEMBERS = members
   const TABS: {id:Tab;label:string;icon:string;count?:number}[] = [
@@ -420,7 +515,8 @@ function RightPanel({ tab, setTab, expanded, setExpanded, alerts, dismiss, toggl
           )}
           {tab==='profile' && (
             <motion.div key="pro" initial={{opacity:0,y:6}} animate={{opacity:1,y:0}} exit={{opacity:0}}>
-              <ProfileTab user={user} toggles={toggles} setToggle={setToggle} logout={logout} />
+              <ProfileTab user={user} toggles={toggles} setToggle={setToggle} logout={logout}
+                familyRole={familyRole} familyInviteCode={familyInviteCode} familyName={familyName} />
             </motion.div>
           )}
         </AnimatePresence>
@@ -444,6 +540,9 @@ export default function DashboardPage() {
   const [toggles, setToggles] = useState<Record<TKey,boolean>>({location:true,push:true,sos:false,battery:true})
   const [familyMembers, setFamilyMembers] = useState<MapMember[]>([])
   const [familyLoading, setFamilyLoading] = useState(true)
+  const [familyRole, setFamilyRole] = useState<string>('member')
+  const [familyInviteCode, setFamilyInviteCode] = useState<string>('')
+  const [familyName, setFamilyName] = useState<string>('')
   const [realAlerts, setRealAlerts] = useState<Alert[]>([])
   const [familyId, setFamilyId] = useState<number | null>(null)
 
@@ -470,6 +569,9 @@ export default function DashboardPage() {
         if (!Array.isArray(families) || families.length === 0) { setFamilyLoading(false); return }
         const fid = families[0].id
         setFamilyId(fid)
+        setFamilyRole(families[0].role || 'member')
+        setFamilyInviteCode(families[0].invite_code || '')
+        setFamilyName(families[0].name || 'My Family')
         try {
           const [membersRes, liveRes] = await Promise.all([
             fetch(`/families/${fid}/members`, { headers: { Authorization: 'Bearer ' + token } }),
@@ -775,7 +877,8 @@ export default function DashboardPage() {
           className="hidden lg:flex flex-col w-[320px] flex-shrink-0">
           <RightPanel tab={tab} setTab={setTab} expanded={expanded} setExpanded={setExpanded}
             alerts={alerts} dismiss={dismiss} toggles={toggles} setToggle={toggleSetting}
-            user={user} logout={logout} onSOS={triggerSOS} onMap={onMemberClick} members={MEMBERS} />
+            user={user} logout={logout} onSOS={triggerSOS} onMap={onMemberClick} members={MEMBERS}
+            familyRole={familyRole} familyInviteCode={familyInviteCode} familyName={familyName} />
         </motion.div>
 
         {/* RIGHT — Mobile tab content */}
@@ -790,7 +893,8 @@ export default function DashboardPage() {
                 </div>
               )}
               {mobTab==='alerts' && <AlertsTab alerts={alerts} dismiss={dismiss} />}
-              {mobTab==='profile' && <ProfileTab user={user} toggles={toggles} setToggle={toggleSetting} logout={logout} />}
+              {mobTab==='profile' && <ProfileTab user={user} toggles={toggles} setToggle={toggleSetting} logout={logout}
+                familyRole={familyRole} familyInviteCode={familyInviteCode} familyName={familyName} />}
             </motion.div>
           </AnimatePresence>
         </div>
