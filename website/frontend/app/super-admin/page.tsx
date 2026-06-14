@@ -720,6 +720,12 @@ export default function SuperAdminPage() {
       .catch(() => {})
   }, [active, familiesPlanFilter])
 
+  // Refetch users when navigating to users tab
+  useEffect(() => {
+    if (active === 'users') fetchUsers(userSearch)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [active])
+
   useEffect(() => {
     const token = getAuthToken()
     if (!token) return

@@ -50,6 +50,9 @@ def get_current_admin(token: str = Depends(oauth2_scheme), db: Session = Depends
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM], options={"verify_sub": False})
         admin_id = payload.get("admin_id")
+        # Fallback: old tokens used "sub" + "is_admin" flag
+        if admin_id is None and payload.get("is_admin"):
+            admin_id = payload.get("sub")
         if admin_id is None:
             raise HTTPException(status_code=401, detail="Not an admin token")
         admin_id = int(admin_id)

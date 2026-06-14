@@ -147,7 +147,7 @@ def login_unified(data: UserLogin, db: Session = Depends(get_db)):
     # Check AdminUser table (role: admin, super_admin)
     admin = db.query(models.AdminUser).filter(models.AdminUser.email == data.email).first()
     if admin and verify_password(data.password, admin.password_hash):
-        token = create_access_token({"sub": admin.id, "is_admin": True})
+        token = create_access_token({"admin_id": admin.id, "is_admin": True})
         # Normalize legacy "superadmin" → "super_admin" (DB may have old format)
         role = admin.role
         if role == "superadmin":
