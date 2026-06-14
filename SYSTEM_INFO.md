@@ -1,6 +1,6 @@
 # GRAVITY — FULL SYSTEM DOCUMENTATION
 ### Trackalways Technologies Pvt Ltd
-**Platform:** Family Safety App | **Version:** 2.0.0 | **Last Updated:** June 2025
+**Platform:** Family Safety App | **Version:** 2.0.0 | **Last Updated:** June 2026
 
 ---
 
@@ -17,9 +17,10 @@
 10. [Authentication System](#10-authentication-system)
 11. [Frontend API Client](#11-frontend-api-client)
 12. [Design System](#12-design-system)
-13. [How to Run](#13-how-to-run)
-14. [Credentials — All Roles](#14-credentials--all-roles)
-15. [Seed Data](#15-seed-data)
+13. [How to Run — Local](#13-how-to-run--local)
+14. [VPS Deployment](#14-vps-deployment)
+15. [Credentials — All Roles](#15-credentials--all-roles)
+16. [Seed Data](#16-seed-data)
 
 ---
 
@@ -27,14 +28,25 @@
 
 **Gravity** is a premium family safety platform by Trackalways Technologies. It allows families to stay connected through real-time location sharing, SOS emergency alerts, geofence zone management, health monitoring, driving safety, and family chat.
 
-**Live URLs (Local Development)**
+### Live Production URLs (VPS)
 | Service | URL |
 |---|---|
-| Website | http://localhost:3020 |
-| User Dashboard | http://localhost:3020/dashboard |
-| Moderator Panel | http://localhost:3020/moderator |
-| Super Admin Panel | http://localhost:3020/super-admin |
-| Admin Panel (legacy) | http://localhost:3020/admin |
+| Website + Dashboards | https://gravity.kvlbusinessssolutions.com |
+| Parent Dashboard | https://gravity.kvlbusinessssolutions.com/parent |
+| Child Dashboard | https://gravity.kvlbusinessssolutions.com/child |
+| Super Admin Panel | https://gravity.kvlbusinessssolutions.com/super-admin |
+| Login | https://gravity.kvlbusinessssolutions.com/login |
+
+### Local Development URLs
+| Service | URL |
+|---|---|
+| Website | http://localhost:3000 |
+| User Dashboard | http://localhost:3000/dashboard |
+| Parent Dashboard | http://localhost:3000/parent |
+| Child Dashboard | http://localhost:3000/child |
+| Moderator Panel | http://localhost:3000/moderator |
+| Super Admin Panel | http://localhost:3000/super-admin |
+| Admin Panel (legacy) | http://localhost:3000/admin |
 | Backend API | http://localhost:8000 |
 | API Swagger Docs | http://localhost:8000/docs |
 
@@ -61,7 +73,7 @@
 | FastAPI | 0.111.0 | REST API framework |
 | Python | 3.12 | Language |
 | SQLAlchemy | 2.0.30 | ORM, database models |
-| SQLite | built-in | Database (dev) |
+| SQLite | built-in | Database (dev + production) |
 | Alembic | 1.13.1 | Database migrations |
 | bcrypt | 4.2.1 | Password hashing |
 | python-jose | 3.3.0 | JWT token generation/validation |
@@ -79,14 +91,16 @@ TRACKALWAYS GRAVITY 2.0/
 └── website/
     ├── frontend/                     ← Next.js 14 app
     │   ├── middleware.ts             ← Route protection (role-based auth)
+    │   ├── next.config.js            ← API rewrites: /families → backend:8001
     │   ├── app/                      ← App Router pages
     │   │   ├── layout.tsx            ← Root layout + SEO metadata
     │   │   ├── page.tsx              ← Homepage
     │   │   ├── login/                ← Unified login (all roles)
     │   │   ├── dashboard/            ← User dashboard (premium)
+    │   │   ├── parent/               ← Parent monitoring dashboard (real API data)
+    │   │   ├── child/                ← Child safety dashboard (real API data)
     │   │   ├── moderator/            ← Moderator panel
     │   │   ├── super-admin/          ← Super Admin command center
-    │   │   ├── parent/               ← Parent tracking dashboard
     │   │   ├── about/
     │   │   ├── features/
     │   │   ├── pricing/
@@ -130,14 +144,20 @@ TRACKALWAYS GRAVITY 2.0/
     │   │   │   ├── HeroSection.tsx
     │   │   │   ├── StatsSection.tsx
     │   │   │   ├── FeaturesSection.tsx
-    │   │   │   ├── LiveMapDemoSection.tsx
+    │   │   │   ├── LiveMapDemoSection.tsx  ← Passes members={MAP_MEMBERS} to MapView
     │   │   │   ├── HowItWorksSection.tsx
     │   │   │   ├── ElderlyCareSection.tsx
     │   │   │   ├── TestimonialsSection.tsx
     │   │   │   ├── PricingSection.tsx
     │   │   │   ├── DownloadCTA.tsx
-    │   │   │   ├── MapView.tsx       ← Interactive Leaflet map (family pins + vehicles)
-    │   │   │   └── ParentChildSection.tsx ← Homepage parent/child feature section
+    │   │   │   ├── MapView.tsx             ← Leaflet map; requires `members` prop
+    │   │   │   └── ParentChildSection.tsx
+    │   │   ├── parent/
+    │   │   │   └── ParentMonitor.tsx       ← Full parent dashboard (real API data)
+    │   │   ├── child/
+    │   │   │   ├── ChildHome.tsx           ← Child home tab (real API data)
+    │   │   │   ├── ChildSOS.tsx            ← SOS, LocationSection, FamilyRadarSection
+    │   │   │   └── ChildLife.tsx           ← School, Health, Achievements, Chat, Settings
     │   │   └── effects/
     │   │       ├── AIAssistant.tsx
     │   │       ├── ParticleField.tsx
@@ -147,7 +167,7 @@ TRACKALWAYS GRAVITY 2.0/
     │   │   ├── auth.ts               ← Auth utils (setAuth, getUser, getRoleRedirect)
     │   │   ├── useAuth.ts            ← useAuth() React hook
     │   │   ├── useAdminData.ts       ← React hooks for admin data
-    │   │   ├── mapData.ts            ← MAP_MEMBERS, VehicleType, Gender types
+    │   │   ├── mapData.ts            ← MAP_MEMBERS with randomuser.me portrait photos
     │   │   ├── animations.ts
     │   │   ├── constants.ts
     │   │   └── utils.ts
@@ -174,7 +194,7 @@ TRACKALWAYS GRAVITY 2.0/
         └── routers/
             ├── auth.py               ← /auth/* user + unified login
             ├── admin_router.py       ← /admin-api/* admin endpoints
-            ├── families.py           ← /families/* family circles
+            ├── families.py           ← /families/* family circles (is_online via GPS recency)
             ├── devices.py            ← /devices/* device management
             ├── location.py           ← /location/* GPS tracking
             ├── geofences.py          ← /geofences/* safe zones
@@ -182,7 +202,7 @@ TRACKALWAYS GRAVITY 2.0/
             ├── check_ins.py          ← /check-ins/* check-in system
             ├── journeys.py           ← /journeys/* route sharing
             ├── chat.py               ← /chat/* family messaging
-            ├── driving.py            ← /driving/* driving safety
+            ├── driving.py            ← /driving/* driving safety + member score
             ├── health.py             ← /health/* health tracking
             ├── notifications.py      ← /notifications/* push alerts
             ├── plans.py              ← /plans/* subscription billing
@@ -193,28 +213,6 @@ TRACKALWAYS GRAVITY 2.0/
 
 ## 4. FRONTEND — PUBLIC WEBSITE
 
-### Pages (17 total)
-
-| Route | Page | Description |
-|---|---|---|
-| `/` | Homepage | Full landing page with all sections |
-| `/about` | About Us | Team, mission, company values |
-| `/features` | Features | All 15 features detailed |
-| `/pricing` | Pricing | 3 plans, FAQs, regional pricing |
-| `/live-tracking` | Live Tracking | GPS tracking feature page |
-| `/geofencing` | Geofencing | Safe zones feature page |
-| `/sos-emergency` | SOS Emergency | Emergency alert feature page |
-| `/elderly-care` | Elderly Care | Senior monitoring feature page |
-| `/blog` | Blog | Editorial grid, 6 post cards |
-| `/careers` | Careers | Job listings, culture, benefits |
-| `/press` | Press | Media room, press coverage |
-| `/contact` | Contact | Form + FAQ + office info |
-| `/help` | Help Center | Search, FAQ accordion |
-| `/privacy` | Privacy Policy | 12-section policy |
-| `/terms` | Terms of Service | 12-section ToS |
-| `/cookies` | Cookie Policy | Cookie types, browser controls |
-| `/status` | System Status | 8 service status indicators |
-
 ### Homepage Sections (in order)
 
 | Section | Component | Features |
@@ -222,7 +220,7 @@ TRACKALWAYS GRAVITY 2.0/
 | Hero | `HeroSection.tsx` | Background image slider (4 slides), auto-advance 5s, Ken Burns zoom, dot nav |
 | Stats | `StatsSection.tsx` | 4 animated stat cards with SVG progress rings |
 | Features | `FeaturesSection.tsx` | 15 feature cards in CSS bento grid (SOS wide, Map extra-wide) |
-| Live Map Demo | `LiveMapDemoSection.tsx` | Interactive Leaflet map with family member pins |
+| Live Map Demo | `LiveMapDemoSection.tsx` | Leaflet map with 5 family pins using randomuser.me photos |
 | How It Works | `HowItWorksSection.tsx` | 4-step process with animations |
 | Parent / Child | `ParentChildSection.tsx` | Phone mockup with Parent/Child tab switcher |
 | Elderly Care | `ElderlyCareSection.tsx` | Senior-focused features |
@@ -257,7 +255,7 @@ All dashboards share one login page (`/login`) but redirect to separate panels b
 - **File:** `app/login/page.tsx`
 - **Tabs:** Email | Phone OTP | Social (Google + Apple)
 - **Background:** StarfieldCanvas + FloatingOrb effects
-- **On success:** Calls `setAuth()` → sets cookies → redirects via `getRoleRedirect(role)`
+- **On success:** Calls `setAuth()` → sets localStorage + cookies → redirects via `getRoleRedirect(role)`
 - **Endpoint:** `POST /auth/login/unified`
 
 ### Role → Route Mapping
@@ -273,44 +271,68 @@ All dashboards share one login page (`/login`) but redirect to separate panels b
 - **File:** `app/dashboard/page.tsx`
 - **Design:** Premium dark glass UI — deep navy `#050D1A` background, gold accents
 - **Layout:**
-  - **Header:** Gold G logo, "All Safe" pulsing pill, notification bell with dropdown, user avatar
+  - **Header:** Gold G logo, "All Safe" pulsing pill, notification bell, user avatar
   - **Left:** Leaflet map (Carto Voyager tiles, 420px height) + active member overlay + horizontal member strip
   - **Right panel (300px):** 3 gold pill tabs — Family / Alerts / Profile
 - **Family Tab:** 5 expandable member cards (color-coded glow, live pulse dot, mini stat grid, journey timeline, Call/SOS/Map buttons)
 - **Alerts Tab:** Color-coded severity alerts (safe/warning/sos/info) with left accent bar, dismissable
-- **Profile Tab:** Gold user identity card, 4 toggle settings (Location/Notifications/SOS Auto-Call/Battery), sign out button
-- **Member Strip:** Per-member color glow cards with photo, vehicle emoji badge, battery bar
+- **Profile Tab:** Gold user identity card, 4 toggle settings, sign out button
 - **Mobile:** Bottom tab bar with gold active underline, Map/Family/Alerts/Profile
+
+### Parent Dashboard (`/parent`)
+- **File:** `app/parent/page.tsx` + `components/parent/ParentMonitor.tsx`
+- **Data:** 100% real API data — no dummy members
+- **Tabs:** Live Map / Children / Elderly / Driving Safety
+- **Children Tab:** Real family members from `/families/{id}/members`, expandable cards with live GPS, battery, online status
+- **Elderly Tab:** Real members + "Connect Gravity Watch" prompt (no fake HR/BP)
+- **Driving Safety Tab:** Full implementation — ScoreRing, trip history, events from `/driving/member/{user_id}`
+- **Online detection:** Based on location recency (`recorded_at < 30 min`) not device table
+- **Data fetch pattern:**
+  ```typescript
+  const famRes = await fetch('/families/my', { headers })
+  const famsArr = Array.isArray(famData) ? famData : [famData]
+  const fid = famsArr[0].id
+  const members = await fetch(`/families/${fid}/members`, { headers })
+  ```
+
+### Child Dashboard (`/child`)
+- **File:** `app/child/page.tsx` + `components/child/ChildHome.tsx`
+- **Design:** Dark theme `#0B0D13`, animated safety bubble, pulse rings, floating sparkles
+- **All data is real — no hardcoded values:**
+  - Greeting: Time-based (Good Morning / Afternoon / Evening)
+  - Family avatars: Real member names + initials from `/families/{id}/members`
+  - Last location: Real GPS `last_location` from API
+  - Geofences: Real count from `/geofences/family/{id}`
+  - SOS alerts: Real from `/sos/history/{family_id}`
+  - Battery: Real from live family locations
+  - Family online count: Real from `/location/live/{family_id}`
+- **Tabs (bottom nav):** Home / Safety / School / Health
+- **More drawer:** Achievements / Family Chat / Family Radar / My Location / Settings
+- **Quick Actions:** Check In Now / Message Family / I'm Safe
+- **No fake data:** Heart rate removed (no device), safety score shows `—` until computed
 
 ### Moderator Panel (`/moderator`)
 - **File:** `app/moderator/page.tsx`
 - **Accent:** Amber `#F59E0B`
-- **Layout:** Left sidebar + main content area
 - **Sections:** Overview / Tickets / Reports / Content / Announcements / Analytics
 
 ### Super Admin Panel (`/super-admin`)
 - **File:** `app/super-admin/page.tsx`
-- **Accent:** Purple `#8B5CF6`, crown 👑 icon
+- **Accent:** Purple `#8B5CF6`, crown icon
 - **Sections:** 8 sidebar sections including Command Center
 - **Hero stats:** 2.8M users, ₹48.7L MRR, 99.97% uptime
-
-### Parent Dashboard (`/parent`)
-- **File:** `app/parent/page.tsx`
-- **Layout:** Full Leaflet map (left) + panel (right)
-- **Tabs:** Live Map / Children / Alerts / Settings
-- **Children Panel:** Expandable child cards with journey timeline
 
 ### Middleware (Route Protection)
 - **File:** `middleware.ts`
 - **Protected routes:**
-
 ```
 /super-admin  → requires: super_admin
 /admin        → requires: admin, super_admin
 /moderator    → requires: moderator, admin, super_admin
 /dashboard    → requires: user, moderator, admin, super_admin
+/parent       → requires: user, moderator, admin, super_admin
+/child        → requires: user, moderator, admin, super_admin
 ```
-
 - **Unauthenticated:** redirects → `/login?next=<path>`
 - **Wrong role:** redirects → `getRoleRedirect(role)` (their own dashboard)
 - **Cookies read:** `gv_token` (auth check), `gv_user` (role check)
@@ -353,10 +375,10 @@ All dashboards share one login page (`/login`) but redirect to separate panels b
 ### Server
 - **Framework:** FastAPI 0.111.0
 - **Server:** Uvicorn (ASGI)
-- **Port:** 8000
+- **Port:** 8000 (local) / 8001 (VPS PM2)
 - **Database:** SQLite (`gravity.db`) via SQLAlchemy 2.0
 - **Docs:** http://localhost:8000/docs (Swagger UI)
-- **CORS:** Allows http://localhost:3020 and http://localhost:3000
+- **CORS:** Allows all origins (configured in main.py)
 
 ### Router Modules (15 routers)
 
@@ -364,7 +386,7 @@ All dashboards share one login page (`/login`) but redirect to separate panels b
 |---|---|---|
 | `admin_router.py` | `/admin-api` | Admin dashboard, families, devices, SOS, analytics |
 | `auth.py` | `/auth` | User register, login, unified login, profile |
-| `families.py` | `/families` | Family circle CRUD, invite codes |
+| `families.py` | `/families` | Family circle CRUD, invite codes, online detection via GPS recency |
 | `devices.py` | `/devices` | Device registration, battery updates |
 | `location.py` | `/location` | GPS updates, history, live family view |
 | `geofences.py` | `/geofences` | Zone CRUD, entry/exit event logging |
@@ -372,11 +394,24 @@ All dashboards share one login page (`/login`) but redirect to separate panels b
 | `check_ins.py` | `/check-ins` | Schedule, complete, stats |
 | `journeys.py` | `/journeys` | Start, track, complete route sharing |
 | `chat.py` | `/chat` | Send messages, fetch history, moderation |
-| `driving.py` | `/driving` | Log incidents, stats |
+| `driving.py` | `/driving` | Log incidents, member driving score, stats |
 | `health.py` | `/health` | Daily records, medication reminders |
 | `notifications.py` | `/notifications` | Send push notifications, history |
 | `plans.py` | `/plans` | Subscription management, MRR stats |
 | `ai.py` | `/ai` | Anthropic AI chat assistant |
+
+### Key Backend Logic
+
+**`families.py` — `is_online` detection:**
+```python
+# Online = location shared within last 30 minutes
+is_online = False
+if loc and loc.recorded_at:
+    rec = loc.recorded_at if loc.recorded_at.tzinfo else loc.recorded_at.replace(tzinfo=timezone.utc)
+    is_online = (datetime.now(timezone.utc) - rec).total_seconds() < 1800
+elif device:
+    is_online = device.is_online
+```
 
 ---
 
@@ -441,7 +476,7 @@ Database file: `backend/gravity.db` (SQLite)
 | os_version | String | e.g. "17.2" |
 | app_version | String | e.g. "2.4.1" |
 | battery_level | Integer | 0–100 |
-| is_online | Boolean | Currently online |
+| is_online | Boolean | Currently online (fallback only) |
 | push_token | String | FCM/APNs token |
 | last_seen | DateTime | Last heartbeat |
 | registered_at | DateTime | When registered |
@@ -457,7 +492,7 @@ Database file: `backend/gravity.db` (SQLite)
 | accuracy | Float | GPS accuracy in meters |
 | speed | Float | Speed in km/h |
 | place_name | String | Reverse-geocoded name |
-| recorded_at | DateTime | When captured |
+| recorded_at | DateTime | When captured — used for `is_online` check |
 
 ### Table 7: geofences
 | Column | Type | Description |
@@ -668,9 +703,12 @@ GET    /auth/me                Get current user profile
 ```
 POST   /families/create           Create new family circle
 POST   /families/join/{code}      Join via invite code
-GET    /families/my               My family memberships
+GET    /families/my               My family memberships → returns ARRAY (use famsArr[0].id)
 GET    /families/{id}/members     Members of a family
+                                  Returns: [{ user_id, name, role, last_location, lat, lng, battery, is_online }]
 ```
+
+> **Important:** `/families/my` always returns an **array**. Always use `Array.isArray(data) ? data : [data]` pattern.
 
 ### Devices (`/devices`)
 ```
@@ -689,11 +727,11 @@ GET    /location/live/{family_id}  Live locations of all family members
 
 ### Geofences (`/geofences`)
 ```
-POST   /geofences/            Create a new geofence zone
-GET    /geofences/family/{id} Get all zones for a family
-POST   /geofences/event       Log an entry/exit event
-GET    /geofences/events      Get recent geofence events
-DELETE /geofences/{id}        Delete a zone
+POST   /geofences/              Create a new geofence zone
+GET    /geofences/family/{id}   Get all zones for a family → returns array
+POST   /geofences/event         Log an entry/exit event
+GET    /geofences/events        Get recent geofence events
+DELETE /geofences/{id}          Delete a zone
 ```
 
 ### SOS Alerts (`/sos`)
@@ -701,7 +739,8 @@ DELETE /geofences/{id}        Delete a zone
 POST   /sos/trigger              Trigger emergency SOS
 GET    /sos/active               Get all active alerts
 PATCH  /sos/{id}/resolve         Mark alert as resolved
-GET    /sos/history/{family_id}  SOS history for a family
+GET    /sos/history/{family_id}  SOS history for a family → returns array
+GET    /sos/family/{family_id}   Alias for SOS history (used by child dashboard)
 ```
 
 ### Check-Ins (`/check-ins`)
@@ -732,9 +771,13 @@ GET    /chat/stats               Chat usage stats
 
 ### Driving Safety (`/driving`)
 ```
-POST   /driving/event    Log a driving incident (speeding/phone/brake)
-GET    /driving/events   List recent incidents
-GET    /driving/stats    Driving safety statistics
+POST   /driving/event              Log a driving incident (speeding/phone/brake/rapid_accel)
+GET    /driving/events             List recent incidents
+GET    /driving/stats              Driving safety statistics
+GET    /driving/member/{user_id}   Member-specific driving score + trip history
+                                   Returns: { score, total_trips, total_km, harsh_brakes,
+                                             speeding, phone_use, journeys[], recent_events[] }
+                                   score = null if no trips; else 100 - penalties
 ```
 
 ### Health (`/health`)
@@ -828,12 +871,6 @@ const { user, role, isAuthenticated, logout } = useAuth()
 - `gv_token`: `max-age=604800` (7 days), `path=/`, `SameSite=Lax`
 - `gv_user`: same, stores URL-encoded JSON of AuthUser
 
-### Password Hashing (Backend)
-```python
-bcrypt.hashpw(password.encode(), bcrypt.gensalt()).decode()  # Hash
-bcrypt.checkpw(plain.encode(), hashed.encode())               # Verify
-```
-
 ---
 
 ## 11. FRONTEND API CLIENT
@@ -869,17 +906,7 @@ await healthApi.saveRecord({ date: "2025-06-12", steps: 8000, sleep_hours: 7.5 }
 | `healthApi` | saveRecord, records, addMedication, medications, stats |
 | `journeysApi` | start, addPoint, complete, active, stats |
 | `plansApi` | list, subscribe, stats |
-| `drivingApi` | logEvent, events, stats |
-
-### React Hooks (`lib/useAdminData.ts`)
-```typescript
-import { useDashboard, useFamilies, useDevices, useSosAlerts } from '@/lib/useAdminData'
-
-const { data, loading, error, refetch } = useDashboard()
-const { families, total, loading, setPlan } = useFamilies()
-const { devices, total, setStatus } = useDevices()
-const { alerts, resolve } = useSosAlerts('active')
-```
+| `drivingApi` | logEvent, events, stats, memberScore |
 
 ---
 
@@ -910,12 +937,6 @@ background:  #050D1A → #080F20 → #060C18  (gradient)
 gold:        #D4A853  (logo, active tabs, toggles)
 emerald:     #10B981  (safe status, live indicators)
 glass card:  rgba(8,16,32,0.85) + backdrop-blur(24px)
-member colors:
-  Mom:     #3B82F6  (blue)
-  Dad:     #10B981  (green)
-  Priya:   #F59E0B  (amber)
-  Anya:    #8B5CF6  (purple)
-  Grandpa: #EF4444  (red)
 ```
 
 **Light Mode:**
@@ -933,25 +954,24 @@ member colors:
 
 ### Map Members (`lib/mapData.ts`)
 
+Live demo map uses 5 family members with randomuser.me portrait photos:
+
 ```typescript
 type VehicleType = 'car' | 'bus' | 'walk' | 'bike' | 'auto' | 'tempo'
 type Gender = 'male' | 'female'
 
-interface MapMember {
-  id, name, photo, location, lat, lng
-  vehicle: VehicleType
-  vehicleLat?, vehicleLng?   // vehicle marker position on road
-  speed, battery, color
-  gender: Gender
-}
-
-// 5 members:
-Mom      → walk, blue   (#3B82F6), female
-Dad      → car,  green  (#10B981), male
-Priya    → bus,  amber  (#F59E0B), female
-Anya     → auto, purple (#8B5CF6), female
-Grandpa  → tempo, red  (#EF4444), male
+// Photos use randomuser.me (NOT Unsplash — Unsplash caused 404s):
+Mom     → women/44.jpg — walk, blue   (#3B82F6), female
+Dad     → men/32.jpg   — car,  green  (#10B981), male
+Priya   → women/22.jpg — bus,  amber  (#F59E0B), female
+Anya    → women/18.jpg — auto, purple (#8B5CF6), female  ← use women/ NOT girls/
+Grandpa → men/70.jpg   — tempo, red  (#EF4444), male
 ```
+
+> **Important:** `randomuser.me/api/portraits/girls/` and `/boys/` do NOT exist (404). Use `women/` and `men/` only.
+
+> **Important:** `MapView` requires `members` prop explicitly passed:
+> `<MapView activeId={activeId} onMemberClick={handlePin} members={MAP_MEMBERS} />`
 
 ### Key CSS Utility Classes
 ```css
@@ -970,7 +990,7 @@ Grandpa  → tempo, red  (#EF4444), male
 
 ---
 
-## 13. HOW TO RUN
+## 13. HOW TO RUN — LOCAL
 
 ### First Time Setup
 ```bash
@@ -996,18 +1016,9 @@ npm install
 cd "website/backend"
 venv/bin/uvicorn main:app --reload --host 0.0.0.0 --port 8000
 
-# Terminal 2 — Frontend (port 3020)
+# Terminal 2 — Frontend (port 3000)
 cd "website/frontend"
 npm run dev
-```
-
-### Kill / Restart Servers
-```bash
-# Kill frontend
-fuser -k 3020/tcp
-
-# Kill backend
-pkill -f uvicorn
 ```
 
 ### Environment Files
@@ -1025,13 +1036,13 @@ ANTHROPIC_API_KEY=<your-key-here>
 **`frontend/.env.local`**
 ```
 NEXT_PUBLIC_API_URL=http://localhost:8000
-NEXT_PUBLIC_APP_URL=http://localhost:3020
+NEXT_PUBLIC_APP_URL=http://localhost:3000
 NEXT_PUBLIC_WS_URL=ws://localhost:8000
 INTERNAL_API_URL=http://127.0.0.1:8000       ← IMPORTANT: used by next.config.js rewrites
 NEXT_PUBLIC_RAZORPAY_KEY_ID=rzp_test_tXD8cP6NSHvKbR
 ```
 
-> **Note:** `INTERNAL_API_URL` must be set to avoid ECONNREFUSED on port 8001. The `next.config.js` rewrites default to `INTERNAL_API_URL || 'http://127.0.0.1:8001'`.
+> **Note:** `INTERNAL_API_URL` must be set. The `next.config.js` rewrites default to `INTERNAL_API_URL || 'http://127.0.0.1:8001'`. On VPS it should be `http://127.0.0.1:8001`.
 
 ### Reset Database
 ```bash
@@ -1043,10 +1054,63 @@ sqlite3 gravity.db "ALTER TABLE users ADD COLUMN role VARCHAR DEFAULT 'user';"
 
 ---
 
-## 14. CREDENTIALS — ALL ROLES
+## 14. VPS DEPLOYMENT
+
+### Server Info
+| Field | Value |
+|---|---|
+| Provider | Hostinger VPS |
+| OS | Ubuntu |
+| Project path | `/root/gravity/` |
+| Frontend port | **3100** (PM2: `gravity-frontend`) |
+| Backend port | **8001** (PM2: `gravity-backend`) |
+| Live domain | https://gravity.kvlbusinessssolutions.com |
+| Git repo | https://github.com/kamaralam1984/GRAVITY |
+
+> **IMPORTANT:** Other projects on the same VPS — DO NOT TOUCH:
+> `8rupiya`, `aapkaplot`, `kvl-*`, `restro-*`, `vidyt`
+
+### PM2 Processes
+```
+id 50 → gravity-backend    (port 8001)
+id 51 → gravity-frontend   (port 3100)
+```
+
+### Deploy Command (run on VPS)
+```bash
+cd /root/gravity && git pull origin main && cd website/frontend && npm run build && pm2 restart gravity-frontend
+```
+
+### Deploy with Backend Restart
+```bash
+cd /root/gravity && git pull origin main
+cd website/frontend && npm run build && pm2 restart gravity-frontend
+cd ../backend && pm2 restart gravity-backend
+```
+
+### VPS Environment (`frontend/.env.local` on VPS)
+```
+INTERNAL_API_URL=http://127.0.0.1:8001
+NEXT_PUBLIC_API_URL=https://gravity.kvlbusinessssolutions.com
+```
+
+### next.config.js API Rewrites
+All `/families/*`, `/auth/*`, `/location/*`, etc. API calls are rewritten:
+```javascript
+rewrites: () => [{
+  source: '/:path*',
+  destination: `${process.env.INTERNAL_API_URL || 'http://127.0.0.1:8001'}/:path*`
+}]
+```
+This means frontend fetches `/families/my` and it proxies to backend automatically.
+
+---
+
+## 15. CREDENTIALS — ALL ROLES
 
 ### Unified Login URL
-`http://localhost:3020/login` — all roles login here, auto-redirected to their panel
+**Production:** https://gravity.kvlbusinessssolutions.com/login
+**Local:** http://localhost:3000/login — all roles login here, auto-redirected to their panel
 
 ### Role-Based Credentials
 
@@ -1059,13 +1123,14 @@ sqlite3 gravity.db "ALTER TABLE users ADD COLUMN role VARCHAR DEFAULT 'user';"
 
 > Admin/Super Admin credentials are in the `admin_users` table. User/Moderator credentials are in the `users` table (with `role` field).
 
-### Legacy Admin Panel (direct)
+### Legacy Admin Panel
 | Field | Value |
 |---|---|
 | **Email** | kamaralamjdu@gmail.com |
 | **Password** | K12345678 |
 | **Role** | super_admin |
-| **Login URL** | http://localhost:3020/admin/login |
+| **Login URL (prod)** | https://gravity.kvlbusinessssolutions.com/admin/login |
+| **Login URL (local)** | http://localhost:3000/admin/login |
 
 ### Test User Credentials (seeded in `users` table)
 | Name | Email | Password | Role |
@@ -1077,7 +1142,7 @@ sqlite3 gravity.db "ALTER TABLE users ADD COLUMN role VARCHAR DEFAULT 'user';"
 
 ---
 
-## 15. SEED DATA
+## 16. SEED DATA
 
 Running `seed.py` creates the following mock data:
 
@@ -1115,46 +1180,55 @@ Running `seed.py` creates the following mock data:
 ## QUICK REFERENCE CHEAT SHEET
 
 ```
-WEBSITE:       http://localhost:3020
-DASHBOARD:     http://localhost:3020/dashboard
-MODERATOR:     http://localhost:3020/moderator
-SUPER ADMIN:   http://localhost:3020/super-admin
-LEGACY ADMIN:  http://localhost:3020/admin
-LOGIN:         http://localhost:3020/login
+─── PRODUCTION (VPS) ─────────────────────────────────────────────
+WEBSITE:       https://gravity.kvlbusinessssolutions.com
+PARENT:        https://gravity.kvlbusinessssolutions.com/parent
+CHILD:         https://gravity.kvlbusinessssolutions.com/child
+SUPER ADMIN:   https://gravity.kvlbusinessssolutions.com/super-admin
+LOGIN:         https://gravity.kvlbusinessssolutions.com/login
+VPS PATH:      /root/gravity/
+FRONTEND PORT: 3100 (PM2: gravity-frontend, id 51)
+BACKEND PORT:  8001 (PM2: gravity-backend, id 50)
+
+─── LOCAL DEV ────────────────────────────────────────────────────
+WEBSITE:       http://localhost:3000
+DASHBOARD:     http://localhost:3000/dashboard
+PARENT:        http://localhost:3000/parent
+CHILD:         http://localhost:3000/child
+SUPER ADMIN:   http://localhost:3000/super-admin
+LEGACY ADMIN:  http://localhost:3000/admin
+LOGIN:         http://localhost:3000/login
 API:           http://localhost:8000
 API DOCS:      http://localhost:8000/docs
 
-LOGIN (all roles):
-  URL:      http://localhost:3020/login
-  User:     priya.sharma@gmail.com / Password@123
-  Admin:    kamaralamjdu@gmail.com / K12345678
+─── CREDENTIALS ──────────────────────────────────────────────────
+User:     priya.sharma@gmail.com / Password@123
+Admin:    kamaralamjdu@gmail.com / K12345678
 
-START BACKEND:
-  cd website/backend
-  venv/bin/uvicorn main:app --reload --host 0.0.0.0 --port 8000
+─── DEPLOY TO VPS ────────────────────────────────────────────────
+cd /root/gravity && git pull origin main
+cd website/frontend && npm run build && pm2 restart gravity-frontend
 
-START FRONTEND:
-  cd website/frontend
-  npm run dev    (runs on port 3020)
+─── START LOCAL ──────────────────────────────────────────────────
+# Backend (port 8000)
+cd website/backend && venv/bin/uvicorn main:app --reload --host 0.0.0.0 --port 8000
 
-KILL SERVERS:
-  fuser -k 3020/tcp   (frontend)
-  pkill -f uvicorn    (backend)
+# Frontend (port 3000)
+cd website/frontend && npm run dev
 
-RESET DATABASE:
-  cd website/backend
-  rm gravity.db
-  venv/bin/python3 seed.py
-  sqlite3 gravity.db "ALTER TABLE users ADD COLUMN role VARCHAR DEFAULT 'user';"
+─── RESET DATABASE ───────────────────────────────────────────────
+cd website/backend
+rm gravity.db && venv/bin/python3 seed.py
+sqlite3 gravity.db "ALTER TABLE users ADD COLUMN role VARCHAR DEFAULT 'user';"
 
-API TEST:
-  curl http://localhost:8000/
-  curl -X POST http://localhost:8000/auth/login/unified \
-    -H "Content-Type: application/json" \
-    -d '{"email":"priya.sharma@gmail.com","password":"Password@123"}'
+─── API TEST ─────────────────────────────────────────────────────
+curl http://localhost:8000/
+curl -X POST http://localhost:8000/auth/login/unified \
+  -H "Content-Type: application/json" \
+  -d '{"email":"priya.sharma@gmail.com","password":"Password@123"}'
 ```
 
 ---
 
 *Gravity — What Pulls You Together*
-*© 2025 Trackalways Technologies Pvt Ltd*
+*© 2026 Trackalways Technologies Pvt Ltd*

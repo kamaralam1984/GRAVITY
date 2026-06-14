@@ -294,7 +294,7 @@ export default function ChildHome({
 
         // Geofences
         try {
-          const geoRes = await fetch(`/geofences/${famId}`, { headers });
+          const geoRes = await fetch(`/geofences/family/${famId}`, { headers });
           if (geoRes.ok) {
             const geos = await geoRes.json();
             setActiveGeofences(Array.isArray(geos) ? geos.length : 0);
