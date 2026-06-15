@@ -87,138 +87,187 @@ function MemberAvatar({
 // ─── GeofenceSection ──────────────────────────────────────────────────────────
 
 interface Geofence {
-  id: string;
+  id: number;
   name: string;
-  address: string;
-  radius: number;
+  type: string;
+  center_lat: number;
+  center_lng: number;
+  radius_meters: number;
   color: string;
-  colorHex: string;
-  members: { name: string; initials: string; color: string }[];
-  active: boolean;
-  type: 'safe' | 'restricted';
-  mapX: number;
-  mapY: number;
-  recentActivity: { action: string; member: string; time: string }[];
+  is_active: boolean;
 }
 
-const INITIAL_GEOFENCES: Geofence[] = [
-  {
-    id: 'home',
-    name: 'Home',
-    address: 'Andheri West, Mumbai',
-    radius: 200,
-    color: 'green',
-    colorHex: '#22c55e',
-    members: [
-      { name: 'Priya', initials: 'P', color: '#D4AF37' },
-      { name: 'Rahul', initials: 'R', color: '#3b82f6' },
-      { name: 'Aarav', initials: 'A', color: '#a855f7' },
-    ],
-    active: true,
-    type: 'safe',
-    mapX: 40,
-    mapY: 55,
-    recentActivity: [
-      { action: 'entered', member: 'Aarav', time: '3:45 PM' },
-      { action: 'exited', member: 'Rahul', time: '8:15 AM' },
-    ],
-  },
-  {
-    id: 'school',
-    name: 'School — DPS Mumbai',
-    address: 'DPS, Powai, Mumbai',
-    radius: 300,
-    color: 'blue',
-    colorHex: '#3b82f6',
-    members: [{ name: 'Aarav', initials: 'A', color: '#a855f7' }],
-    active: true,
-    type: 'safe',
-    mapX: 65,
-    mapY: 35,
-    recentActivity: [
-      { action: 'entered', member: 'Aarav', time: '7:58 AM' },
-      { action: 'exited', member: 'Aarav', time: '3:30 PM' },
-    ],
-  },
-  {
-    id: 'office',
-    name: 'Office — Bandra',
-    address: 'BKC, Bandra East, Mumbai',
-    radius: 500,
-    color: 'amber',
-    colorHex: '#f59e0b',
-    members: [{ name: 'Rahul', initials: 'R', color: '#3b82f6' }],
-    active: true,
-    type: 'safe',
-    mapX: 25,
-    mapY: 70,
-    recentActivity: [
-      { action: 'entered', member: 'Rahul', time: '9:10 AM' },
-    ],
-  },
-  {
-    id: 'mall',
-    name: 'Mall — No-go Zone',
-    address: 'Phoenix Mall, Kurla',
-    radius: 250,
-    color: 'red',
-    colorHex: '#ef4444',
-    members: [{ name: 'Aarav', initials: 'A', color: '#a855f7' }],
-    active: true,
-    type: 'restricted',
-    mapX: 72,
-    mapY: 65,
-    recentActivity: [],
-  },
-];
+interface GeoEvent {
+  id: number;
+  event_type: string;
+  user_name: string;
+  geofence_name: string;
+  occurred_at: string | null;
+}
+
+const ZONE_COLORS = ['#22c55e', '#3b82f6', '#f59e0b', '#a855f7', '#ef4444', '#D4AF37'];
+
+function geoNameInitials(name: string) {
+  return name.split(' ').map((w: string) => w[0] || '').join('').toUpperCase().slice(0, 2);
+}
+
+function geoColorForName(name: string) {
+  let h = 0;
+  for (let i = 0; i < name.length; i++) h = (h * 31 + name.charCodeAt(i)) % ZONE_COLORS.length;
+  return ZONE_COLORS[h];
+}
+
+function formatEventTime(iso: string | null) {
+  if (!iso) return '--';
+  const d = new Date(iso);
+  const now = new Date();
+  const diff = Math.floor((now.getTime() - d.getTime()) / 60000);
+  if (diff < 1) return 'just now';
+  if (diff < 60) return `${diff}m ago`;
+  if (diff < 1440) return `${Math.floor(diff / 60)}h ago`;
+  return d.toLocaleDateString('en-IN', { day: 'numeric', month: 'short' });
+}
 
 export function GeofenceSection() {
-  const [geofences, setGeofences] = useState<Geofence[]>(INITIAL_GEOFENCES);
+  const [geofences, setGeofences] = useState<Geofence[]>([]);
+  const [events, setEvents] = useState<GeoEvent[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [familyId, setFamilyId] = useState<number | null>(null);
+  const [expandedId, setExpandedId] = useState<number | null>(null);
   const [showAddModal, setShowAddModal] = useState(false);
-  const [selectedGeofence, setSelectedGeofence] = useState<string | null>(null);
-  const [expandedId, setExpandedId] = useState<string | null>(null);
-
-  // Add modal state
+  const [saving, setSaving] = useState(false);
+  const [addError, setAddError] = useState('');
+  const [locatingMe, setLocatingMe] = useState(false);
   const [newZone, setNewZone] = useState({
     name: '',
-    address: '',
-    radius: 200,
-    members: [] as string[],
-    alertType: 'both' as 'entry' | 'exit' | 'both',
+    type: 'custom',
+    center_lat: '',
+    center_lng: '',
+    radius_meters: 200,
+    color: '#22c55e',
+    alert_on_enter: true,
+    alert_on_exit: true,
   });
 
-  const allMembers = [
-    { name: 'Priya', initials: 'P', color: '#D4AF37' },
-    { name: 'Rahul', initials: 'R', color: '#3b82f6' },
-    { name: 'Aarav', initials: 'A', color: '#a855f7' },
-  ];
+  function authHeaders(): Record<string, string> {
+    const token = typeof window !== 'undefined' ? localStorage.getItem('gv_token') || '' : '';
+    return token ? { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' } : { 'Content-Type': 'application/json' };
+  }
 
-  const recentEvents = [
-    { member: 'Aarav', initials: 'A', color: '#a855f7', action: 'entered', zone: 'School zone', time: '7:58 AM' },
-    { member: 'Rahul', initials: 'R', color: '#3b82f6', action: 'entered', zone: 'Office zone', time: '9:10 AM' },
-    { member: 'Aarav', initials: 'A', color: '#a855f7', action: 'exited', zone: 'School zone', time: '3:30 PM' },
-    { member: 'Aarav', initials: 'A', color: '#a855f7', action: 'entered', zone: 'Home', time: '3:45 PM' },
-    { member: 'Priya', initials: 'P', color: '#D4AF37', action: 'exited', zone: 'Home', time: '10:00 AM' },
-  ];
+  async function loadData(fid: number) {
+    try {
+      const [gRes, eRes] = await Promise.all([
+        fetch(`/geofences/family/${fid}`, { headers: authHeaders() }),
+        fetch('/geofences/events', { headers: authHeaders() }),
+      ]);
+      if (gRes.ok) setGeofences(await gRes.json());
+      if (eRes.ok) setEvents(await eRes.json());
+    } finally {
+      setLoading(false);
+    }
+  }
 
-  function toggleGeofence(id: string) {
-    setGeofences((prev) =>
-      prev.map((g) => (g.id === id ? { ...g, active: !g.active } : g))
+  useEffect(() => {
+    const token = typeof window !== 'undefined' ? localStorage.getItem('gv_token') || '' : '';
+    if (!token) { setLoading(false); return; }
+    fetch('/families/my', { headers: { Authorization: `Bearer ${token}` } })
+      .then((r) => r.json())
+      .then((data) => {
+        const families = Array.isArray(data) ? data : [];
+        const fid = families[0]?.id;
+        if (fid) { setFamilyId(fid); loadData(fid); }
+        else setLoading(false);
+      })
+      .catch(() => setLoading(false));
+  }, []);
+
+  useEffect(() => {
+    if (!familyId) return;
+    const iv = setInterval(() => loadData(familyId), 60000);
+    return () => clearInterval(iv);
+  }, [familyId]);
+
+  async function toggleGeofence(id: number) {
+    setGeofences((prev) => prev.map((g) => (g.id === id ? { ...g, is_active: !g.is_active } : g)));
+    try {
+      const res = await fetch(`/geofences/${id}`, { method: 'PATCH', headers: authHeaders() });
+      if (!res.ok) setGeofences((prev) => prev.map((g) => (g.id === id ? { ...g, is_active: !g.is_active } : g)));
+    } catch {
+      setGeofences((prev) => prev.map((g) => (g.id === id ? { ...g, is_active: !g.is_active } : g)));
+    }
+  }
+
+  async function deleteGeofence(id: number) {
+    setGeofences((prev) => prev.filter((g) => g.id !== id));
+    await fetch(`/geofences/${id}`, { method: 'DELETE', headers: authHeaders() }).catch(() => {});
+  }
+
+  async function saveZone() {
+    if (!newZone.name.trim()) { setAddError('Zone name is required'); return; }
+    const lat = parseFloat(newZone.center_lat);
+    const lng = parseFloat(newZone.center_lng);
+    if (isNaN(lat) || isNaN(lng)) { setAddError('Enter valid coordinates or tap "Use My Location"'); return; }
+    if (!familyId) { setAddError('Family not loaded'); return; }
+    setSaving(true); setAddError('');
+    try {
+      const res = await fetch('/geofences/', {
+        method: 'POST',
+        headers: authHeaders(),
+        body: JSON.stringify({
+          family_id: familyId,
+          name: newZone.name.trim(),
+          type: newZone.type,
+          center_lat: lat,
+          center_lng: lng,
+          radius_meters: newZone.radius_meters,
+          color: newZone.color,
+          alert_on_enter: newZone.alert_on_enter,
+          alert_on_exit: newZone.alert_on_exit,
+        }),
+      });
+      if (res.ok) {
+        setShowAddModal(false);
+        setNewZone({ name: '', type: 'custom', center_lat: '', center_lng: '', radius_meters: 200, color: '#22c55e', alert_on_enter: true, alert_on_exit: true });
+        loadData(familyId);
+      } else {
+        const err = await res.json().catch(() => ({}));
+        setAddError((err as { detail?: string }).detail || 'Failed to save zone');
+      }
+    } catch {
+      setAddError('Network error, please try again');
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  function useMyLocation() {
+    if (!navigator.geolocation) { setAddError('Geolocation not supported by this browser'); return; }
+    setLocatingMe(true);
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        setNewZone((p) => ({ ...p, center_lat: pos.coords.latitude.toFixed(6), center_lng: pos.coords.longitude.toFixed(6) }));
+        setLocatingMe(false);
+      },
+      () => { setAddError('Could not get your location'); setLocatingMe(false); },
+      { timeout: 10000 }
     );
   }
 
-  function deleteGeofence(id: string) {
-    setGeofences((prev) => prev.filter((g) => g.id !== id));
+  function getMapPos(gf: Geofence): { x: number; y: number } {
+    if (geofences.length < 2) return { x: 50, y: 50 };
+    const lats = geofences.map((g) => g.center_lat);
+    const lngs = geofences.map((g) => g.center_lng);
+    const minLat = Math.min(...lats), maxLat = Math.max(...lats);
+    const minLng = Math.min(...lngs), maxLng = Math.max(...lngs);
+    const latRange = maxLat - minLat || 0.01;
+    const lngRange = maxLng - minLng || 0.01;
+    return {
+      x: ((gf.center_lng - minLng) / lngRange) * 80 + 10,
+      y: 90 - ((gf.center_lat - minLat) / latRange) * 80,
+    };
   }
 
-  function toggleMember(name: string) {
-    setNewZone((prev) => ({
-      ...prev,
-      members: prev.members.includes(name)
-        ? prev.members.filter((m) => m !== name)
-        : [...prev.members, name],
-    }));
-  }
+  const activeCount = geofences.filter((g) => g.is_active).length;
 
   return (
     <div className="space-y-6">
@@ -230,13 +279,15 @@ export function GeofenceSection() {
           </div>
           <div>
             <h2 className="text-xl font-bold text-white">Geofences</h2>
-            <p className="text-white/50 text-sm">{geofences.filter((g) => g.active).length} active zones</p>
+            <p className="text-white/50 text-sm">
+              {loading ? 'Loading...' : `${activeCount} active zone${activeCount !== 1 ? 's' : ''}`}
+            </p>
           </div>
         </div>
         <motion.button
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
-          onClick={() => setShowAddModal(true)}
+          onClick={() => { setShowAddModal(true); setAddError(''); }}
           className="flex items-center gap-2 px-4 py-2 rounded-xl bg-[#D4AF37] text-black font-semibold text-sm"
         >
           <Plus className="w-4 h-4" />
@@ -244,12 +295,11 @@ export function GeofenceSection() {
         </motion.button>
       </div>
 
-      {/* Map View Placeholder */}
+      {/* Map View */}
       <div
         className="relative rounded-2xl overflow-hidden border border-white/10"
         style={{ height: 200, background: 'linear-gradient(135deg, #0a1628 0%, #0f2040 50%, #0a1628 100%)' }}
       >
-        {/* Grid lines */}
         <svg className="absolute inset-0 w-full h-full opacity-10">
           {[...Array(8)].map((_, i) => (
             <line key={`v${i}`} x1={`${(i + 1) * 12.5}%`} y1="0" x2={`${(i + 1) * 12.5}%`} y2="100%" stroke="#D4AF37" strokeWidth="0.5" />
@@ -258,208 +308,179 @@ export function GeofenceSection() {
             <line key={`h${i}`} x1="0" y1={`${(i + 1) * 16.67}%`} x2="100%" y2={`${(i + 1) * 16.67}%`} stroke="#D4AF37" strokeWidth="0.5" />
           ))}
         </svg>
-
-        {/* Map label */}
         <div className="absolute top-3 left-3 flex items-center gap-1.5">
           <Globe className="w-3.5 h-3.5 text-[#D4AF37]" />
-          <span className="text-[#D4AF37] text-xs font-semibold">Mumbai Region</span>
+          <span className="text-[#D4AF37] text-xs font-semibold">Zone Map</span>
         </div>
-
-        {/* Geofence circles on map */}
-        {geofences.map((gf) => (
-          <motion.div
-            key={gf.id}
-            className="absolute transform -translate-x-1/2 -translate-y-1/2 cursor-pointer"
-            style={{ left: `${gf.mapX}%`, top: `${gf.mapY}%` }}
-            onClick={() => setSelectedGeofence(gf.id === selectedGeofence ? null : gf.id)}
-          >
-            {/* Pulse ring */}
-            {gf.active && (
+        {loading ? (
+          <div className="absolute inset-0 flex items-center justify-center">
+            <RefreshCw className="w-5 h-5 text-white/30 animate-spin" />
+          </div>
+        ) : geofences.length === 0 ? (
+          <div className="absolute inset-0 flex items-center justify-center">
+            <p className="text-white/30 text-sm">No zones added yet</p>
+          </div>
+        ) : (
+          geofences.map((gf) => {
+            const pos = getMapPos(gf);
+            return (
               <motion.div
-                className="absolute rounded-full border-2"
-                style={{
-                  borderColor: gf.colorHex,
-                  width: gf.radius / 6,
-                  height: gf.radius / 6,
-                  left: '50%',
-                  top: '50%',
-                  transform: 'translate(-50%, -50%)',
-                }}
-                animate={{ scale: [1, 1.5, 1], opacity: [0.6, 0, 0.6] }}
-                transition={{ duration: 2, repeat: Infinity }}
-              />
-            )}
-            {/* Main circle */}
-            <div
-              className="rounded-full border-2 flex items-center justify-center"
-              style={{
-                borderColor: gf.colorHex,
-                background: `${gf.colorHex}22`,
-                width: gf.radius / 8,
-                height: gf.radius / 8,
-                minWidth: 28,
-                minHeight: 28,
-              }}
-            >
-              <MapPin style={{ color: gf.colorHex, width: 10, height: 10 }} />
-            </div>
-            {/* Label */}
-            <div
-              className="absolute top-full mt-1 left-1/2 -translate-x-1/2 whitespace-nowrap text-[10px] font-semibold px-1.5 py-0.5 rounded"
-              style={{ color: gf.colorHex, background: '#0a162888' }}
-            >
-              {gf.name.split(' — ')[0]}
-            </div>
-          </motion.div>
-        ))}
+                key={gf.id}
+                className="absolute transform -translate-x-1/2 -translate-y-1/2"
+                style={{ left: `${pos.x}%`, top: `${pos.y}%` }}
+              >
+                {gf.is_active && (
+                  <motion.div
+                    className="absolute rounded-full border-2"
+                    style={{ borderColor: gf.color, width: gf.radius_meters / 6, height: gf.radius_meters / 6, left: '50%', top: '50%', transform: 'translate(-50%, -50%)' }}
+                    animate={{ scale: [1, 1.5, 1], opacity: [0.6, 0, 0.6] }}
+                    transition={{ duration: 2, repeat: Infinity }}
+                  />
+                )}
+                <div
+                  className="rounded-full border-2 flex items-center justify-center"
+                  style={{ borderColor: gf.color, background: `${gf.color}22`, width: Math.max(28, gf.radius_meters / 8), height: Math.max(28, gf.radius_meters / 8) }}
+                >
+                  <MapPin style={{ color: gf.color, width: 10, height: 10 }} />
+                </div>
+                <div
+                  className="absolute top-full mt-1 left-1/2 -translate-x-1/2 whitespace-nowrap text-[10px] font-semibold px-1.5 py-0.5 rounded"
+                  style={{ color: gf.color, background: '#0a162888' }}
+                >
+                  {gf.name}
+                </div>
+              </motion.div>
+            );
+          })
+        )}
       </div>
 
       {/* Geofence Cards */}
-      <div className="space-y-3">
-        {geofences.map((gf) => (
-          <motion.div
-            key={gf.id}
-            layout
-            className="rounded-2xl border border-white/10 overflow-hidden"
-            style={{ background: 'rgba(255,255,255,0.04)' }}
-          >
-            {/* Card main row */}
-            <div className="flex items-center gap-3 p-4" style={{ borderLeft: `3px solid ${gf.colorHex}` }}>
-              {/* Icon */}
-              <div
-                className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
-                style={{ background: `${gf.colorHex}22` }}
-              >
-                <Shield style={{ color: gf.colorHex, width: 18, height: 18 }} />
-              </div>
-
-              {/* Info */}
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2">
-                  <span className="text-white font-semibold text-sm truncate">{gf.name}</span>
-                  {gf.type === 'restricted' && (
-                    <span className="text-[10px] bg-red-500/20 text-red-400 px-1.5 py-0.5 rounded font-semibold">NO-GO</span>
-                  )}
-                </div>
-                <div className="flex items-center gap-3 mt-0.5">
-                  <span className="text-white/40 text-xs">{gf.radius}m radius</span>
-                  {/* Avatar stack */}
-                  <div className="flex -space-x-1.5">
-                    {gf.members.map((m) => (
-                      <MemberAvatar key={m.name} initials={m.initials} color={m.color} size={18} />
-                    ))}
-                  </div>
-                </div>
-              </div>
-
-              {/* Toggle + Actions */}
-              <div className="flex items-center gap-3">
-                <AnimatedToggle value={gf.active} onChange={() => toggleGeofence(gf.id)} />
-                <button
-                  onClick={() => setExpandedId(expandedId === gf.id ? null : gf.id)}
-                  className="text-white/30 hover:text-white/60 transition-colors"
+      {loading ? (
+        <div className="flex items-center justify-center py-8">
+          <RefreshCw className="w-5 h-5 text-white/30 animate-spin" />
+        </div>
+      ) : geofences.length === 0 ? (
+        <div className="rounded-2xl border border-white/10 p-8 text-center" style={{ background: 'rgba(255,255,255,0.03)' }}>
+          <Shield className="w-10 h-10 text-white/20 mx-auto mb-3" />
+          <p className="text-white/50 text-sm font-medium">No geofences added yet</p>
+          <p className="text-white/30 text-xs mt-1">Tap "Add Zone" to create your first safety zone</p>
+        </div>
+      ) : (
+        <div className="space-y-3">
+          {geofences.map((gf) => (
+            <motion.div
+              key={gf.id}
+              layout
+              className="rounded-2xl border border-white/10 overflow-hidden"
+              style={{ background: 'rgba(255,255,255,0.04)' }}
+            >
+              <div className="flex items-center gap-3 p-4" style={{ borderLeft: `3px solid ${gf.color}` }}>
+                <div
+                  className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
+                  style={{ background: `${gf.color}22` }}
                 >
-                  <ChevronRight
-                    className="w-4 h-4 transition-transform duration-200"
-                    style={{ transform: expandedId === gf.id ? 'rotate(90deg)' : 'rotate(0deg)' }}
-                  />
-                </button>
-              </div>
-            </div>
-
-            {/* Expanded section */}
-            <AnimatePresence>
-              {expandedId === gf.id && (
-                <motion.div
-                  initial={{ height: 0, opacity: 0 }}
-                  animate={{ height: 'auto', opacity: 1 }}
-                  exit={{ height: 0, opacity: 0 }}
-                  transition={{ duration: 0.25 }}
-                  className="overflow-hidden border-t border-white/5"
-                >
-                  <div className="px-4 py-3 space-y-3">
-                    {/* Address */}
-                    <div className="flex items-center gap-2 text-white/40 text-xs">
-                      <MapPin className="w-3.5 h-3.5" />
-                      {gf.address}
-                    </div>
-
-                    {/* Recent Activity */}
-                    {gf.recentActivity.length > 0 && (
-                      <div>
-                        <p className="text-white/30 text-xs font-semibold uppercase tracking-wider mb-2">Recent Activity</p>
-                        <div className="space-y-1.5">
-                          {gf.recentActivity.map((ev, i) => (
-                            <div key={i} className="flex items-center gap-2 text-xs">
-                              <div
-                                className="w-1.5 h-1.5 rounded-full"
-                                style={{ background: ev.action === 'entered' ? '#22c55e' : '#f59e0b' }}
-                              />
-                              <span className="text-white/60">
-                                <span className="text-white/80 font-medium">{ev.member}</span>{' '}
-                                {ev.action} zone
-                              </span>
-                              <span className="text-white/30 ml-auto">{ev.time}</span>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
+                  <Shield style={{ color: gf.color, width: 18, height: 18 }} />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2">
+                    <span className="text-white font-semibold text-sm truncate">{gf.name}</span>
+                    {gf.type === 'restricted' && (
+                      <span className="text-[10px] bg-red-500/20 text-red-400 px-1.5 py-0.5 rounded font-semibold">NO-GO</span>
                     )}
-
-                    {/* Actions */}
-                    <div className="flex items-center gap-2 pt-1">
-                      <button className="flex items-center gap-1.5 text-xs text-white/50 hover:text-white/80 transition-colors px-3 py-1.5 rounded-lg bg-white/5">
-                        <Edit className="w-3.5 h-3.5" />
-                        Edit
-                      </button>
-                      <button className="flex items-center gap-1.5 text-xs text-white/50 hover:text-white/80 transition-colors px-3 py-1.5 rounded-lg bg-white/5">
-                        <MapPin className="w-3.5 h-3.5" />
-                        View on Map
-                      </button>
-                      <button
-                        onClick={() => deleteGeofence(gf.id)}
-                        className="flex items-center gap-1.5 text-xs text-red-400/70 hover:text-red-400 transition-colors px-3 py-1.5 rounded-lg bg-red-500/10 ml-auto"
-                      >
-                        <Trash2 className="w-3.5 h-3.5" />
-                        Delete
-                      </button>
-                    </div>
                   </div>
-                </motion.div>
-              )}
-            </AnimatePresence>
-          </motion.div>
-        ))}
-      </div>
+                  <div className="flex items-center gap-3 mt-0.5">
+                    <span className="text-white/40 text-xs">{gf.radius_meters}m radius</span>
+                    <span className="text-white/30 text-xs capitalize">{gf.type}</span>
+                  </div>
+                </div>
+                <div className="flex items-center gap-3">
+                  <AnimatedToggle value={gf.is_active} onChange={() => toggleGeofence(gf.id)} />
+                  <button
+                    onClick={() => setExpandedId(expandedId === gf.id ? null : gf.id)}
+                    className="text-white/30 hover:text-white/60 transition-colors"
+                  >
+                    <ChevronRight
+                      className="w-4 h-4 transition-transform duration-200"
+                      style={{ transform: expandedId === gf.id ? 'rotate(90deg)' : 'rotate(0deg)' }}
+                    />
+                  </button>
+                </div>
+              </div>
+
+              <AnimatePresence>
+                {expandedId === gf.id && (
+                  <motion.div
+                    initial={{ height: 0, opacity: 0 }}
+                    animate={{ height: 'auto', opacity: 1 }}
+                    exit={{ height: 0, opacity: 0 }}
+                    transition={{ duration: 0.25 }}
+                    className="overflow-hidden border-t border-white/5"
+                  >
+                    <div className="px-4 py-3 space-y-3">
+                      <div className="flex items-center gap-2 text-white/40 text-xs">
+                        <Navigation className="w-3.5 h-3.5" />
+                        {gf.center_lat.toFixed(5)}, {gf.center_lng.toFixed(5)}
+                      </div>
+                      <div className="flex items-center gap-2 pt-1">
+                        <button
+                          onClick={() => deleteGeofence(gf.id)}
+                          className="flex items-center gap-1.5 text-xs text-red-400/70 hover:text-red-400 transition-colors px-3 py-1.5 rounded-lg bg-red-500/10 ml-auto"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                          Delete Zone
+                        </button>
+                      </div>
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </motion.div>
+          ))}
+        </div>
+      )}
 
       {/* Recent Activity Feed */}
       <div className="rounded-2xl border border-white/10 p-4" style={{ background: 'rgba(255,255,255,0.03)' }}>
-        <div className="flex items-center gap-2 mb-4">
-          <Clock className="w-4 h-4 text-[#D4AF37]" />
-          <h3 className="text-white font-semibold text-sm">Recent Activity</h3>
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center gap-2">
+            <Clock className="w-4 h-4 text-[#D4AF37]" />
+            <h3 className="text-white font-semibold text-sm">Recent Activity</h3>
+          </div>
+          <button
+            onClick={() => familyId && loadData(familyId)}
+            className="text-white/30 hover:text-white/60 transition-colors"
+          >
+            <RefreshCw className="w-3.5 h-3.5" />
+          </button>
         </div>
-        <div className="space-y-3">
-          {recentEvents.map((ev, i) => (
-            <div key={i} className="flex items-center gap-3">
-              <MemberAvatar initials={ev.initials} color={ev.color} size={28} />
-              <div className="flex-1">
-                <span className="text-white/80 text-sm">
-                  <span className="font-semibold">{ev.member}</span>{' '}
-                  <span className={ev.action === 'entered' ? 'text-green-400' : 'text-amber-400'}>{ev.action}</span>{' '}
-                  {ev.zone}
-                </span>
+        {events.length === 0 ? (
+          <p className="text-white/30 text-sm text-center py-4">No zone activity recorded yet</p>
+        ) : (
+          <div className="space-y-3">
+            {events.slice(0, 10).map((ev) => (
+              <div key={ev.id} className="flex items-center gap-3">
+                <MemberAvatar initials={geoNameInitials(ev.user_name)} color={geoColorForName(ev.user_name)} size={28} />
+                <div className="flex-1">
+                  <span className="text-white/80 text-sm">
+                    <span className="font-semibold">{ev.user_name}</span>{' '}
+                    <span className={ev.event_type === 'enter' ? 'text-green-400' : 'text-amber-400'}>
+                      {ev.event_type === 'enter' ? 'entered' : 'exited'}
+                    </span>{' '}
+                    {ev.geofence_name}
+                  </span>
+                </div>
+                <span className="text-white/30 text-xs">{formatEventTime(ev.occurred_at)}</span>
               </div>
-              <span className="text-white/30 text-xs">{ev.time}</span>
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+        )}
       </div>
 
       {/* Add Zone Modal */}
       <AnimatePresence>
         {showAddModal && (
           <>
-            {/* Backdrop */}
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
@@ -467,14 +488,12 @@ export function GeofenceSection() {
               className="fixed inset-0 z-40 bg-black/60 backdrop-blur-sm"
               onClick={() => setShowAddModal(false)}
             />
-
-            {/* Modal */}
             <motion.div
               initial={{ y: '100%', opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
               exit={{ y: '100%', opacity: 0 }}
               transition={{ type: 'spring', stiffness: 300, damping: 30 }}
-              className="fixed bottom-0 left-0 right-0 z-50 rounded-t-3xl border-t border-white/10 p-6 space-y-5"
+              className="fixed bottom-0 left-0 right-0 z-50 rounded-t-3xl border-t border-white/10 p-6 space-y-5 max-h-[90vh] overflow-y-auto"
               style={{ background: 'linear-gradient(180deg, #0f1e38 0%, #0a1628 100%)' }}
             >
               <div className="flex items-center justify-between">
@@ -494,36 +513,77 @@ export function GeofenceSection() {
                   type="text"
                   value={newZone.name}
                   onChange={(e) => setNewZone((p) => ({ ...p, name: e.target.value }))}
-                  placeholder="e.g. Grandma's House"
+                  placeholder="e.g. Home, School, Office"
                   className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder-white/30 text-sm focus:outline-none focus:border-[#D4AF37]/50"
                 />
               </div>
 
-              {/* Address */}
+              {/* Zone Type */}
               <div>
-                <label className="text-white/50 text-xs font-semibold uppercase tracking-wider block mb-2">Address</label>
-                <input
-                  type="text"
-                  value={newZone.address}
-                  onChange={(e) => setNewZone((p) => ({ ...p, address: e.target.value }))}
-                  placeholder="Search address..."
-                  className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder-white/30 text-sm focus:outline-none focus:border-[#D4AF37]/50"
-                />
+                <label className="text-white/50 text-xs font-semibold uppercase tracking-wider block mb-2">Zone Type</label>
+                <div className="flex gap-2 flex-wrap">
+                  {['home', 'school', 'work', 'custom', 'restricted'].map((t) => (
+                    <button
+                      key={t}
+                      onClick={() => setNewZone((p) => ({ ...p, type: t }))}
+                      className={`px-3 py-1.5 rounded-full text-xs font-semibold capitalize border transition-all ${
+                        newZone.type === t
+                          ? 'border-[#D4AF37] bg-[#D4AF37]/10 text-[#D4AF37]'
+                          : 'border-white/10 bg-white/5 text-white/50'
+                      }`}
+                    >
+                      {t}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Location */}
+              <div>
+                <div className="flex items-center justify-between mb-2">
+                  <label className="text-white/50 text-xs font-semibold uppercase tracking-wider">Coordinates</label>
+                  <button
+                    onClick={useMyLocation}
+                    disabled={locatingMe}
+                    className="flex items-center gap-1.5 text-xs text-[#D4AF37] hover:text-[#D4AF37]/80 transition-colors disabled:opacity-50"
+                  >
+                    <Navigation className="w-3.5 h-3.5" />
+                    {locatingMe ? 'Locating...' : 'Use My Location'}
+                  </button>
+                </div>
+                <div className="flex gap-2">
+                  <input
+                    type="number"
+                    step="0.000001"
+                    value={newZone.center_lat}
+                    onChange={(e) => setNewZone((p) => ({ ...p, center_lat: e.target.value }))}
+                    placeholder="Latitude"
+                    className="flex-1 px-3 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder-white/30 text-sm focus:outline-none focus:border-[#D4AF37]/50"
+                  />
+                  <input
+                    type="number"
+                    step="0.000001"
+                    value={newZone.center_lng}
+                    onChange={(e) => setNewZone((p) => ({ ...p, center_lng: e.target.value }))}
+                    placeholder="Longitude"
+                    className="flex-1 px-3 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder-white/30 text-sm focus:outline-none focus:border-[#D4AF37]/50"
+                  />
+                </div>
               </div>
 
               {/* Radius Slider */}
               <div>
                 <div className="flex items-center justify-between mb-2">
                   <label className="text-white/50 text-xs font-semibold uppercase tracking-wider">Radius</label>
-                  <span className="text-[#D4AF37] text-sm font-bold">{newZone.radius}m</span>
+                  <span className="text-[#D4AF37] text-sm font-bold">{newZone.radius_meters}m</span>
                 </div>
                 <input
                   type="range"
                   min={50}
                   max={1000}
                   step={50}
-                  value={newZone.radius}
-                  onChange={(e) => setNewZone((p) => ({ ...p, radius: Number(e.target.value) }))}
+                  value={newZone.radius_meters}
+                  onChange={(e) => setNewZone((p) => ({ ...p, radius_meters: Number(e.target.value) }))}
                   className="w-full accent-[#D4AF37]"
                 />
                 <div className="flex justify-between text-white/20 text-xs mt-1">
@@ -532,56 +592,56 @@ export function GeofenceSection() {
                 </div>
               </div>
 
-              {/* Members */}
+              {/* Color */}
               <div>
-                <label className="text-white/50 text-xs font-semibold uppercase tracking-wider block mb-2">Members</label>
-                <div className="flex gap-2 flex-wrap">
-                  {allMembers.map((m) => (
+                <label className="text-white/50 text-xs font-semibold uppercase tracking-wider block mb-2">Zone Color</label>
+                <div className="flex gap-3">
+                  {ZONE_COLORS.map((c) => (
                     <button
-                      key={m.name}
-                      onClick={() => toggleMember(m.name)}
-                      className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium border transition-all ${
-                        newZone.members.includes(m.name)
-                          ? 'border-[#D4AF37] bg-[#D4AF37]/10 text-[#D4AF37]'
-                          : 'border-white/10 bg-white/5 text-white/50'
-                      }`}
-                    >
-                      <MemberAvatar initials={m.initials} color={m.color} size={16} />
-                      {m.name}
-                      {newZone.members.includes(m.name) && <Check className="w-3 h-3" />}
-                    </button>
+                      key={c}
+                      onClick={() => setNewZone((p) => ({ ...p, color: c }))}
+                      className="w-8 h-8 rounded-full border-2 transition-all"
+                      style={{ background: c, borderColor: newZone.color === c ? '#fff' : 'transparent' }}
+                    />
                   ))}
                 </div>
               </div>
 
               {/* Alert Type */}
               <div>
-                <label className="text-white/50 text-xs font-semibold uppercase tracking-wider block mb-2">Alert Type</label>
-                <div className="flex gap-2">
-                  {(['entry', 'exit', 'both'] as const).map((type) => (
-                    <button
-                      key={type}
-                      onClick={() => setNewZone((p) => ({ ...p, alertType: type }))}
-                      className={`flex-1 py-2 rounded-xl text-xs font-semibold capitalize border transition-all ${
-                        newZone.alertType === type
-                          ? 'border-[#D4AF37] bg-[#D4AF37]/10 text-[#D4AF37]'
-                          : 'border-white/10 bg-white/5 text-white/40'
-                      }`}
-                    >
-                      {type}
-                    </button>
-                  ))}
+                <label className="text-white/50 text-xs font-semibold uppercase tracking-wider block mb-2">Alert On</label>
+                <div className="flex gap-3">
+                  <button
+                    onClick={() => setNewZone((p) => ({ ...p, alert_on_enter: !p.alert_on_enter }))}
+                    className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold border transition-all ${
+                      newZone.alert_on_enter ? 'border-green-500 bg-green-500/10 text-green-400' : 'border-white/10 bg-white/5 text-white/40'
+                    }`}
+                  >
+                    {newZone.alert_on_enter && <Check className="w-3 h-3" />}
+                    Entry
+                  </button>
+                  <button
+                    onClick={() => setNewZone((p) => ({ ...p, alert_on_exit: !p.alert_on_exit }))}
+                    className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold border transition-all ${
+                      newZone.alert_on_exit ? 'border-amber-500 bg-amber-500/10 text-amber-400' : 'border-white/10 bg-white/5 text-white/40'
+                    }`}
+                  >
+                    {newZone.alert_on_exit && <Check className="w-3 h-3" />}
+                    Exit
+                  </button>
                 </div>
               </div>
 
-              {/* Save Button */}
+              {addError && <p className="text-red-400 text-xs">{addError}</p>}
+
               <motion.button
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
-                onClick={() => setShowAddModal(false)}
-                className="w-full py-3.5 rounded-2xl bg-[#D4AF37] text-black font-bold text-sm"
+                onClick={saveZone}
+                disabled={saving}
+                className="w-full py-3.5 rounded-2xl bg-[#D4AF37] text-black font-bold text-sm disabled:opacity-50"
               >
-                Save Zone
+                {saving ? 'Saving...' : 'Save Zone'}
               </motion.button>
             </motion.div>
           </>
