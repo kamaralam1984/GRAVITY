@@ -651,6 +651,9 @@ export default function SuperAdminPage() {
   }, [isAuthenticated, role, router])
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [showAddAdminModal, setShowAddAdminModal] = useState(false)
+  const [addAdminForm, setAddAdminForm] = useState({ name: '', email: '', password: '', role: 'admin' })
+  const [addAdminLoading, setAddAdminLoading] = useState(false)
+  const [addAdminError, setAddAdminError] = useState('')
   const [showAddUserModal, setShowAddUserModal] = useState(false)
   const [addUserForm, setAddUserForm] = useState({ name: '', email: '', password: '', role: 'user' })
   const [addUserLoading, setAddUserLoading] = useState(false)
@@ -1644,76 +1647,56 @@ export default function SuperAdminPage() {
                 <div style={{ fontSize: 18, fontWeight: 800, color: 'var(--text-primary)', fontFamily: 'Plus Jakarta Sans, sans-serif' }}>
                   Add New Admin
                 </div>
-                <button
-                  onClick={() => setShowAddAdminModal(false)}
-                  style={{ background: 'transparent', border: 'none', color: 'var(--text-muted)', cursor: 'pointer' }}
-                >
+                <button onClick={() => setShowAddAdminModal(false)} style={{ background: 'transparent', border: 'none', color: 'var(--text-muted)', cursor: 'pointer' }}>
                   <X size={20} />
                 </button>
               </div>
+              {addAdminError && <div style={{ padding: '8px 12px', borderRadius: 8, background: 'rgba(239,68,68,0.12)', color: '#EF4444', fontSize: 13, marginBottom: 14 }}>{addAdminError}</div>}
               {[
-                { label: 'Full Name', placeholder: 'Karan Sharma', type: 'text' },
-                { label: 'Email Address', placeholder: 'admin@gravity.app', type: 'email' },
-                { label: 'Temporary Password', placeholder: '••••••••', type: 'password' },
+                { label: 'Full Name', key: 'name', placeholder: 'Karan Sharma', type: 'text' },
+                { label: 'Email Address', key: 'email', placeholder: 'admin@gravity.app', type: 'email' },
+                { label: 'Password', key: 'password', placeholder: 'Min 8 characters', type: 'password' },
               ].map((field) => (
-                <div key={field.label} style={{ marginBottom: 16 }}>
+                <div key={field.key} style={{ marginBottom: 16 }}>
                   <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: 'var(--text-muted)', marginBottom: 6 }}>
                     {field.label}
                   </label>
                   <input
                     type={field.type}
                     placeholder={field.placeholder}
-                    style={{
-                      width: '100%',
-                      padding: '10px 14px',
-                      borderRadius: 10,
-                      border: '1px solid var(--border)',
-                      background: 'var(--bg-surface2)',
-                      color: 'var(--text-primary)',
-                      fontSize: 14,
-                      outline: 'none',
-                      boxSizing: 'border-box',
-                    }}
+                    value={(addAdminForm as any)[field.key]}
+                    onChange={(e) => setAddAdminForm((prev) => ({ ...prev, [field.key]: e.target.value }))}
+                    style={{ width: '100%', padding: '10px 14px', borderRadius: 10, border: '1px solid var(--border)', background: 'var(--bg-surface2)', color: 'var(--text-primary)', fontSize: 14, outline: 'none', boxSizing: 'border-box' }}
                   />
                 </div>
               ))}
               <div style={{ marginBottom: 20 }}>
-                <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: 'var(--text-muted)', marginBottom: 6 }}>
-                  Role
-                </label>
-                <select
-                  style={{
-                    width: '100%',
-                    padding: '10px 14px',
-                    borderRadius: 10,
-                    border: '1px solid var(--border)',
-                    background: 'var(--bg-surface2)',
-                    color: 'var(--text-primary)',
-                    fontSize: 14,
-                    outline: 'none',
-                    cursor: 'pointer',
-                    boxSizing: 'border-box',
-                  }}
+                <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: 'var(--text-muted)', marginBottom: 6 }}>Role</label>
+                <select value={addAdminForm.role} onChange={(e) => setAddAdminForm((prev) => ({ ...prev, role: e.target.value }))}
+                  style={{ width: '100%', padding: '10px 14px', borderRadius: 10, border: '1px solid var(--border)', background: 'var(--bg-surface2)', color: 'var(--text-primary)', fontSize: 14, outline: 'none', cursor: 'pointer', boxSizing: 'border-box' }}
                 >
                   <option value="admin" style={{ background: '#1a1030' }}>Admin</option>
+                  <option value="superadmin" style={{ background: '#1a1030' }}>Super Admin</option>
                   <option value="moderator" style={{ background: '#1a1030' }}>Moderator</option>
                 </select>
               </div>
               <button
-                style={{
-                  width: '100%',
-                  padding: '12px',
-                  borderRadius: 12,
-                  border: 'none',
-                  background: `linear-gradient(135deg, ${PURPLE}, ${PURPLE_DARK})`,
-                  color: 'var(--text-primary)',
-                  cursor: 'pointer',
-                  fontSize: 14,
-                  fontWeight: 700,
-                  boxShadow: `0 6px 20px rgba(139,92,246,0.4)`,
+                onClick={async () => {
+                  if (!addAdminForm.name || !addAdminForm.email || !addAdminForm.password) { setAddAdminError('All fields are required'); return }
+                  setAddAdminLoading(true); setAddAdminError('')
+                  try {
+                    const token = getAuthToken()
+                    const res = await fetch('/admin-api/admins', { method: 'POST', headers: { Authorization: 'Bearer ' + token, 'Content-Type': 'application/json' }, body: JSON.stringify(addAdminForm) })
+                    const data = await res.json()
+                    if (!res.ok) throw new Error(data.detail || 'Failed to create admin')
+                    setShowAddAdminModal(false)
+                    setAddAdminForm({ name: '', email: '', password: '', role: 'admin' })
+                  } catch (e: any) { setAddAdminError(e.message || 'Failed') } finally { setAddAdminLoading(false) }
                 }}
+                disabled={addAdminLoading}
+                style={{ width: '100%', padding: '12px', borderRadius: 12, border: 'none', background: `linear-gradient(135deg, ${PURPLE}, ${PURPLE_DARK})`, color: 'var(--text-primary)', cursor: addAdminLoading ? 'not-allowed' : 'pointer', fontSize: 14, fontWeight: 700, boxShadow: `0 6px 20px rgba(139,92,246,0.4)`, opacity: addAdminLoading ? 0.7 : 1 }}
               >
-                Create Admin Account
+                {addAdminLoading ? 'Creating...' : 'Create Admin Account'}
               </button>
             </motion.div>
           </motion.div>
@@ -1783,6 +1766,8 @@ export default function SuperAdminPage() {
             >
               <option value="user">User</option>
               <option value="moderator">Moderator</option>
+              <option value="admin">Admin</option>
+              <option value="superadmin">Super Admin</option>
             </select>
           </div>
           <button onClick={handleSubmit} disabled={addUserLoading}
@@ -1908,6 +1893,7 @@ export default function SuperAdminPage() {
               <option value="user">User</option>
               <option value="moderator">Moderator</option>
               <option value="admin">Admin</option>
+              <option value="superadmin">Super Admin</option>
             </select>
           </div>
           <div style={{ display: 'flex', gap: 10 }}>

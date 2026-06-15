@@ -218,6 +218,12 @@ class UserPasswordRequest(BaseModel):
 class UserRoleRequest(BaseModel):
     role: str
 
+class AdminCreateRequest(BaseModel):
+    name: str
+    email: str
+    password: str
+    role: Optional[str] = "admin"
+
 @router.get("/users")
 def list_users(
     skip: int = 0, limit: int = 20,
@@ -347,6 +353,51 @@ def delete_user(user_id: int, admin=Depends(get_current_admin), db: Session = De
     db.delete(user)
     db.commit()
     return {"message": "User deleted"}
+
+
+# ── Admin management ──────────────────────────────────────────────────────────
+
+@router.get("/admins")
+def list_admins(admin=Depends(get_current_admin), db: Session = Depends(get_db)):
+    admins = db.query(models.AdminUser).order_by(desc(models.AdminUser.id)).all()
+    return {"admins": [{"id": a.id, "name": a.name, "email": a.email, "role": a.role, "is_active": a.is_active, "created_at": str(a.created_at) if hasattr(a, 'created_at') and a.created_at else None} for a in admins]}
+
+@router.post("/admins")
+def create_admin(data: AdminCreateRequest, admin=Depends(get_current_admin), db: Session = Depends(get_db)):
+    valid_roles = ["admin", "superadmin", "moderator"]
+    if data.role not in valid_roles:
+        raise HTTPException(status_code=400, detail=f"Invalid role. Must be one of: {', '.join(valid_roles)}")
+    if db.query(models.AdminUser).filter(models.AdminUser.email == data.email).first():
+        raise HTTPException(status_code=400, detail="Email already registered as admin")
+    new_admin = models.AdminUser(
+        name=data.name,
+        email=data.email,
+        password_hash=get_password_hash(data.password),
+        role=data.role,
+        is_active=True,
+    )
+    db.add(new_admin)
+    db.commit()
+    db.refresh(new_admin)
+    return {"message": "Admin created", "id": new_admin.id}
+
+@router.delete("/admins/{admin_id}")
+def delete_admin(admin_id: int, admin=Depends(get_current_admin), db: Session = Depends(get_db)):
+    target = db.query(models.AdminUser).filter(models.AdminUser.id == admin_id).first()
+    if not target:
+        raise HTTPException(status_code=404, detail="Admin not found")
+    db.delete(target)
+    db.commit()
+    return {"message": "Admin deleted"}
+
+@router.patch("/admins/{admin_id}/status")
+def toggle_admin_status(admin_id: int, data: UserStatusRequest, admin=Depends(get_current_admin), db: Session = Depends(get_db)):
+    target = db.query(models.AdminUser).filter(models.AdminUser.id == admin_id).first()
+    if not target:
+        raise HTTPException(status_code=404, detail="Admin not found")
+    target.is_active = data.is_active
+    db.commit()
+    return {"message": "Admin status updated"}
 
 
 # ── Families management ───────────────────────────────────────────────────────
