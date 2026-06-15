@@ -27,6 +27,7 @@ interface ChildHomeProps {
   steps: number;
   battery: number;
   familyOnline: number;
+  onNavigate?: (tab: string) => void;
 }
 
 interface ApiMember {
@@ -243,6 +244,7 @@ export default function ChildHome({
   steps,
   battery,
   familyOnline,
+  onNavigate,
 }: ChildHomeProps) {
   const [safetyScore, setSafetyScore] = useState<number | null>(null);
   const [activeGeofences, setActiveGeofences] = useState<number>(0);
@@ -253,6 +255,7 @@ export default function ChildHome({
   const [lastLocation, setLastLocation] = useState<string | null>(null);
   const [recentAlerts, setRecentAlerts] = useState<AlertItem[]>([]);
   const [greeting] = useState(getGreeting());
+  const [famId, setFamId] = useState<number | null>(null);
 
   const statusColor = STATUS_COLORS[safeStatus];
   const statusGlow = STATUS_GLOW[safeStatus];
@@ -282,6 +285,7 @@ export default function ChildHome({
         const fams = await famRes.json();
         if (!Array.isArray(fams) || fams.length === 0) return;
         const famId = fams[0].id;
+        setFamId(famId);
 
         // Load members → real avatars + own location
         const memRes = await fetch(`/families/${famId}/members`, { headers });
@@ -661,7 +665,20 @@ export default function ChildHome({
               {/* Check In Now */}
               <motion.button
                 whileTap={{ scale: 0.95 }} whileHover={{ scale: 1.03 }}
-                onClick={() => setCheckedIn(true)}
+                onClick={async () => {
+                  if (checkedIn) return;
+                  setCheckedIn(true);
+                  try {
+                    const token = getToken();
+                    if (token && famId) {
+                      await fetch('/chat/send', {
+                        method: 'POST',
+                        headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ family_id: famId, content: `✅ ${childName} has checked in` }),
+                      });
+                    }
+                  } catch { /* ignore */ }
+                }}
                 style={{
                   padding: '11px 20px', borderRadius: 50,
                   background: checkedIn ? '#10B98130' : 'linear-gradient(135deg, #10B981, #059669)',
@@ -679,7 +696,10 @@ export default function ChildHome({
               {/* Message Family */}
               <motion.button
                 whileTap={{ scale: 0.95 }} whileHover={{ scale: 1.03 }}
-                onClick={() => setMessageSent(true)}
+                onClick={() => {
+                  setMessageSent(true);
+                  onNavigate?.('chat');
+                }}
                 style={{
                   padding: '11px 20px', borderRadius: 50,
                   background: messageSent ? '#3B82F630' : 'linear-gradient(135deg, #3B82F6, #2563EB)',
@@ -691,13 +711,26 @@ export default function ChildHome({
                 }}
               >
                 {messageSent ? <Check size={14} /> : <Users size={14} />}
-                {messageSent ? 'Sent!' : 'Message Family'}
+                {messageSent ? 'Opening Chat...' : 'Message Family'}
               </motion.button>
 
               {/* I'm Safe */}
               <motion.button
                 whileTap={{ scale: 0.95 }} whileHover={{ scale: 1.03 }}
-                onClick={() => setSafeSignalSent(true)}
+                onClick={async () => {
+                  if (safeSignalSent) return;
+                  setSafeSignalSent(true);
+                  try {
+                    const token = getToken();
+                    if (token && famId) {
+                      await fetch('/chat/send', {
+                        method: 'POST',
+                        headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ family_id: famId, content: `🟢 ${childName} is safe` }),
+                      });
+                    }
+                  } catch { /* ignore */ }
+                }}
                 style={{
                   padding: '11px 20px', borderRadius: 50,
                   background: safeSignalSent ? 'rgba(212,175,55,0.15)' : 'linear-gradient(135deg, #D4AF37, #B8960C)',

@@ -299,6 +299,7 @@ export default function ChildPage() {
             steps={steps}
             battery={battery}
             familyOnline={familyOnline}
+            onNavigate={(tab) => handleTabChange(tab as Tab)}
           />
         )
       case 'sos':
