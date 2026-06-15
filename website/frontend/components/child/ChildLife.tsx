@@ -632,33 +632,59 @@ export function HealthSection({ userId }: { userId?: number }) {
   const [calories, setCalories] = useState(0);
   const [sleepHrs, setSleepHrs] = useState(0);
   const [activeMin, setActiveMin] = useState(0);
+  const [waterMl, setWaterMl] = useState(0);
   const [weeklySteps, setWeeklySteps] = useState(WEEKLY_STEPS);
   const [dataLoaded, setDataLoaded] = useState(false);
   const [aiTip, setAiTip] = useState('');
+  const [hasRecord, setHasRecord] = useState(false);
+
+  // Log health data modal
+  const [showLogModal, setShowLogModal] = useState(false);
+  const [logForm, setLogForm] = useState({ steps: '', heart_rate: '', sleep_hours: '', calories: '', water_ml: '', active_minutes: '' });
+  const [logLoading, setLogLoading] = useState(false);
+  const [logError, setLogError] = useState('');
 
   const goalSteps = 10000;
-  const water = 1200;
   const waterGoal = 2000;
-  const todayIdx = (new Date().getDay() + 6) % 7; // 0=Mon … 6=Sun
+  const todayIdx = (new Date().getDay() + 6) % 7;
 
-  useEffect(() => {
+  function loadData() {
     if (!userId) { setDataLoaded(true); return; }
     const token = getToken();
-    fetch(`/health/records/${userId}`, { headers: { Authorization: `Bearer ${token}` } })
-      .then(r => r.ok ? r.json() : [])
-      .then((records: Record<string, number>[]) => {
-        if (records.length > 0) {
-          const rec = records[0];
-          const s = rec.steps ?? 0;
-          setSteps(s); setHeartRate(rec.heart_rate ?? 0);
-          setCalories(rec.calories_burned ?? 0); setSleepHrs(rec.sleep_hours ?? 0);
-          setActiveMin(rec.active_minutes ?? 0);
-          setWeeklySteps(prev => { const w = [...prev]; w[todayIdx] = s; return w; });
-        }
-        setDataLoaded(true);
-      })
-      .catch(() => setDataLoaded(true));
-  }, [userId]);
+    const today = new Date().toISOString().slice(0, 10);
+    Promise.all([
+      fetch(`/health/today/${userId}`, { headers: { Authorization: `Bearer ${token}` } }).then(r => r.ok ? r.json() : null),
+      fetch(`/health/weekly/${userId}`, { headers: { Authorization: `Bearer ${token}` } }).then(r => r.ok ? r.json() : null),
+    ]).then(([rec, weekly]) => {
+      if (rec?.exists) {
+        setSteps(rec.steps ?? 0);
+        setHeartRate(rec.heart_rate ?? 0);
+        setCalories(rec.calories ?? 0);
+        setSleepHrs(rec.sleep_hours ?? 0);
+        setActiveMin(rec.active_minutes ?? 0);
+        setWaterMl(rec.water_ml ?? 0);
+        setHasRecord(true);
+        // Pre-fill log form with existing data
+        setLogForm({
+          steps: rec.steps ? String(rec.steps) : '',
+          heart_rate: rec.heart_rate ? String(rec.heart_rate) : '',
+          sleep_hours: rec.sleep_hours ? String(rec.sleep_hours) : '',
+          calories: rec.calories ? String(rec.calories) : '',
+          water_ml: rec.water_ml ? String(rec.water_ml) : '',
+          active_minutes: rec.active_minutes ? String(rec.active_minutes) : '',
+        });
+      }
+      if (weekly) {
+        const vals = Object.entries(weekly).map(([, v]) => (v as number | null) ?? 0);
+        setWeeklySteps(vals.length === 7 ? vals : WEEKLY_STEPS);
+        const todayVal = weekly[today];
+        if (todayVal) setSteps(todayVal);
+      }
+      setDataLoaded(true);
+    }).catch(() => setDataLoaded(true));
+  }
+
+  useEffect(() => { loadData(); }, [userId]);
 
   useEffect(() => {
     if (!dataLoaded) return;
@@ -675,11 +701,38 @@ export function HealthSection({ userId }: { userId?: number }) {
       .catch(() => {});
   }, [dataLoaded]);
 
-  const s = steps > 0 ? steps : 0;
+  async function handleLogHealth() {
+    setLogLoading(true);
+    setLogError('');
+    const token = getToken();
+    const today = new Date().toISOString().slice(0, 10);
+    const body: Record<string, string | number> = { date: today };
+    if (logForm.steps) body.steps = parseInt(logForm.steps);
+    if (logForm.heart_rate) body.heart_rate = parseInt(logForm.heart_rate);
+    if (logForm.sleep_hours) body.sleep_hours = parseFloat(logForm.sleep_hours);
+    if (logForm.calories) body.calories = parseInt(logForm.calories);
+    if (logForm.water_ml) body.water_ml = parseInt(logForm.water_ml);
+    if (logForm.active_minutes) body.active_minutes = parseInt(logForm.active_minutes);
+    try {
+      const res = await fetch('/health/record', {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      });
+      if (!res.ok) { setLogError('Save nahi hua, dobara try karo'); return; }
+      setShowLogModal(false);
+      setDataLoaded(false);
+      setHasRecord(false);
+      loadData();
+    } catch { setLogError('Network error'); }
+    finally { setLogLoading(false); }
+  }
+
+  const s = steps;
   const hr = heartRate > 0 ? heartRate : 78;
-  const cal = calories > 0 ? calories : 0;
-  const slp = sleepHrs > 0 ? sleepHrs : 0;
-  const act = activeMin > 0 ? activeMin : 0;
+  const cal = calories;
+  const slp = sleepHrs;
+  const act = activeMin;
   const maxWeekly = Math.max(...weeklySteps, 1);
 
   return (
@@ -694,10 +747,21 @@ export function HealthSection({ userId }: { userId?: number }) {
         }}>
           <Heart size={22} color="#fff" />
         </div>
-        <div>
+        <div style={{ flex: 1 }}>
           <h2 style={{ margin: 0, fontSize: '20px', fontWeight: 700, color: '#fff' }}>Health</h2>
           <p style={{ margin: 0, fontSize: '13px', color: 'rgba(255,255,255,0.5)' }}>Activity & Wellness</p>
         </div>
+        <button
+          onClick={() => setShowLogModal(true)}
+          style={{
+            background: 'linear-gradient(135deg, #EF4444, #F97316)',
+            border: 'none', borderRadius: '10px', padding: '8px 14px',
+            color: '#fff', fontSize: '12px', fontWeight: 700, cursor: 'pointer',
+            boxShadow: '0 4px 12px rgba(239,68,68,0.35)',
+          }}
+        >
+          {hasRecord ? '✏️ Update' : '+ Log Data'}
+        </button>
       </div>
 
       {/* Activity Rings */}
@@ -780,19 +844,21 @@ export function HealthSection({ userId }: { userId?: number }) {
             <span style={{ fontSize: '11px', color: 'rgba(255,255,255,0.45)', fontWeight: 600 }}>WATER</span>
           </div>
           <div style={{ display: 'flex', alignItems: 'baseline', gap: '4px' }}>
-            <span style={{ fontSize: '24px', fontWeight: 800, color: '#06B6D4' }}>1.2L</span>
+            <span style={{ fontSize: '24px', fontWeight: 800, color: '#06B6D4' }}>
+              {waterMl > 0 ? `${(waterMl / 1000).toFixed(1)}L` : '—'}
+            </span>
             <span style={{ fontSize: '12px', color: 'rgba(255,255,255,0.4)' }}>/ 2L</span>
           </div>
           <div style={{ marginTop: '8px' }}>
             <div style={{ height: '4px', borderRadius: '2px', background: 'rgba(255,255,255,0.08)' }}>
               <motion.div
                 initial={{ width: 0 }}
-                animate={{ width: `${(water / waterGoal) * 100}%` }}
+                animate={{ width: `${Math.min(100, (waterMl / waterGoal) * 100)}%` }}
                 transition={{ duration: 1 }}
                 style={{ height: '100%', borderRadius: '2px', background: '#06B6D4' }}
               />
             </div>
-            <div style={{ fontSize: '10px', color: 'rgba(255,255,255,0.35)', marginTop: '4px' }}>{water} ml consumed</div>
+            <div style={{ fontSize: '10px', color: 'rgba(255,255,255,0.35)', marginTop: '4px' }}>{waterMl > 0 ? `${waterMl} ml consumed` : 'No data yet'}</div>
           </div>
         </div>
 
@@ -906,6 +972,80 @@ export function HealthSection({ userId }: { userId?: number }) {
           </div>
         </div>
       )}
+
+      {/* Log Health Data Modal */}
+      <AnimatePresence>
+        {showLogModal && (
+          <>
+            <motion.div
+              initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+              onClick={() => setShowLogModal(false)}
+              style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)', zIndex: 200 }}
+            />
+            <motion.div
+              initial={{ y: '100%' }} animate={{ y: 0 }} exit={{ y: '100%' }}
+              transition={{ type: 'spring', damping: 30, stiffness: 300 }}
+              style={{
+                position: 'fixed', bottom: 0, left: 0, right: 0, zIndex: 201,
+                background: '#1A1A2E', borderRadius: '24px 24px 0 0',
+                padding: '24px 20px 32px', maxHeight: '80vh', overflowY: 'auto',
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '20px' }}>
+                <h3 style={{ margin: 0, fontSize: '18px', fontWeight: 700, color: '#fff' }}>
+                  {hasRecord ? 'Health Data Update' : 'Aaj Ka Health Data Log Karo'}
+                </h3>
+                <button onClick={() => setShowLogModal(false)} style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.5)', cursor: 'pointer', padding: '4px' }}>
+                  <X size={20} />
+                </button>
+              </div>
+
+              {[
+                { key: 'steps', label: '👣 Steps', placeholder: 'e.g. 8000', type: 'number' },
+                { key: 'heart_rate', label: '❤️ Heart Rate (bpm)', placeholder: 'e.g. 72', type: 'number' },
+                { key: 'sleep_hours', label: '🌙 Sleep (hours)', placeholder: 'e.g. 8', type: 'number' },
+                { key: 'calories', label: '🔥 Calories Burned', placeholder: 'e.g. 450', type: 'number' },
+                { key: 'water_ml', label: '💧 Water (ml)', placeholder: 'e.g. 1500', type: 'number' },
+                { key: 'active_minutes', label: '⚡ Active Minutes', placeholder: 'e.g. 45', type: 'number' },
+              ].map(field => (
+                <div key={field.key} style={{ marginBottom: '14px' }}>
+                  <label style={{ display: 'block', fontSize: '13px', color: 'rgba(255,255,255,0.6)', marginBottom: '6px', fontWeight: 600 }}>
+                    {field.label}
+                  </label>
+                  <input
+                    type={field.type}
+                    placeholder={field.placeholder}
+                    value={logForm[field.key as keyof typeof logForm]}
+                    onChange={e => setLogForm(prev => ({ ...prev, [field.key]: e.target.value }))}
+                    style={{
+                      width: '100%', padding: '12px 14px', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.12)',
+                      background: 'rgba(255,255,255,0.06)', color: '#fff', fontSize: '15px', boxSizing: 'border-box',
+                      outline: 'none',
+                    }}
+                  />
+                </div>
+              ))}
+
+              {logError && (
+                <p style={{ margin: '0 0 12px', fontSize: '13px', color: '#EF4444' }}>{logError}</p>
+              )}
+
+              <button
+                onClick={handleLogHealth}
+                disabled={logLoading}
+                style={{
+                  width: '100%', padding: '16px', borderRadius: '14px', border: 'none',
+                  background: logLoading ? 'rgba(255,255,255,0.1)' : 'linear-gradient(135deg, #EF4444, #F97316)',
+                  color: '#fff', fontSize: '16px', fontWeight: 700, cursor: logLoading ? 'not-allowed' : 'pointer',
+                  boxShadow: logLoading ? 'none' : '0 4px 16px rgba(239,68,68,0.4)',
+                }}
+              >
+                {logLoading ? 'Saving...' : 'Save Health Data'}
+              </button>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

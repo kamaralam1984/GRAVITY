@@ -6,6 +6,7 @@ from typing import Optional, List
 from database import get_db
 import models
 from auth import get_current_user
+from datetime import datetime, timedelta
 
 router = APIRouter()
 
@@ -53,6 +54,34 @@ def add_medication(data: MedReminderCreate, user: models.User = Depends(get_curr
 def get_medications(user_id: int, db: Session = Depends(get_db)):
     meds = db.query(models.MedicationReminder).filter(models.MedicationReminder.user_id == user_id, models.MedicationReminder.is_active == True).all()
     return [{"id": m.id, "name": m.medication_name, "dosage": m.dosage, "times": m.times} for m in meds]
+
+@router.get("/today/{user_id}")
+def get_today_record(user_id: int, db: Session = Depends(get_db)):
+    today = datetime.utcnow().date().isoformat()
+    record = db.query(models.HealthRecord).filter(
+        models.HealthRecord.user_id == user_id,
+        models.HealthRecord.date == today,
+    ).first()
+    if not record:
+        return {"date": today, "steps": None, "sleep_hours": None, "heart_rate": None, "calories": None, "water_ml": None, "active_minutes": None, "exists": False}
+    return {"date": record.date, "steps": record.steps, "sleep_hours": record.sleep_hours, "heart_rate": record.heart_rate, "calories": record.calories, "water_ml": record.water_ml, "active_minutes": record.active_minutes, "exists": True}
+
+@router.get("/weekly/{user_id}")
+def get_weekly_steps(user_id: int, db: Session = Depends(get_db)):
+    """Return steps for each of the last 7 days (Mon-Sun order)."""
+    today = datetime.utcnow().date()
+    result = {}
+    for i in range(6, -1, -1):
+        day = (today - timedelta(days=i)).isoformat()
+        result[day] = None
+    records = db.query(models.HealthRecord).filter(
+        models.HealthRecord.user_id == user_id,
+        models.HealthRecord.date >= (today - timedelta(days=6)).isoformat(),
+    ).all()
+    for r in records:
+        if r.date in result:
+            result[r.date] = r.steps
+    return result
 
 @router.get("/stats")
 def health_stats(db: Session = Depends(get_db)):
