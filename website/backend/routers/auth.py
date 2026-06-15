@@ -477,6 +477,25 @@ def list_devices(current_user: models.User = Depends(get_current_user), db: Sess
     devices = db.query(models.TrustedDevice).filter(models.TrustedDevice.user_id == current_user.id).all()
     return [{"id": d.id, "device_name": d.device_name, "device_type": d.device_type, "browser": d.browser, "last_seen": d.last_seen.isoformat() if d.last_seen else None} for d in devices]
 
+class HeartbeatRequest(BaseModel):
+    battery: Optional[int] = None
+
+@router.post("/heartbeat")
+def heartbeat(data: HeartbeatRequest = HeartbeatRequest(), current_user: models.User = Depends(get_current_user), db: Session = Depends(get_db)):
+    device = db.query(models.Device).filter(
+        models.Device.user_id == current_user.id,
+        models.Device.os == "web",
+    ).first()
+    if not device:
+        device = models.Device(user_id=current_user.id, device_name="Web Browser", os="web")
+        db.add(device)
+    device.is_online = True
+    device.last_seen = datetime.utcnow()
+    if data.battery is not None:
+        device.battery_level = data.battery
+    db.commit()
+    return {"status": "ok"}
+
 @router.delete("/device/{device_id}")
 def remove_device(device_id: int, current_user: models.User = Depends(get_current_user), db: Session = Depends(get_db)):
     device = db.query(models.TrustedDevice).filter(

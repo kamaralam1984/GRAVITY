@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { MapPin, RefreshCw, Navigation, Users, Wifi, WifiOff, ChevronDown, ChevronUp, Plus, Minus, Layers, Locate } from 'lucide-react'
+import { MapPin, RefreshCw, Navigation, Users, Wifi, WifiOff, ChevronDown, ChevronUp, Plus, Minus, LayoutGrid, Moon, Globe, Navigation2 } from 'lucide-react'
 import { getToken } from '@/lib/auth'
 
 const API_BASE = ''  // relative URLs go through Next.js proxy → port 8001
@@ -118,6 +118,8 @@ export default function UberFamilyMap({
   const [refreshing, setRefreshing] = useState(false)
   const [lastUpdate, setLastUpdate] = useState<Date | null>(null)
   const [mapStyle, setMapStyle]     = useState<'dark' | 'satellite' | 'street'>('dark')
+  const [satProvider, setSatProvider] = useState<'esri' | 'google-earth' | 'google-sat' | 'google-hybrid'>('esri')
+  const [satPickerOpen, setSatPickerOpen] = useState(false)
 
   /* ── Load Leaflet & init map ── */
   useEffect(() => {
@@ -130,6 +132,7 @@ export default function UberFamilyMap({
       const map = L.map(mapRef.current, {
         center: [20.5937, 78.9629], // India center
         zoom: 5,
+        maxZoom: 22,
         zoomControl: false,
         attributionControl: false,
         preferCanvas: true,
@@ -137,10 +140,10 @@ export default function UberFamilyMap({
 
       const tileLayer = L.tileLayer(
         'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',
-        { maxZoom: 19, subdomains: 'abcd' }
+        { maxZoom: 22, subdomains: 'abcd' }
       ).addTo(map)
 
-      leafletRef.current = { L, map, tileLayer }
+      leafletRef.current = { L, map, tileLayer, labelLayer: null }
 
       // Fix blank map on mobile
       setTimeout(() => map.invalidateSize(), 300)
@@ -280,19 +283,83 @@ export default function UberFamilyMap({
   function zoomIn() { leafletRef.current?.map?.zoomIn() }
   function zoomOut() { leafletRef.current?.map?.zoomOut() }
 
-  function cycleMapStyle() {
+  const SAT_PROVIDERS = [
+    {
+      id: 'esri',
+      label: 'ESRI Hybrid',
+      desc: 'Satellite + labels',
+      color: '#34D399',
+      base: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
+      baseOpts: { maxZoom: 22 },
+      overlay: 'https://services.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}',
+      overlayOpts: { maxZoom: 22, opacity: 1 },
+    },
+    {
+      id: 'google-earth',
+      label: 'Google Earth',
+      desc: 'Satellite + roads',
+      color: '#60A5FA',
+      base: 'https://mt{s}.google.com/vt/lyrs=y&x={x}&y={y}&z={z}',
+      baseOpts: { maxZoom: 22, subdomains: '0123' },
+      overlay: null,
+      overlayOpts: {},
+    },
+    {
+      id: 'google-sat',
+      label: 'Google Satellite',
+      desc: 'Pure satellite',
+      color: '#F59E0B',
+      base: 'https://mt{s}.google.com/vt/lyrs=s&x={x}&y={y}&z={z}',
+      baseOpts: { maxZoom: 22, subdomains: '0123' },
+      overlay: null,
+      overlayOpts: {},
+    },
+    {
+      id: 'google-hybrid',
+      label: 'Google Hybrid',
+      desc: 'Satellite + streets + buildings',
+      color: '#A78BFA',
+      base: 'https://mt{s}.google.com/vt/lyrs=s&x={x}&y={y}&z={z}',
+      baseOpts: { maxZoom: 22, subdomains: '0123' },
+      overlay: 'https://mt{s}.google.com/vt/lyrs=h&x={x}&y={y}&z={z}',
+      overlayOpts: { maxZoom: 22, subdomains: '0123' },
+    },
+  ] as const
+
+  function applyMapStyle(style: 'dark' | 'satellite' | 'street', provider?: string) {
     const ctx = leafletRef.current
     if (!ctx) return
-    const next = mapStyle === 'dark' ? 'satellite' : mapStyle === 'satellite' ? 'street' : 'dark'
-    setMapStyle(next)
     ctx.tileLayer?.remove()
-    const urls: Record<string, string> = {
-      dark: 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',
-      satellite: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
-      street: 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',
+    ctx.labelLayer?.remove()
+    setMapStyle(style)
+    let tileLayer: any
+    let labelLayer: any = null
+    if (style === 'satellite') {
+      const pid = provider ?? satProvider
+      const prov = SAT_PROVIDERS.find((p) => p.id === pid) ?? SAT_PROVIDERS[0]
+      setSatProvider(pid as typeof satProvider)
+      tileLayer = ctx.L.tileLayer(prov.base, prov.baseOpts).addTo(ctx.map)
+      if (prov.overlay) {
+        labelLayer = ctx.L.tileLayer(prov.overlay, prov.overlayOpts).addTo(ctx.map)
+      }
+    } else if (style === 'street') {
+      tileLayer = ctx.L.tileLayer(
+        'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',
+        { maxZoom: 22, subdomains: 'abcd' }
+      ).addTo(ctx.map)
+    } else {
+      tileLayer = ctx.L.tileLayer(
+        'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',
+        { maxZoom: 22, subdomains: 'abcd' }
+      ).addTo(ctx.map)
     }
-    const newLayer = ctx.L.tileLayer(urls[next], { maxZoom: 19, subdomains: 'abcd' }).addTo(ctx.map)
-    leafletRef.current = { ...ctx, tileLayer: newLayer }
+    leafletRef.current = { ...ctx, tileLayer, labelLayer }
+  }
+
+  function cycleMapStyle() {
+    const next = mapStyle === 'dark' ? 'satellite' : mapStyle === 'satellite' ? 'street' : 'dark'
+    applyMapStyle(next)
+    setSatPickerOpen(false)
   }
 
   function locateMe() {
@@ -369,35 +436,87 @@ export default function UberFamilyMap({
 
       {/* ── Right-side map controls ── */}
       <div style={{
-        position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)',
-        zIndex: 10, display: 'flex', flexDirection: 'column', gap: 6,
+        position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)',
+        zIndex: 20, display: 'flex', flexDirection: 'column', gap: 5,
       }}>
+        {/* Zoom in */}
         {[
-          { icon: <Plus size={16} />, action: zoomIn, title: 'Zoom in' },
-          { icon: <Minus size={16} />, action: zoomOut, title: 'Zoom out' },
-          { icon: <Layers size={15} />, action: cycleMapStyle, title: `Style: ${mapStyle}` },
-          { icon: <Locate size={15} />, action: locateMe, title: 'My location' },
+          { icon: <Plus size={18} strokeWidth={2.5} />, action: zoomIn, color: 'rgba(255,255,255,0.9)', title: 'Zoom in' },
+          { icon: <Minus size={18} strokeWidth={2.5} />, action: zoomOut, color: 'rgba(255,255,255,0.9)', title: 'Zoom out' },
+          { icon: <LayoutGrid size={16} />, action: cycleMapStyle, color: 'rgba(255,255,255,0.75)', title: 'Cycle layers' },
+          { icon: <Moon size={16} />, action: () => { applyMapStyle('dark'); setSatPickerOpen(false) }, color: '#A78BFA', title: 'Dark mode' },
+          { icon: <Navigation2 size={16} />, action: locateMe, color: '#60A5FA', title: 'My location' },
         ].map((btn, i) => (
-          <motion.button
-            key={i}
-            whileTap={{ scale: 0.85 }}
-            whileHover={{ scale: 1.08 }}
-            onClick={btn.action}
-            title={btn.title}
-            style={{
-              width: 38, height: 38,
-              background: 'rgba(10,12,20,0.85)',
-              backdropFilter: 'blur(12px)',
-              border: '1px solid rgba(255,255,255,0.12)',
-              borderRadius: 10,
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              cursor: 'pointer', color: 'rgba(255,255,255,0.75)',
-            }}
-          >
+          <motion.button key={i} whileTap={{ scale: 0.82 }} onClick={btn.action} title={btn.title}
+            style={{ width: 42, height: 42, background: 'rgba(15,17,28,0.88)', backdropFilter: 'blur(16px)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 12, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: btn.color, boxShadow: '0 4px 16px rgba(0,0,0,0.4)', outline: 'none' }}>
             {btn.icon}
           </motion.button>
         ))}
+
+        {/* Satellite picker toggle */}
+        <motion.button
+          whileTap={{ scale: 0.82 }}
+          onClick={() => setSatPickerOpen((v) => !v)}
+          title="Satellite providers"
+          style={{
+            width: 42, height: 42,
+            background: mapStyle === 'satellite' ? 'rgba(52,211,153,0.2)' : 'rgba(15,17,28,0.88)',
+            backdropFilter: 'blur(16px)',
+            border: `1px solid ${mapStyle === 'satellite' ? 'rgba(52,211,153,0.5)' : 'rgba(255,255,255,0.1)'}`,
+            borderRadius: 12, display: 'flex', alignItems: 'center', justifyContent: 'center',
+            cursor: 'pointer', color: '#34D399', boxShadow: '0 4px 16px rgba(0,0,0,0.4)', outline: 'none',
+          }}>
+          <Globe size={16} />
+        </motion.button>
       </div>
+
+      {/* ── Satellite provider picker panel ── */}
+      <AnimatePresence>
+        {satPickerOpen && (
+          <motion.div
+            initial={{ opacity: 0, x: 20, scale: 0.95 }}
+            animate={{ opacity: 1, x: 0, scale: 1 }}
+            exit={{ opacity: 0, x: 20, scale: 0.95 }}
+            transition={{ duration: 0.18 }}
+            style={{
+              position: 'absolute', right: 62, top: '50%', transform: 'translateY(-50%)',
+              zIndex: 20, display: 'flex', flexDirection: 'column', gap: 6,
+              background: 'rgba(10,12,22,0.96)', backdropFilter: 'blur(20px)',
+              border: '1px solid rgba(255,255,255,0.12)', borderRadius: 16,
+              padding: '10px 10px', minWidth: 180,
+              boxShadow: '0 8px 32px rgba(0,0,0,0.6)',
+            }}
+          >
+            <p style={{ margin: '0 0 6px 2px', fontSize: 10, fontWeight: 700, color: 'rgba(255,255,255,0.35)', letterSpacing: 1, textTransform: 'uppercase' }}>
+              Satellite Provider
+            </p>
+            {SAT_PROVIDERS.map((prov) => {
+              const active = mapStyle === 'satellite' && satProvider === prov.id
+              return (
+                <motion.button
+                  key={prov.id}
+                  whileTap={{ scale: 0.96 }}
+                  onClick={() => { applyMapStyle('satellite', prov.id); setSatPickerOpen(false) }}
+                  style={{
+                    display: 'flex', alignItems: 'center', gap: 10,
+                    background: active ? `rgba(${prov.color === '#34D399' ? '52,211,153' : prov.color === '#60A5FA' ? '96,165,250' : prov.color === '#F59E0B' ? '245,158,11' : '167,139,250'},0.15)` : 'rgba(255,255,255,0.04)',
+                    border: `1px solid ${active ? prov.color + '55' : 'rgba(255,255,255,0.08)'}`,
+                    borderRadius: 10, padding: '8px 10px', cursor: 'pointer', outline: 'none',
+                    textAlign: 'left',
+                  }}
+                >
+                  <div style={{ width: 8, height: 8, borderRadius: '50%', background: prov.color, flexShrink: 0, boxShadow: active ? `0 0 8px ${prov.color}` : 'none' }} />
+                  <div>
+                    <div style={{ fontSize: 12, fontWeight: 700, color: active ? prov.color : 'rgba(255,255,255,0.8)' }}>{prov.label}</div>
+                    <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.35)', marginTop: 1 }}>{prov.desc}</div>
+                  </div>
+                  {active && <div style={{ marginLeft: 'auto', width: 6, height: 6, borderRadius: '50%', background: prov.color }} />}
+                </motion.button>
+              )
+            })}
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* ── Loading state ── */}
       {loading && (
