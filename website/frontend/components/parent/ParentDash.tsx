@@ -435,6 +435,19 @@ export function DashboardSection() {
   const [copied, setCopied] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
 
+  // Dedicated invite code fetch — independent of loadFamily
+  useEffect(() => {
+    const token = getToken();
+    if (!token) return;
+    fetch('/families/my', { headers: { Authorization: `Bearer ${token}` } })
+      .then(r => r.ok ? r.json() : null)
+      .then(fam => {
+        const f = Array.isArray(fam) ? fam[0] : fam;
+        if (f?.invite_code) setInviteCode(f.invite_code);
+      })
+      .catch(() => {});
+  }, []);
+
   // Load real family members and live locations
   useEffect(() => {
     async function loadFamily() {
