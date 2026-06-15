@@ -47,6 +47,12 @@ export function clearAuth(): void {
   localStorage.removeItem(USER_KEY)
 }
 
+export function updateUser(updates: Partial<AuthUser>): void {
+  const user = getUser()
+  if (!user) return
+  localStorage.setItem(USER_KEY, JSON.stringify({ ...user, ...updates }))
+}
+
 export function isAuthenticated(): boolean {
   return !!getToken() && !!getUser()
 }

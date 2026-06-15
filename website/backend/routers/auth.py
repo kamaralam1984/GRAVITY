@@ -209,6 +209,25 @@ def login_unified(request: Request, data: UserLogin, db: Session = Depends(get_d
 def get_me(current_user: models.User = Depends(get_current_user)):
     return current_user
 
+class ProfileUpdate(BaseModel):
+    name: Optional[str] = None
+    phone: Optional[str] = None
+
+@router.patch("/profile")
+def update_profile(data: ProfileUpdate, current_user: models.User = Depends(get_current_user), db: Session = Depends(get_db)):
+    if data.name:
+        current_user.name = data.name.strip()
+    if data.phone is not None:
+        # Check phone not taken by another user
+        if data.phone:
+            existing = db.query(models.User).filter(models.User.phone == data.phone, models.User.id != current_user.id).first()
+            if existing:
+                raise HTTPException(status_code=400, detail="Phone number already in use")
+        current_user.phone = data.phone.strip() if data.phone else None
+    db.commit()
+    db.refresh(current_user)
+    return {"id": current_user.id, "name": current_user.name, "email": current_user.email, "phone": current_user.phone, "is_active": current_user.is_active, "role": current_user.role}
+
 # ── Password reset endpoints ─────────────────────────────────────────────────
 
 class ForgotPasswordRequest(BaseModel):

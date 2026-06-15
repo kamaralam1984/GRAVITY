@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { getToken, getUser, updateUser } from '@/lib/auth';
 import {
   MapPin,
   Shield,
@@ -1349,14 +1350,133 @@ export function ParentSettingsSection() {
     appLock: true,
   });
 
-  const [alertSensitivity, setAlertSensitivity] = useState(2); // 0=Low, 1=Med, 2=High
+  const [alertSensitivity, setAlertSensitivity] = useState(2);
+  const [profileUser, setProfileUser] = useState(() => getUser());
+  const [showEditProfile, setShowEditProfile] = useState(false);
+  const [editName, setEditName] = useState('');
+  const [editPhone, setEditPhone] = useState('');
+  const [editLoading, setEditLoading] = useState(false);
+  const [editError, setEditError] = useState('');
+  const [editSuccess, setEditSuccess] = useState(false);
 
   function setToggle(key: keyof SettingToggle) {
     setToggles((prev) => ({ ...prev, [key]: !prev[key] }));
   }
 
+  function openEdit() {
+    setEditName(profileUser?.name ?? '');
+    setEditPhone(profileUser?.phone ?? '');
+    setEditError('');
+    setEditSuccess(false);
+    setShowEditProfile(true);
+  }
+
+  async function saveProfile() {
+    setEditLoading(true);
+    setEditError('');
+    try {
+      const token = getToken();
+      const res = await fetch('/auth/profile', {
+        method: 'PATCH',
+        headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: editName.trim(), phone: editPhone.trim() || null }),
+      });
+      if (!res.ok) {
+        const d = await res.json();
+        setEditError(d.detail ?? 'Update failed');
+        return;
+      }
+      const updated = await res.json();
+      updateUser({ name: updated.name, phone: updated.phone });
+      setProfileUser(getUser());
+      setEditSuccess(true);
+      setTimeout(() => setShowEditProfile(false), 1200);
+    } catch {
+      setEditError('Network error');
+    } finally {
+      setEditLoading(false);
+    }
+  }
+
   return (
     <div className="space-y-6">
+      {/* Edit Profile Modal */}
+      <AnimatePresence>
+        {showEditProfile && (
+          <>
+            <motion.div
+              key="backdrop"
+              initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+              onClick={() => setShowEditProfile(false)}
+              style={{ position: 'fixed', inset: 0, zIndex: 200, background: 'rgba(0,0,0,0.6)' }}
+            />
+            <motion.div
+              key="modal"
+              initial={{ opacity: 0, y: 40, scale: 0.96 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0, y: 20, scale: 0.96 }}
+              style={{
+                position: 'fixed', bottom: 0, left: 0, right: 0, zIndex: 201,
+                background: '#12131F', borderRadius: '20px 20px 0 0',
+                border: '1px solid rgba(212,175,55,0.2)',
+                padding: '24px 20px 36px',
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
+                <span style={{ fontSize: 17, fontWeight: 700, color: '#fff' }}>Edit Profile</span>
+                <button onClick={() => setShowEditProfile(false)} style={{ background: 'rgba(255,255,255,0.08)', border: 'none', borderRadius: 8, padding: '6px 10px', color: 'rgba(255,255,255,0.6)', cursor: 'pointer' }}>
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+                <div>
+                  <label style={{ fontSize: 12, color: 'rgba(255,255,255,0.5)', fontWeight: 600, display: 'block', marginBottom: 6 }}>Full Name</label>
+                  <input
+                    value={editName}
+                    onChange={e => setEditName(e.target.value)}
+                    placeholder="Your name"
+                    style={{
+                      width: '100%', background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.12)',
+                      borderRadius: 10, padding: '12px 14px', color: '#fff', fontSize: 14, outline: 'none', boxSizing: 'border-box',
+                    }}
+                  />
+                </div>
+                <div>
+                  <label style={{ fontSize: 12, color: 'rgba(255,255,255,0.5)', fontWeight: 600, display: 'block', marginBottom: 6 }}>Phone Number</label>
+                  <input
+                    value={editPhone}
+                    onChange={e => setEditPhone(e.target.value)}
+                    placeholder="+91 98765 43210"
+                    type="tel"
+                    style={{
+                      width: '100%', background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.12)',
+                      borderRadius: 10, padding: '12px 14px', color: '#fff', fontSize: 14, outline: 'none', boxSizing: 'border-box',
+                    }}
+                  />
+                  <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.35)', marginTop: 5 }}>
+                    Yeh number child ke SOS contacts mein dikhega
+                  </p>
+                </div>
+
+                {editError && <p style={{ fontSize: 12, color: '#EF4444' }}>{editError}</p>}
+                {editSuccess && <p style={{ fontSize: 12, color: '#10B981' }}>✓ Profile update ho gaya!</p>}
+
+                <button
+                  onClick={saveProfile}
+                  disabled={editLoading || !editName.trim()}
+                  style={{
+                    width: '100%', padding: '14px', borderRadius: 12,
+                    background: editLoading ? 'rgba(212,175,55,0.4)' : 'linear-gradient(135deg, #D4AF37, #b8902d)',
+                    border: 'none', color: '#000', fontSize: 15, fontWeight: 700, cursor: editLoading ? 'not-allowed' : 'pointer',
+                  }}
+                >
+                  {editLoading ? 'Saving...' : 'Save Changes'}
+                </button>
+              </div>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
+
       {/* Header */}
       <div className="flex items-center gap-3">
         <div className="w-10 h-10 rounded-xl bg-[#D4AF37]/20 flex items-center justify-center">
@@ -1379,25 +1499,33 @@ export function ParentSettingsSection() {
             className="w-16 h-16 rounded-2xl flex items-center justify-center text-black font-black text-xl flex-shrink-0"
             style={{ background: 'linear-gradient(135deg, #D4AF37, #c4a02d)' }}
           >
-            P
+            {(profileUser?.name?.[0] ?? 'P').toUpperCase()}
           </div>
 
           <div className="flex-1">
             <div className="flex items-center gap-2">
-              <h3 className="text-white font-bold text-lg">Priya Sharma</h3>
-              <button className="w-6 h-6 rounded-full bg-white/10 flex items-center justify-center text-white/40 hover:text-white/70 transition-colors">
+              <h3 className="text-white font-bold text-lg">{profileUser?.name ?? 'Parent'}</h3>
+              <button onClick={openEdit} className="w-6 h-6 rounded-full bg-white/10 flex items-center justify-center text-white/40 hover:text-white/70 transition-colors">
                 <Edit className="w-3 h-3" />
               </button>
             </div>
             <div className="flex items-center gap-2 mt-1">
               <span className="text-xs px-2 py-0.5 rounded-full bg-[#D4AF37]/20 text-[#D4AF37] font-semibold">Family Admin</span>
             </div>
-            <div className="flex items-center gap-3 mt-2 text-white/40 text-xs">
-              <span>Sharma Family</span>
-              <span>•</span>
-              <Users className="w-3.5 h-3.5" />
-              <span>3 members</span>
+            <div className="flex items-center gap-2 mt-2 text-white/40 text-xs">
+              <span>{profileUser?.email ?? ''}</span>
             </div>
+            {profileUser?.phone ? (
+              <div className="flex items-center gap-2 mt-1 text-white/50 text-xs">
+                <Smartphone className="w-3 h-3" />
+                <span>{profileUser.phone}</span>
+              </div>
+            ) : (
+              <button onClick={openEdit} className="flex items-center gap-1 mt-1 text-xs text-amber-400/70 hover:text-amber-400 transition-colors">
+                <Plus className="w-3 h-3" />
+                <span>Phone number add karo (SOS ke liye)</span>
+              </button>
+            )}
           </div>
         </div>
 

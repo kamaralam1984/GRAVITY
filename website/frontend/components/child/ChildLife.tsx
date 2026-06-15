@@ -28,7 +28,7 @@ import {
   Edit,
   LogOut,
 } from 'lucide-react';
-import { getToken } from '@/lib/auth';
+import { getToken, updateUser } from '@/lib/auth';
 
 // ─── Shared Styles ────────────────────────────────────────────────────────────
 
@@ -1343,7 +1343,7 @@ function SettingsRow({ icon, iconColor, label, sublabel, hasToggle, toggleOn, on
   );
 }
 
-export function SettingsSection({ user }: { user?: { name: string; email?: string } | null }) {
+export function SettingsSection({ user }: { user?: { name: string; email?: string; phone?: string } | null }) {
   const [locationSharing, setLocationSharing] = useState(true);
   const [geofenceAlerts, setGeofenceAlerts] = useState(true);
   const [sosAutocall, setSosAutocall] = useState(false);
@@ -1351,6 +1351,48 @@ export function SettingsSection({ user }: { user?: { name: string; email?: strin
   const [smsNotifs, setSmsNotifs] = useState(false);
   const [quietHours, setQuietHours] = useState(true);
   const [biometric, setBiometric] = useState(true);
+  const [showEditProfile, setShowEditProfile] = useState(false);
+  const [editName, setEditName] = useState('');
+  const [editPhone, setEditPhone] = useState('');
+  const [editLoading, setEditLoading] = useState(false);
+  const [editError, setEditError] = useState('');
+  const [editSuccess, setEditSuccess] = useState(false);
+  const [currentPhone, setCurrentPhone] = useState(user?.phone ?? '');
+
+  function openEdit() {
+    setEditName(user?.name ?? '');
+    setEditPhone(currentPhone);
+    setEditError('');
+    setEditSuccess(false);
+    setShowEditProfile(true);
+  }
+
+  async function saveProfile() {
+    setEditLoading(true);
+    setEditError('');
+    try {
+      const token = getToken();
+      const res = await fetch('/auth/profile', {
+        method: 'PATCH',
+        headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: editName.trim(), phone: editPhone.trim() || null }),
+      });
+      if (!res.ok) {
+        const d = await res.json();
+        setEditError(d.detail ?? 'Update failed');
+        return;
+      }
+      const updated = await res.json();
+      updateUser({ name: updated.name, phone: updated.phone });
+      setCurrentPhone(updated.phone ?? '');
+      setEditSuccess(true);
+      setTimeout(() => setShowEditProfile(false), 1200);
+    } catch {
+      setEditError('Network error');
+    } finally {
+      setEditLoading(false);
+    }
+  }
 
   const GROUPS = [
     {
@@ -1408,6 +1450,56 @@ export function SettingsSection({ user }: { user?: { name: string; email?: strin
         </div>
       </div>
 
+      {/* Edit Profile Modal */}
+      <AnimatePresence>
+        {showEditProfile && (
+          <>
+            <motion.div
+              key="backdrop"
+              initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+              onClick={() => setShowEditProfile(false)}
+              style={{ position: 'fixed', inset: 0, zIndex: 200, background: 'rgba(0,0,0,0.6)' }}
+            />
+            <motion.div
+              key="modal"
+              initial={{ opacity: 0, y: 40, scale: 0.96 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0, y: 20, scale: 0.96 }}
+              style={{
+                position: 'fixed', bottom: 0, left: 0, right: 0, zIndex: 201,
+                background: '#12131F', borderRadius: '20px 20px 0 0',
+                border: '1px solid rgba(245,158,11,0.2)',
+                padding: '24px 20px 36px',
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
+                <span style={{ fontSize: 17, fontWeight: 700, color: '#fff' }}>Edit Profile</span>
+                <button onClick={() => setShowEditProfile(false)} style={{ background: 'rgba(255,255,255,0.08)', border: 'none', borderRadius: 8, padding: '6px 10px', color: 'rgba(255,255,255,0.6)', cursor: 'pointer', display: 'flex', alignItems: 'center' }}>
+                  <X size={16} />
+                </button>
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+                <div>
+                  <label style={{ fontSize: 12, color: 'rgba(255,255,255,0.5)', fontWeight: 600, display: 'block', marginBottom: 6 }}>Full Name</label>
+                  <input value={editName} onChange={e => setEditName(e.target.value)} placeholder="Your name"
+                    style={{ width: '100%', background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.12)', borderRadius: 10, padding: '12px 14px', color: '#fff', fontSize: 14, outline: 'none', boxSizing: 'border-box' }} />
+                </div>
+                <div>
+                  <label style={{ fontSize: 12, color: 'rgba(255,255,255,0.5)', fontWeight: 600, display: 'block', marginBottom: 6 }}>Phone Number</label>
+                  <input value={editPhone} onChange={e => setEditPhone(e.target.value)} placeholder="+91 98765 43210" type="tel"
+                    style={{ width: '100%', background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.12)', borderRadius: 10, padding: '12px 14px', color: '#fff', fontSize: 14, outline: 'none', boxSizing: 'border-box' }} />
+                  <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.35)', marginTop: 5 }}>Yeh number SOS contacts mein dikhega</p>
+                </div>
+                {editError && <p style={{ fontSize: 12, color: '#EF4444', margin: 0 }}>{editError}</p>}
+                {editSuccess && <p style={{ fontSize: 12, color: '#10B981', margin: 0 }}>✓ Profile update ho gaya!</p>}
+                <button onClick={saveProfile} disabled={editLoading || !editName.trim()}
+                  style={{ width: '100%', padding: '14px', borderRadius: 12, background: editLoading ? 'rgba(245,158,11,0.4)' : 'linear-gradient(135deg, #F59E0B, #F97316)', border: 'none', color: '#000', fontSize: 15, fontWeight: 700, cursor: editLoading ? 'not-allowed' : 'pointer' }}>
+                  {editLoading ? 'Saving...' : 'Save Changes'}
+                </button>
+              </div>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
+
       {/* Profile Card */}
       <motion.div
         initial={{ opacity: 0, y: 10 }}
@@ -1416,39 +1508,37 @@ export function SettingsSection({ user }: { user?: { name: string; email?: strin
           ...CARD,
           background: 'linear-gradient(135deg, rgba(245,158,11,0.1), rgba(249,115,22,0.08))',
           border: '1px solid rgba(245,158,11,0.2)',
-          display: 'flex', alignItems: 'center', gap: '16px',
         }}
       >
-        {/* Avatar */}
-        <div style={{
-          width: 64, height: 64, borderRadius: '50%',
-          background: 'linear-gradient(135deg, #F59E0B, #F97316)',
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-          fontSize: '24px', fontWeight: 800, color: '#fff',
-          boxShadow: '0 0 20px rgba(245,158,11,0.4)',
-          flexShrink: 0,
-        }}>
-          {(user?.name?.[0] ?? 'U').toUpperCase()}
-        </div>
-
-        <div style={{ flex: 1 }}>
-          <div style={{ fontSize: '18px', fontWeight: 700, color: '#fff' }}>{user?.name ?? 'My Profile'}</div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
           <div style={{
-            fontSize: '12px', fontWeight: 600, color: GOLD,
-            background: 'rgba(245,158,11,0.12)', borderRadius: '6px', padding: '2px 8px',
-            display: 'inline-block', marginTop: '4px',
+            width: 64, height: 64, borderRadius: '50%',
+            background: 'linear-gradient(135deg, #F59E0B, #F97316)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            fontSize: '24px', fontWeight: 800, color: '#fff',
+            boxShadow: '0 0 20px rgba(245,158,11,0.4)', flexShrink: 0,
           }}>
-            Child Account
+            {(user?.name?.[0] ?? 'U').toUpperCase()}
           </div>
+          <div style={{ flex: 1 }}>
+            <div style={{ fontSize: '18px', fontWeight: 700, color: '#fff' }}>{user?.name ?? 'My Profile'}</div>
+            <div style={{ fontSize: '12px', fontWeight: 600, color: GOLD, background: 'rgba(245,158,11,0.12)', borderRadius: '6px', padding: '2px 8px', display: 'inline-block', marginTop: '4px' }}>
+              Child Account
+            </div>
+            {currentPhone ? (
+              <div style={{ fontSize: '12px', color: 'rgba(255,255,255,0.45)', marginTop: 6, display: 'flex', alignItems: 'center', gap: 5 }}>
+                📱 {currentPhone}
+              </div>
+            ) : (
+              <button onClick={openEdit} style={{ fontSize: 11, color: '#F59E0B', background: 'none', border: 'none', padding: 0, marginTop: 6, cursor: 'pointer' }}>
+                + Phone number add karo
+              </button>
+            )}
+          </div>
+          <button onClick={openEdit} style={{ width: 36, height: 36, borderRadius: '10px', background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.1)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <Edit size={15} color="rgba(255,255,255,0.6)" />
+          </button>
         </div>
-
-        <button style={{
-          width: 36, height: 36, borderRadius: '10px',
-          background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.1)',
-          cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
-        }}>
-          <Edit size={15} color="rgba(255,255,255,0.6)" />
-        </button>
       </motion.div>
 
       {/* Settings Groups */}
