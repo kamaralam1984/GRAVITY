@@ -373,7 +373,7 @@ export default function ParentPage() {
             transition={{ duration: 0.22, ease: 'easeOut' }}
             style={{ padding: '0 16px 80px 16px', minHeight: '100%' }}
           >
-            {activeTab === 'dashboard' && <DashboardSection />}
+            {activeTab === 'dashboard' && <DashboardSection onNavigate={(tab) => setActiveTab(tab as Tab)} />}
             {activeTab === 'alerts' && <AlertsSection />}
             {activeTab === 'children' && <ChildrenMonitorSection />}
             {activeTab === 'health' && <HealthMonitorSection />}

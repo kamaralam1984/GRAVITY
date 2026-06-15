@@ -420,7 +420,7 @@ function timeAgo(iso: string): string {
   return `${Math.floor(h / 24)} days ago`;
 }
 
-export function DashboardSection() {
+export function DashboardSection({ onNavigate }: { onNavigate?: (tab: string) => void } = {}) {
   const [stats, setStats] = useState({
     activeMembers: 0,
     sosAlerts: 0,
@@ -434,6 +434,21 @@ export function DashboardSection() {
   const [inviteCode, setInviteCode] = useState<string>('');
   const [copied, setCopied] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
+  const [familyId, setFamilyId] = useState<number | null>(null);
+
+  // Quick Action modal states
+  const [showBroadcast, setShowBroadcast] = useState(false);
+  const [broadcastMsg, setBroadcastMsg] = useState('');
+  const [broadcastLoading, setBroadcastLoading] = useState(false);
+  const [broadcastSent, setBroadcastSent] = useState(false);
+
+  const [showQuietHours, setShowQuietHours] = useState(false);
+  const [quietStart, setQuietStart] = useState(() => { try { return localStorage.getItem('gv_quiet_start') || '22:00'; } catch { return '22:00'; } });
+  const [quietEnd, setQuietEnd] = useState(() => { try { return localStorage.getItem('gv_quiet_end') || '07:00'; } catch { return '07:00'; } });
+  const [quietSaved, setQuietSaved] = useState(false);
+
+  const [reqLocLoading, setReqLocLoading] = useState(false);
+  const [reqLocSent, setReqLocSent] = useState(false);
 
   // Dedicated invite code fetch — independent of loadFamily
   useEffect(() => {
@@ -479,6 +494,7 @@ export function DashboardSection() {
           if (!fid) return;
         }
         if (famData?.invite_code) setInviteCode(famData.invite_code);
+        setFamilyId(fid);
 
         const memRes = await fetch(`/families/${fid}/members`, { headers: h });
         if (!memRes.ok) return;
@@ -585,26 +601,71 @@ export function DashboardSection() {
     setEvents((prev) => prev.map((e) => ({ ...e, read: true })));
   }
 
+  async function sendBroadcast() {
+    if (!broadcastMsg.trim() || !familyId) return;
+    setBroadcastLoading(true);
+    const token = getToken();
+    try {
+      await fetch('/chat/send', {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ family_id: familyId, content: `📢 Broadcast: ${broadcastMsg.trim()}`, type: 'text' }),
+      });
+      setBroadcastSent(true);
+      setBroadcastMsg('');
+      setTimeout(() => { setBroadcastSent(false); setShowBroadcast(false); }, 1500);
+    } catch {}
+    setBroadcastLoading(false);
+  }
+
+  async function requestLocation() {
+    if (!familyId) return;
+    setReqLocLoading(true);
+    const token = getToken();
+    try {
+      await fetch('/chat/send', {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ family_id: familyId, content: '📍 Please share your current location.', type: 'text' }),
+      });
+      setReqLocSent(true);
+      setTimeout(() => setReqLocSent(false), 3000);
+    } catch {}
+    setReqLocLoading(false);
+  }
+
+  function saveQuietHours() {
+    try { localStorage.setItem('gv_quiet_start', quietStart); localStorage.setItem('gv_quiet_end', quietEnd); } catch {}
+    setQuietSaved(true);
+    setTimeout(() => { setQuietSaved(false); setShowQuietHours(false); }, 1500);
+  }
+
   const quickActions = [
     {
       icon: <MessageSquare size={28} style={{ color: '#B8720A' }} />,
       label: 'Broadcast Message',
       color: '#B8720A',
+      onClick: () => { setBroadcastMsg(''); setBroadcastSent(false); setShowBroadcast(true); },
     },
     {
-      icon: <MapPin size={28} style={{ color: '#10B981' }} />,
-      label: 'Request Location',
+      icon: reqLocSent
+        ? <CheckCheck size={28} style={{ color: '#10B981' }} />
+        : <MapPin size={28} style={{ color: '#10B981' }} />,
+      label: reqLocSent ? 'Request Sent!' : reqLocLoading ? 'Sending...' : 'Request Location',
       color: '#10B981',
+      onClick: requestLocation,
     },
     {
       icon: <Bell size={28} style={{ color: '#8B5CF6' }} />,
       label: 'Set Quiet Hours',
       color: '#8B5CF6',
+      onClick: () => { setQuietSaved(false); setShowQuietHours(true); },
     },
     {
       icon: <Eye size={28} style={{ color: '#3B82F6' }} />,
       label: 'View Geofences',
       color: '#3B82F6',
+      onClick: () => onNavigate?.('geofences'),
     },
   ];
 
@@ -1179,6 +1240,7 @@ export function DashboardSection() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.1 + i * 0.07 }}
             whileTap={{ scale: 0.95 }}
+            onClick={action.onClick}
             style={{
               ...glassCard,
               padding: '16px 14px',
@@ -1217,6 +1279,116 @@ export function DashboardSection() {
           </motion.div>
         ))}
       </div>
+
+      {/* ── Broadcast Message Modal ─────────────────────────────────────── */}
+      <AnimatePresence>
+        {showBroadcast && (
+          <>
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+              onClick={() => setShowBroadcast(false)}
+              style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.65)', zIndex: 300 }} />
+            <motion.div initial={{ y: '100%' }} animate={{ y: 0 }} exit={{ y: '100%' }}
+              transition={{ type: 'spring', damping: 30, stiffness: 300 }}
+              style={{ position: 'fixed', bottom: 0, left: 0, right: 0, zIndex: 301, background: '#1A1A2E', borderRadius: '24px 24px 0 0', padding: '24px 20px 36px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                  <div style={{ width: 36, height: 36, borderRadius: 10, background: 'rgba(184,114,10,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <Radio size={18} style={{ color: '#B8720A' }} />
+                  </div>
+                  <div>
+                    <div style={{ fontSize: 16, fontWeight: 700, color: '#fff' }}>Broadcast Message</div>
+                    <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.4)' }}>Send to all family members</div>
+                  </div>
+                </div>
+                <button onClick={() => setShowBroadcast(false)} style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.4)', cursor: 'pointer' }}>
+                  <X size={20} />
+                </button>
+              </div>
+              {broadcastSent ? (
+                <div style={{ textAlign: 'center', padding: '20px 0' }}>
+                  <CheckCheck size={40} style={{ color: '#10B981', margin: '0 auto 8px' }} />
+                  <div style={{ fontSize: 15, fontWeight: 700, color: '#10B981' }}>Message sent to all members!</div>
+                </div>
+              ) : (
+                <>
+                  <textarea
+                    autoFocus
+                    value={broadcastMsg}
+                    onChange={e => setBroadcastMsg(e.target.value)}
+                    placeholder="Type your message for all family members..."
+                    rows={4}
+                    style={{ width: '100%', padding: '12px 14px', borderRadius: 12, border: '1px solid rgba(255,255,255,0.12)', background: 'rgba(255,255,255,0.06)', color: '#fff', fontSize: 14, resize: 'none', outline: 'none', boxSizing: 'border-box', marginBottom: 14 }}
+                  />
+                  <button
+                    onClick={sendBroadcast}
+                    disabled={broadcastLoading || !broadcastMsg.trim()}
+                    style={{ width: '100%', padding: 14, borderRadius: 12, border: 'none', background: !broadcastMsg.trim() || broadcastLoading ? 'rgba(255,255,255,0.1)' : 'linear-gradient(135deg, #B8720A, #F59E0B)', color: '#fff', fontSize: 15, fontWeight: 700, cursor: !broadcastMsg.trim() || broadcastLoading ? 'not-allowed' : 'pointer' }}>
+                    {broadcastLoading ? 'Sending...' : '📢 Send to All Members'}
+                  </button>
+                </>
+              )}
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
+
+      {/* ── Quiet Hours Modal ───────────────────────────────────────────── */}
+      <AnimatePresence>
+        {showQuietHours && (
+          <>
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+              onClick={() => setShowQuietHours(false)}
+              style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.65)', zIndex: 300 }} />
+            <motion.div initial={{ y: '100%' }} animate={{ y: 0 }} exit={{ y: '100%' }}
+              transition={{ type: 'spring', damping: 30, stiffness: 300 }}
+              style={{ position: 'fixed', bottom: 0, left: 0, right: 0, zIndex: 301, background: '#1A1A2E', borderRadius: '24px 24px 0 0', padding: '24px 20px 40px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                  <div style={{ width: 36, height: 36, borderRadius: 10, background: 'rgba(139,92,246,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <Bell size={18} style={{ color: '#8B5CF6' }} />
+                  </div>
+                  <div>
+                    <div style={{ fontSize: 16, fontWeight: 700, color: '#fff' }}>Quiet Hours</div>
+                    <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.4)' }}>Mute notifications during sleep</div>
+                  </div>
+                </div>
+                <button onClick={() => setShowQuietHours(false)} style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.4)', cursor: 'pointer' }}>
+                  <X size={20} />
+                </button>
+              </div>
+              {quietSaved ? (
+                <div style={{ textAlign: 'center', padding: '20px 0' }}>
+                  <Check size={40} style={{ color: '#10B981', margin: '0 auto 8px' }} />
+                  <div style={{ fontSize: 15, fontWeight: 700, color: '#10B981' }}>Quiet hours saved!</div>
+                  <div style={{ fontSize: 13, color: 'rgba(255,255,255,0.5)', marginTop: 4 }}>{quietStart} – {quietEnd}</div>
+                </div>
+              ) : (
+                <>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14, marginBottom: 20 }}>
+                    {[
+                      { label: '🌙 Start Time', value: quietStart, set: setQuietStart },
+                      { label: '☀️ End Time',   value: quietEnd,   set: setQuietEnd   },
+                    ].map(({ label, value, set }) => (
+                      <div key={label}>
+                        <label style={{ display: 'block', fontSize: 12, color: 'rgba(255,255,255,0.5)', fontWeight: 600, marginBottom: 8 }}>{label}</label>
+                        <input type="time" value={value} onChange={e => set(e.target.value)}
+                          style={{ width: '100%', padding: '12px 14px', borderRadius: 12, border: '1px solid rgba(255,255,255,0.12)', background: 'rgba(255,255,255,0.06)', color: '#fff', fontSize: 16, fontWeight: 700, outline: 'none', boxSizing: 'border-box' as const, colorScheme: 'dark' }} />
+                      </div>
+                    ))}
+                  </div>
+                  <div style={{ background: 'rgba(139,92,246,0.1)', borderRadius: 10, padding: '10px 14px', marginBottom: 16, fontSize: 12, color: 'rgba(255,255,255,0.5)' }}>
+                    Notifications will be muted from <strong style={{ color: '#8B5CF6' }}>{quietStart}</strong> to <strong style={{ color: '#8B5CF6' }}>{quietEnd}</strong>. SOS alerts are never muted.
+                  </div>
+                  <button onClick={saveQuietHours}
+                    style={{ width: '100%', padding: 14, borderRadius: 12, border: 'none', background: 'linear-gradient(135deg, #8B5CF6, #6D28D9)', color: '#fff', fontSize: 15, fontWeight: 700, cursor: 'pointer' }}>
+                    Save Quiet Hours
+                  </button>
+                </>
+              )}
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
