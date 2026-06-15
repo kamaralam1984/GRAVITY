@@ -626,6 +626,15 @@ function AnimatedCount({ value }: { value: number }) {
   return <>{display}</>;
 }
 
+const METRIC_META: Record<string, { label: string; unit: string; placeholder: string; step: string }> = {
+  heart_rate:     { label: '❤️ Heart Rate', unit: 'bpm',   placeholder: 'e.g. 72',   step: '1'   },
+  sleep_hours:    { label: '🌙 Sleep',       unit: 'hrs',   placeholder: 'e.g. 8.0',  step: '0.5' },
+  calories:       { label: '🔥 Calories',    unit: 'kcal',  placeholder: 'e.g. 450',  step: '10'  },
+  active_minutes: { label: '⚡ Active Min',  unit: 'min',   placeholder: 'e.g. 45',   step: '1'   },
+  steps:          { label: '👣 Steps',       unit: 'steps', placeholder: 'e.g. 8000', step: '100' },
+  water_ml:       { label: '💧 Water',       unit: 'ml',    placeholder: 'e.g. 1500', step: '250' },
+};
+
 export function HealthSection({ userId }: { userId?: number }) {
   const [steps, setSteps] = useState(0);
   const [heartRate, setHeartRate] = useState(0);
@@ -638,13 +647,29 @@ export function HealthSection({ userId }: { userId?: number }) {
   const [aiTip, setAiTip] = useState('');
   const [hasRecord, setHasRecord] = useState(false);
 
-  // Log health data modal
+  // Step Challenge — persisted in localStorage
+  const [goalSteps, setGoalSteps] = useState<number>(() => {
+    try { return parseInt(localStorage.getItem('gv_step_goal') || '10000') || 10000; } catch { return 10000; }
+  });
+  const [showGoalEdit, setShowGoalEdit] = useState(false);
+  const [goalInput, setGoalInput] = useState('');
+
+  // Pedometer (DeviceMotion API)
+  const [pedometerActive, setPedometerActive] = useState(false);
+  const [liveSteps, setLiveSteps] = useState(0);
+  const pedometerRef = useRef({ steps: 0, lastMag: 0, lastSave: Date.now(), baseSteps: 0 });
+
+  // Inline quick-edit per metric
+  const [editMetric, setEditMetric] = useState<string | null>(null);
+  const [editValue, setEditValue] = useState('');
+  const [editLoading, setEditLoading] = useState(false);
+
+  // Full log modal
   const [showLogModal, setShowLogModal] = useState(false);
   const [logForm, setLogForm] = useState({ steps: '', heart_rate: '', sleep_hours: '', calories: '', water_ml: '', active_minutes: '' });
   const [logLoading, setLogLoading] = useState(false);
   const [logError, setLogError] = useState('');
 
-  const goalSteps = 10000;
   const waterGoal = 2000;
   const todayIdx = (new Date().getDay() + 6) % 7;
 
@@ -657,14 +682,12 @@ export function HealthSection({ userId }: { userId?: number }) {
       fetch(`/health/weekly/${userId}`, { headers: { Authorization: `Bearer ${token}` } }).then(r => r.ok ? r.json() : null),
     ]).then(([rec, weekly]) => {
       if (rec?.exists) {
-        setSteps(rec.steps ?? 0);
-        setHeartRate(rec.heart_rate ?? 0);
-        setCalories(rec.calories ?? 0);
-        setSleepHrs(rec.sleep_hours ?? 0);
-        setActiveMin(rec.active_minutes ?? 0);
-        setWaterMl(rec.water_ml ?? 0);
+        const s = rec.steps ?? 0;
+        setSteps(s); setHeartRate(rec.heart_rate ?? 0);
+        setCalories(rec.calories ?? 0); setSleepHrs(rec.sleep_hours ?? 0);
+        setActiveMin(rec.active_minutes ?? 0); setWaterMl(rec.water_ml ?? 0);
         setHasRecord(true);
-        // Pre-fill log form with existing data
+        pedometerRef.current.baseSteps = s;
         setLogForm({
           steps: rec.steps ? String(rec.steps) : '',
           heart_rate: rec.heart_rate ? String(rec.heart_rate) : '',
@@ -678,7 +701,7 @@ export function HealthSection({ userId }: { userId?: number }) {
         const vals = Object.entries(weekly).map(([, v]) => (v as number | null) ?? 0);
         setWeeklySteps(vals.length === 7 ? vals : WEEKLY_STEPS);
         const todayVal = weekly[today];
-        if (todayVal) setSteps(todayVal);
+        if (todayVal) { setSteps(todayVal); pedometerRef.current.baseSteps = todayVal as number; }
       }
       setDataLoaded(true);
     }).catch(() => setDataLoaded(true));
@@ -686,24 +709,102 @@ export function HealthSection({ userId }: { userId?: number }) {
 
   useEffect(() => { loadData(); }, [userId]);
 
+  // Auto-refresh every 60 s (skip while modals are open)
+  useEffect(() => {
+    const id = setInterval(() => { if (userId && !showLogModal && !editMetric) loadData(); }, 60000);
+    return () => clearInterval(id);
+  }, [userId, showLogModal, editMetric]);
+
+  // AI tip after data loads
   useEffect(() => {
     if (!dataLoaded) return;
     const prompt = steps > 0
       ? `Child today: ${steps} steps, HR ${heartRate} bpm, ${sleepHrs}h sleep. One short encouraging health tip, max 15 words.`
       : 'One short health tip for a child to stay active today, max 12 words.';
     fetch('/ai/chat', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ messages: [{ role: 'user', content: prompt }] }),
-    })
-      .then(r => r.ok ? r.json() : null)
-      .then(d => { if (d?.content) setAiTip(d.content); })
-      .catch(() => {});
+    }).then(r => r.ok ? r.json() : null).then(d => { if (d?.content) setAiTip(d.content); }).catch(() => {});
   }, [dataLoaded]);
 
+  // DeviceMotion pedometer
+  useEffect(() => {
+    if (!pedometerActive) return;
+    const ref = pedometerRef.current;
+    function handleMotion(e: DeviceMotionEvent) {
+      const acc = e.accelerationIncludingGravity;
+      if (!acc) return;
+      const mag = Math.sqrt((acc.x || 0) ** 2 + (acc.y || 0) ** 2 + (acc.z || 0) ** 2);
+      const delta = Math.abs(mag - ref.lastMag);
+      ref.lastMag = mag;
+      if (delta > 2.8) { ref.steps += 1; setLiveSteps(ref.steps); }
+      if (Date.now() - ref.lastSave > 30000 && ref.steps > 0) {
+        ref.lastSave = Date.now();
+        const total = ref.baseSteps + ref.steps;
+        const token = getToken();
+        const today = new Date().toISOString().slice(0, 10);
+        fetch('/health/record', {
+          method: 'POST',
+          headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+          body: JSON.stringify({ date: today, steps: total }),
+        }).then(() => { setSteps(total); setHasRecord(true); }).catch(() => {});
+      }
+    }
+    window.addEventListener('devicemotion', handleMotion);
+    return () => window.removeEventListener('devicemotion', handleMotion);
+  }, [pedometerActive]);
+
+  async function startPedometer() {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const DME = DeviceMotionEvent as any;
+    if (typeof DME.requestPermission === 'function') {
+      try {
+        const perm = await DME.requestPermission();
+        if (perm !== 'granted') return;
+      } catch { return; }
+    }
+    pedometerRef.current.steps = 0; setLiveSteps(0); setPedometerActive(true);
+  }
+
+  async function saveMetric(field: string, rawVal: string) {
+    const num = field === 'sleep_hours' ? parseFloat(rawVal) : parseInt(rawVal);
+    if (isNaN(num) || num < 0) return;
+    setEditLoading(true);
+    const token = getToken();
+    const today = new Date().toISOString().slice(0, 10);
+    try {
+      await fetch('/health/record', {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ date: today, [field]: num }),
+      });
+      switch (field) {
+        case 'steps': setSteps(num); pedometerRef.current.baseSteps = num; break;
+        case 'heart_rate': setHeartRate(num); break;
+        case 'sleep_hours': setSleepHrs(num); break;
+        case 'calories': setCalories(num); break;
+        case 'water_ml': setWaterMl(num); break;
+        case 'active_minutes': setActiveMin(num); break;
+      }
+      setHasRecord(true); setEditMetric(null); setEditValue('');
+    } catch {}
+    setEditLoading(false);
+  }
+
+  async function addWater(ml: number) {
+    const newW = waterMl + ml;
+    setWaterMl(newW);
+    const token = getToken();
+    const today = new Date().toISOString().slice(0, 10);
+    fetch('/health/record', {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ date: today, water_ml: newW }),
+    }).then(() => setHasRecord(true)).catch(() => {});
+  }
+
   async function handleLogHealth() {
-    setLogLoading(true);
-    setLogError('');
+    setLogLoading(true); setLogError('');
     const token = getToken();
     const today = new Date().toISOString().slice(0, 10);
     const body: Record<string, string | number> = { date: today };
@@ -720,61 +821,76 @@ export function HealthSection({ userId }: { userId?: number }) {
         body: JSON.stringify(body),
       });
       if (!res.ok) { setLogError('Failed to save, please try again'); return; }
-      setShowLogModal(false);
-      setDataLoaded(false);
-      setHasRecord(false);
-      loadData();
+      setShowLogModal(false); setDataLoaded(false); setHasRecord(false); loadData();
     } catch { setLogError('Network error'); }
     finally { setLogLoading(false); }
   }
 
   const s = steps;
-  const hr = heartRate > 0 ? heartRate : 78;
+  const hr = heartRate;
   const cal = calories;
   const slp = sleepHrs;
   const act = activeMin;
   const maxWeekly = Math.max(...weeklySteps, 1);
+  const streak = weeklySteps.filter(v => v >= goalSteps).length;
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
       {/* Header */}
       <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-        <div style={{
-          width: 44, height: 44, borderRadius: '12px',
-          background: 'linear-gradient(135deg, #EF4444, #F97316)',
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-          boxShadow: '0 4px 16px rgba(239,68,68,0.4)',
-        }}>
+        <div style={{ width: 44, height: 44, borderRadius: '12px', background: 'linear-gradient(135deg, #EF4444, #F97316)', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 4px 16px rgba(239,68,68,0.4)' }}>
           <Heart size={22} color="#fff" />
         </div>
         <div style={{ flex: 1 }}>
           <h2 style={{ margin: 0, fontSize: '20px', fontWeight: 700, color: '#fff' }}>Health</h2>
           <p style={{ margin: 0, fontSize: '13px', color: 'rgba(255,255,255,0.5)' }}>Activity & Wellness</p>
         </div>
-        <button
-          onClick={() => setShowLogModal(true)}
-          style={{
-            background: 'linear-gradient(135deg, #EF4444, #F97316)',
-            border: 'none', borderRadius: '10px', padding: '8px 14px',
-            color: '#fff', fontSize: '12px', fontWeight: 700, cursor: 'pointer',
-            boxShadow: '0 4px 12px rgba(239,68,68,0.35)',
-          }}
-        >
+        <button onClick={() => setShowLogModal(true)} style={{ background: 'linear-gradient(135deg, #EF4444, #F97316)', border: 'none', borderRadius: '10px', padding: '8px 14px', color: '#fff', fontSize: '12px', fontWeight: 700, cursor: 'pointer', boxShadow: '0 4px 12px rgba(239,68,68,0.35)' }}>
           {hasRecord ? '✏️ Update' : '+ Log Data'}
         </button>
       </div>
 
+      {/* Pedometer Banner */}
+      {pedometerActive ? (
+        <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }}
+          style={{ ...CARD, background: 'linear-gradient(135deg, rgba(59,130,246,0.15), rgba(139,92,246,0.15))', border: '1px solid rgba(59,130,246,0.4)', padding: '14px 16px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+              <motion.div animate={{ scale: [1, 1.3, 1] }} transition={{ repeat: Infinity, duration: 0.6 }}
+                style={{ width: 10, height: 10, borderRadius: '50%', background: '#10B981', boxShadow: '0 0 8px #10B981' }} />
+              <div>
+                <div style={{ fontSize: '10px', color: 'rgba(255,255,255,0.5)', fontWeight: 700, letterSpacing: '0.08em' }}>PEDOMETER ACTIVE</div>
+                <div style={{ display: 'flex', alignItems: 'baseline', gap: '4px' }}>
+                  <span style={{ fontSize: '26px', fontWeight: 800, color: '#3B82F6' }}>{liveSteps.toLocaleString()}</span>
+                  <span style={{ fontSize: '12px', color: 'rgba(255,255,255,0.4)' }}>new steps this session</span>
+                </div>
+              </div>
+            </div>
+            <button onClick={() => { setPedometerActive(false); if (liveSteps > 0) saveMetric('steps', String(pedometerRef.current.baseSteps + liveSteps)); }}
+              style={{ background: 'rgba(239,68,68,0.15)', border: '1px solid rgba(239,68,68,0.4)', borderRadius: '10px', padding: '8px 14px', color: '#EF4444', cursor: 'pointer', fontSize: '12px', fontWeight: 700 }}>
+              Stop & Save
+            </button>
+          </div>
+        </motion.div>
+      ) : (
+        <button onClick={startPedometer}
+          style={{ width: '100%', padding: '12px 16px', borderRadius: '14px', border: '1px dashed rgba(59,130,246,0.4)', background: 'rgba(59,130,246,0.06)', color: '#3B82F6', fontSize: '13px', fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
+          <Activity size={16} /> Start Auto Step Counter (Pedometer)
+        </button>
+      )}
+
       {/* Activity Rings */}
       <div style={{ ...CARD, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-        <span style={{ fontSize: '13px', fontWeight: 600, color: GOLD, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '12px', alignSelf: 'flex-start' }}>
-          Activity Rings
-        </span>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%', marginBottom: '12px' }}>
+          <span style={{ fontSize: '13px', fontWeight: 600, color: GOLD, textTransform: 'uppercase', letterSpacing: '0.06em' }}>Activity Rings</span>
+          {!dataLoaded && <span style={{ fontSize: '11px', color: 'rgba(255,255,255,0.3)' }}>Loading...</span>}
+        </div>
         <ActivityRings steps={s} goalSteps={goalSteps} calories={cal} goalCalories={600} activeMin={act} goalActiveMin={75} />
         <div style={{ display: 'flex', gap: '24px', marginTop: '12px' }}>
           {[
             { label: 'Steps',    value: s > 0 ? `${s.toLocaleString()} / ${goalSteps.toLocaleString()}` : `— / ${goalSteps.toLocaleString()}`, color: '#3B82F6' },
             { label: 'Calories', value: cal > 0 ? `${cal} / 600 kcal` : '— / 600 kcal', color: '#F97316' },
-            { label: 'Active',   value: act > 0 ? `${act} / 75 min` : '— / 75 min',     color: '#10B981' },
+            { label: 'Active',   value: act > 0 ? `${act} / 75 min` : '— / 75 min', color: '#10B981' },
           ].map(item => (
             <div key={item.label} style={{ textAlign: 'center' }}>
               <div style={{ fontSize: '12px', color: item.color, fontWeight: 600 }}>{item.label}</div>
@@ -784,41 +900,43 @@ export function HealthSection({ userId }: { userId?: number }) {
         </div>
       </div>
 
-      {/* Vital Stats */}
+      {/* Vital Stats Grid — each card tappable to quick-edit */}
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
         {/* Heart Rate */}
-        <div style={{ ...CARD, padding: '16px' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '10px' }}>
-            <Heart size={14} color="#EF4444" />
-            <span style={{ fontSize: '11px', color: 'rgba(255,255,255,0.45)', fontWeight: 600 }}>HEART RATE</span>
+        <div onClick={() => { setEditMetric('heart_rate'); setEditValue(hr > 0 ? String(hr) : ''); }}
+          style={{ ...CARD, padding: '16px', cursor: 'pointer', transition: 'opacity 0.15s' }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '10px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+              <Heart size={13} color="#EF4444" />
+              <span style={{ fontSize: '10px', color: 'rgba(255,255,255,0.45)', fontWeight: 600 }}>HEART RATE</span>
+            </div>
+            <span style={{ fontSize: '9px', color: 'rgba(255,255,255,0.2)', fontWeight: 600 }}>TAP</span>
           </div>
           <div style={{ display: 'flex', alignItems: 'baseline', gap: '4px' }}>
-            <motion.span
-              animate={{ scale: [1, 1.08, 1] }}
-              transition={{ repeat: Infinity, duration: 0.85 }}
-              style={{ fontSize: '28px', fontWeight: 800, color: '#EF4444' }}
-            >
+            <motion.span animate={{ scale: [1, 1.08, 1] }} transition={{ repeat: Infinity, duration: 0.85 }}
+              style={{ fontSize: '28px', fontWeight: 800, color: '#EF4444' }}>
               {hr > 0 ? <AnimatedCount value={hr} /> : '—'}
             </motion.span>
             <span style={{ fontSize: '12px', color: 'rgba(255,255,255,0.4)' }}>bpm</span>
           </div>
-          <div style={{ marginTop: '8px', height: '28px', display: 'flex', alignItems: 'center', gap: '2px' }}>
-            {Array.from({ length: 20 }).map((_, i) => (
-              <motion.div
-                key={i}
-                animate={{ height: [4, Math.random() * 18 + 4, 4] }}
-                transition={{ repeat: Infinity, duration: 0.8 + i * 0.05, delay: i * 0.04 }}
-                style={{ width: '3px', background: '#EF4444', borderRadius: '2px', opacity: 0.7 }}
-              />
+          <div style={{ marginTop: '8px', height: '24px', display: 'flex', alignItems: 'center', gap: '2px' }}>
+            {Array.from({ length: 18 }).map((_, i) => (
+              <motion.div key={i} animate={{ height: [3, Math.random() * 16 + 3, 3] }}
+                transition={{ repeat: Infinity, duration: 0.75 + i * 0.05, delay: i * 0.04 }}
+                style={{ width: '3px', background: '#EF4444', borderRadius: '2px', opacity: hr > 0 ? 0.7 : 0.15 }} />
             ))}
           </div>
         </div>
 
         {/* Sleep */}
-        <div style={{ ...CARD, padding: '16px' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '10px' }}>
-            <Moon size={14} color="#8B5CF6" />
-            <span style={{ fontSize: '11px', color: 'rgba(255,255,255,0.45)', fontWeight: 600 }}>SLEEP</span>
+        <div onClick={() => { setEditMetric('sleep_hours'); setEditValue(slp > 0 ? String(slp) : ''); }}
+          style={{ ...CARD, padding: '16px', cursor: 'pointer' }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '10px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+              <Moon size={13} color="#8B5CF6" />
+              <span style={{ fontSize: '10px', color: 'rgba(255,255,255,0.45)', fontWeight: 600 }}>SLEEP</span>
+            </div>
+            <span style={{ fontSize: '9px', color: 'rgba(255,255,255,0.2)', fontWeight: 600 }}>TAP</span>
           </div>
           <div style={{ display: 'flex', alignItems: 'baseline', gap: '4px' }}>
             <span style={{ fontSize: '28px', fontWeight: 800, color: '#8B5CF6' }}>{slp > 0 ? slp : '—'}</span>
@@ -826,47 +944,53 @@ export function HealthSection({ userId }: { userId?: number }) {
           </div>
           <div style={{ marginTop: '8px' }}>
             <div style={{ height: '4px', borderRadius: '2px', background: 'rgba(255,255,255,0.08)' }}>
-              <motion.div
-                initial={{ width: 0 }}
-                animate={{ width: `${(slp / 9) * 100}%` }}
-                transition={{ duration: 1 }}
-                style={{ height: '100%', borderRadius: '2px', background: '#8B5CF6' }}
-              />
+              <motion.div initial={{ width: 0 }} animate={{ width: `${Math.min(100, (slp / 9) * 100)}%` }} transition={{ duration: 1 }}
+                style={{ height: '100%', borderRadius: '2px', background: '#8B5CF6' }} />
             </div>
             <div style={{ fontSize: '10px', color: 'rgba(255,255,255,0.35)', marginTop: '4px' }}>Goal: 9 hrs</div>
           </div>
         </div>
 
-        {/* Water */}
+        {/* Water — quick +250/+500 buttons + Set */}
         <div style={{ ...CARD, padding: '16px' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '10px' }}>
-            <Droplets size={14} color="#06B6D4" />
-            <span style={{ fontSize: '11px', color: 'rgba(255,255,255,0.45)', fontWeight: 600 }}>WATER</span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '10px' }}>
+            <Droplets size={13} color="#06B6D4" />
+            <span style={{ fontSize: '10px', color: 'rgba(255,255,255,0.45)', fontWeight: 600 }}>WATER</span>
           </div>
-          <div style={{ display: 'flex', alignItems: 'baseline', gap: '4px' }}>
-            <span style={{ fontSize: '24px', fontWeight: 800, color: '#06B6D4' }}>
-              {waterMl > 0 ? `${(waterMl / 1000).toFixed(1)}L` : '—'}
-            </span>
+          <div style={{ display: 'flex', alignItems: 'baseline', gap: '4px', marginBottom: '8px' }}>
+            <span style={{ fontSize: '24px', fontWeight: 800, color: '#06B6D4' }}>{waterMl > 0 ? `${(waterMl / 1000).toFixed(1)}L` : '—'}</span>
             <span style={{ fontSize: '12px', color: 'rgba(255,255,255,0.4)' }}>/ 2L</span>
           </div>
-          <div style={{ marginTop: '8px' }}>
+          <div style={{ marginBottom: '8px' }}>
             <div style={{ height: '4px', borderRadius: '2px', background: 'rgba(255,255,255,0.08)' }}>
-              <motion.div
-                initial={{ width: 0 }}
-                animate={{ width: `${Math.min(100, (waterMl / waterGoal) * 100)}%` }}
-                transition={{ duration: 1 }}
-                style={{ height: '100%', borderRadius: '2px', background: '#06B6D4' }}
-              />
+              <motion.div initial={{ width: 0 }} animate={{ width: `${Math.min(100, (waterMl / waterGoal) * 100)}%` }} transition={{ duration: 1 }}
+                style={{ height: '100%', borderRadius: '2px', background: '#06B6D4' }} />
             </div>
-            <div style={{ fontSize: '10px', color: 'rgba(255,255,255,0.35)', marginTop: '4px' }}>{waterMl > 0 ? `${waterMl} ml consumed` : 'No data yet'}</div>
+            <div style={{ fontSize: '10px', color: 'rgba(255,255,255,0.35)', marginTop: '4px' }}>{waterMl > 0 ? `${waterMl} ml` : 'Tap to log'}</div>
+          </div>
+          <div style={{ display: 'flex', gap: '5px' }}>
+            {[250, 500].map(ml => (
+              <button key={ml} onClick={() => addWater(ml)}
+                style={{ flex: 1, padding: '6px 2px', borderRadius: '8px', border: '1px solid rgba(6,182,212,0.4)', background: 'rgba(6,182,212,0.1)', color: '#06B6D4', fontSize: '11px', fontWeight: 700, cursor: 'pointer' }}>
+                +{ml}ml
+              </button>
+            ))}
+            <button onClick={() => { setEditMetric('water_ml'); setEditValue(waterMl > 0 ? String(waterMl) : ''); }}
+              style={{ flex: 1, padding: '6px 2px', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.12)', background: 'rgba(255,255,255,0.06)', color: 'rgba(255,255,255,0.5)', fontSize: '11px', fontWeight: 700, cursor: 'pointer' }}>
+              Set
+            </button>
           </div>
         </div>
 
         {/* Calories */}
-        <div style={{ ...CARD, padding: '16px' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '10px' }}>
-            <Flame size={14} color="#F97316" />
-            <span style={{ fontSize: '11px', color: 'rgba(255,255,255,0.45)', fontWeight: 600 }}>CALORIES</span>
+        <div onClick={() => { setEditMetric('calories'); setEditValue(cal > 0 ? String(cal) : ''); }}
+          style={{ ...CARD, padding: '16px', cursor: 'pointer' }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '10px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+              <Flame size={13} color="#F97316" />
+              <span style={{ fontSize: '10px', color: 'rgba(255,255,255,0.45)', fontWeight: 600 }}>CALORIES</span>
+            </div>
+            <span style={{ fontSize: '9px', color: 'rgba(255,255,255,0.2)', fontWeight: 600 }}>TAP</span>
           </div>
           <div style={{ display: 'flex', alignItems: 'baseline', gap: '4px' }}>
             <span style={{ fontSize: '28px', fontWeight: 800, color: '#F97316' }}>{cal > 0 ? cal : '—'}</span>
@@ -874,12 +998,8 @@ export function HealthSection({ userId }: { userId?: number }) {
           </div>
           <div style={{ marginTop: '8px' }}>
             <div style={{ height: '4px', borderRadius: '2px', background: 'rgba(255,255,255,0.08)' }}>
-              <motion.div
-                initial={{ width: 0 }}
-                animate={{ width: `${(cal / 600) * 100}%` }}
-                transition={{ duration: 1 }}
-                style={{ height: '100%', borderRadius: '2px', background: '#F97316' }}
-              />
+              <motion.div initial={{ width: 0 }} animate={{ width: `${Math.min(100, (cal / 600) * 100)}%` }} transition={{ duration: 1 }}
+                style={{ height: '100%', borderRadius: '2px', background: '#F97316' }} />
             </div>
             <div style={{ fontSize: '10px', color: 'rgba(255,255,255,0.35)', marginTop: '4px' }}>Goal: 600 kcal</div>
           </div>
@@ -890,82 +1010,73 @@ export function HealthSection({ userId }: { userId?: number }) {
       <div style={{ ...CARD }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px' }}>
           <Activity size={16} color='#3B82F6' />
-          <span style={{ fontSize: '13px', fontWeight: 600, color: '#3B82F6', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
-            Weekly Steps
-          </span>
+          <span style={{ fontSize: '13px', fontWeight: 600, color: '#3B82F6', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Weekly Steps</span>
         </div>
         <div style={{ display: 'flex', alignItems: 'flex-end', gap: '8px', height: '80px' }}>
           {weeklySteps.map((val, i) => {
             const isToday = i === todayIdx;
+            const metGoal = val >= goalSteps;
             const pct = val / maxWeekly;
             return (
               <div key={i} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '6px', height: '100%', justifyContent: 'flex-end' }}>
-                <motion.div
-                  initial={{ height: 0 }}
-                  animate={{ height: `${pct * 100}%` }}
-                  transition={{ duration: 0.8, delay: i * 0.08, ease: 'easeOut' }}
+                <motion.div initial={{ height: 0 }} animate={{ height: `${pct * 100}%` }} transition={{ duration: 0.8, delay: i * 0.08, ease: 'easeOut' }}
                   style={{
                     width: '100%', borderRadius: '4px 4px 0 0',
-                    background: isToday
-                      ? 'linear-gradient(180deg, #3B82F6, #60A5FA)'
-                      : i === 6
-                        ? 'rgba(255,255,255,0.08)'
-                        : 'rgba(59,130,246,0.35)',
-                    boxShadow: isToday ? '0 0 8px rgba(59,130,246,0.4)' : 'none',
-                  }}
-                />
-                <span style={{ fontSize: '10px', color: isToday ? '#3B82F6' : 'rgba(255,255,255,0.35)', fontWeight: isToday ? 700 : 400 }}>
+                    background: isToday ? 'linear-gradient(180deg, #3B82F6, #60A5FA)' : metGoal ? 'linear-gradient(180deg, #10B981, #34D399)' : 'rgba(59,130,246,0.3)',
+                    boxShadow: isToday ? '0 0 8px rgba(59,130,246,0.4)' : metGoal ? '0 0 6px rgba(16,185,129,0.3)' : 'none',
+                  }} />
+                <span style={{ fontSize: '10px', color: isToday ? '#3B82F6' : metGoal ? '#10B981' : 'rgba(255,255,255,0.3)', fontWeight: isToday ? 700 : 400 }}>
                   {DAYS[i]}
                 </span>
               </div>
             );
           })}
         </div>
+        <div style={{ display: 'flex', gap: '16px', marginTop: '10px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+            <div style={{ width: 8, height: 8, borderRadius: '2px', background: '#3B82F6' }} />
+            <span style={{ fontSize: '10px', color: 'rgba(255,255,255,0.35)' }}>Today</span>
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+            <div style={{ width: 8, height: 8, borderRadius: '2px', background: '#10B981' }} />
+            <span style={{ fontSize: '10px', color: 'rgba(255,255,255,0.35)' }}>Goal reached</span>
+          </div>
+        </div>
       </div>
 
       {/* Step Challenge */}
-      <div style={{
-        ...CARD,
-        background: 'linear-gradient(135deg, rgba(59,130,246,0.12), rgba(139,92,246,0.12))',
-        border: '1px solid rgba(59,130,246,0.2)',
-      }}>
+      <div style={{ ...CARD, background: 'linear-gradient(135deg, rgba(59,130,246,0.12), rgba(139,92,246,0.12))', border: '1px solid rgba(59,130,246,0.2)' }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
             <Target size={16} color={GOLD} />
-            <span style={{ fontSize: '14px', fontWeight: 700, color: '#fff' }}>10K Step Challenge</span>
+            <span style={{ fontSize: '14px', fontWeight: 700, color: '#fff' }}>Step Challenge</span>
           </div>
-          <span style={{ fontSize: '13px', fontWeight: 600, color: GOLD }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            {streak > 0 && <span style={{ fontSize: '12px', color: '#F59E0B', fontWeight: 800 }}>🔥 {streak}d streak</span>}
+            <button onClick={() => { setShowGoalEdit(true); setGoalInput(String(goalSteps)); }}
+              style={{ background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.15)', borderRadius: '8px', padding: '5px 10px', color: 'rgba(255,255,255,0.6)', fontSize: '11px', fontWeight: 700, cursor: 'pointer' }}>
+              Goal: {goalSteps.toLocaleString()}
+            </button>
+          </div>
+        </div>
+        <div style={{ height: '8px', borderRadius: '4px', background: 'rgba(255,255,255,0.08)', marginBottom: '10px' }}>
+          <motion.div initial={{ width: 0 }} animate={{ width: `${Math.min(100, (s / goalSteps) * 100)}%` }} transition={{ duration: 1.2 }}
+            style={{ height: '100%', borderRadius: '4px', background: 'linear-gradient(90deg, #3B82F6, #8B5CF6)', boxShadow: '0 0 8px rgba(59,130,246,0.4)' }} />
+        </div>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <p style={{ margin: 0, fontSize: '13px', color: 'rgba(255,255,255,0.6)' }}>
+            {s >= goalSteps ? '🎉 Goal reached! Great job!' : s > 0 ? `${(goalSteps - s).toLocaleString()} steps to go — keep it up!` : `Start moving to hit your ${goalSteps.toLocaleString()} step goal!`}
+          </p>
+          <span style={{ fontSize: '16px', fontWeight: 800, color: GOLD, flexShrink: 0, marginLeft: 8 }}>
             {s > 0 ? `${Math.round((s / goalSteps) * 100)}%` : '0%'}
           </span>
         </div>
-        <div style={{ height: '8px', borderRadius: '4px', background: 'rgba(255,255,255,0.08)', marginBottom: '10px' }}>
-          <motion.div
-            initial={{ width: 0 }}
-            animate={{ width: `${Math.min(100, (s / goalSteps) * 100)}%` }}
-            transition={{ duration: 1.2 }}
-            style={{ height: '100%', borderRadius: '4px', background: 'linear-gradient(90deg, #3B82F6, #8B5CF6)', boxShadow: '0 0 8px rgba(59,130,246,0.4)' }}
-          />
-        </div>
-        <p style={{ margin: 0, fontSize: '13px', color: 'rgba(255,255,255,0.6)' }}>
-          {s > 0
-            ? `You're ${(goalSteps - s).toLocaleString()} steps away from your goal! Keep going! 🔥`
-            : 'Start moving to reach your 10,000 step goal today! 🔥'}
-        </p>
       </div>
 
       {/* AI Health Tip */}
       {aiTip && (
-        <div style={{
-          ...CARD,
-          background: 'linear-gradient(135deg, rgba(139,92,246,0.12), rgba(59,130,246,0.08))',
-          border: '1px solid rgba(139,92,246,0.25)',
-          display: 'flex', alignItems: 'flex-start', gap: '12px',
-        }}>
-          <div style={{
-            width: 36, height: 36, borderRadius: '10px', flexShrink: 0,
-            background: 'linear-gradient(135deg, #8B5CF6, #3B82F6)',
-            display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '18px',
-          }}>🤖</div>
+        <div style={{ ...CARD, background: 'linear-gradient(135deg, rgba(139,92,246,0.12), rgba(59,130,246,0.08))', border: '1px solid rgba(139,92,246,0.25)', display: 'flex', alignItems: 'flex-start', gap: '12px' }}>
+          <div style={{ width: 36, height: 36, borderRadius: '10px', flexShrink: 0, background: 'linear-gradient(135deg, #8B5CF6, #3B82F6)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '18px' }}>🤖</div>
           <div>
             <div style={{ fontSize: '11px', fontWeight: 700, color: '#A78BFA', marginBottom: '4px', letterSpacing: '0.06em' }}>AI HEALTH TIP</div>
             <p style={{ margin: 0, fontSize: '13px', color: 'rgba(255,255,255,0.8)', lineHeight: 1.5 }}>{aiTip}</p>
@@ -973,73 +1084,108 @@ export function HealthSection({ userId }: { userId?: number }) {
         </div>
       )}
 
-      {/* Log Health Data Modal */}
+      {/* Inline quick-edit sheet */}
+      <AnimatePresence>
+        {editMetric && (
+          <>
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+              onClick={() => { setEditMetric(null); setEditValue(''); }}
+              style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)', zIndex: 200 }} />
+            <motion.div initial={{ y: '100%' }} animate={{ y: 0 }} exit={{ y: '100%' }}
+              transition={{ type: 'spring', damping: 30, stiffness: 300 }}
+              style={{ position: 'fixed', bottom: 0, left: 0, right: 0, zIndex: 201, background: '#1A1A2E', borderRadius: '24px 24px 0 0', padding: '28px 20px 40px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '20px' }}>
+                <h3 style={{ margin: 0, fontSize: '18px', fontWeight: 700, color: '#fff' }}>{METRIC_META[editMetric]?.label}</h3>
+                <button onClick={() => { setEditMetric(null); setEditValue(''); }} style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.5)', cursor: 'pointer' }}><X size={20} /></button>
+              </div>
+              <div style={{ display: 'flex', gap: '10px', alignItems: 'center', marginBottom: '20px' }}>
+                <input autoFocus type="number" step={METRIC_META[editMetric]?.step}
+                  placeholder={METRIC_META[editMetric]?.placeholder} value={editValue}
+                  onChange={e => setEditValue(e.target.value)}
+                  onKeyDown={e => { if (e.key === 'Enter' && editValue) saveMetric(editMetric, editValue); }}
+                  style={{ flex: 1, padding: '14px 16px', borderRadius: '14px', border: '1px solid rgba(255,255,255,0.15)', background: 'rgba(255,255,255,0.07)', color: '#fff', fontSize: '22px', fontWeight: 700, outline: 'none', boxSizing: 'border-box' }} />
+                <span style={{ fontSize: '15px', color: 'rgba(255,255,255,0.4)', fontWeight: 600, flexShrink: 0 }}>{METRIC_META[editMetric]?.unit}</span>
+              </div>
+              <button onClick={() => saveMetric(editMetric, editValue)} disabled={editLoading || !editValue}
+                style={{ width: '100%', padding: '16px', borderRadius: '14px', border: 'none', background: !editValue || editLoading ? 'rgba(255,255,255,0.1)' : 'linear-gradient(135deg, #3B82F6, #8B5CF6)', color: '#fff', fontSize: '16px', fontWeight: 700, cursor: !editValue || editLoading ? 'not-allowed' : 'pointer' }}>
+                {editLoading ? 'Saving...' : 'Save'}
+              </button>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
+
+      {/* Step Challenge goal editor */}
+      <AnimatePresence>
+        {showGoalEdit && (
+          <>
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+              onClick={() => setShowGoalEdit(false)}
+              style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)', zIndex: 200 }} />
+            <motion.div initial={{ y: '100%' }} animate={{ y: 0 }} exit={{ y: '100%' }}
+              transition={{ type: 'spring', damping: 30, stiffness: 300 }}
+              style={{ position: 'fixed', bottom: 0, left: 0, right: 0, zIndex: 201, background: '#1A1A2E', borderRadius: '24px 24px 0 0', padding: '28px 20px 40px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '20px' }}>
+                <h3 style={{ margin: 0, fontSize: '18px', fontWeight: 700, color: '#fff' }}>Set Step Goal</h3>
+                <button onClick={() => setShowGoalEdit(false)} style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.5)', cursor: 'pointer' }}><X size={20} /></button>
+              </div>
+              <div style={{ display: 'flex', gap: '8px', marginBottom: '16px', flexWrap: 'wrap' as const }}>
+                {[5000, 7500, 10000, 12000, 15000].map(g => (
+                  <button key={g} onClick={() => setGoalInput(String(g))}
+                    style={{ padding: '8px 14px', borderRadius: '10px', border: `1px solid ${goalInput === String(g) ? '#3B82F6' : 'rgba(255,255,255,0.15)'}`, background: goalInput === String(g) ? 'rgba(59,130,246,0.2)' : 'transparent', color: goalInput === String(g) ? '#3B82F6' : 'rgba(255,255,255,0.6)', fontSize: '13px', fontWeight: 700, cursor: 'pointer' }}>
+                    {g.toLocaleString()}
+                  </button>
+                ))}
+              </div>
+              <input type="number" placeholder="Custom goal..." value={goalInput} onChange={e => setGoalInput(e.target.value)}
+                style={{ width: '100%', padding: '14px 16px', borderRadius: '14px', border: '1px solid rgba(255,255,255,0.15)', background: 'rgba(255,255,255,0.07)', color: '#fff', fontSize: '18px', fontWeight: 700, outline: 'none', boxSizing: 'border-box' as const, marginBottom: '16px' }} />
+              <button onClick={() => {
+                const g = parseInt(goalInput);
+                if (!isNaN(g) && g > 0) { setGoalSteps(g); try { localStorage.setItem('gv_step_goal', String(g)); } catch {} }
+                setShowGoalEdit(false);
+              }} style={{ width: '100%', padding: '16px', borderRadius: '14px', border: 'none', background: 'linear-gradient(135deg, #3B82F6, #8B5CF6)', color: '#fff', fontSize: '16px', fontWeight: 700, cursor: 'pointer' }}>
+                Set Goal
+              </button>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
+
+      {/* Full log modal */}
       <AnimatePresence>
         {showLogModal && (
           <>
-            <motion.div
-              initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
               onClick={() => setShowLogModal(false)}
-              style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)', zIndex: 200 }}
-            />
-            <motion.div
-              initial={{ y: '100%' }} animate={{ y: 0 }} exit={{ y: '100%' }}
+              style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)', zIndex: 200 }} />
+            <motion.div initial={{ y: '100%' }} animate={{ y: 0 }} exit={{ y: '100%' }}
               transition={{ type: 'spring', damping: 30, stiffness: 300 }}
-              style={{
-                position: 'fixed', bottom: 0, left: 0, right: 0, zIndex: 201,
-                background: '#1A1A2E', borderRadius: '24px 24px 0 0',
-                padding: '24px 20px 32px', maxHeight: '80vh', overflowY: 'auto',
-              }}
-            >
+              style={{ position: 'fixed', bottom: 0, left: 0, right: 0, zIndex: 201, background: '#1A1A2E', borderRadius: '24px 24px 0 0', padding: '24px 20px 32px', maxHeight: '80vh', overflowY: 'auto' }}>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '20px' }}>
                 <h3 style={{ margin: 0, fontSize: '18px', fontWeight: 700, color: '#fff' }}>
                   {hasRecord ? 'Update Health Data' : "Log Today's Health Data"}
                 </h3>
-                <button onClick={() => setShowLogModal(false)} style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.5)', cursor: 'pointer', padding: '4px' }}>
-                  <X size={20} />
-                </button>
+                <button onClick={() => setShowLogModal(false)} style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.5)', cursor: 'pointer', padding: '4px' }}><X size={20} /></button>
               </div>
-
               {[
-                { key: 'steps', label: '👣 Steps', placeholder: 'e.g. 8000', type: 'number' },
-                { key: 'heart_rate', label: '❤️ Heart Rate (bpm)', placeholder: 'e.g. 72', type: 'number' },
-                { key: 'sleep_hours', label: '🌙 Sleep (hours)', placeholder: 'e.g. 8', type: 'number' },
-                { key: 'calories', label: '🔥 Calories Burned', placeholder: 'e.g. 450', type: 'number' },
-                { key: 'water_ml', label: '💧 Water (ml)', placeholder: 'e.g. 1500', type: 'number' },
-                { key: 'active_minutes', label: '⚡ Active Minutes', placeholder: 'e.g. 45', type: 'number' },
+                { key: 'steps', label: '👣 Steps', placeholder: 'e.g. 8000' },
+                { key: 'heart_rate', label: '❤️ Heart Rate (bpm)', placeholder: 'e.g. 72' },
+                { key: 'sleep_hours', label: '🌙 Sleep (hours)', placeholder: 'e.g. 8' },
+                { key: 'calories', label: '🔥 Calories Burned', placeholder: 'e.g. 450' },
+                { key: 'water_ml', label: '💧 Water (ml)', placeholder: 'e.g. 1500' },
+                { key: 'active_minutes', label: '⚡ Active Minutes', placeholder: 'e.g. 45' },
               ].map(field => (
                 <div key={field.key} style={{ marginBottom: '14px' }}>
-                  <label style={{ display: 'block', fontSize: '13px', color: 'rgba(255,255,255,0.6)', marginBottom: '6px', fontWeight: 600 }}>
-                    {field.label}
-                  </label>
-                  <input
-                    type={field.type}
-                    placeholder={field.placeholder}
+                  <label style={{ display: 'block', fontSize: '13px', color: 'rgba(255,255,255,0.6)', marginBottom: '6px', fontWeight: 600 }}>{field.label}</label>
+                  <input type="number" placeholder={field.placeholder}
                     value={logForm[field.key as keyof typeof logForm]}
                     onChange={e => setLogForm(prev => ({ ...prev, [field.key]: e.target.value }))}
-                    style={{
-                      width: '100%', padding: '12px 14px', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.12)',
-                      background: 'rgba(255,255,255,0.06)', color: '#fff', fontSize: '15px', boxSizing: 'border-box',
-                      outline: 'none',
-                    }}
-                  />
+                    style={{ width: '100%', padding: '12px 14px', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.12)', background: 'rgba(255,255,255,0.06)', color: '#fff', fontSize: '15px', boxSizing: 'border-box' as const, outline: 'none' }} />
                 </div>
               ))}
-
-              {logError && (
-                <p style={{ margin: '0 0 12px', fontSize: '13px', color: '#EF4444' }}>{logError}</p>
-              )}
-
-              <button
-                onClick={handleLogHealth}
-                disabled={logLoading}
-                style={{
-                  width: '100%', padding: '16px', borderRadius: '14px', border: 'none',
-                  background: logLoading ? 'rgba(255,255,255,0.1)' : 'linear-gradient(135deg, #EF4444, #F97316)',
-                  color: '#fff', fontSize: '16px', fontWeight: 700, cursor: logLoading ? 'not-allowed' : 'pointer',
-                  boxShadow: logLoading ? 'none' : '0 4px 16px rgba(239,68,68,0.4)',
-                }}
-              >
+              {logError && <p style={{ margin: '0 0 12px', fontSize: '13px', color: '#EF4444' }}>{logError}</p>}
+              <button onClick={handleLogHealth} disabled={logLoading}
+                style={{ width: '100%', padding: '16px', borderRadius: '14px', border: 'none', background: logLoading ? 'rgba(255,255,255,0.1)' : 'linear-gradient(135deg, #EF4444, #F97316)', color: '#fff', fontSize: '16px', fontWeight: 700, cursor: logLoading ? 'not-allowed' : 'pointer', boxShadow: logLoading ? 'none' : '0 4px 16px rgba(239,68,68,0.4)' }}>
                 {logLoading ? 'Saving...' : 'Save Health Data'}
               </button>
             </motion.div>
