@@ -2536,7 +2536,7 @@ export default function SuperAdminPage() {
             {/* Download Backup */}
             <div style={{ padding: 18, borderRadius: 14, border: '1px solid rgba(16,185,129,0.3)', background: 'rgba(16,185,129,0.06)' }}>
               <div style={{ fontSize: 13, fontWeight: 700, color: '#10B981', marginBottom: 8 }}>Backup Download</div>
-              <div style={{ fontSize: 12, color: 'var(--text-muted)', marginBottom: 14 }}>Poora gravity.db file download karo. Ye file restore ke liye use hoti hai.</div>
+              <div style={{ fontSize: 12, color: 'var(--text-muted)', marginBottom: 14 }}>Download the complete gravity.db file. Use this file for database restore.</div>
               <button
                 onClick={async () => {
                   const token = getAuthToken()
@@ -2556,13 +2556,13 @@ export default function SuperAdminPage() {
             {/* Restore Backup */}
             <div style={{ padding: 18, borderRadius: 14, border: '1px solid rgba(239,68,68,0.3)', background: 'rgba(239,68,68,0.06)' }}>
               <div style={{ fontSize: 13, fontWeight: 700, color: '#EF4444', marginBottom: 8 }}>Restore from Backup</div>
-              <div style={{ fontSize: 12, color: 'var(--text-muted)', marginBottom: 14 }}>Pehle download ki hui .db file upload karo. Current data replace ho jayega.</div>
+              <div style={{ fontSize: 12, color: 'var(--text-muted)', marginBottom: 14 }}>Upload a previously downloaded .db file. This will replace the current database.</div>
               <label style={{ display: 'block' }}>
                 <input type="file" accept=".db" style={{ display: 'none' }}
                   onChange={async (e) => {
                     const file = e.target.files?.[0]
                     if (!file) return
-                    if (!window.confirm(`"${file.name}" se restore karein? Current database replace ho jayega.`)) { e.target.value = ''; return }
+                    if (!window.confirm(`Restore from "${file.name}"? This will replace the current database.`)) { e.target.value = ''; return }
                     const token = getAuthToken()
                     const form = new FormData(); form.append('file', file)
                     const res = await fetch('/super-admin-api/backup/restore', { method: 'POST', headers: { Authorization: 'Bearer ' + token }, body: form })
@@ -2581,13 +2581,13 @@ export default function SuperAdminPage() {
             {/* Family Tables Info */}
             <div style={{ padding: 18, borderRadius: 14, border: `1px solid ${PURPLE}33`, background: `${PURPLE}08` }}>
               <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--gold)', marginBottom: 8 }}>Per-Family Tables</div>
-              <div style={{ fontSize: 12, color: 'var(--text-muted)', marginBottom: 14 }}>Har family ka alag data table. Families tab se Export karo ya yahan check karo.</div>
+              <div style={{ fontSize: 12, color: 'var(--text-muted)', marginBottom: 14 }}>Each family has a separate data table. Export from Families tab or check here.</div>
               <button
                 onClick={async () => {
                   const token = getAuthToken()
                   const res = await fetch('/super-admin-api/backup/family-tables', { headers: { Authorization: 'Bearer ' + token } })
                   const data = await res.json()
-                  const info = (data.tables || []).map((t: any) => `${t.family_name} → ${t.table} (${t.event_count} events)`).join('\n') || 'Koi family table nahi mili'
+                  const info = (data.tables || []).map((t: any) => `${t.family_name} → ${t.table} (${t.event_count} events)`).join('\n') || 'No family tables found'
                   alert(`Family Tables:\n\n${info}`)
                 }}
                 style={{ width: '100%', padding: '10px', borderRadius: 10, border: `1px solid ${PURPLE}44`, background: `${PURPLE}22`, color: 'var(--gold)', cursor: 'pointer', fontSize: 13, fontWeight: 700 }}

@@ -259,9 +259,9 @@ export default function ChildPage() {
       return (
         <div style={{ padding: '32px 0', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 16 }}>
           <div style={{ fontSize: 48 }}>👨‍👩‍👧</div>
-          <div style={{ fontSize: 18, fontWeight: 700, color: '#fff', textAlign: 'center' }}>Family se abhi tak join nahi kiya</div>
+          <div style={{ fontSize: 18, fontWeight: 700, color: '#fff', textAlign: 'center' }}>You haven't joined a family yet</div>
           <div style={{ fontSize: 13, color: 'rgba(255,255,255,0.5)', textAlign: 'center', maxWidth: 280 }}>
-            Parent se invite code lo aur neeche enter karo apni family circle mein shamil hone ke liye
+            Get an invite code from your parent and enter it below to join your family circle
           </div>
           {joinSuccess ? (
             <div style={{ padding: '12px 20px', borderRadius: 12, background: 'rgba(16,185,129,0.15)', border: '1px solid rgba(16,185,129,0.4)', color: '#10B981', fontSize: 14, fontWeight: 600 }}>

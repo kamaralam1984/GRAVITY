@@ -1523,7 +1523,7 @@ export function ParentSettingsSection() {
             ) : (
               <button onClick={openEdit} className="flex items-center gap-1 mt-1 text-xs text-amber-400/70 hover:text-amber-400 transition-colors">
                 <Plus className="w-3 h-3" />
-                <span>Phone number add karo (SOS ke liye)</span>
+                <span>Add phone number (for SOS alerts)</span>
               </button>
             )}
           </div>

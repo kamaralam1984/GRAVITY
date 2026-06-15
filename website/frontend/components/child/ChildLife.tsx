@@ -156,7 +156,7 @@ export function SchoolSection({ userId }: { userId?: number }) {
         headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
         body: JSON.stringify({ ...addForm, period_order: schedule.length + 1 }),
       });
-      if (!res.ok) { setAddError('Add nahi hua, dobara try karo'); return; }
+      if (!res.ok) { setAddError('Failed to add period, please try again'); return; }
       // Refresh schedule
       const periods = await fetch(`/school/schedule/${userId}`, { headers: { Authorization: `Bearer ${token}` } }).then(r => r.json());
       setSchedule(periods.map((p: { time: string; subject: string; teacher: string; room: string; color: string; status: string }) => ({
@@ -197,7 +197,7 @@ export function SchoolSection({ userId }: { userId?: number }) {
             <motion.div key="modal" initial={{ opacity: 0, y: 40 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 20 }}
               style={{ position: 'fixed', bottom: 0, left: 0, right: 0, zIndex: 201, background: '#12131F', borderRadius: '20px 20px 0 0', border: '1px solid rgba(59,130,246,0.25)', padding: '24px 20px 36px' }}>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 18 }}>
-                <span style={{ fontSize: 17, fontWeight: 700, color: '#fff' }}>Period Add Karo</span>
+                <span style={{ fontSize: 17, fontWeight: 700, color: '#fff' }}>Add Period</span>
                 <button onClick={() => setShowAddPeriod(false)} style={{ background: 'rgba(255,255,255,0.08)', border: 'none', borderRadius: 8, padding: '6px 10px', color: '#aaa', cursor: 'pointer' }}>
                   <X size={16} />
                 </button>
@@ -290,7 +290,7 @@ export function SchoolSection({ userId }: { userId?: number }) {
         <div style={{ flex: 1 }}>
           <h2 style={{ margin: 0, fontSize: '20px', fontWeight: 700, color: '#fff' }}>School</h2>
           <p style={{ margin: 0, fontSize: '13px', color: 'rgba(255,255,255,0.5)' }}>
-            {schoolInfo?.school_name ?? 'School info set nahi'}
+            {schoolInfo?.school_name ?? 'School info not set'}
           </p>
         </div>
         <button onClick={() => setShowEditInfo(true)} style={{ background: 'rgba(59,130,246,0.15)', border: '1px solid rgba(59,130,246,0.3)', borderRadius: 8, padding: '6px 10px', color: '#3B82F6', cursor: 'pointer', fontSize: 11, fontWeight: 600 }}>
@@ -304,7 +304,7 @@ export function SchoolSection({ userId }: { userId?: number }) {
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
             <Clock size={16} color={GOLD} />
             <span style={{ fontSize: '13px', fontWeight: 600, color: GOLD, textTransform: 'uppercase', letterSpacing: '0.06em' }}>
-              Aaj Ka Schedule
+              Today's Schedule
             </span>
           </div>
           <button onClick={() => setShowAddPeriod(true)}
@@ -316,13 +316,13 @@ export function SchoolSection({ userId }: { userId?: number }) {
         {displaySchedule.length === 0 ? (
           <div style={{ textAlign: 'center', padding: '32px 16px' }}>
             <div style={{ fontSize: 36, marginBottom: 10 }}>📚</div>
-            <p style={{ color: 'rgba(255,255,255,0.5)', fontSize: 14, margin: 0 }}>Abhi koi schedule nahi hai</p>
+            <p style={{ color: 'rgba(255,255,255,0.5)', fontSize: 14, margin: 0 }}>No schedule added yet</p>
             <p style={{ color: 'rgba(255,255,255,0.3)', fontSize: 12, marginTop: 6 }}>
-              "+ Add Period" button se apna timetable banao
+              Tap &quot;+ Add Period&quot; to set up your timetable
             </p>
             <button onClick={() => setShowAddPeriod(true)}
               style={{ marginTop: 16, padding: '10px 24px', borderRadius: 10, background: 'linear-gradient(135deg, #3B82F6, #8B5CF6)', border: 'none', color: '#fff', fontSize: 13, fontWeight: 700, cursor: 'pointer' }}>
-              Pehla Period Add Karo
+              Add First Period
             </button>
           </div>
         ) : (
@@ -719,7 +719,7 @@ export function HealthSection({ userId }: { userId?: number }) {
         headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
         body: JSON.stringify(body),
       });
-      if (!res.ok) { setLogError('Save nahi hua, dobara try karo'); return; }
+      if (!res.ok) { setLogError('Failed to save, please try again'); return; }
       setShowLogModal(false);
       setDataLoaded(false);
       setHasRecord(false);
@@ -993,7 +993,7 @@ export function HealthSection({ userId }: { userId?: number }) {
             >
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '20px' }}>
                 <h3 style={{ margin: 0, fontSize: '18px', fontWeight: 700, color: '#fff' }}>
-                  {hasRecord ? 'Health Data Update' : 'Aaj Ka Health Data Log Karo'}
+                  {hasRecord ? 'Update Health Data' : "Log Today's Health Data"}
                 </h3>
                 <button onClick={() => setShowLogModal(false)} style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.5)', cursor: 'pointer', padding: '4px' }}>
                   <X size={20} />
@@ -1853,7 +1853,7 @@ export function SettingsSection({ user }: { user?: { name: string; email?: strin
               </div>
             ) : (
               <button onClick={openEdit} style={{ fontSize: 11, color: '#F59E0B', background: 'none', border: 'none', padding: 0, marginTop: 6, cursor: 'pointer' }}>
-                + Phone number add karo
+                + Add phone number
               </button>
             )}
           </div>
