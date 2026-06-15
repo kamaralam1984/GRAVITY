@@ -1393,6 +1393,15 @@ export default function SuperAdminPage() {
           </div>
         </div>
       </GlassCard>
+      <AnimatePresence>
+        <AddUserModal />
+      </AnimatePresence>
+      <AnimatePresence>
+        <UserViewModal />
+      </AnimatePresence>
+      <AnimatePresence>
+        <UserEditModal />
+      </AnimatePresence>
     </div>
   )
 
@@ -1596,17 +1605,6 @@ export default function SuperAdminPage() {
           ))}
         </div>
       </div>
-
-      {/* Add User Modal */}
-      <AnimatePresence>
-        <AddUserModal />
-      </AnimatePresence>
-      <AnimatePresence>
-        <UserViewModal />
-      </AnimatePresence>
-      <AnimatePresence>
-        <UserEditModal />
-      </AnimatePresence>
 
       {/* Add Admin Modal / static form */}
       <AnimatePresence>
