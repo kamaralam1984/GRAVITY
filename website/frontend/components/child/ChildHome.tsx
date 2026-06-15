@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { motion, useSpring, useTransform } from 'framer-motion';
+import { motion, AnimatePresence, useSpring, useTransform } from 'framer-motion';
 import {
   Shield,
   MapPin,
@@ -256,6 +256,10 @@ export default function ChildHome({
   const [recentAlerts, setRecentAlerts] = useState<AlertItem[]>([]);
   const [greeting] = useState(getGreeting());
   const [famId, setFamId] = useState<number | null>(null);
+  const [viewMode, setViewMode] = useState<'profile' | 'radar'>('profile');
+  const [transport, setTransport] = useState<string>('—');
+  const [speed, setSpeed] = useState<number | null>(null);
+  const [parentWatching, setParentWatching] = useState<string | null>(null);
 
   const statusColor = STATUS_COLORS[safeStatus];
   const statusGlow = STATUS_GLOW[safeStatus];
@@ -294,7 +298,23 @@ export default function ChildHome({
           setFamilyMembers(members);
           const me = members.find((m) => m.user_id === user!.id);
           if (me?.last_location) setLastLocation(me.last_location);
+          const parents = members.filter((m: ApiMember) => m.role === 'owner' && m.is_online && m.user_id !== user!.id);
+          if (parents.length > 0) setParentWatching(parents[0].name.split(' ')[0]);
         }
+
+        // Active journey for speed/transport
+        try {
+          const jRes = await fetch('/journeys/active', { headers });
+          if (jRes.ok) {
+            const jData = await jRes.json();
+            const journeys: Array<{ user_id?: number; user_name?: string; speed?: number | null }> = jData.journeys || [];
+            const myJ = journeys.find((j) => j.user_id === user!.id || j.user_name === user!.name);
+            if (myJ) {
+              setTransport('In Transit');
+              if (myJ.speed != null) setSpeed(Math.round(myJ.speed));
+            }
+          }
+        } catch (_) {}
 
         // Geofences
         try {
@@ -390,188 +410,200 @@ export default function ChildHome({
         {/* Content wrapper */}
         <div style={{ position: 'relative', zIndex: 1, maxWidth: 480, margin: '0 auto' }}>
 
-          {/* ── Top Bar ────────────────────────────────────────── */}
-          <motion.div
-            initial={{ opacity: 0, y: -16 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5 }}
-            style={{
-              display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 32,
-            }}
-          >
-            <div>
-              <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.4)', letterSpacing: '0.1em', textTransform: 'uppercase' }}>
-                {greeting}
-              </div>
-              <div style={{ fontSize: 20, fontWeight: 700, color: '#fff' }}>
-                {childName} ✦
-              </div>
-            </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-              <div
-                style={{
-                  width: 36, height: 36, borderRadius: 10,
-                  background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)',
-                  display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer',
-                }}
-              >
-                <Bell size={16} color="rgba(255,255,255,0.6)" />
-              </div>
-              <div
-                style={{
-                  width: 36, height: 36, borderRadius: 10,
-                  background: `${statusColor}22`, border: `1px solid ${statusColor}44`,
-                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                }}
-              >
-                <Wifi size={16} color={statusColor} />
-              </div>
-            </div>
-          </motion.div>
-
-          {/* ── 1. HERO SAFETY BUBBLE ──────────────────────────── */}
-          <motion.div
-            initial={{ opacity: 0, scale: 0.8 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 0.7, ease: 'easeOut' }}
-            style={{
-              display: 'flex', flexDirection: 'column', alignItems: 'center',
-              marginBottom: 36, minHeight: '38vh', justifyContent: 'center', position: 'relative',
-            }}
-          >
-            <div
+          {/* ── TOGGLE BUTTON ── */}
+          <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 14 }}>
+            <motion.button
+              whileTap={{ scale: 0.94 }}
+              onClick={() => setViewMode(viewMode === 'profile' ? 'radar' : 'profile')}
               style={{
-                position: 'absolute', width: 360, height: 360, borderRadius: '50%',
-                background: `radial-gradient(circle, ${statusColor}18 0%, transparent 65%)`,
-                pointerEvents: 'none',
-              }}
-            />
-            <div style={{ position: 'relative', width: 200, height: 200 }}>
-              <div className="ring-3" style={{ position: 'absolute', inset: 0, borderRadius: '50%', border: `2px solid ${statusColor}` }} />
-              <div className="ring-2" style={{ position: 'absolute', inset: 0, borderRadius: '50%', border: `2px solid ${statusColor}` }} />
-              <div className="ring-1" style={{ position: 'absolute', inset: 0, borderRadius: '50%', border: `2px solid ${statusColor}` }} />
-              <FloatingSparkles statusColor={statusColor} />
-              <div
-                style={{
-                  position: 'absolute', inset: 20, borderRadius: '50%',
-                  background: `radial-gradient(circle at 35% 35%, ${statusColor}30, ${statusColor}10)`,
-                  border: `2px solid ${statusColor}60`,
-                  boxShadow: `0 0 40px ${statusGlow}, inset 0 0 20px ${statusColor}15`,
-                  backdropFilter: 'blur(10px)',
-                  display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 6,
-                }}
-              >
-                <motion.div animate={{ scale: [1, 1.12, 1] }} transition={{ duration: 2.4, repeat: Infinity, ease: 'easeInOut' }}>
-                  <Shield size={40} color={statusColor} style={{ filter: `drop-shadow(0 0 10px ${statusColor})` }} />
-                </motion.div>
-                <div style={{ fontSize: 13, fontWeight: 700, color: '#fff', textAlign: 'center', letterSpacing: '0.02em', lineHeight: 1.2, maxWidth: 100 }}>
-                  {childName}
-                </div>
-                <div style={{ fontSize: 10, fontWeight: 600, color: statusColor, textTransform: 'uppercase', letterSpacing: '0.12em', textAlign: 'center' }}>
-                  {statusLabel}
-                </div>
-              </div>
-            </div>
-
-            <motion.div
-              animate={{ opacity: [0.7, 1, 0.7] }}
-              transition={{ duration: 2, repeat: Infinity }}
-              style={{
-                marginTop: 20, padding: '6px 18px', borderRadius: 50,
-                background: `${statusColor}18`, border: `1px solid ${statusColor}40`,
-                display: 'flex', alignItems: 'center', gap: 8,
+                display: 'flex', alignItems: 'center', gap: 6, padding: '7px 16px', borderRadius: 50,
+                background: 'rgba(255,255,255,0.07)', border: '1px solid rgba(255,255,255,0.13)',
+                color: 'rgba(255,255,255,0.65)', fontSize: 12, fontWeight: 600, cursor: 'pointer',
               }}
             >
-              <div style={{ width: 7, height: 7, borderRadius: '50%', background: statusColor, boxShadow: `0 0 8px ${statusColor}` }} />
-              <span style={{ fontSize: 12, color: statusColor, fontWeight: 600, letterSpacing: '0.08em' }}>
-                LIVE TRACKING ACTIVE
-              </span>
-            </motion.div>
-          </motion.div>
+              {viewMode === 'profile' ? <Activity size={13} /> : <Smartphone size={13} />}
+              {viewMode === 'profile' ? 'Radar View' : 'Profile View'}
+            </motion.button>
+          </div>
 
-          {/* ── 2. QUICK STATS ROW ─────────────────────────────── */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, delay: 0.2 }}
-            style={{ marginBottom: 24 }}
-          >
-            <div style={{ fontSize: 11, fontWeight: 700, color: 'rgba(255,255,255,0.35)', letterSpacing: '0.14em', textTransform: 'uppercase', marginBottom: 12 }}>
-              Today&apos;s Stats
-            </div>
-            <div style={{ display: 'flex', gap: 12, overflowX: 'auto', paddingBottom: 4 }}>
+          {/* ── ANIMATED HERO SECTION ── */}
+          <AnimatePresence mode="wait">
 
-              {/* Steps Card */}
-              <div style={{ minWidth: 110, padding: '16px 14px', borderRadius: 20, background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', backdropFilter: 'blur(12px)', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8 }}>
-                <div style={{ position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                  <CircularProgress value={steps} max={stepsMax} color="#3B82F6" size={68} />
-                  <div style={{ position: 'absolute', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                    <Activity size={14} color="#3B82F6" />
-                    <span style={{ fontSize: 10, fontWeight: 800, color: '#3B82F6' }}>{stepsPercent}%</span>
-                  </div>
-                </div>
-                <div style={{ textAlign: 'center' }}>
-                  <div style={{ fontSize: 16, fontWeight: 800, color: '#fff' }}><AnimatedNumber value={steps} /></div>
-                  <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.4)', marginTop: 2 }}>Steps</div>
-                </div>
-              </div>
-
-              {/* Battery Card */}
-              <div style={{ minWidth: 90, padding: '16px 14px', borderRadius: 20, background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', backdropFilter: 'blur(12px)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
-                <BatteryBar level={battery} />
-                <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.4)' }}>Battery</div>
-              </div>
-
-              {/* Family Online Card — real members */}
-              <div style={{ minWidth: 120, padding: '16px 14px', borderRadius: 20, background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', backdropFilter: 'blur(12px)', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 10 }}>
-                <div style={{ display: 'flex', position: 'relative', height: 32 }}>
-                  {(onlineMembers.length > 0 ? onlineMembers : familyMembers).slice(0, 4).map((member, i) => (
-                    <div
-                      key={member.user_id}
-                      style={{
-                        width: 28, height: 28, borderRadius: '50%',
-                        background: memberColor(i), border: '2px solid #0B0D13',
-                        display: 'flex', alignItems: 'center', justifyContent: 'center',
-                        fontSize: 10, fontWeight: 800, color: '#fff',
-                        position: 'absolute', left: i * 18, top: 0, zIndex: 4 - i,
-                        boxShadow: `0 0 8px ${memberColor(i)}60`,
-                      }}
-                    >
-                      {memberInitials(member.name)}
+            {viewMode === 'profile' ? (
+              /* ── PROFILE CARD VIEW ── */
+              <motion.div
+                key="profile"
+                initial={{ opacity: 0, x: -24 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: 24 }}
+                transition={{ duration: 0.28 }}
+                style={{ marginBottom: 24 }}
+              >
+                {/* Profile Header */}
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 13 }}>
+                    <div style={{ width: 60, height: 60, borderRadius: '50%', background: 'linear-gradient(135deg, #10B981, #3B82F6)', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '3px solid rgba(16,185,129,0.4)', boxShadow: '0 0 22px rgba(16,185,129,0.28)', flexShrink: 0 }}>
+                      <span style={{ fontSize: 24, fontWeight: 900, color: '#fff' }}>{childName.charAt(0).toUpperCase()}</span>
                     </div>
-                  ))}
-                </div>
-                <div style={{ textAlign: 'center' }}>
-                  <div style={{ fontSize: 16, fontWeight: 800, color: '#10B981' }}>
-                    {familyOnline} <span style={{ fontSize: 11, fontWeight: 600, color: 'rgba(255,255,255,0.5)' }}>online</span>
+                    <div>
+                      <div style={{ fontSize: 19, fontWeight: 800, color: '#fff', lineHeight: 1.2 }}>Hi, {childName}! 👋</div>
+                      <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.42)', marginTop: 3 }}>{greeting}</div>
+                    </div>
                   </div>
-                  <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.4)' }}>Family</div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '7px 14px', borderRadius: 50, background: '#10B98116', border: '1px solid #10B98145', flexShrink: 0, boxShadow: '0 0 14px rgba(16,185,129,0.18)' }}>
+                    <Check size={12} color="#10B981" strokeWidth={3} />
+                    <span style={{ fontSize: 12, fontWeight: 700, color: '#10B981' }}>SAFE ✓</span>
+                  </div>
                 </div>
-              </div>
 
-              {/* Safety Score Card */}
-              <div style={{ minWidth: 100, padding: '16px 14px', borderRadius: 20, background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', backdropFilter: 'blur(12px)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
-                <div
-                  style={{
-                    width: 56, height: 56, borderRadius: '50%',
-                    background: `radial-gradient(circle, ${scoreColor}22, transparent)`,
-                    border: `2px solid ${scoreColor}50`,
-                    display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column',
-                  }}
-                >
-                  <span style={{ fontSize: 20, fontWeight: 900, color: scoreColor, lineHeight: 1 }}>
-                    {safetyScore !== null ? <AnimatedNumber value={safetyScore} /> : '—'}
-                  </span>
-                </div>
-                <div style={{ textAlign: 'center' }}>
-                  <div style={{ fontSize: 11, color: scoreColor, fontWeight: 700 }}>
-                    {safetyScore !== null ? (safetyScore >= 80 ? 'Excellent' : safetyScore >= 50 ? 'Good' : 'Fair') : 'Active'}
+                {/* Current Location Card */}
+                <div style={{ padding: '14px 16px', borderRadius: 20, background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', marginBottom: 14, backdropFilter: 'blur(12px)' }}>
+                  <div style={{ fontSize: 10, fontWeight: 700, color: 'rgba(255,255,255,0.32)', letterSpacing: '0.14em', textTransform: 'uppercase', marginBottom: 10 }}>Current Location</div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                    <div style={{ width: 46, height: 46, borderRadius: 14, background: '#3B82F618', border: '1px solid #3B82F630', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 22, flexShrink: 0 }}>
+                      {lastLocation
+                        ? (lastLocation.toLowerCase().includes('school') ? '🏫' : lastLocation.toLowerCase().includes('home') ? '🏠' : lastLocation.toLowerCase().includes('work') || lastLocation.toLowerCase().includes('office') ? '🏢' : '📍')
+                        : '📡'}
+                    </div>
+                    <div>
+                      <div style={{ fontSize: 17, fontWeight: 800, color: '#fff', lineHeight: 1.2 }}>{lastLocation || 'Locating...'}</div>
+                      <div style={{ fontSize: 11, marginTop: 3, display: 'flex', alignItems: 'center', gap: 4, color: lastLocation ? '#10B981' : 'rgba(255,255,255,0.32)' }}>
+                        {lastLocation ? <><Check size={10} color="#10B981" strokeWidth={3} /> Location Active</> : 'Waiting for GPS...'}
+                      </div>
+                    </div>
                   </div>
-                  <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.4)' }}>Safety Score</div>
                 </div>
-              </div>
-            </div>
-          </motion.div>
+
+                {/* 2×2 Stats Grid */}
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+                  {/* Battery */}
+                  <div style={{ padding: '14px', borderRadius: 18, background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', backdropFilter: 'blur(8px)' }}>
+                    <div style={{ fontSize: 24, marginBottom: 8 }}>🔋</div>
+                    <div style={{ fontSize: 22, fontWeight: 800, color: battery > 20 ? '#10B981' : '#EF4444', lineHeight: 1 }}>{battery > 0 ? `${battery}%` : '—'}</div>
+                    <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.4)', marginTop: 5 }}>Battery</div>
+                  </div>
+                  {/* Transport */}
+                  <div style={{ padding: '14px', borderRadius: 18, background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', backdropFilter: 'blur(8px)' }}>
+                    <div style={{ fontSize: 24, marginBottom: 8 }}>📍</div>
+                    <div style={{ fontSize: 15, fontWeight: 700, color: '#fff', lineHeight: 1 }}>🚕 {transport === '—' ? 'Auto' : transport}</div>
+                    <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.4)', marginTop: 5 }}>Transport</div>
+                  </div>
+                  {/* Speed */}
+                  <div style={{ padding: '14px', borderRadius: 18, background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', backdropFilter: 'blur(8px)' }}>
+                    <div style={{ fontSize: 24, marginBottom: 8 }}>⚡</div>
+                    <div style={{ fontSize: 20, fontWeight: 800, color: '#F5A623', lineHeight: 1 }}>{speed != null ? `${speed} km/h` : '0 km/h'}</div>
+                    <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.4)', marginTop: 5 }}>Speed</div>
+                  </div>
+                  {/* Parent Watching */}
+                  <div style={{ padding: '14px', borderRadius: 18, background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', backdropFilter: 'blur(8px)' }}>
+                    <div style={{ fontSize: 24, marginBottom: 8 }}>👀</div>
+                    {parentWatching ? (
+                      <div style={{ fontSize: 15, fontWeight: 700, color: '#fff', lineHeight: 1 }}>{parentWatching} ❤️</div>
+                    ) : (
+                      <div style={{ fontSize: 13, fontWeight: 600, color: 'rgba(255,255,255,0.32)', lineHeight: 1 }}>Offline</div>
+                    )}
+                    <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.4)', marginTop: 5 }}>Parent Watching</div>
+                  </div>
+                </div>
+              </motion.div>
+
+            ) : (
+
+              /* ── RADAR VIEW ── */
+              <motion.div
+                key="radar"
+                initial={{ opacity: 0, x: 24 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -24 }}
+                transition={{ duration: 0.28 }}
+              >
+                {/* Top Bar */}
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 32 }}>
+                  <div>
+                    <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.4)', letterSpacing: '0.1em', textTransform: 'uppercase' }}>{greeting}</div>
+                    <div style={{ fontSize: 20, fontWeight: 700, color: '#fff' }}>{childName} ✦</div>
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                    <div style={{ width: 36, height: 36, borderRadius: 10, background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                      <Bell size={16} color="rgba(255,255,255,0.6)" />
+                    </div>
+                    <div style={{ width: 36, height: 36, borderRadius: 10, background: `${statusColor}22`, border: `1px solid ${statusColor}44`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                      <Wifi size={16} color={statusColor} />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Hero Safety Bubble */}
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginBottom: 32, minHeight: '36vh', justifyContent: 'center', position: 'relative' }}>
+                  <div style={{ position: 'absolute', width: 360, height: 360, borderRadius: '50%', background: `radial-gradient(circle, ${statusColor}18 0%, transparent 65%)`, pointerEvents: 'none' }} />
+                  <div style={{ position: 'relative', width: 200, height: 200 }}>
+                    <div className="ring-3" style={{ position: 'absolute', inset: 0, borderRadius: '50%', border: `2px solid ${statusColor}` }} />
+                    <div className="ring-2" style={{ position: 'absolute', inset: 0, borderRadius: '50%', border: `2px solid ${statusColor}` }} />
+                    <div className="ring-1" style={{ position: 'absolute', inset: 0, borderRadius: '50%', border: `2px solid ${statusColor}` }} />
+                    <FloatingSparkles statusColor={statusColor} />
+                    <div style={{ position: 'absolute', inset: 20, borderRadius: '50%', background: `radial-gradient(circle at 35% 35%, ${statusColor}30, ${statusColor}10)`, border: `2px solid ${statusColor}60`, boxShadow: `0 0 40px ${statusGlow}, inset 0 0 20px ${statusColor}15`, backdropFilter: 'blur(10px)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
+                      <motion.div animate={{ scale: [1, 1.12, 1] }} transition={{ duration: 2.4, repeat: Infinity, ease: 'easeInOut' }}>
+                        <Shield size={40} color={statusColor} style={{ filter: `drop-shadow(0 0 10px ${statusColor})` }} />
+                      </motion.div>
+                      <div style={{ fontSize: 13, fontWeight: 700, color: '#fff', textAlign: 'center', letterSpacing: '0.02em', lineHeight: 1.2, maxWidth: 100 }}>{childName}</div>
+                      <div style={{ fontSize: 10, fontWeight: 600, color: statusColor, textTransform: 'uppercase', letterSpacing: '0.12em', textAlign: 'center' }}>{statusLabel}</div>
+                    </div>
+                  </div>
+                  <motion.div animate={{ opacity: [0.7, 1, 0.7] }} transition={{ duration: 2, repeat: Infinity }} style={{ marginTop: 20, padding: '6px 18px', borderRadius: 50, background: `${statusColor}18`, border: `1px solid ${statusColor}40`, display: 'flex', alignItems: 'center', gap: 8 }}>
+                    <div style={{ width: 7, height: 7, borderRadius: '50%', background: statusColor, boxShadow: `0 0 8px ${statusColor}` }} />
+                    <span style={{ fontSize: 12, color: statusColor, fontWeight: 600, letterSpacing: '0.08em' }}>LIVE TRACKING ACTIVE</span>
+                  </motion.div>
+                </div>
+
+                {/* Today's Stats Row */}
+                <div style={{ marginBottom: 24 }}>
+                  <div style={{ fontSize: 11, fontWeight: 700, color: 'rgba(255,255,255,0.35)', letterSpacing: '0.14em', textTransform: 'uppercase', marginBottom: 12 }}>Today&apos;s Stats</div>
+                  <div style={{ display: 'flex', gap: 12, overflowX: 'auto', paddingBottom: 4 }}>
+                    <div style={{ minWidth: 110, padding: '16px 14px', borderRadius: 20, background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', backdropFilter: 'blur(12px)', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8 }}>
+                      <div style={{ position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                        <CircularProgress value={steps} max={stepsMax} color="#3B82F6" size={68} />
+                        <div style={{ position: 'absolute', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                          <Activity size={14} color="#3B82F6" />
+                          <span style={{ fontSize: 10, fontWeight: 800, color: '#3B82F6' }}>{stepsPercent}%</span>
+                        </div>
+                      </div>
+                      <div style={{ textAlign: 'center' }}>
+                        <div style={{ fontSize: 16, fontWeight: 800, color: '#fff' }}><AnimatedNumber value={steps} /></div>
+                        <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.4)', marginTop: 2 }}>Steps</div>
+                      </div>
+                    </div>
+                    <div style={{ minWidth: 90, padding: '16px 14px', borderRadius: 20, background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', backdropFilter: 'blur(12px)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
+                      <BatteryBar level={battery} />
+                      <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.4)' }}>Battery</div>
+                    </div>
+                    <div style={{ minWidth: 120, padding: '16px 14px', borderRadius: 20, background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', backdropFilter: 'blur(12px)', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 10 }}>
+                      <div style={{ display: 'flex', position: 'relative', height: 32 }}>
+                        {(onlineMembers.length > 0 ? onlineMembers : familyMembers).slice(0, 4).map((member, i) => (
+                          <div key={member.user_id} style={{ width: 28, height: 28, borderRadius: '50%', background: memberColor(i), border: '2px solid #0B0D13', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 10, fontWeight: 800, color: '#fff', position: 'absolute', left: i * 18, top: 0, zIndex: 4 - i, boxShadow: `0 0 8px ${memberColor(i)}60` }}>
+                            {memberInitials(member.name)}
+                          </div>
+                        ))}
+                      </div>
+                      <div style={{ textAlign: 'center' }}>
+                        <div style={{ fontSize: 16, fontWeight: 800, color: '#10B981' }}>{familyOnline} <span style={{ fontSize: 11, fontWeight: 600, color: 'rgba(255,255,255,0.5)' }}>online</span></div>
+                        <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.4)' }}>Family</div>
+                      </div>
+                    </div>
+                    <div style={{ minWidth: 100, padding: '16px 14px', borderRadius: 20, background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', backdropFilter: 'blur(12px)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
+                      <div style={{ width: 56, height: 56, borderRadius: '50%', background: `radial-gradient(circle, ${scoreColor}22, transparent)`, border: `2px solid ${scoreColor}50`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column' }}>
+                        <span style={{ fontSize: 20, fontWeight: 900, color: scoreColor, lineHeight: 1 }}>{safetyScore !== null ? <AnimatedNumber value={safetyScore} /> : '—'}</span>
+                      </div>
+                      <div style={{ textAlign: 'center' }}>
+                        <div style={{ fontSize: 11, color: scoreColor, fontWeight: 700 }}>{safetyScore !== null ? (safetyScore >= 80 ? 'Excellent' : safetyScore >= 50 ? 'Good' : 'Fair') : 'Active'}</div>
+                        <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.4)' }}>Safety Score</div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </motion.div>
+            )}
+
+          </AnimatePresence>
 
           {/* ── 3. TODAY'S SUMMARY CARDS (2×2) ────────────────── */}
           <motion.div
