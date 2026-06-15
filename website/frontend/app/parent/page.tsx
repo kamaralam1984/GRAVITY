@@ -30,6 +30,7 @@ import {
   CreditCard,
   Sun,
   Moon,
+  Camera,
 } from 'lucide-react'
 import { DashboardSection, AlertsSection } from '@/components/parent/ParentDash'
 import dynamic from 'next/dynamic'
@@ -83,6 +84,8 @@ export default function ParentPage() {
   const [unreadCount] = useState(3)
   const [authUser, setAuthUser] = useState<AuthUser | null>(null)
   const [isDark, setIsDark] = useState(true)
+  const [profileImg, setProfileImg] = useState<string | null>(null)
+  const fileInputRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
     const token = localStorage.getItem('gv_token')
@@ -93,6 +96,8 @@ export default function ParentPage() {
     setAuthUser(getUser())
     const savedTheme = localStorage.getItem('gv_theme')
     if (savedTheme === 'light') setIsDark(false)
+    const savedAvatar = localStorage.getItem('gravity_parent_avatar')
+    if (savedAvatar) setProfileImg(savedAvatar)
 
     // Mark current user as online — repeated every 60s
     const sendHeartbeat = () => fetch('/auth/heartbeat', {
@@ -326,8 +331,10 @@ export default function ParentPage() {
 
           {/* Avatar */}
           <motion.div whileTap={{ scale: 0.9 }} onClick={() => setProfileOpen(true)}
-            style={{ width: 36, height: 36, borderRadius: '50%', background: 'linear-gradient(135deg, #D4A853, #8B5CF6)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 13, fontWeight: 800, color: 'white', border: `2px solid ${T.accentBorder}`, cursor: 'pointer', flexShrink: 0, boxShadow: '0 2px 14px rgba(212,168,83,0.32)' }}>
-            {authUser ? getInitials(authUser.name) : 'G'}
+            style={{ width: 36, height: 36, borderRadius: '50%', background: 'linear-gradient(135deg, #D4A853, #8B5CF6)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 13, fontWeight: 800, color: 'white', border: `2px solid ${T.accentBorder}`, cursor: 'pointer', flexShrink: 0, boxShadow: '0 2px 14px rgba(212,168,83,0.32)', overflow: 'hidden', position: 'relative' }}>
+            {profileImg
+              ? <img src={profileImg} alt="avatar" style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '50%' }} />
+              : (authUser ? getInitials(authUser.name) : 'G')}
           </motion.div>
         </div>
       </div>
@@ -469,8 +476,26 @@ export default function ParentPage() {
 
               {/* Profile header */}
               <div style={{ padding: '20px 18px 16px', background: isDark ? 'linear-gradient(135deg,rgba(212,168,83,0.12) 0%,rgba(139,92,246,0.08) 100%)' : 'linear-gradient(135deg,rgba(212,168,83,0.08) 0%,rgba(139,92,246,0.05) 100%)', borderBottom: `1px solid ${T.divider}`, display: 'flex', alignItems: 'center', gap: 12 }}>
-                <div style={{ width: 52, height: 52, borderRadius: '50%', background: 'linear-gradient(135deg,#D4A853,#8B5CF6)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18, fontWeight: 800, color: 'white', border: `2.5px solid ${T.accentBorder}`, boxShadow: '0 4px 18px rgba(212,168,83,0.32)', flexShrink: 0 }}>
-                  {authUser ? getInitials(authUser.name) : 'G'}
+                <div style={{ position: 'relative', flexShrink: 0 }}>
+                  <div style={{ width: 52, height: 52, borderRadius: '50%', background: 'linear-gradient(135deg,#D4A853,#8B5CF6)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18, fontWeight: 800, color: 'white', border: `2.5px solid ${T.accentBorder}`, boxShadow: '0 4px 18px rgba(212,168,83,0.32)', overflow: 'hidden' }}>
+                    {profileImg
+                      ? <img src={profileImg} alt="avatar" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                      : (authUser ? getInitials(authUser.name) : 'G')}
+                  </div>
+                  <button onClick={() => fileInputRef.current?.click()} style={{ position: 'absolute', bottom: -2, right: -2, width: 20, height: 20, borderRadius: '50%', background: '#D4A853', border: '2px solid white', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
+                    <Camera size={10} color="white" />
+                  </button>
+                  <input ref={fileInputRef} type="file" accept="image/*" style={{ display: 'none' }} onChange={(e) => {
+                    const file = e.target.files?.[0]
+                    if (!file) return
+                    const reader = new FileReader()
+                    reader.onload = (ev) => {
+                      const dataUrl = ev.target?.result as string
+                      setProfileImg(dataUrl)
+                      localStorage.setItem('gravity_parent_avatar', dataUrl)
+                    }
+                    reader.readAsDataURL(file)
+                  }} />
                 </div>
                 <div style={{ minWidth: 0 }}>
                   <div style={{ fontSize: 15, fontWeight: 700, color: T.text, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' as const }}>{authUser?.name ?? 'Family Member'}</div>
