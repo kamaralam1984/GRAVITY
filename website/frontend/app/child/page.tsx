@@ -308,7 +308,7 @@ export default function ChildPage() {
       case 'family-radar':
         return <FamilyRadarSection />
       case 'school':
-        return <SchoolSection />
+        return <SchoolSection userId={authUser?.id} />
       case 'health':
         return <HealthSection userId={authUser?.id} />
       case 'achievements':

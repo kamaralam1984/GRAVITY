@@ -34,7 +34,7 @@ const nextConfig = {
       'check-ins', 'journeys', 'chat', 'driving', 'health', 'notifications',
       'plans', 'emergency-profile', 'support', 'audit', 'coupons', 'payments',
       'ai', 'api', 'location', 'subscriptions', 'security-logs', 'social-auth',
-      'stripe', 'titan', 'venus', 'cosmo', 'super-admin-api', 'gravity',
+      'stripe', 'titan', 'venus', 'cosmo', 'super-admin-api', 'gravity', 'school',
     ]
     return routes.flatMap(r => [
       { source: `/${r}`, destination: `${base}/${r}` },

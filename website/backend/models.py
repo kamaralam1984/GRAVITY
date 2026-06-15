@@ -551,3 +551,29 @@ class BehaviorScore(Base):
     phone_events = Column(Integer, default=0)
     ai_feedback = Column(Text, nullable=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
+
+
+class SchoolInfo(Base):
+    __tablename__ = "school_info"
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"), unique=True, nullable=False)
+    school_name = Column(String, nullable=False, default="My School")
+    class_name = Column(String, nullable=True)   # e.g. "Class 8"
+    section = Column(String, nullable=True)       # e.g. "A"
+    bus_number = Column(String, nullable=True)
+    bus_driver = Column(String, nullable=True)
+    updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
+
+
+class SchoolPeriod(Base):
+    __tablename__ = "school_periods"
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    day_of_week = Column(Integer, nullable=False)   # 0=Mon, 1=Tue … 4=Fri, 5=Sat, 6=Sun
+    period_order = Column(Integer, nullable=False, default=1)
+    time = Column(String, nullable=False)            # "8:00 AM"
+    subject = Column(String, nullable=False)
+    teacher = Column(String, nullable=True, default="—")
+    room = Column(String, nullable=True, default="—")
+    color = Column(String, nullable=True, default="#3B82F6")
+    created_at = Column(DateTime(timezone=True), server_default=func.now())

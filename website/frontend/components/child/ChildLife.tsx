@@ -27,6 +27,7 @@ import {
   User,
   Edit,
   LogOut,
+  X,
 } from 'lucide-react';
 import { getToken, updateUser } from '@/lib/auth';
 
@@ -93,13 +94,31 @@ const SUBJECT_ICONS: Record<string, string> = {
   Dismissal: '🏠',
 };
 
-export function SchoolSection() {
+export function SchoolSection({ userId }: { userId?: number }) {
   const [hwDone, setHwDone] = useState<boolean[]>(HOMEWORK.map(h => h.done));
   const [busProgress, setBusProgress] = useState(0);
   const [countdown, setCountdown] = useState(12);
 
+  // Real schedule state
+  const [schedule, setSchedule] = useState<ClassEntry[]>([]);
+  const [schoolInfo, setSchoolInfo] = useState<{ school_name?: string; class_name?: string; bus_number?: string; bus_driver?: string } | null>(null);
+  const [scheduleLoaded, setScheduleLoaded] = useState(false);
+
+  // Add period modal
+  const [showAddPeriod, setShowAddPeriod] = useState(false);
+  const [addForm, setAddForm] = useState({ time: '', subject: '', teacher: '', room: '', day_of_week: new Date().getDay() === 0 ? 6 : new Date().getDay() - 1 });
+  const [addLoading, setAddLoading] = useState(false);
+  const [addError, setAddError] = useState('');
+
+  // School info edit
+  const [showEditInfo, setShowEditInfo] = useState(false);
+  const [infoForm, setInfoForm] = useState({ school_name: '', class_name: '', bus_number: '', bus_driver: '' });
+  const [infoLoading, setInfoLoading] = useState(false);
+
+  const DAY_NAMES = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+  const todayDow = new Date().getDay() === 0 ? 6 : new Date().getDay() - 1;
+
   useEffect(() => {
-    // Animate bus progress to 65%
     const t = setTimeout(() => setBusProgress(65), 300);
     return () => clearTimeout(t);
   }, []);
@@ -110,8 +129,154 @@ export function SchoolSection() {
     return () => clearInterval(interval);
   }, [countdown]);
 
+  useEffect(() => {
+    if (!userId) { setScheduleLoaded(true); return; }
+    const token = getToken();
+    Promise.all([
+      fetch(`/school/schedule/${userId}`, { headers: { Authorization: `Bearer ${token}` } }).then(r => r.ok ? r.json() : []),
+      fetch(`/school/info/${userId}`, { headers: { Authorization: `Bearer ${token}` } }).then(r => r.ok ? r.json() : null),
+    ]).then(([periods, info]) => {
+      setSchedule(periods.map((p: { time: string; subject: string; teacher: string; room: string; color: string; status: string }) => ({
+        time: p.time, subject: p.subject, teacher: p.teacher, room: p.room, color: p.color, status: p.status as 'done' | 'now' | 'upcoming',
+      })));
+      setSchoolInfo(info);
+      if (info) setInfoForm({ school_name: info.school_name ?? '', class_name: info.class_name ?? '', bus_number: info.bus_number ?? '', bus_driver: info.bus_driver ?? '' });
+      setScheduleLoaded(true);
+    }).catch(() => setScheduleLoaded(true));
+  }, [userId]);
+
+  async function handleAddPeriod() {
+    if (!addForm.time || !addForm.subject) { setAddError('Time aur subject zaroori hai'); return; }
+    setAddLoading(true);
+    setAddError('');
+    const token = getToken();
+    try {
+      const res = await fetch('/school/schedule', {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ...addForm, period_order: schedule.length + 1 }),
+      });
+      if (!res.ok) { setAddError('Add nahi hua, dobara try karo'); return; }
+      // Refresh schedule
+      const periods = await fetch(`/school/schedule/${userId}`, { headers: { Authorization: `Bearer ${token}` } }).then(r => r.json());
+      setSchedule(periods.map((p: { time: string; subject: string; teacher: string; room: string; color: string; status: string }) => ({
+        time: p.time, subject: p.subject, teacher: p.teacher, room: p.room, color: p.color, status: p.status as 'done' | 'now' | 'upcoming',
+      })));
+      setShowAddPeriod(false);
+      setAddForm({ time: '', subject: '', teacher: '', room: '', day_of_week: todayDow });
+    } catch { setAddError('Network error'); }
+    finally { setAddLoading(false); }
+  }
+
+  async function handleSaveInfo() {
+    setInfoLoading(true);
+    const token = getToken();
+    try {
+      await fetch('/school/info', {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify(infoForm),
+      });
+      setSchoolInfo({ ...schoolInfo, ...infoForm });
+      setShowEditInfo(false);
+    } catch { /* ignore */ }
+    finally { setInfoLoading(false); }
+  }
+
+  const displaySchedule = schedule.length > 0 ? schedule : (scheduleLoaded ? [] : SCHEDULE);
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+
+      {/* Add Period Modal */}
+      <AnimatePresence>
+        {showAddPeriod && (
+          <>
+            <motion.div key="bd" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setShowAddPeriod(false)}
+              style={{ position: 'fixed', inset: 0, zIndex: 200, background: 'rgba(0,0,0,0.65)' }} />
+            <motion.div key="modal" initial={{ opacity: 0, y: 40 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 20 }}
+              style={{ position: 'fixed', bottom: 0, left: 0, right: 0, zIndex: 201, background: '#12131F', borderRadius: '20px 20px 0 0', border: '1px solid rgba(59,130,246,0.25)', padding: '24px 20px 36px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 18 }}>
+                <span style={{ fontSize: 17, fontWeight: 700, color: '#fff' }}>Period Add Karo</span>
+                <button onClick={() => setShowAddPeriod(false)} style={{ background: 'rgba(255,255,255,0.08)', border: 'none', borderRadius: 8, padding: '6px 10px', color: '#aaa', cursor: 'pointer' }}>
+                  <X size={16} />
+                </button>
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+                  <div>
+                    <label style={{ fontSize: 11, color: 'rgba(255,255,255,0.4)', display: 'block', marginBottom: 5 }}>Din (Day)</label>
+                    <select value={addForm.day_of_week} onChange={e => setAddForm(f => ({ ...f, day_of_week: +e.target.value }))}
+                      style={{ width: '100%', background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.12)', borderRadius: 8, padding: '10px', color: '#fff', fontSize: 13 }}>
+                      {DAY_NAMES.map((d, i) => <option key={i} value={i} style={{ background: '#1a1b2e' }}>{d}</option>)}
+                    </select>
+                  </div>
+                  <div>
+                    <label style={{ fontSize: 11, color: 'rgba(255,255,255,0.4)', display: 'block', marginBottom: 5 }}>Time</label>
+                    <input value={addForm.time} onChange={e => setAddForm(f => ({ ...f, time: e.target.value }))} placeholder="8:00 AM"
+                      style={{ width: '100%', background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.12)', borderRadius: 8, padding: '10px', color: '#fff', fontSize: 13, boxSizing: 'border-box' }} />
+                  </div>
+                </div>
+                <div>
+                  <label style={{ fontSize: 11, color: 'rgba(255,255,255,0.4)', display: 'block', marginBottom: 5 }}>Subject *</label>
+                  <input value={addForm.subject} onChange={e => setAddForm(f => ({ ...f, subject: e.target.value }))} placeholder="Mathematics"
+                    style={{ width: '100%', background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.12)', borderRadius: 8, padding: '10px', color: '#fff', fontSize: 13, boxSizing: 'border-box' }} />
+                </div>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+                  <div>
+                    <label style={{ fontSize: 11, color: 'rgba(255,255,255,0.4)', display: 'block', marginBottom: 5 }}>Teacher</label>
+                    <input value={addForm.teacher} onChange={e => setAddForm(f => ({ ...f, teacher: e.target.value }))} placeholder="Mr. Sharma"
+                      style={{ width: '100%', background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.12)', borderRadius: 8, padding: '10px', color: '#fff', fontSize: 13, boxSizing: 'border-box' }} />
+                  </div>
+                  <div>
+                    <label style={{ fontSize: 11, color: 'rgba(255,255,255,0.4)', display: 'block', marginBottom: 5 }}>Room</label>
+                    <input value={addForm.room} onChange={e => setAddForm(f => ({ ...f, room: e.target.value }))} placeholder="R-101"
+                      style={{ width: '100%', background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.12)', borderRadius: 8, padding: '10px', color: '#fff', fontSize: 13, boxSizing: 'border-box' }} />
+                  </div>
+                </div>
+                {addError && <p style={{ color: '#EF4444', fontSize: 12, margin: 0 }}>{addError}</p>}
+                <button onClick={handleAddPeriod} disabled={addLoading}
+                  style={{ width: '100%', padding: 13, borderRadius: 10, background: addLoading ? 'rgba(59,130,246,0.4)' : 'linear-gradient(135deg, #3B82F6, #8B5CF6)', border: 'none', color: '#fff', fontSize: 14, fontWeight: 700, cursor: addLoading ? 'not-allowed' : 'pointer' }}>
+                  {addLoading ? 'Adding...' : 'Add Period'}
+                </button>
+              </div>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
+
+      {/* Edit School Info Modal */}
+      <AnimatePresence>
+        {showEditInfo && (
+          <>
+            <motion.div key="bd2" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setShowEditInfo(false)}
+              style={{ position: 'fixed', inset: 0, zIndex: 200, background: 'rgba(0,0,0,0.65)' }} />
+            <motion.div key="modal2" initial={{ opacity: 0, y: 40 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 20 }}
+              style={{ position: 'fixed', bottom: 0, left: 0, right: 0, zIndex: 201, background: '#12131F', borderRadius: '20px 20px 0 0', border: '1px solid rgba(59,130,246,0.25)', padding: '24px 20px 36px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 18 }}>
+                <span style={{ fontSize: 17, fontWeight: 700, color: '#fff' }}>School Info</span>
+                <button onClick={() => setShowEditInfo(false)} style={{ background: 'rgba(255,255,255,0.08)', border: 'none', borderRadius: 8, padding: '6px 10px', color: '#aaa', cursor: 'pointer' }}>
+                  <X size={16} />
+                </button>
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                {[['school_name', 'School Name', 'Delhi Public School'], ['class_name', 'Class', 'Class 8-A'], ['bus_number', 'Bus Number', 'DL-01-XY-4567'], ['bus_driver', 'Driver Name', 'Ramu Singh']].map(([key, label, ph]) => (
+                  <div key={key}>
+                    <label style={{ fontSize: 11, color: 'rgba(255,255,255,0.4)', display: 'block', marginBottom: 5 }}>{label}</label>
+                    <input value={(infoForm as Record<string, string>)[key]} onChange={e => setInfoForm(f => ({ ...f, [key]: e.target.value }))} placeholder={ph}
+                      style={{ width: '100%', background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.12)', borderRadius: 8, padding: '10px', color: '#fff', fontSize: 13, boxSizing: 'border-box' }} />
+                  </div>
+                ))}
+                <button onClick={handleSaveInfo} disabled={infoLoading}
+                  style={{ width: '100%', padding: 13, borderRadius: 10, background: 'linear-gradient(135deg, #3B82F6, #8B5CF6)', border: 'none', color: '#fff', fontSize: 14, fontWeight: 700, cursor: 'pointer' }}>
+                  {infoLoading ? 'Saving...' : 'Save'}
+                </button>
+              </div>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
+
       {/* Header */}
       <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '4px' }}>
         <div style={{
@@ -124,35 +289,51 @@ export function SchoolSection() {
         </div>
         <div style={{ flex: 1 }}>
           <h2 style={{ margin: 0, fontSize: '20px', fontWeight: 700, color: '#fff' }}>School</h2>
-          <p style={{ margin: 0, fontSize: '13px', color: 'rgba(255,255,255,0.5)' }}>Sample Schedule</p>
+          <p style={{ margin: 0, fontSize: '13px', color: 'rgba(255,255,255,0.5)' }}>
+            {schoolInfo?.school_name ?? 'School info set nahi'}
+          </p>
         </div>
-        <span style={{
-          fontSize: '10px', fontWeight: 700, color: '#F59E0B',
-          background: 'rgba(245,158,11,0.15)', border: '1px solid rgba(245,158,11,0.3)',
-          borderRadius: '6px', padding: '3px 8px', letterSpacing: '0.04em',
-        }}>
-          DEMO
-        </span>
+        <button onClick={() => setShowEditInfo(true)} style={{ background: 'rgba(59,130,246,0.15)', border: '1px solid rgba(59,130,246,0.3)', borderRadius: 8, padding: '6px 10px', color: '#3B82F6', cursor: 'pointer', fontSize: 11, fontWeight: 600 }}>
+          Edit
+        </button>
       </div>
 
       {/* Today's Schedule */}
       <div style={{ ...CARD }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px' }}>
-          <Clock size={16} color={GOLD} />
-          <span style={{ fontSize: '13px', fontWeight: 600, color: GOLD, textTransform: 'uppercase', letterSpacing: '0.06em' }}>
-            Today&apos;s Schedule
-          </span>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <Clock size={16} color={GOLD} />
+            <span style={{ fontSize: '13px', fontWeight: 600, color: GOLD, textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+              Aaj Ka Schedule
+            </span>
+          </div>
+          <button onClick={() => setShowAddPeriod(true)}
+            style={{ display: 'flex', alignItems: 'center', gap: 5, background: 'rgba(59,130,246,0.15)', border: '1px solid rgba(59,130,246,0.3)', borderRadius: 8, padding: '6px 10px', color: '#3B82F6', cursor: 'pointer', fontSize: 11, fontWeight: 700 }}>
+            <span>+ Add Period</span>
+          </button>
         </div>
 
+        {displaySchedule.length === 0 ? (
+          <div style={{ textAlign: 'center', padding: '32px 16px' }}>
+            <div style={{ fontSize: 36, marginBottom: 10 }}>📚</div>
+            <p style={{ color: 'rgba(255,255,255,0.5)', fontSize: 14, margin: 0 }}>Abhi koi schedule nahi hai</p>
+            <p style={{ color: 'rgba(255,255,255,0.3)', fontSize: 12, marginTop: 6 }}>
+              "+ Add Period" button se apna timetable banao
+            </p>
+            <button onClick={() => setShowAddPeriod(true)}
+              style={{ marginTop: 16, padding: '10px 24px', borderRadius: 10, background: 'linear-gradient(135deg, #3B82F6, #8B5CF6)', border: 'none', color: '#fff', fontSize: 13, fontWeight: 700, cursor: 'pointer' }}>
+              Pehla Period Add Karo
+            </button>
+          </div>
+        ) : (
         <div style={{ position: 'relative' }}>
-          {/* vertical line */}
           <div style={{
             position: 'absolute', left: '38px', top: 0, bottom: 0,
             width: '2px', background: 'rgba(255,255,255,0.06)',
           }} />
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-            {SCHEDULE.map((cls, i) => {
+            {displaySchedule.map((cls, i) => {
               const isDone = cls.status === 'done';
               const isNow  = cls.status === 'now';
               return (
@@ -221,6 +402,7 @@ export function SchoolSection() {
             })}
           </div>
         </div>
+        )}
       </div>
 
       {/* School Bus Tracking */}
