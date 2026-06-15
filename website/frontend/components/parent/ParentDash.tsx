@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { getToken } from '@/lib/auth';
+import { getToken, clearAuth } from '@/lib/auth';
 import {
   Shield,
   MapPin,
@@ -443,7 +443,13 @@ export function DashboardSection() {
       const h = { Authorization: `Bearer ${token}` };
       try {
         const famRes = await fetch('/families/my', { headers: h });
-        if (!famRes.ok) return;
+        if (!famRes.ok) {
+          if (famRes.status === 401) {
+            clearAuth();
+            if (typeof window !== 'undefined') window.location.href = '/login';
+          }
+          return;
+        }
         const fam = await famRes.json();
         let famData = Array.isArray(fam) ? fam[0] : fam;
         let fid = famData?.id ?? famData?.family?.id;
