@@ -127,6 +127,10 @@ export default function ChildPage() {
   const [familyId, setFamilyId] = useState<number | undefined>()
   const [steps, setSteps] = useState(0)
   const [dataLoaded, setDataLoaded] = useState(false)
+  const [joinCode, setJoinCode] = useState('')
+  const [joinLoading, setJoinLoading] = useState(false)
+  const [joinError, setJoinError] = useState('')
+  const [joinSuccess, setJoinSuccess] = useState(false)
 
   useEffect(() => {
     const token = getToken()
@@ -223,6 +227,26 @@ export default function ChildPage() {
     }
   }, [router])
 
+  async function handleJoinFamily() {
+    if (!joinCode.trim()) { setJoinError('Invite code daalo'); return }
+    setJoinLoading(true); setJoinError('')
+    try {
+      const token = getToken()
+      const res = await fetch(`/families/join/${joinCode.trim().toUpperCase()}`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}` },
+      })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.detail || 'Invalid invite code')
+      setJoinSuccess(true)
+      setFamilyId(data.family_id ?? data.id)
+      // Reload page after 1.5s so all family data loads fresh
+      setTimeout(() => window.location.reload(), 1500)
+    } catch (e: any) {
+      setJoinError(e.message || 'Failed to join family')
+    } finally { setJoinLoading(false) }
+  }
+
   function handleTabChange(tab: Tab) {
     setPrevTab(activeTab)
     setActiveTab(tab)
@@ -230,6 +254,42 @@ export default function ChildPage() {
   }
 
   function renderSection() {
+    // If no family joined yet, show join prompt on all tabs
+    if (dataLoaded && !familyId && activeTab === 'home') {
+      return (
+        <div style={{ padding: '32px 0', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 16 }}>
+          <div style={{ fontSize: 48 }}>👨‍👩‍👧</div>
+          <div style={{ fontSize: 18, fontWeight: 700, color: '#fff', textAlign: 'center' }}>Family se abhi tak join nahi kiya</div>
+          <div style={{ fontSize: 13, color: 'rgba(255,255,255,0.5)', textAlign: 'center', maxWidth: 280 }}>
+            Parent se invite code lo aur neeche enter karo apni family circle mein shamil hone ke liye
+          </div>
+          {joinSuccess ? (
+            <div style={{ padding: '12px 20px', borderRadius: 12, background: 'rgba(16,185,129,0.15)', border: '1px solid rgba(16,185,129,0.4)', color: '#10B981', fontSize: 14, fontWeight: 600 }}>
+              ✓ Family join ho gayi! Loading...
+            </div>
+          ) : (
+            <div style={{ width: '100%', maxWidth: 320, display: 'flex', flexDirection: 'column', gap: 10 }}>
+              {joinError && <div style={{ padding: '10px 14px', borderRadius: 10, background: 'rgba(239,68,68,0.12)', border: '1px solid rgba(239,68,68,0.3)', color: '#EF4444', fontSize: 13 }}>{joinError}</div>}
+              <input
+                type="text"
+                placeholder="Invite code (e.g. YULfi8RU)"
+                value={joinCode}
+                onChange={(e) => setJoinCode(e.target.value.toUpperCase())}
+                onKeyDown={(e) => e.key === 'Enter' && handleJoinFamily()}
+                style={{ padding: '14px 16px', borderRadius: 14, border: '1px solid rgba(16,185,129,0.4)', background: 'rgba(255,255,255,0.05)', color: '#fff', fontSize: 16, outline: 'none', letterSpacing: 2, textAlign: 'center', fontWeight: 700 }}
+              />
+              <button
+                onClick={handleJoinFamily}
+                disabled={joinLoading}
+                style={{ padding: '14px', borderRadius: 14, border: 'none', background: 'linear-gradient(135deg, #10B981, #059669)', color: '#fff', fontSize: 15, fontWeight: 700, cursor: joinLoading ? 'not-allowed' : 'pointer', opacity: joinLoading ? 0.7 : 1 }}
+              >
+                {joinLoading ? 'Joining...' : 'Family Join Karo'}
+              </button>
+            </div>
+          )}
+        </div>
+      )
+    }
     switch (activeTab) {
       case 'home':
         return (
