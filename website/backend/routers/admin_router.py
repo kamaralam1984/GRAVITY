@@ -349,6 +349,18 @@ def delete_user(user_id: int, admin=Depends(get_current_admin), db: Session = De
     return {"message": "User deleted"}
 
 
+# ── Families management ───────────────────────────────────────────────────────
+
+@router.delete("/families/{family_id}")
+def delete_family(family_id: int, admin=Depends(get_current_admin), db: Session = Depends(get_db)):
+    family = db.query(models.Family).filter(models.Family.id == family_id).first()
+    if not family:
+        raise HTTPException(status_code=404, detail="Family not found")
+    db.delete(family)
+    db.commit()
+    return {"message": "Family deleted"}
+
+
 # ── Children ──────────────────────────────────────────────────────────────────
 
 @router.get("/children")

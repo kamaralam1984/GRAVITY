@@ -655,6 +655,18 @@ export default function SuperAdminPage() {
   const [addUserForm, setAddUserForm] = useState({ name: '', email: '', password: '', role: 'user' })
   const [addUserLoading, setAddUserLoading] = useState(false)
   const [addUserError, setAddUserError] = useState('')
+  const [selectedSAUser, setSelectedSAUser] = useState<any>(null)
+  const [showUserViewModal, setShowUserViewModal] = useState(false)
+  const [showUserEditModal, setShowUserEditModal] = useState(false)
+  const [editUserForm, setEditUserForm] = useState({ name: '', email: '', phone: '', role: 'user' })
+  const [editUserLoading, setEditUserLoading] = useState(false)
+  const [editUserError, setEditUserError] = useState('')
+  const [userActionLoading, setUserActionLoading] = useState<number | null>(null)
+  const [selectedSAFamily, setSelectedSAFamily] = useState<any>(null)
+  const [showFamilyViewModal, setShowFamilyViewModal] = useState(false)
+  const [familiesPage, setFamiliesPage] = useState(1)
+  const [familiesActionLoading, setFamiliesActionLoading] = useState<number | null>(null)
+  const FAMILIES_PER_PAGE = 20
   const [maintenanceMode, setMaintenanceMode] = useState(false)
   const [registrationsEnabled, setRegistrationsEnabled] = useState(true)
   const [sosEnabled, setSosEnabled] = useState(true)
@@ -700,13 +712,13 @@ export default function SuperAdminPage() {
       .finally(() => setUsersLoading(false))
   }
 
-  useEffect(() => {
-    if (active !== 'families') return
+  function fetchFamilies(page = familiesPage) {
     const token = getAuthToken()
     if (!token) return
     setFamiliesLoading(true)
+    const skip = (page - 1) * FAMILIES_PER_PAGE
     const planQuery = familiesPlanFilter ? `&plan=${encodeURIComponent(familiesPlanFilter)}` : ''
-    fetch(`/admin-api/families?limit=20${planQuery}`, { headers: { Authorization: 'Bearer ' + token } })
+    fetch(`/admin-api/families?limit=${FAMILIES_PER_PAGE}&skip=${skip}${planQuery}`, { headers: { Authorization: 'Bearer ' + token } })
       .then((r) => r.json())
       .then((d) => {
         setFamiliesData(d.families || [])
@@ -714,7 +726,14 @@ export default function SuperAdminPage() {
       })
       .catch(() => {})
       .finally(() => setFamiliesLoading(false))
+  }
 
+  useEffect(() => {
+    if (active !== 'families') return
+    fetchFamilies(1)
+    setFamiliesPage(1)
+    const token = getAuthToken()
+    if (!token) return
     fetch('/admin-api/analytics', { headers: { Authorization: 'Bearer ' + token } })
       .then((r) => r.json())
       .then((d) => {
@@ -722,6 +741,7 @@ export default function SuperAdminPage() {
         setFamiliesPlanDist({ free: pd.free || 0, premium: pd.premium || 0, family: pd.family || 0 })
       })
       .catch(() => {})
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [active, familiesPlanFilter])
 
   // Refetch users when navigating to users tab
@@ -1200,6 +1220,15 @@ export default function SuperAdminPage() {
               fontSize: 13,
               fontWeight: 500,
             }}
+            onClick={() => {
+              const rows = [['Name', 'Email', 'Role', 'Status', 'Family', 'Invite Code', 'Joined'], ...allUsers.map((u: any) => [
+                u.name || '', u.email || '', u.role || '', u.is_active ? 'Active' : 'Inactive',
+                u.family_name || '', u.invite_code || '', u.created_at ? new Date(u.created_at).toLocaleDateString('en-IN') : ''
+              ])]
+              const csv = rows.map((r) => r.map((v: string) => `"${String(v).replace(/"/g, '""')}"`).join(',')).join('\n')
+              const blob = new Blob([csv], { type: 'text/csv' })
+              const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'gravity_users.csv'; a.click()
+            }}
           >
             <Download size={14} /> Export CSV
           </button>
@@ -1289,31 +1318,56 @@ export default function SuperAdminPage() {
                   <td style={{ padding: '12px 16px', color: 'var(--text-muted)', whiteSpace: 'nowrap' }}>{u.joined || (u.created_at ? new Date(u.created_at).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) : '—')}</td>
                   <td style={{ padding: '12px 16px' }}>
                     <div style={{ display: 'flex', gap: 6 }}>
-                      {[{ icon: Eye, tip: 'View', color: '#60A5FA' }, { icon: Edit, tip: 'Edit', color: '#F59E0B' }, { icon: Ban, tip: 'Suspend', color: '#F97316' }, { icon: Trash2, tip: 'Delete', color: '#EF4444' }].map(
-                        ({ icon: Icon, tip, color }) => (
-                          <button
-                            key={tip}
-                            title={tip}
-                            style={{
-                              width: 28,
-                              height: 28,
-                              borderRadius: 7,
-                              border: `1px solid ${color}22`,
-                              background: `${color}12`,
-                              color,
-                              cursor: 'pointer',
-                              display: 'flex',
-                              alignItems: 'center',
-                              justifyContent: 'center',
-                              transition: 'all 0.15s',
-                            }}
-                            onMouseEnter={(e) => { e.currentTarget.style.background = `${color}28`; e.currentTarget.style.borderColor = `${color}44` }}
-                            onMouseLeave={(e) => { e.currentTarget.style.background = `${color}12`; e.currentTarget.style.borderColor = `${color}22` }}
-                          >
-                            <Icon size={13} />
-                          </button>
-                        )
-                      )}
+                      {([
+                        { icon: Eye, tip: 'View', color: '#60A5FA', onClick: () => { setSelectedSAUser(u); setShowUserViewModal(true) } },
+                        { icon: Edit, tip: 'Edit', color: '#F59E0B', onClick: () => { setSelectedSAUser(u); setEditUserForm({ name: u.name || '', email: u.email || '', phone: u.phone || '', role: u.role || 'user' }); setEditUserError(''); setShowUserEditModal(true) } },
+                        { icon: u.is_active ? Ban : CheckCircle, tip: u.is_active ? 'Suspend' : 'Activate', color: u.is_active ? '#F97316' : '#10B981',
+                          onClick: async () => {
+                            setUserActionLoading(u.id)
+                            try {
+                              const token = getAuthToken()
+                              await fetch(`/admin-api/users/${u.id}/status`, { method: 'PATCH', headers: { Authorization: 'Bearer ' + token, 'Content-Type': 'application/json' }, body: JSON.stringify({ is_active: !u.is_active }) })
+                              fetchUsers()
+                            } finally { setUserActionLoading(null) }
+                          }
+                        },
+                        { icon: Trash2, tip: 'Delete', color: '#EF4444',
+                          onClick: async () => {
+                            if (!confirm(`Delete user ${u.name}? This cannot be undone.`)) return
+                            setUserActionLoading(u.id)
+                            try {
+                              const token = getAuthToken()
+                              await fetch(`/admin-api/users/${u.id}`, { method: 'DELETE', headers: { Authorization: 'Bearer ' + token } })
+                              fetchUsers()
+                            } finally { setUserActionLoading(null) }
+                          }
+                        },
+                      ] as { icon: any; tip: string; color: string; onClick: () => void }[]).map(({ icon: Icon, tip, color, onClick }) => (
+                        <button
+                          key={tip}
+                          title={tip}
+                          onClick={onClick}
+                          disabled={userActionLoading === u.id}
+                          style={{
+                            width: 28,
+                            height: 28,
+                            borderRadius: 7,
+                            border: `1px solid ${color}22`,
+                            background: `${color}12`,
+                            color,
+                            cursor: userActionLoading === u.id ? 'not-allowed' : 'pointer',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            transition: 'all 0.15s',
+                            opacity: userActionLoading === u.id ? 0.6 : 1,
+                          }}
+                          onMouseEnter={(e) => { e.currentTarget.style.background = `${color}28`; e.currentTarget.style.borderColor = `${color}44` }}
+                          onMouseLeave={(e) => { e.currentTarget.style.background = `${color}12`; e.currentTarget.style.borderColor = `${color}22` }}
+                        >
+                          <Icon size={13} />
+                        </button>
+                      ))}
                     </div>
                   </td>
                 </motion.tr>
@@ -1547,6 +1601,12 @@ export default function SuperAdminPage() {
       <AnimatePresence>
         <AddUserModal />
       </AnimatePresence>
+      <AnimatePresence>
+        <UserViewModal />
+      </AnimatePresence>
+      <AnimatePresence>
+        <UserEditModal />
+      </AnimatePresence>
 
       {/* Add Admin Modal / static form */}
       <AnimatePresence>
@@ -1731,6 +1791,185 @@ export default function SuperAdminPage() {
             style={{ width: '100%', padding: '12px', borderRadius: 12, border: 'none', background: `linear-gradient(135deg, ${PURPLE}, ${PURPLE_DARK})`, color: 'var(--text-primary)', cursor: addUserLoading ? 'not-allowed' : 'pointer', fontSize: 14, fontWeight: 700, opacity: addUserLoading ? 0.7 : 1 }}
           >
             {addUserLoading ? 'Creating...' : 'Create User'}
+          </button>
+        </motion.div>
+      </motion.div>
+    )
+  }
+
+  // ── User View Modal ──
+  const UserViewModal = () => {
+    if (!showUserViewModal || !selectedSAUser) return null
+    const u = selectedSAUser
+    return (
+      <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+        style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.7)', zIndex: 200, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}
+        onClick={() => setShowUserViewModal(false)}
+      >
+        <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.9, opacity: 0 }}
+          onClick={(e) => e.stopPropagation()}
+          style={{ background: '#1a1030', border: `1px solid ${PURPLE}44`, borderRadius: 20, padding: 28, width: '100%', maxWidth: 460, boxShadow: `0 24px 80px rgba(139,92,246,0.3)` }}
+        >
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 22 }}>
+            <div style={{ fontSize: 18, fontWeight: 800, color: 'var(--text-primary)', fontFamily: 'Plus Jakarta Sans, sans-serif' }}>User Details</div>
+            <button onClick={() => setShowUserViewModal(false)} style={{ background: 'transparent', border: 'none', color: 'var(--text-muted)', cursor: 'pointer' }}><X size={20} /></button>
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 22, padding: '14px 16px', background: 'rgba(139,92,246,0.08)', borderRadius: 14, border: '1px solid rgba(139,92,246,0.2)' }}>
+            <div style={{ width: 52, height: 52, borderRadius: 14, background: `linear-gradient(135deg, ${PURPLE}, ${PURPLE_DARK})`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18, fontWeight: 800, color: '#fff', flexShrink: 0 }}>
+              {u.avatar || (u.name || '?').split(' ').map((w: string) => w[0]).join('').toUpperCase().slice(0, 2)}
+            </div>
+            <div>
+              <div style={{ fontSize: 16, fontWeight: 700, color: 'var(--text-primary)' }}>{u.name}</div>
+              <div style={{ fontSize: 13, color: 'var(--text-muted)' }}>{u.email}</div>
+            </div>
+          </div>
+          {[
+            ['User ID', `#${u.id}`],
+            ['Phone', u.phone || '—'],
+            ['Role', u.role || '—'],
+            ['Status', u.is_active ? 'Active' : 'Inactive'],
+            ['Family', u.family_name || '—'],
+            ['Family ID', u.family_id ? `#${u.family_id}` : '—'],
+            ['Invite Code', u.invite_code || '—'],
+            ['Devices', String(u.devices ?? 0)],
+            ['Joined', u.created_at ? new Date(u.created_at).toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' }) : '—'],
+          ].map(([label, value]) => (
+            <div key={label} style={{ display: 'flex', justifyContent: 'space-between', padding: '10px 0', borderBottom: '1px solid var(--border)' }}>
+              <span style={{ fontSize: 13, color: 'var(--text-muted)' }}>{label}</span>
+              <span style={{ fontSize: 13, color: 'var(--text-primary)', fontWeight: 500 }}>{value}</span>
+            </div>
+          ))}
+          <div style={{ marginTop: 20, display: 'flex', gap: 10 }}>
+            <button onClick={() => { setShowUserViewModal(false); setEditUserForm({ name: u.name || '', email: u.email || '', phone: u.phone || '', role: u.role || 'user' }); setEditUserError(''); setShowUserEditModal(true) }}
+              style={{ flex: 1, padding: '10px', borderRadius: 10, border: `1px solid ${PURPLE}44`, background: `${PURPLE}22`, color: 'var(--gold)', cursor: 'pointer', fontSize: 13, fontWeight: 600 }}>
+              Edit User
+            </button>
+            <button onClick={() => setShowUserViewModal(false)}
+              style={{ flex: 1, padding: '10px', borderRadius: 10, border: '1px solid var(--border)', background: 'transparent', color: 'var(--text-muted)', cursor: 'pointer', fontSize: 13, fontWeight: 600 }}>
+              Close
+            </button>
+          </div>
+        </motion.div>
+      </motion.div>
+    )
+  }
+
+  // ── User Edit Modal ──
+  const UserEditModal = () => {
+    if (!showUserEditModal || !selectedSAUser) return null
+    const handleSubmit = async () => {
+      if (!editUserForm.name || !editUserForm.email) { setEditUserError('Name and email are required'); return }
+      setEditUserLoading(true); setEditUserError('')
+      try {
+        const token = getAuthToken()
+        const res = await fetch(`/admin-api/users/${selectedSAUser.id}`, {
+          method: 'PUT',
+          headers: { Authorization: 'Bearer ' + token, 'Content-Type': 'application/json' },
+          body: JSON.stringify(editUserForm),
+        })
+        const data = await res.json()
+        if (!res.ok) throw new Error(data.detail || 'Failed to update user')
+        setShowUserEditModal(false)
+        fetchUsers()
+      } catch (e: any) {
+        setEditUserError(e.message || 'Failed to update user')
+      } finally { setEditUserLoading(false) }
+    }
+    return (
+      <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+        style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.7)', zIndex: 200, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}
+        onClick={() => setShowUserEditModal(false)}
+      >
+        <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.9, opacity: 0 }}
+          onClick={(e) => e.stopPropagation()}
+          style={{ background: '#1a1030', border: `1px solid ${PURPLE}44`, borderRadius: 20, padding: 28, width: '100%', maxWidth: 420, boxShadow: `0 24px 80px rgba(139,92,246,0.3)` }}
+        >
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 22 }}>
+            <div style={{ fontSize: 18, fontWeight: 800, color: 'var(--text-primary)', fontFamily: 'Plus Jakarta Sans, sans-serif' }}>Edit User</div>
+            <button onClick={() => setShowUserEditModal(false)} style={{ background: 'transparent', border: 'none', color: 'var(--text-muted)', cursor: 'pointer' }}><X size={20} /></button>
+          </div>
+          {editUserError && <div style={{ padding: '8px 12px', borderRadius: 8, background: 'rgba(239,68,68,0.12)', color: '#EF4444', fontSize: 13, marginBottom: 14 }}>{editUserError}</div>}
+          {[
+            { label: 'Full Name', key: 'name', type: 'text', placeholder: 'Enter name' },
+            { label: 'Email', key: 'email', type: 'email', placeholder: 'user@example.com' },
+            { label: 'Phone', key: 'phone', type: 'text', placeholder: '+91 98765 43210' },
+          ].map((f) => (
+            <div key={f.key} style={{ marginBottom: 14 }}>
+              <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: 'var(--text-muted)', marginBottom: 6 }}>{f.label}</label>
+              <input type={f.type} placeholder={f.placeholder} value={(editUserForm as any)[f.key]}
+                onChange={(e) => setEditUserForm((prev) => ({ ...prev, [f.key]: e.target.value }))}
+                style={{ width: '100%', padding: '10px 14px', borderRadius: 10, border: '1px solid var(--border)', background: 'var(--bg-surface2)', color: 'var(--text-primary)', fontSize: 14, outline: 'none', boxSizing: 'border-box' }}
+              />
+            </div>
+          ))}
+          <div style={{ marginBottom: 20 }}>
+            <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: 'var(--text-muted)', marginBottom: 6 }}>Role</label>
+            <select value={editUserForm.role} onChange={(e) => setEditUserForm((prev) => ({ ...prev, role: e.target.value }))}
+              style={{ width: '100%', padding: '10px 14px', borderRadius: 10, border: '1px solid var(--border)', background: 'var(--bg-surface2)', color: 'var(--text-primary)', fontSize: 14, outline: 'none', cursor: 'pointer', boxSizing: 'border-box' }}
+            >
+              <option value="user">User</option>
+              <option value="moderator">Moderator</option>
+              <option value="admin">Admin</option>
+            </select>
+          </div>
+          <div style={{ display: 'flex', gap: 10 }}>
+            <button onClick={handleSubmit} disabled={editUserLoading}
+              style={{ flex: 2, padding: '12px', borderRadius: 12, border: 'none', background: `linear-gradient(135deg, ${PURPLE}, ${PURPLE_DARK})`, color: 'var(--text-primary)', cursor: editUserLoading ? 'not-allowed' : 'pointer', fontSize: 14, fontWeight: 700, opacity: editUserLoading ? 0.7 : 1 }}
+            >
+              {editUserLoading ? 'Saving...' : 'Save Changes'}
+            </button>
+            <button onClick={() => setShowUserEditModal(false)}
+              style={{ flex: 1, padding: '12px', borderRadius: 12, border: '1px solid var(--border)', background: 'transparent', color: 'var(--text-muted)', cursor: 'pointer', fontSize: 14 }}
+            >
+              Cancel
+            </button>
+          </div>
+        </motion.div>
+      </motion.div>
+    )
+  }
+
+  // ── Family View Modal ──
+  const FamilyViewModal = () => {
+    if (!showFamilyViewModal || !selectedSAFamily) return null
+    const f = selectedSAFamily
+    return (
+      <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+        style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.7)', zIndex: 200, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}
+        onClick={() => setShowFamilyViewModal(false)}
+      >
+        <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.9, opacity: 0 }}
+          onClick={(e) => e.stopPropagation()}
+          style={{ background: '#1a1030', border: `1px solid rgba(212,175,55,0.4)`, borderRadius: 20, padding: 28, width: '100%', maxWidth: 440, boxShadow: `0 24px 80px rgba(212,175,55,0.2)` }}
+        >
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 22 }}>
+            <div style={{ fontSize: 18, fontWeight: 800, color: 'var(--text-primary)', fontFamily: 'Plus Jakarta Sans, sans-serif' }}>Family Details</div>
+            <button onClick={() => setShowFamilyViewModal(false)} style={{ background: 'transparent', border: 'none', color: 'var(--text-muted)', cursor: 'pointer' }}><X size={20} /></button>
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 22, padding: '14px 16px', background: 'rgba(212,175,55,0.08)', borderRadius: 14, border: '1px solid rgba(212,175,55,0.2)' }}>
+            <div style={{ width: 44, height: 44, borderRadius: 12, background: 'rgba(212,175,55,0.2)', color: 'var(--gold)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18, fontWeight: 800, flexShrink: 0 }}>
+              {(f.name || '?').charAt(0).toUpperCase()}
+            </div>
+            <div>
+              <div style={{ fontSize: 16, fontWeight: 700, color: 'var(--text-primary)' }}>{f.name}</div>
+              <div style={{ fontSize: 13, color: 'var(--text-muted)' }}>Family ID #{f.id}</div>
+            </div>
+          </div>
+          {[
+            ['Plan', f.plan || 'free'],
+            ['Members', String(f.member_count ?? '—')],
+            ['Monthly Spend', typeof f.monthly_spend === 'number' ? `₹${f.monthly_spend.toLocaleString('en-IN')}` : '—'],
+            ['Status', f.status || 'active'],
+            ['Created', f.created_at ? new Date(f.created_at).toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' }) : '—'],
+          ].map(([label, value]) => (
+            <div key={label} style={{ display: 'flex', justifyContent: 'space-between', padding: '10px 0', borderBottom: '1px solid var(--border)' }}>
+              <span style={{ fontSize: 13, color: 'var(--text-muted)' }}>{label}</span>
+              <span style={{ fontSize: 13, color: 'var(--text-primary)', fontWeight: 500 }}>{value}</span>
+            </div>
+          ))}
+          <button onClick={() => setShowFamilyViewModal(false)}
+            style={{ marginTop: 20, width: '100%', padding: '10px', borderRadius: 10, border: '1px solid var(--border)', background: 'transparent', color: 'var(--text-muted)', cursor: 'pointer', fontSize: 13, fontWeight: 600 }}>
+            Close
           </button>
         </motion.div>
       </motion.div>
@@ -2379,7 +2618,19 @@ export default function SuperAdminPage() {
             <option value="premium" style={{ background: '#1a1030' }}>Premium</option>
             <option value="family" style={{ background: '#1a1030' }}>Family+</option>
           </select>
-          <button style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '8px 14px', borderRadius: 10, border: '1px solid var(--border)', background: 'var(--bg-surface2)', color: 'var(--text-primary)', cursor: 'pointer', fontSize: 13, fontWeight: 600 }}>
+          <button
+            style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '8px 14px', borderRadius: 10, border: '1px solid var(--border)', background: 'var(--bg-surface2)', color: 'var(--text-primary)', cursor: 'pointer', fontSize: 13, fontWeight: 600 }}
+            onClick={() => {
+              const rows = [['Family Name', 'Members', 'Plan', 'Created', 'Monthly Spend'], ...familiesData.map((f: any) => [
+                f.name || '', String(f.member_count ?? ''), f.plan || 'free',
+                f.created_at ? new Date(f.created_at).toLocaleDateString('en-IN') : '',
+                typeof f.monthly_spend === 'number' ? String(f.monthly_spend) : '0'
+              ])]
+              const csv = rows.map((r) => r.map((v: string) => `"${String(v).replace(/"/g, '""')}"`).join(',')).join('\n')
+              const blob = new Blob([csv], { type: 'text/csv' })
+              const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'gravity_families.csv'; a.click()
+            }}
+          >
             <Download size={14} /> Export
           </button>
           <button style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '8px 14px', borderRadius: 10, border: 'none', background: 'var(--gold)', color: '#000', cursor: 'pointer', fontSize: 13, fontWeight: 700 }}>
@@ -2429,8 +2680,20 @@ export default function SuperAdminPage() {
                     </td>
                     <td style={{ padding: '12px 16px' }}>
                       <div style={{ display: 'flex', gap: 6 }}>
-                        {[{ icon: Eye, color: '#60A5FA', tip: 'View' }, { icon: Edit, color: '#F59E0B', tip: 'Edit' }, { icon: Trash2, color: '#EF4444', tip: 'Delete' }].map(({ icon: Icon, color, tip }) => (
-                          <button key={tip} title={tip} style={{ width: 28, height: 28, borderRadius: 7, border: `1px solid ${color}22`, background: `${color}12`, color, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                        {([
+                          { icon: Eye, color: '#60A5FA', tip: 'View', onClick: () => { setSelectedSAFamily(f); setShowFamilyViewModal(true) } },
+                          { icon: Trash2, color: '#EF4444', tip: 'Delete', onClick: async () => {
+                            if (!confirm(`Delete family "${f.name}"? This cannot be undone.`)) return
+                            setFamiliesActionLoading(f.id)
+                            try {
+                              const token = getAuthToken()
+                              await fetch(`/admin-api/families/${f.id}`, { method: 'DELETE', headers: { Authorization: 'Bearer ' + token } })
+                              fetchFamilies(familiesPage)
+                            } finally { setFamiliesActionLoading(null) }
+                          }},
+                        ] as { icon: any; color: string; tip: string; onClick: () => void }[]).map(({ icon: Icon, color, tip, onClick }) => (
+                          <button key={tip} title={tip} onClick={onClick} disabled={familiesActionLoading === f.id}
+                            style={{ width: 28, height: 28, borderRadius: 7, border: `1px solid ${color}22`, background: `${color}12`, color, cursor: familiesActionLoading === f.id ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', opacity: familiesActionLoading === f.id ? 0.6 : 1 }}>
                             <Icon size={13} />
                           </button>
                         ))}
@@ -2441,17 +2704,39 @@ export default function SuperAdminPage() {
               </tbody>
             </table>
           </div>
-          <div style={{ padding: '12px 16px', borderTop: '1px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-            <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>
-              Showing <span style={{ color: 'var(--text-primary)', fontWeight: 600 }}>{filteredFamilies.length}</span> of <span style={{ color: 'var(--text-primary)', fontWeight: 600 }}>{familiesTotal.toLocaleString()}</span> families
-            </span>
-            <div style={{ display: 'flex', gap: 6 }}>
-              {['Prev', '1', '2', '3', 'Next'].map((p) => (
-                <button key={p} style={{ padding: '4px 10px', borderRadius: 6, border: '1px solid var(--border)', background: p === '1' ? 'var(--gold)' : 'var(--bg-surface2)', color: p === '1' ? '#000' : 'var(--text-secondary)', fontSize: 12, fontWeight: p === '1' ? 700 : 400, cursor: 'pointer' }}>{p}</button>
-              ))}
-            </div>
-          </div>
+          {(() => {
+            const totalPages = Math.max(1, Math.ceil(familiesTotal / FAMILIES_PER_PAGE))
+            const pages: (number | '...')[] = []
+            if (totalPages <= 5) { for (let i = 1; i <= totalPages; i++) pages.push(i) }
+            else {
+              pages.push(1)
+              if (familiesPage > 3) pages.push('...')
+              for (let i = Math.max(2, familiesPage - 1); i <= Math.min(totalPages - 1, familiesPage + 1); i++) pages.push(i)
+              if (familiesPage < totalPages - 2) pages.push('...')
+              pages.push(totalPages)
+            }
+            return (
+              <div style={{ padding: '12px 16px', borderTop: '1px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 8 }}>
+                <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>
+                  Showing <span style={{ color: 'var(--text-primary)', fontWeight: 600 }}>{filteredFamilies.length}</span> of <span style={{ color: 'var(--text-primary)', fontWeight: 600 }}>{familiesTotal.toLocaleString()}</span> families
+                </span>
+                <div style={{ display: 'flex', gap: 6 }}>
+                  <button onClick={() => { const p = Math.max(1, familiesPage - 1); setFamiliesPage(p); fetchFamilies(p) }} disabled={familiesPage === 1}
+                    style={{ padding: '4px 10px', borderRadius: 6, border: '1px solid var(--border)', background: 'var(--bg-surface2)', color: 'var(--text-secondary)', fontSize: 12, cursor: familiesPage === 1 ? 'not-allowed' : 'pointer', opacity: familiesPage === 1 ? 0.5 : 1 }}>Prev</button>
+                  {pages.map((p, i) => p === '...' ? <span key={`dots${i}`} style={{ padding: '4px 6px', color: 'var(--text-muted)', fontSize: 12, lineHeight: '1.5' }}>…</span> : (
+                    <button key={p} onClick={() => { setFamiliesPage(p as number); fetchFamilies(p as number) }}
+                      style={{ padding: '4px 10px', borderRadius: 6, border: '1px solid var(--border)', background: p === familiesPage ? 'var(--gold)' : 'var(--bg-surface2)', color: p === familiesPage ? '#000' : 'var(--text-secondary)', fontSize: 12, fontWeight: p === familiesPage ? 700 : 400, cursor: 'pointer' }}>{p}</button>
+                  ))}
+                  <button onClick={() => { const p = Math.min(totalPages, familiesPage + 1); setFamiliesPage(p); fetchFamilies(p) }} disabled={familiesPage === totalPages}
+                    style={{ padding: '4px 10px', borderRadius: 6, border: '1px solid var(--border)', background: 'var(--bg-surface2)', color: 'var(--text-secondary)', fontSize: 12, cursor: familiesPage === totalPages ? 'not-allowed' : 'pointer', opacity: familiesPage === totalPages ? 0.5 : 1 }}>Next</button>
+                </div>
+              </div>
+            )
+          })()}
         </GlassCard>
+        <AnimatePresence>
+          <FamilyViewModal />
+        </AnimatePresence>
       </div>
     )
   }
