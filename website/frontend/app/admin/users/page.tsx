@@ -575,6 +575,8 @@ export default function UsersPage() {
                 { icon: Mail, label: 'Email', value: drawer.email },
                 { icon: Phone, label: 'Phone', value: drawer.phone || '—' },
                 { icon: Users2, label: 'Family', value: drawer.family_name || '—' },
+                { icon: Users2, label: 'Family ID', value: drawer.family_id ? `#${drawer.family_id}` : '—' },
+                { icon: KeyRound, label: 'Invite Code', value: drawer.invite_code || '—' },
                 { icon: Smartphone, label: 'Devices', value: String(drawer.devices) },
                 { icon: Calendar, label: 'Joined', value: drawer.created_at ? new Date(drawer.created_at).toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' }) : '—' },
               ].map(({ icon: Icon, label, value }) => (

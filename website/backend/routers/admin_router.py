@@ -247,24 +247,27 @@ def list_users(
         .all()
     )
 
-    # Single query: family memberships + family names for these users
+    # Single query: family memberships + family names + invite codes for these users
     family_rows = (
-        db.query(models.FamilyMember.user_id, models.Family.name)
+        db.query(models.FamilyMember.user_id, models.Family.id, models.Family.name, models.Family.invite_code)
         .join(models.Family, models.Family.id == models.FamilyMember.family_id)
         .filter(models.FamilyMember.user_id.in_(user_ids))
         .all()
     )
-    family_names = {row.user_id: row.name for row in family_rows}
+    family_data = {row.user_id: {"name": row.name, "id": row.id, "invite_code": row.invite_code} for row in family_rows}
 
     result = []
     for u in users:
+        fam = family_data.get(u.id, {})
         result.append({
             "id": u.id, "name": u.name, "email": u.email,
             "phone": u.phone or "", "is_active": u.is_active,
             "status": "active" if u.is_active else "inactive",
             "role": u.role or "user",
             "devices": device_counts.get(u.id, 0),
-            "family_name": family_names.get(u.id, ""),
+            "family_name": fam.get("name", ""),
+            "family_id": fam.get("id"),
+            "invite_code": fam.get("invite_code", ""),
             "created_at": u.created_at.isoformat() if u.created_at else None,
             "avatar": (u.name[:2].upper() if u.name and len(u.name) >= 2 else (u.name[0].upper() if u.name else "?")),
         })
