@@ -410,19 +410,35 @@ export default function ChildHome({
         {/* Content wrapper */}
         <div style={{ position: 'relative', zIndex: 1, maxWidth: 480, margin: '0 auto' }}>
 
-          {/* ── TOGGLE BUTTON ── */}
-          <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 14 }}>
+          {/* ── VIEW TOGGLE ── */}
+          <div style={{ display: 'flex', background: 'rgba(255,255,255,0.07)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 50, padding: 4, marginBottom: 20, gap: 2 }}>
             <motion.button
-              whileTap={{ scale: 0.94 }}
-              onClick={() => setViewMode(viewMode === 'profile' ? 'radar' : 'profile')}
+              whileTap={{ scale: 0.96 }}
+              onClick={() => setViewMode('profile')}
               style={{
-                display: 'flex', alignItems: 'center', gap: 6, padding: '7px 16px', borderRadius: 50,
-                background: 'rgba(255,255,255,0.07)', border: '1px solid rgba(255,255,255,0.13)',
-                color: 'rgba(255,255,255,0.65)', fontSize: 12, fontWeight: 600, cursor: 'pointer',
+                flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
+                padding: '9px 0', borderRadius: 50, border: 'none', cursor: 'pointer', fontSize: 13, fontWeight: 700,
+                background: viewMode === 'profile' ? 'linear-gradient(135deg, #10B981, #3B82F6)' : 'transparent',
+                color: viewMode === 'profile' ? '#fff' : 'rgba(255,255,255,0.45)',
+                transition: 'all 0.2s ease',
+                boxShadow: viewMode === 'profile' ? '0 2px 12px rgba(16,185,129,0.35)' : 'none',
               }}
             >
-              {viewMode === 'profile' ? <Activity size={13} /> : <Smartphone size={13} />}
-              {viewMode === 'profile' ? 'Radar View' : 'Profile View'}
+              <Smartphone size={14} /> Profile
+            </motion.button>
+            <motion.button
+              whileTap={{ scale: 0.96 }}
+              onClick={() => setViewMode('radar')}
+              style={{
+                flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
+                padding: '9px 0', borderRadius: 50, border: 'none', cursor: 'pointer', fontSize: 13, fontWeight: 700,
+                background: viewMode === 'radar' ? 'linear-gradient(135deg, #10B981, #3B82F6)' : 'transparent',
+                color: viewMode === 'radar' ? '#fff' : 'rgba(255,255,255,0.45)',
+                transition: 'all 0.2s ease',
+                boxShadow: viewMode === 'radar' ? '0 2px 12px rgba(16,185,129,0.35)' : 'none',
+              }}
+            >
+              <Activity size={14} /> Radar
             </motion.button>
           </div>
 
