@@ -2526,6 +2526,77 @@ export default function SuperAdminPage() {
             })}
           </div>
         </GlassCard>
+
+        {/* ── Real Backup & Restore ── */}
+        <GlassCard style={{ padding: 24, marginBottom: 20 }}>
+          <div style={{ fontSize: 15, fontWeight: 700, color: 'var(--text-primary)', marginBottom: 6 }}>Database Backup & Restore</div>
+          <div style={{ fontSize: 13, color: 'var(--text-muted)', marginBottom: 18 }}>Full SQLite database backup download aur restore. Restore karne ke baad server restart zaroori hai.</div>
+
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: 16 }}>
+            {/* Download Backup */}
+            <div style={{ padding: 18, borderRadius: 14, border: '1px solid rgba(16,185,129,0.3)', background: 'rgba(16,185,129,0.06)' }}>
+              <div style={{ fontSize: 13, fontWeight: 700, color: '#10B981', marginBottom: 8 }}>Backup Download</div>
+              <div style={{ fontSize: 12, color: 'var(--text-muted)', marginBottom: 14 }}>Poora gravity.db file download karo. Ye file restore ke liye use hoti hai.</div>
+              <button
+                onClick={async () => {
+                  const token = getAuthToken()
+                  const res = await fetch('/super-admin-api/backup/download', { headers: { Authorization: 'Bearer ' + token } })
+                  if (!res.ok) { alert('Backup download failed'); return }
+                  const blob = await res.blob()
+                  const cd = res.headers.get('content-disposition') || ''
+                  const fname = cd.match(/filename="?([^"]+)"?/)?.[1] || `gravity_backup_${Date.now()}.db`
+                  const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = fname; a.click()
+                }}
+                style={{ width: '100%', padding: '10px', borderRadius: 10, border: 'none', background: 'linear-gradient(135deg, #10B981, #059669)', color: '#fff', cursor: 'pointer', fontSize: 13, fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}
+              >
+                <Download size={14} /> Download Backup
+              </button>
+            </div>
+
+            {/* Restore Backup */}
+            <div style={{ padding: 18, borderRadius: 14, border: '1px solid rgba(239,68,68,0.3)', background: 'rgba(239,68,68,0.06)' }}>
+              <div style={{ fontSize: 13, fontWeight: 700, color: '#EF4444', marginBottom: 8 }}>Restore from Backup</div>
+              <div style={{ fontSize: 12, color: 'var(--text-muted)', marginBottom: 14 }}>Pehle download ki hui .db file upload karo. Current data replace ho jayega.</div>
+              <label style={{ display: 'block' }}>
+                <input type="file" accept=".db" style={{ display: 'none' }}
+                  onChange={async (e) => {
+                    const file = e.target.files?.[0]
+                    if (!file) return
+                    if (!window.confirm(`"${file.name}" se restore karein? Current database replace ho jayega.`)) { e.target.value = ''; return }
+                    const token = getAuthToken()
+                    const form = new FormData(); form.append('file', file)
+                    const res = await fetch('/super-admin-api/backup/restore', { method: 'POST', headers: { Authorization: 'Bearer ' + token }, body: form })
+                    const data = await res.json()
+                    if (res.ok) alert('✓ ' + data.message)
+                    else alert('✗ Restore failed: ' + (data.detail || 'Unknown error'))
+                    e.target.value = ''
+                  }}
+                />
+                <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, width: '100%', padding: '10px', borderRadius: 10, border: '1px solid rgba(239,68,68,0.5)', background: 'rgba(239,68,68,0.12)', color: '#EF4444', cursor: 'pointer', fontSize: 13, fontWeight: 700 }}>
+                  <HardDrive size={14} /> Restore .db File Upload
+                </span>
+              </label>
+            </div>
+
+            {/* Family Tables Info */}
+            <div style={{ padding: 18, borderRadius: 14, border: `1px solid ${PURPLE}33`, background: `${PURPLE}08` }}>
+              <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--gold)', marginBottom: 8 }}>Per-Family Tables</div>
+              <div style={{ fontSize: 12, color: 'var(--text-muted)', marginBottom: 14 }}>Har family ka alag data table. Families tab se Export karo ya yahan check karo.</div>
+              <button
+                onClick={async () => {
+                  const token = getAuthToken()
+                  const res = await fetch('/super-admin-api/backup/family-tables', { headers: { Authorization: 'Bearer ' + token } })
+                  const data = await res.json()
+                  const info = (data.tables || []).map((t: any) => `${t.family_name} → ${t.table} (${t.event_count} events)`).join('\n') || 'Koi family table nahi mili'
+                  alert(`Family Tables:\n\n${info}`)
+                }}
+                style={{ width: '100%', padding: '10px', borderRadius: 10, border: `1px solid ${PURPLE}44`, background: `${PURPLE}22`, color: 'var(--gold)', cursor: 'pointer', fontSize: 13, fontWeight: 700 }}
+              >
+                Family Tables Dekho
+              </button>
+            </div>
+          </div>
+        </GlassCard>
       </div>
     )
   }

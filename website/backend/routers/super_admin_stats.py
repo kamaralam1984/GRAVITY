@@ -1,8 +1,9 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, UploadFile, File
+from fastapi.responses import FileResponse
 from sqlalchemy.orm import Session
-from sqlalchemy import func, desc, and_
-from database import get_db
-import models
+from sqlalchemy import func, desc, and_, text
+from database import get_db, DATABASE_URL
+import models, os, shutil, json
 from auth import get_current_admin
 from datetime import datetime, timedelta
 
@@ -175,3 +176,71 @@ def suspend_user(user_id: int, admin=Depends(get_current_admin), db: Session = D
     user.is_active = not user.is_active
     db.commit()
     return {"message": "User status updated", "is_active": user.is_active}
+
+
+# ── Backup & Restore ──────────────────────────────────────────────────────────
+
+def _get_db_path() -> str:
+    url = DATABASE_URL
+    if url.startswith("sqlite:///./"):
+        return url.replace("sqlite:///./", "")
+    if url.startswith("sqlite:///"):
+        return url.replace("sqlite:///", "")
+    raise HTTPException(status_code=400, detail="Backup only supported for SQLite databases")
+
+@router.get("/backup/download")
+def download_backup(admin=Depends(get_current_admin)):
+    """Download full SQLite database as backup file."""
+    db_path = _get_db_path()
+    if not os.path.exists(db_path):
+        raise HTTPException(status_code=404, detail="Database file not found")
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    backup_name = f"gravity_backup_{timestamp}.db"
+    backup_path = f"/tmp/{backup_name}"
+    shutil.copy2(db_path, backup_path)
+    return FileResponse(backup_path, filename=backup_name, media_type="application/octet-stream")
+
+@router.post("/backup/restore")
+async def restore_backup(file: UploadFile = File(...), admin=Depends(get_current_admin)):
+    """Restore database from uploaded backup file."""
+    if not file.filename.endswith(".db"):
+        raise HTTPException(status_code=400, detail="Only .db files allowed")
+    db_path = _get_db_path()
+    # Save old DB as safety backup first
+    safety_backup = db_path + ".before_restore"
+    shutil.copy2(db_path, safety_backup)
+    try:
+        contents = await file.read()
+        tmp_path = "/tmp/gravity_restore_upload.db"
+        with open(tmp_path, "wb") as f:
+            f.write(contents)
+        shutil.copy2(tmp_path, db_path)
+        return {"message": "Database restored successfully. Restart the server to apply changes."}
+    except Exception as e:
+        shutil.copy2(safety_backup, db_path)
+        raise HTTPException(status_code=500, detail=f"Restore failed: {str(e)}")
+
+@router.get("/backup/family-tables")
+def list_family_tables(admin=Depends(get_current_admin), db: Session = Depends(get_db)):
+    """List all per-family tables that exist in the database."""
+    rows = db.execute(text("SELECT name FROM sqlite_master WHERE type='table' AND name LIKE 'family_%_data' ORDER BY name")).fetchall()
+    result = []
+    for row in rows:
+        table_name = row[0]
+        count = db.execute(text(f"SELECT COUNT(*) FROM {table_name}")).scalar()
+        family_id = int(table_name.split("_")[1])
+        family = db.query(models.Family).filter(models.Family.id == family_id).first()
+        result.append({"table": table_name, "family_id": family_id, "family_name": family.name if family else "Unknown", "event_count": count})
+    return {"tables": result}
+
+@router.get("/backup/family/{family_id}/export")
+def export_family_data(family_id: int, admin=Depends(get_current_admin), db: Session = Depends(get_db)):
+    """Export all data from a family's dedicated table as JSON."""
+    table = f"family_{family_id}_data"
+    try:
+        rows = db.execute(text(f"SELECT * FROM {table} ORDER BY recorded_at DESC")).fetchall()
+        family = db.query(models.Family).filter(models.Family.id == family_id).first()
+        events = [{"id": r[0], "event_type": r[1], "user_id": r[2], "user_name": r[3], "data": json.loads(r[4] or "{}"), "recorded_at": str(r[5])} for r in rows]
+        return {"family_id": family_id, "family_name": family.name if family else "Unknown", "exported_at": datetime.utcnow().isoformat(), "total_events": len(events), "events": events}
+    except Exception:
+        raise HTTPException(status_code=404, detail=f"No data table found for family {family_id}. Family may predate this feature.")

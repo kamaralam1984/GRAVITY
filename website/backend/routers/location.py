@@ -94,6 +94,17 @@ async def update_location(
 
     db.commit()
 
+    # Log location to family's dedicated table (every 5th update to avoid bloat)
+    if family_id:
+        try:
+            from routers.families import log_family_event
+            loc_count = db.query(models.Location).filter(models.Location.user_id == user.id).count()
+            if loc_count % 5 == 0:
+                log_family_event(db, family_id, "location_update", user.id, user.name,
+                                 {"lat": data.lat, "lng": data.lng, "place": data.place_name})
+        except Exception:
+            pass
+
     # After saving location, check geofences
     if family_id:
         geofences = db.query(models.Geofence).filter(

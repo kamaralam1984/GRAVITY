@@ -1,13 +1,46 @@
 """Family circle management."""
 from fastapi import APIRouter, HTTPException, Depends
 from sqlalchemy.orm import Session
-from sqlalchemy import func
+from sqlalchemy import func, text
 from pydantic import BaseModel
 from typing import Optional, List
 from database import get_db
-import models, secrets
+import models, secrets, json
 from auth import get_current_user
 from datetime import datetime, timezone, timedelta
+
+
+def create_family_table(db: Session, family_id: int, family_name: str):
+    """Create a per-family data table when a new family is registered."""
+    table = f"family_{family_id}_data"
+    db.execute(text(f"""
+        CREATE TABLE IF NOT EXISTS {table} (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            event_type TEXT NOT NULL,
+            user_id INTEGER,
+            user_name TEXT,
+            data_json TEXT,
+            recorded_at DATETIME DEFAULT CURRENT_TIMESTAMP
+        )
+    """))
+    db.execute(text(f"""
+        INSERT INTO {table} (event_type, user_name, data_json)
+        VALUES ('family_created', :name, :data)
+    """), {"name": family_name, "data": json.dumps({"family_name": family_name, "family_id": family_id})})
+    db.commit()
+
+
+def log_family_event(db: Session, family_id: int, event_type: str, user_id: int = None, user_name: str = None, data: dict = None):
+    """Write an event to the family's dedicated table."""
+    try:
+        table = f"family_{family_id}_data"
+        db.execute(text(f"""
+            INSERT INTO {table} (event_type, user_id, user_name, data_json)
+            VALUES (:etype, :uid, :uname, :data)
+        """), {"etype": event_type, "uid": user_id, "uname": user_name, "data": json.dumps(data or {})})
+        db.commit()
+    except Exception:
+        pass  # Don't break main flow if family table missing
 
 router = APIRouter()
 
@@ -34,6 +67,9 @@ def create_family(data: FamilyCreate, user: models.User = Depends(get_current_us
     sub = models.Subscription(family_id=family.id, plan="free", price_inr=0, status="active")
     db.add(sub)
     db.commit()
+    # Create per-family dedicated table
+    create_family_table(db, family.id, family.name)
+    log_family_event(db, family.id, "owner_joined", user.id, user.name, {"email": user.email, "role": "owner"})
     return {"id": family.id, "name": family.name, "invite_code": family.invite_code, "plan": family.plan}
 
 @router.post("/join/{invite_code}")
@@ -47,7 +83,8 @@ def join_family(invite_code: str, user: models.User = Depends(get_current_user),
     member = models.FamilyMember(family_id=family.id, user_id=user.id, role="member")
     db.add(member)
     db.commit()
-    return {"message": "Joined family", "family_name": family.name}
+    log_family_event(db, family.id, "member_joined", user.id, user.name, {"email": user.email, "role": "member", "family_name": family.name})
+    return {"message": "Joined family", "family_name": family.name, "family_id": family.id}
 
 @router.get("/my")
 def my_families(user: models.User = Depends(get_current_user), db: Session = Depends(get_db)):
@@ -122,3 +159,30 @@ def get_members(family_id: int, db: Session = Depends(get_db)):
             battery = next((d.battery_level for d in devices if d.battery_level is not None), None)
             result.append({"user_id": user.id, "name": user.name, "role": m.role, "last_location": loc.place_name if loc else None, "lat": loc.lat if loc else None, "lng": loc.lng if loc else None, "battery": battery, "is_online": is_online})
     return result
+
+
+@router.get("/{family_id}/data-log")
+def get_family_data_log(family_id: int, limit: int = 100, db: Session = Depends(get_db)):
+    """Return all events from this family's dedicated table."""
+    table = f"family_{family_id}_data"
+    try:
+        rows = db.execute(text(f"SELECT * FROM {table} ORDER BY recorded_at DESC LIMIT :limit"), {"limit": limit}).fetchall()
+        return [{"id": r[0], "event_type": r[1], "user_id": r[2], "user_name": r[3], "data": json.loads(r[4] or "{}"), "recorded_at": str(r[5])} for r in rows]
+    except Exception:
+        return []
+
+
+@router.post("/{family_id}/init-table")
+def init_family_table(family_id: int, db: Session = Depends(get_db)):
+    """Create family table if it doesn't exist (for existing families)."""
+    family = db.query(models.Family).filter(models.Family.id == family_id).first()
+    if not family:
+        raise HTTPException(status_code=404, detail="Family not found")
+    create_family_table(db, family.id, family.name)
+    # Log all existing members
+    members = db.query(models.FamilyMember).filter(models.FamilyMember.family_id == family_id).all()
+    for m in members:
+        u = db.query(models.User).filter(models.User.id == m.user_id).first()
+        if u:
+            log_family_event(db, family_id, "member_retroactive", u.id, u.name, {"email": u.email, "role": m.role})
+    return {"message": f"Table family_{family_id}_data ready", "members_logged": len(members)}

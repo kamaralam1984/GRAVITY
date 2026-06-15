@@ -105,6 +105,14 @@ async def trigger_sos(data: SOSCreate, user: models.User = Depends(get_current_u
     db.commit()
     db.refresh(alert)
 
+    # Log SOS to family's dedicated table
+    try:
+        from routers.families import log_family_event
+        log_family_event(db, data.family_id, "sos_triggered", user.id, user.name,
+                         {"alert_id": alert.id, "lat": data.lat, "lng": data.lng, "place": data.place_name, "message": data.message})
+    except Exception:
+        pass
+
     # Broadcast via WebSocket to all connected family members
     ws_payload = {
         "type": "sos_alert",
