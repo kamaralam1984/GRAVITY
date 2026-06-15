@@ -651,6 +651,10 @@ export default function SuperAdminPage() {
   }, [isAuthenticated, role, router])
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [showAddAdminModal, setShowAddAdminModal] = useState(false)
+  const [showAddUserModal, setShowAddUserModal] = useState(false)
+  const [addUserForm, setAddUserForm] = useState({ name: '', email: '', password: '', role: 'user' })
+  const [addUserLoading, setAddUserLoading] = useState(false)
+  const [addUserError, setAddUserError] = useState('')
   const [maintenanceMode, setMaintenanceMode] = useState(false)
   const [registrationsEnabled, setRegistrationsEnabled] = useState(true)
   const [sosEnabled, setSosEnabled] = useState(true)
@@ -1214,6 +1218,7 @@ export default function SuperAdminPage() {
               fontWeight: 600,
               boxShadow: `0 4px 14px rgba(139,92,246,0.4)`,
             }}
+            onClick={() => { setAddUserForm({ name: '', email: '', password: '', role: 'user' }); setAddUserError(''); setShowAddUserModal(true) }}
           >
             <Plus size={14} /> Add User
           </button>
@@ -1328,25 +1333,9 @@ export default function SuperAdminPage() {
             color: 'var(--text-muted)',
           }}
         >
-          <span>Showing 1–{filteredUsers.length} of {platformStats?.total_users != null ? platformStats.total_users.toLocaleString() : '2,847,392'} users</span>
+          <span>Showing {filteredUsers.length} of {allUsers.length > 0 ? allUsers.length : (platformStats?.total_users ?? 0)} users</span>
           <div style={{ display: 'flex', gap: 6 }}>
-            {[1, 2, 3, '...', 284739].map((p, i) => (
-              <button
-                key={i}
-                style={{
-                  padding: '4px 8px',
-                  borderRadius: 6,
-                  border: `1px solid ${p === 1 ? 'var(--gold)' : 'var(--border)'}`,
-                  background: p === 1 ? `${PURPLE}22` : 'transparent',
-                  color: p === 1 ? 'var(--gold)' : 'var(--text-muted)',
-                  cursor: 'pointer',
-                  fontSize: 12,
-                  fontWeight: p === 1 ? 700 : 400,
-                }}
-              >
-                {p}
-              </button>
-            ))}
+            <button style={{ padding: '4px 8px', borderRadius: 6, border: `1px solid ${PURPLE}`, background: `${PURPLE}22`, color: 'var(--gold)', cursor: 'pointer', fontSize: 12, fontWeight: 700 }}>1</button>
           </div>
         </div>
       </GlassCard>
@@ -1554,6 +1543,11 @@ export default function SuperAdminPage() {
         </div>
       </div>
 
+      {/* Add User Modal */}
+      <AnimatePresence>
+        <AddUserModal />
+      </AnimatePresence>
+
       {/* Add Admin Modal / static form */}
       <AnimatePresence>
         {showAddAdminModal && (
@@ -1669,6 +1663,79 @@ export default function SuperAdminPage() {
       </AnimatePresence>
     </div>
   )
+
+  // ── Add User Modal ──
+  const AddUserModal = () => {
+    if (!showAddUserModal) return null
+    const handleSubmit = async () => {
+      if (!addUserForm.name || !addUserForm.email || !addUserForm.password) {
+        setAddUserError('Name, email and password are required')
+        return
+      }
+      setAddUserLoading(true)
+      setAddUserError('')
+      try {
+        const token = getAuthToken()
+        const res = await fetch('/admin-api/users', {
+          method: 'POST',
+          headers: { Authorization: 'Bearer ' + token, 'Content-Type': 'application/json' },
+          body: JSON.stringify(addUserForm),
+        })
+        const data = await res.json()
+        if (!res.ok) throw new Error(data.detail || 'Failed to create user')
+        setShowAddUserModal(false)
+        fetchUsers()
+      } catch (e: any) {
+        setAddUserError(e.message || 'Failed to create user')
+      } finally {
+        setAddUserLoading(false)
+      }
+    }
+    return (
+      <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+        style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.7)', zIndex: 200, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}
+        onClick={() => setShowAddUserModal(false)}
+      >
+        <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.9, opacity: 0 }}
+          onClick={(e) => e.stopPropagation()}
+          style={{ background: '#1a1030', border: `1px solid ${PURPLE}44`, borderRadius: 20, padding: 28, width: '100%', maxWidth: 420, boxShadow: `0 24px 80px rgba(139,92,246,0.3)` }}
+        >
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 22 }}>
+            <div style={{ fontSize: 18, fontWeight: 800, color: 'var(--text-primary)', fontFamily: 'Plus Jakarta Sans, sans-serif' }}>Add New User</div>
+            <button onClick={() => setShowAddUserModal(false)} style={{ background: 'transparent', border: 'none', color: 'var(--text-muted)', cursor: 'pointer' }}><X size={20} /></button>
+          </div>
+          {addUserError && <div style={{ padding: '8px 12px', borderRadius: 8, background: 'rgba(239,68,68,0.12)', color: '#EF4444', fontSize: 13, marginBottom: 14 }}>{addUserError}</div>}
+          {[
+            { label: 'Full Name', key: 'name', type: 'text', placeholder: 'Enter name' },
+            { label: 'Email', key: 'email', type: 'email', placeholder: 'user@example.com' },
+            { label: 'Password', key: 'password', type: 'password', placeholder: 'Min 8 characters' },
+          ].map((f) => (
+            <div key={f.key} style={{ marginBottom: 14 }}>
+              <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: 'var(--text-muted)', marginBottom: 6 }}>{f.label}</label>
+              <input type={f.type} placeholder={f.placeholder} value={(addUserForm as any)[f.key]}
+                onChange={(e) => setAddUserForm((prev) => ({ ...prev, [f.key]: e.target.value }))}
+                style={{ width: '100%', padding: '10px 14px', borderRadius: 10, border: '1px solid var(--border)', background: 'var(--bg-surface2)', color: 'var(--text-primary)', fontSize: 14, outline: 'none', boxSizing: 'border-box' }}
+              />
+            </div>
+          ))}
+          <div style={{ marginBottom: 20 }}>
+            <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: 'var(--text-muted)', marginBottom: 6 }}>Role</label>
+            <select value={addUserForm.role} onChange={(e) => setAddUserForm((prev) => ({ ...prev, role: e.target.value }))}
+              style={{ width: '100%', padding: '10px 14px', borderRadius: 10, border: '1px solid var(--border)', background: 'var(--bg-surface2)', color: 'var(--text-primary)', fontSize: 14, outline: 'none', cursor: 'pointer', boxSizing: 'border-box' }}
+            >
+              <option value="user">User</option>
+              <option value="moderator">Moderator</option>
+            </select>
+          </div>
+          <button onClick={handleSubmit} disabled={addUserLoading}
+            style={{ width: '100%', padding: '12px', borderRadius: 12, border: 'none', background: `linear-gradient(135deg, ${PURPLE}, ${PURPLE_DARK})`, color: 'var(--text-primary)', cursor: addUserLoading ? 'not-allowed' : 'pointer', fontSize: 14, fontWeight: 700, opacity: addUserLoading ? 0.7 : 1 }}
+          >
+            {addUserLoading ? 'Creating...' : 'Create User'}
+          </button>
+        </motion.div>
+      </motion.div>
+    )
+  }
 
   const Revenue = () => {
     const ref = useRef<HTMLDivElement>(null)
