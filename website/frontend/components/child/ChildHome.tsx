@@ -14,6 +14,7 @@ import {
   Check,
   Smartphone,
   AlertTriangle,
+  Settings,
 } from 'lucide-react';
 import { getToken, getUser } from '@/lib/auth';
 
@@ -731,7 +732,9 @@ export default function ChildHome({
                   </div>
                 ) : (
                   <div style={{ display: 'inline-flex', alignItems: 'center', gap: 4, padding: '2px 8px', borderRadius: 50, background: 'rgba(212,175,55,0.12)', border: '1px solid rgba(212,175,55,0.3)' }}>
-                    <span style={{ fontSize: 9, color: '#D4AF37', fontWeight: 700 }}>⚙ Set up →</span>
+                    <Settings size={8} color="#D4AF37" />
+                    <span style={{ fontSize: 9, color: '#D4AF37', fontWeight: 700 }}>Set up</span>
+                    <ChevronRight size={8} color="#D4AF37" />
                   </div>
                 )}
               </motion.div>
