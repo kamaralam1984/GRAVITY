@@ -442,19 +442,11 @@ export default function ChildHome({
             </motion.button>
           </div>
 
-          {/* ── ANIMATED HERO SECTION ── */}
-          <AnimatePresence mode="wait">
+          {/* ── HERO SECTION ── */}
 
             {viewMode === 'profile' ? (
               /* ── PROFILE CARD VIEW ── */
-              <motion.div
-                key="profile"
-                initial={{ opacity: 0, x: -24 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: 24 }}
-                transition={{ duration: 0.28 }}
-                style={{ marginBottom: 24 }}
-              >
+              <div style={{ marginBottom: 24 }}>
                 {/* Profile Header */}
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 13 }}>
@@ -521,18 +513,12 @@ export default function ChildHome({
                     <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.4)', marginTop: 5 }}>Parent Watching</div>
                   </div>
                 </div>
-              </motion.div>
+              </div>
 
             ) : (
 
               /* ── RADAR VIEW ── */
-              <motion.div
-                key="radar"
-                initial={{ opacity: 0, x: 24 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: -24 }}
-                transition={{ duration: 0.28 }}
-              >
+              <div>
                 {/* Top Bar */}
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 32 }}>
                   <div>
@@ -616,10 +602,8 @@ export default function ChildHome({
                     </div>
                   </div>
                 </div>
-              </motion.div>
+              </div>
             )}
-
-          </AnimatePresence>
 
           {/* ── 3. TODAY'S SUMMARY CARDS (2×2) ────────────────── */}
           <motion.div
