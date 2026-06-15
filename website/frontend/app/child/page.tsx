@@ -21,7 +21,8 @@ import {
   ChevronLeft,
 } from 'lucide-react'
 import { useRouter } from 'next/navigation'
-import ChildHome from '@/components/child/ChildHome'
+import dynamic from 'next/dynamic'
+const ChildHome = dynamic(() => import('@/components/child/ChildHome'), { ssr: false })
 import { SOSSection, LocationSection, FamilyRadarSection } from '@/components/child/ChildSOS'
 import {
   SchoolSection,
