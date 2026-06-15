@@ -100,16 +100,25 @@ def get_members(family_id: int, db: Session = Depends(get_db)):
         user = db.query(models.User).filter(models.User.id == m.user_id).first()
         if user:
             loc = db.query(models.Location).filter(models.Location.user_id == user.id).order_by(models.Location.recorded_at.desc()).first()
-            device = db.query(models.Device).filter(models.Device.user_id == user.id).first()
-            # Consider online if location shared within last 30 minutes
+            devices = db.query(models.Device).filter(models.Device.user_id == user.id).all()
+            # Online if: location within 30 min OR any device heartbeat within 5 min
             is_online = False
             if loc and loc.recorded_at:
                 try:
                     rec = loc.recorded_at if loc.recorded_at.tzinfo else loc.recorded_at.replace(tzinfo=timezone.utc)
                     is_online = (datetime.now(timezone.utc) - rec).total_seconds() < 1800
                 except Exception:
-                    is_online = bool(device and device.is_online)
-            elif device:
-                is_online = device.is_online
-            result.append({"user_id": user.id, "name": user.name, "role": m.role, "last_location": loc.place_name if loc else None, "lat": loc.lat if loc else None, "lng": loc.lng if loc else None, "battery": device.battery_level if device else None, "is_online": is_online})
+                    pass
+            if not is_online:
+                for device in devices:
+                    if device.last_seen:
+                        try:
+                            seen = device.last_seen if device.last_seen.tzinfo else device.last_seen.replace(tzinfo=timezone.utc)
+                            if (datetime.now(timezone.utc) - seen).total_seconds() < 300:
+                                is_online = True
+                                break
+                        except Exception:
+                            pass
+            battery = next((d.battery_level for d in devices if d.battery_level is not None), None)
+            result.append({"user_id": user.id, "name": user.name, "role": m.role, "last_location": loc.place_name if loc else None, "lat": loc.lat if loc else None, "lng": loc.lng if loc else None, "battery": battery, "is_online": is_online})
     return result

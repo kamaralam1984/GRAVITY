@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Users, Shield, MapPin, Heart, Activity, AlertTriangle, Car,
@@ -53,32 +53,43 @@ interface ApiMember {
 function useFamilyMembers() {
   const [members, setMembers] = useState<ApiMember[]>([]);
   const [loading, setLoading] = useState(true);
+  const familyIdRef = useRef<number>(0);
 
   useEffect(() => {
+    const token = localStorage.getItem('gv_token');
+    if (!token) { setLoading(false); return; }
+
+    async function loadMembers(fid: number) {
+      try {
+        const memRes = await fetch(`/families/${fid}/members`, { headers: { Authorization: `Bearer ${token}` } });
+        if (memRes.ok) {
+          const mems: ApiMember[] = await memRes.json();
+          setMembers(mems);
+        }
+      } catch (_) {}
+    }
+
     async function load() {
       try {
-        const token = localStorage.getItem('gv_token');
-        if (!token) { setLoading(false); return; }
-
-        const famRes = await fetch('/families/my', {
-          headers: { Authorization: `Bearer ${token}` },
-        });
+        const famRes = await fetch('/families/my', { headers: { Authorization: `Bearer ${token}` } });
         if (!famRes.ok) { setLoading(false); return; }
         const famData = await famRes.json();
         const famsArr = Array.isArray(famData) ? famData : [famData];
         if (!famsArr.length) { setLoading(false); return; }
 
-        const fid = famsArr[0].id;
-        const memRes = await fetch(`/families/${fid}/members`, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-        if (!memRes.ok) { setLoading(false); return; }
-        const mems: ApiMember[] = await memRes.json();
-        setMembers(mems);
+        familyIdRef.current = famsArr[0].id;
+        await loadMembers(familyIdRef.current);
       } catch (_) {}
       finally { setLoading(false); }
     }
+
     load();
+
+    // Refresh member status every 30s to pick up heartbeat changes
+    const interval = setInterval(() => {
+      if (familyIdRef.current) loadMembers(familyIdRef.current);
+    }, 30_000);
+    return () => clearInterval(interval);
   }, []);
 
   return { members, loading };
