@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { MapPin, RefreshCw, Navigation, Users, Wifi, WifiOff, ChevronDown, ChevronUp } from 'lucide-react'
+import { MapPin, RefreshCw, Navigation, Users, Wifi, WifiOff, ChevronDown, ChevronUp, Plus, Minus, Layers, Locate } from 'lucide-react'
 import { getToken } from '@/lib/auth'
 
 const API_BASE = ''  // relative URLs go through Next.js proxy → port 8001
@@ -117,6 +117,7 @@ export default function UberFamilyMap({
   const [sheetOpen, setSheetOpen]   = useState(true)
   const [refreshing, setRefreshing] = useState(false)
   const [lastUpdate, setLastUpdate] = useState<Date | null>(null)
+  const [mapStyle, setMapStyle]     = useState<'dark' | 'satellite' | 'street'>('dark')
 
   /* ── Load Leaflet & init map ── */
   useEffect(() => {
@@ -134,12 +135,12 @@ export default function UberFamilyMap({
         preferCanvas: true,
       })
 
-      L.tileLayer(
+      const tileLayer = L.tileLayer(
         'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',
         { maxZoom: 19, subdomains: 'abcd' }
       ).addTo(map)
 
-      leafletRef.current = { L, map }
+      leafletRef.current = { L, map, tileLayer }
 
       // Fix blank map on mobile
       setTimeout(() => map.invalidateSize(), 300)
@@ -191,7 +192,7 @@ export default function UberFamilyMap({
           lat:        lv?.lat ?? null,
           lng:        lv?.lng ?? null,
           battery:    lv?.battery ?? bm.battery ?? 50,
-          is_online:  !!lv,
+          is_online:  !!lv || !!bm.is_online,
           place_name: lv ? (lv.place_name || 'Sharing location') : 'Location not shared',
           recorded_at: lv?.recorded_at ?? null,
           color:      MEMBER_COLORS[i % MEMBER_COLORS.length],
@@ -276,6 +277,31 @@ export default function UberFamilyMap({
 
   const onlineCount = members.filter((m) => m.is_online).length
 
+  function zoomIn() { leafletRef.current?.map?.zoomIn() }
+  function zoomOut() { leafletRef.current?.map?.zoomOut() }
+
+  function cycleMapStyle() {
+    const ctx = leafletRef.current
+    if (!ctx) return
+    const next = mapStyle === 'dark' ? 'satellite' : mapStyle === 'satellite' ? 'street' : 'dark'
+    setMapStyle(next)
+    ctx.tileLayer?.remove()
+    const urls: Record<string, string> = {
+      dark: 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',
+      satellite: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
+      street: 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',
+    }
+    const newLayer = ctx.L.tileLayer(urls[next], { maxZoom: 19, subdomains: 'abcd' }).addTo(ctx.map)
+    leafletRef.current = { ...ctx, tileLayer: newLayer }
+  }
+
+  function locateMe() {
+    if (!navigator.geolocation || !leafletRef.current) return
+    navigator.geolocation.getCurrentPosition((pos) => {
+      leafletRef.current?.map?.setView([pos.coords.latitude, pos.coords.longitude], 16, { animate: true })
+    }, () => {})
+  }
+
   return (
     <div style={{ position: 'relative', width: '100%', height, overflow: 'hidden' }}>
 
@@ -339,6 +365,38 @@ export default function UberFamilyMap({
             <RefreshCw size={15} style={{ color: 'rgba(255,255,255,0.7)' }} />
           </motion.div>
         </motion.button>
+      </div>
+
+      {/* ── Right-side map controls ── */}
+      <div style={{
+        position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)',
+        zIndex: 10, display: 'flex', flexDirection: 'column', gap: 6,
+      }}>
+        {[
+          { icon: <Plus size={16} />, action: zoomIn, title: 'Zoom in' },
+          { icon: <Minus size={16} />, action: zoomOut, title: 'Zoom out' },
+          { icon: <Layers size={15} />, action: cycleMapStyle, title: `Style: ${mapStyle}` },
+          { icon: <Locate size={15} />, action: locateMe, title: 'My location' },
+        ].map((btn, i) => (
+          <motion.button
+            key={i}
+            whileTap={{ scale: 0.85 }}
+            whileHover={{ scale: 1.08 }}
+            onClick={btn.action}
+            title={btn.title}
+            style={{
+              width: 38, height: 38,
+              background: 'rgba(10,12,20,0.85)',
+              backdropFilter: 'blur(12px)',
+              border: '1px solid rgba(255,255,255,0.12)',
+              borderRadius: 10,
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              cursor: 'pointer', color: 'rgba(255,255,255,0.75)',
+            }}
+          >
+            {btn.icon}
+          </motion.button>
+        ))}
       </div>
 
       {/* ── Loading state ── */}
