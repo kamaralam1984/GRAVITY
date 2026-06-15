@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence, useSpring, useTransform } from 'framer-motion';
 import {
   Shield,
@@ -73,6 +73,14 @@ function formatTimeAgo(iso: string): string {
   if (diff < 3600) return `${Math.floor(diff / 60)} min ago`;
   if (diff < 86400) return `${Math.floor(diff / 3600)} hr ago`;
   return `${Math.floor(diff / 86400)}d ago`;
+}
+
+function getTransportMode(speed: number | null): { emoji: string; label: string; color: string } {
+  if (speed === null || speed === 0) return { emoji: '—', label: '—', color: 'rgba(255,255,255,0.4)' };
+  if (speed <= 7) return { emoji: '🚶', label: 'Paidal', color: '#10B981' };
+  if (speed <= 15) return { emoji: '🚴', label: 'Running/Cycling', color: '#3B82F6' };
+  if (speed <= 40) return { emoji: '🚗', label: 'Vehicle', color: '#F59E0B' };
+  return { emoji: '🚌', label: 'Fast Vehicle', color: '#EF4444' };
 }
 
 // ─── Constants ────────────────────────────────────────────────────────────────
@@ -260,6 +268,8 @@ export default function ChildHome({
   const [transport, setTransport] = useState<string>('—');
   const [speed, setSpeed] = useState<number | null>(null);
   const [parentWatching, setParentWatching] = useState<string | null>(null);
+  const [profileImg, setProfileImg] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const statusColor = STATUS_COLORS[safeStatus];
   const statusGlow = STATUS_GLOW[safeStatus];
@@ -282,8 +292,17 @@ export default function ChildHome({
     if (!token || !user) return;
 
     async function load() {
+      const savedAvatar = localStorage.getItem('gravity_child_avatar');
+      if (savedAvatar) setProfileImg(savedAvatar);
       try {
         const headers = { Authorization: `Bearer ${token}` };
+        try {
+          const meRes = await fetch('/auth/me', { headers });
+          if (meRes.ok) {
+            const me = await meRes.json();
+            if (me.avatar_url) setProfileImg(me.avatar_url);
+          }
+        } catch (_) {}
         const famRes = await fetch('/families/my', { headers });
         if (!famRes.ok) return;
         const fams = await famRes.json();
@@ -298,7 +317,7 @@ export default function ChildHome({
           setFamilyMembers(members);
           const me = members.find((m) => m.user_id === user!.id);
           if (me?.last_location) setLastLocation(me.last_location);
-          const parents = members.filter((m: ApiMember) => m.role === 'owner' && m.is_online && m.user_id !== user!.id);
+          const parents = members.filter((m: ApiMember) => (m.role === 'owner' || m.role === 'parent') && m.is_online && m.user_id !== user!.id);
           if (parents.length > 0) setParentWatching(parents[0].name.split(' ')[0]);
         }
 
@@ -310,8 +329,10 @@ export default function ChildHome({
             const journeys: Array<{ user_id?: number; user_name?: string; speed?: number | null }> = jData.journeys || [];
             const myJ = journeys.find((j) => j.user_id === user!.id || j.user_name === user!.name);
             if (myJ) {
-              setTransport('In Transit');
-              if (myJ.speed != null) setSpeed(Math.round(myJ.speed));
+              const spd = myJ.speed != null ? Math.round(myJ.speed) : 0;
+              setSpeed(spd);
+              const mode = getTransportMode(spd);
+              setTransport(mode.label);
             }
           }
         } catch (_) {}
@@ -369,6 +390,16 @@ export default function ChildHome({
         .ring-2 { animation: pulse-ring-slow 2.4s ease-out 0.8s infinite; }
         .ring-3 { animation: pulse-ring-slower 2.4s ease-out 1.6s infinite; }
         ::-webkit-scrollbar { height: 0px; width: 0px; }
+        @keyframes eye-blink {
+          0%, 80%, 100% { transform: scaleY(1); }
+          85% { transform: scaleY(0.08); }
+        }
+        @keyframes eye-pulse {
+          0%, 100% { opacity: 1; transform: scale(1); }
+          50% { opacity: 0.7; transform: scale(1.1); }
+        }
+        .eye-blink { animation: eye-blink 3s ease-in-out infinite; display: inline-block; }
+        .eye-pulse { animation: eye-pulse 1.5s ease-in-out infinite; display: inline-block; }
       `}</style>
 
       {/* Page Container */}
@@ -450,9 +481,33 @@ export default function ChildHome({
                 {/* Profile Header */}
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 13 }}>
-                    <div style={{ width: 60, height: 60, borderRadius: '50%', background: 'linear-gradient(135deg, #10B981, #3B82F6)', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '3px solid rgba(16,185,129,0.4)', boxShadow: '0 0 22px rgba(16,185,129,0.28)', flexShrink: 0 }}>
-                      <span style={{ fontSize: 24, fontWeight: 900, color: '#fff' }}>{childName.charAt(0).toUpperCase()}</span>
+                    <div
+                      onClick={() => fileInputRef.current?.click()}
+                      style={{ width: 60, height: 60, borderRadius: '50%', background: 'linear-gradient(135deg, #10B981, #3B82F6)', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '3px solid rgba(16,185,129,0.4)', boxShadow: '0 0 22px rgba(16,185,129,0.28)', flexShrink: 0, cursor: 'pointer', overflow: 'hidden', position: 'relative' }}>
+                      {profileImg ? (
+                        <img src={profileImg} alt="avatar" style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '50%' }} />
+                      ) : (
+                        <span style={{ fontSize: 24, fontWeight: 900, color: '#fff' }}>{childName.charAt(0).toUpperCase()}</span>
+                      )}
+                      <div style={{ position: 'absolute', bottom: 0, right: 0, width: 18, height: 18, borderRadius: '50%', background: '#10B981', border: '2px solid #0B0D13', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 10 }}>📷</div>
                     </div>
+                    <input
+                      ref={fileInputRef}
+                      type="file"
+                      accept="image/*"
+                      style={{ display: 'none' }}
+                      onChange={async (e) => {
+                        const file = e.target.files?.[0];
+                        if (!file) return;
+                        const reader = new FileReader();
+                        reader.onload = (ev) => {
+                          const dataUrl = ev.target?.result as string;
+                          setProfileImg(dataUrl);
+                          localStorage.setItem('gravity_child_avatar', dataUrl);
+                        };
+                        reader.readAsDataURL(file);
+                      }}
+                    />
                     <div>
                       <div style={{ fontSize: 19, fontWeight: 800, color: '#fff', lineHeight: 1.2 }}>Hi, {childName}! 👋</div>
                       <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.42)', marginTop: 3 }}>{greeting}</div>
@@ -492,8 +547,11 @@ export default function ChildHome({
                   </div>
                   {/* Transport */}
                   <div style={{ padding: '14px', borderRadius: 18, background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', backdropFilter: 'blur(8px)' }}>
-                    <div style={{ fontSize: 24, marginBottom: 8 }}>📍</div>
-                    <div style={{ fontSize: 15, fontWeight: 700, color: '#fff', lineHeight: 1 }}>🚕 {transport === '—' ? 'Auto' : transport}</div>
+                    <div style={{ fontSize: 24, marginBottom: 8 }}>{getTransportMode(speed).emoji === '—' ? '📍' : getTransportMode(speed).emoji}</div>
+                    <div style={{ fontSize: 13, fontWeight: 700, color: getTransportMode(speed).color, lineHeight: 1 }}>{getTransportMode(speed).label}</div>
+                    {speed !== null && speed > 0 && (
+                      <div style={{ fontSize: 9, color: 'rgba(255,255,255,0.3)', marginTop: 2 }}>{speed} km/h</div>
+                    )}
                     <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.4)', marginTop: 5 }}>Transport</div>
                   </div>
                   {/* Speed */}
@@ -503,12 +561,21 @@ export default function ChildHome({
                     <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.4)', marginTop: 5 }}>Speed</div>
                   </div>
                   {/* Parent Watching */}
-                  <div style={{ padding: '14px', borderRadius: 18, background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', backdropFilter: 'blur(8px)' }}>
-                    <div style={{ fontSize: 24, marginBottom: 8 }}>👀</div>
+                  <div style={{ padding: '14px', borderRadius: 18, background: parentWatching ? 'rgba(16,185,129,0.07)' : 'rgba(255,255,255,0.04)', border: parentWatching ? '1px solid rgba(16,185,129,0.25)' : '1px solid rgba(255,255,255,0.08)', backdropFilter: 'blur(8px)' }}>
+                    <div style={{ fontSize: 24, marginBottom: 8 }}>
+                      {parentWatching ? (
+                        <span className="eye-blink">👁️</span>
+                      ) : (
+                        <span style={{ opacity: 0.35 }}>👁️</span>
+                      )}
+                    </div>
                     {parentWatching ? (
-                      <div style={{ fontSize: 15, fontWeight: 700, color: '#fff', lineHeight: 1 }}>{parentWatching} ❤️</div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                        <div className="eye-pulse" style={{ width: 6, height: 6, borderRadius: '50%', background: '#10B981', flexShrink: 0 }} />
+                        <span style={{ fontSize: 13, fontWeight: 700, color: '#fff', lineHeight: 1 }}>{parentWatching}</span>
+                      </div>
                     ) : (
-                      <div style={{ fontSize: 13, fontWeight: 600, color: 'rgba(255,255,255,0.32)', lineHeight: 1 }}>Offline</div>
+                      <div style={{ fontSize: 12, fontWeight: 600, color: 'rgba(255,255,255,0.28)', lineHeight: 1 }}>Offline</div>
                     )}
                     <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.4)', marginTop: 5 }}>Parent Watching</div>
                   </div>
@@ -647,8 +714,10 @@ export default function ChildHome({
               </motion.div>
 
               {/* Active Geofences — real count */}
-              <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.56 }}
-                style={{ padding: 16, borderRadius: 20, background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', backdropFilter: 'blur(12px)' }}>
+              <motion.div
+                initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.56 }}
+                onClick={() => activeGeofences === 0 ? onNavigate?.('safety') : undefined}
+                style={{ padding: 16, borderRadius: 20, background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', backdropFilter: 'blur(12px)', cursor: activeGeofences === 0 ? 'pointer' : 'default' }}>
                 <div style={{ width: 32, height: 32, borderRadius: 10, background: 'rgba(212,175,55,0.12)', border: '1px solid rgba(212,175,55,0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 10 }}>
                   <Shield size={16} color="#D4AF37" />
                 </div>
@@ -661,7 +730,9 @@ export default function ChildHome({
                     <span style={{ fontSize: 9, color: '#10B981', fontWeight: 700 }}>All Active</span>
                   </div>
                 ) : (
-                  <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.35)' }}>Set up in parent app</div>
+                  <div style={{ display: 'inline-flex', alignItems: 'center', gap: 4, padding: '2px 8px', borderRadius: 50, background: 'rgba(212,175,55,0.12)', border: '1px solid rgba(212,175,55,0.3)' }}>
+                    <span style={{ fontSize: 9, color: '#D4AF37', fontWeight: 700 }}>⚙ Set up →</span>
+                  </div>
                 )}
               </motion.div>
 
