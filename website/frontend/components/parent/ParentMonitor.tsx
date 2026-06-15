@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import {
   Users, Shield, MapPin, Heart, Activity, AlertTriangle, Car,
   Phone, Eye, CheckCircle, Battery, Navigation, Bell, ChevronDown,
-  Watch, Gauge, Route, Wifi, WifiOff,
+  Watch, Gauge, Route, Wifi, WifiOff, Droplets, Flame, Moon, Zap, Footprints,
 } from 'lucide-react';
 
 const glassCard = 'bg-white/5 backdrop-blur-md border border-white/10 rounded-2xl';
@@ -48,6 +48,99 @@ interface ApiMember {
   lng: number | null;
   battery: number | null;
   is_online: boolean;
+}
+
+interface HealthData {
+  steps: number | null;
+  heart_rate: number | null;
+  sleep_hours: number | null;
+  calories: number | null;
+  water_ml: number | null;
+  active_minutes: number | null;
+  exists: boolean;
+}
+
+function useHealthData(members: ApiMember[]) {
+  const [healthMap, setHealthMap] = useState<Record<number, HealthData>>({});
+
+  useEffect(() => {
+    if (!members.length) return;
+    const token = localStorage.getItem('gv_token');
+    if (!token) return;
+
+    async function load() {
+      const results = await Promise.all(
+        members.map(m =>
+          fetch(`/health/today/${m.user_id}`, { headers: { Authorization: `Bearer ${token}` } })
+            .then(r => r.ok ? r.json() : null)
+            .catch(() => null)
+            .then(data => ({ uid: m.user_id, data }))
+        )
+      );
+      const map: Record<number, HealthData> = {};
+      results.forEach(({ uid, data }) => { if (data) map[uid] = data; });
+      setHealthMap(map);
+    }
+
+    load();
+    const id = setInterval(load, 60_000);
+    return () => clearInterval(id);
+  }, [members]);
+
+  return healthMap;
+}
+
+// Health mini-card shown inside expanded member rows
+function HealthSummaryCard({ h, goalSteps = 10000 }: { h: HealthData | undefined; goalSteps?: number }) {
+  if (!h?.exists) {
+    return (
+      <div className="bg-white/5 rounded-xl p-3 text-center">
+        <p className="text-xs text-white/30">No health data logged today</p>
+      </div>
+    );
+  }
+  const stepsPct = h.steps ? Math.min(100, Math.round((h.steps / goalSteps) * 100)) : 0;
+  const stats = [
+    { icon: Heart,     color: '#EF4444', label: 'HR',     value: h.heart_rate   ? `${h.heart_rate} bpm`           : '—' },
+    { icon: Moon,      color: '#8B5CF6', label: 'Sleep',  value: h.sleep_hours  ? `${h.sleep_hours} hrs`          : '—' },
+    { icon: Droplets,  color: '#06B6D4', label: 'Water',  value: h.water_ml     ? `${(h.water_ml/1000).toFixed(1)}L` : '—' },
+    { icon: Flame,     color: '#F97316', label: 'Cal',    value: h.calories     ? `${h.calories} kcal`            : '—' },
+  ];
+  return (
+    <div className="space-y-2">
+      {/* Steps bar */}
+      <div className="bg-white/5 rounded-xl p-3">
+        <div className="flex items-center justify-between mb-2">
+          <div className="flex items-center gap-1.5">
+            <Footprints className="w-3.5 h-3.5 text-blue-400" />
+            <span className="text-xs font-semibold text-white/70">Steps Today</span>
+          </div>
+          <span className="text-xs font-bold text-blue-400">{h.steps ? h.steps.toLocaleString() : '—'} / {goalSteps.toLocaleString()}</span>
+        </div>
+        <div className="h-2 rounded-full bg-white/10 overflow-hidden">
+          <motion.div initial={{ width: 0 }} animate={{ width: `${stepsPct}%` }} transition={{ duration: 0.8 }}
+            className="h-full rounded-full"
+            style={{ background: stepsPct >= 100 ? 'linear-gradient(90deg,#10B981,#34D399)' : 'linear-gradient(90deg,#3B82F6,#8B5CF6)' }} />
+        </div>
+        <div className="flex justify-between mt-1">
+          <span className="text-xs text-white/30">{stepsPct}% of goal</span>
+          {h.active_minutes && (
+            <span className="text-xs text-emerald-400 flex items-center gap-1"><Zap className="w-3 h-3" />{h.active_minutes} active min</span>
+          )}
+        </div>
+      </div>
+      {/* Vitals grid */}
+      <div className="grid grid-cols-4 gap-2">
+        {stats.map(({ icon: Icon, color, label, value }) => (
+          <div key={label} className="bg-white/5 rounded-xl p-2 text-center">
+            <Icon className="w-3.5 h-3.5 mx-auto mb-1" style={{ color }} />
+            <div className="text-xs font-bold text-white leading-tight">{value}</div>
+            <div className="text-xs text-white/30 mt-0.5">{label}</div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
 }
 
 function useFamilyMembers() {
@@ -114,6 +207,7 @@ function EmptyState({ icon: Icon, title, subtitle }: { icon: any; title: string;
 
 export function ChildrenMonitorSection() {
   const { members, loading } = useFamilyMembers();
+  const healthMap = useHealthData(members);
   const [expandedId, setExpandedId] = useState<number | null>(null);
 
   const colors = ['#F59E0B', '#8B5CF6', '#3B82F6', '#10B981', '#EF4444'];
@@ -248,6 +342,15 @@ export function ChildrenMonitorSection() {
                           </div>
                         </div>
 
+                        {/* Health Summary */}
+                        <div>
+                          <div className="flex items-center gap-1.5 mb-2">
+                            <Heart className="w-3.5 h-3.5 text-rose-400" />
+                            <span className="text-xs font-semibold text-white/60 uppercase tracking-wider">Today's Health</span>
+                          </div>
+                          <HealthSummaryCard h={healthMap[m.user_id]} />
+                        </div>
+
                         {/* Quick actions */}
                         <div className="grid grid-cols-3 gap-2">
                           {[
@@ -293,6 +396,7 @@ export function ChildrenMonitorSection() {
 
 export function ElderlyMonitorSection() {
   const { members, loading } = useFamilyMembers();
+  const healthMap = useHealthData(members);
   const colors = ['#10B981', '#F59E0B', '#3B82F6', '#8B5CF6', '#EF4444'];
 
   if (loading) {
@@ -351,15 +455,13 @@ export function ElderlyMonitorSection() {
                   </div>
                 </div>
 
-                {/* Health data — not available */}
-                <div className="bg-white/5 rounded-xl p-3 flex items-start gap-3">
-                  <Watch className="w-5 h-5 text-white/20 flex-shrink-0 mt-0.5" />
-                  <div>
-                    <p className="text-sm font-semibold text-white/40">Health data not available</p>
-                    <p className="text-xs text-white/25 mt-0.5">
-                      Heart rate, blood pressure and steps require a Gravity Watch or compatible health device.
-                    </p>
+                {/* Health data — real data from API */}
+                <div>
+                  <div className="flex items-center gap-1.5 mb-2">
+                    <Heart className="w-3.5 h-3.5 text-rose-400" />
+                    <span className="text-xs font-semibold text-white/60 uppercase tracking-wider">Today's Health</span>
                   </div>
+                  <HealthSummaryCard h={healthMap[m.user_id]} />
                 </div>
 
                 {/* Actions */}
@@ -403,6 +505,146 @@ export function ElderlyMonitorSection() {
           Connect
         </motion.button>
       </div>
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// HEALTH MONITOR SECTION  (dedicated parent view of all member health)
+// ─────────────────────────────────────────────────────────────────────────────
+
+export function HealthMonitorSection() {
+  const { members, loading } = useFamilyMembers();
+  const healthMap = useHealthData(members);
+  const colors = ['#EF4444', '#F59E0B', '#3B82F6', '#10B981', '#8B5CF6'];
+
+  if (loading) {
+    return (
+      <div className="space-y-3">
+        {[1, 2].map(i => (
+          <div key={i} className={`${glassCard} p-4 animate-pulse`} style={{ height: 160 }}>
+            <div className="flex items-center gap-3 mb-3">
+              <div className="w-10 h-10 rounded-full bg-white/10" />
+              <div className="h-3 bg-white/10 rounded w-1/3" />
+            </div>
+            <div className="h-2 bg-white/10 rounded mb-3" />
+            <div className="grid grid-cols-4 gap-2">
+              {[1,2,3,4].map(j => <div key={j} className="h-14 bg-white/10 rounded-xl" />)}
+            </div>
+          </div>
+        ))}
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-4">
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <div className="w-9 h-9 rounded-xl bg-rose-500/20 flex items-center justify-center">
+            <Heart className="w-5 h-5 text-rose-400" />
+          </div>
+          <div>
+            <h2 className="text-lg font-bold text-white">Family Health</h2>
+            <p className="text-xs text-white/50">Today's activity & wellness</p>
+          </div>
+        </div>
+        <span className="text-xs text-white/30 flex items-center gap-1">
+          <Activity className="w-3 h-3" /> Live
+          <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse inline-block ml-1" />
+        </span>
+      </div>
+
+      {members.length === 0 ? (
+        <div className={`${glassCard} p-10 flex flex-col items-center gap-3 text-center`}>
+          <div className="w-14 h-14 rounded-2xl bg-white/5 flex items-center justify-center">
+            <Heart className="w-7 h-7 text-white/20" />
+          </div>
+          <p className="text-white/60 font-semibold text-sm">No family members</p>
+          <p className="text-white/30 text-xs max-w-xs">Add family members to monitor their health.</p>
+        </div>
+      ) : (
+        <div className="space-y-3">
+          {members.map((m, i) => {
+            const color = colors[i % colors.length];
+            const h = healthMap[m.user_id];
+            const stepsPct = h?.steps ? Math.min(100, Math.round((h.steps / 10000) * 100)) : 0;
+            return (
+              <div key={m.user_id} className={`${glassCard} p-4 space-y-3`} style={{ borderLeft: `3px solid ${color}44` }}>
+                {/* Member row */}
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold text-black flex-shrink-0"
+                    style={{ background: color }}>
+                    {m.name.charAt(0).toUpperCase()}
+                  </div>
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span className="font-bold text-white text-sm">{m.name}</span>
+                      <span className="text-white/40 text-xs capitalize">{m.role}</span>
+                      <StatusBadge status={m.is_online ? 'Online' : 'Offline'} />
+                    </div>
+                    {h?.exists ? (
+                      <p className="text-xs text-emerald-400 mt-0.5">Data logged today ✓</p>
+                    ) : (
+                      <p className="text-xs text-white/30 mt-0.5">No data logged today</p>
+                    )}
+                  </div>
+                  {h?.heart_rate && (
+                    <div className="text-right flex-shrink-0">
+                      <div className="text-lg font-bold" style={{ color: '#EF4444' }}>{h.heart_rate}</div>
+                      <div className="text-xs text-white/30">bpm</div>
+                    </div>
+                  )}
+                </div>
+
+                {/* Steps progress */}
+                {h?.exists && (
+                  <>
+                    <div>
+                      <div className="flex justify-between mb-1">
+                        <span className="text-xs text-white/50 flex items-center gap-1">
+                          <Footprints className="w-3 h-3" /> Steps
+                        </span>
+                        <span className="text-xs font-bold" style={{ color }}>
+                          {h.steps ? h.steps.toLocaleString() : '—'} / 10,000
+                        </span>
+                      </div>
+                      <div className="h-2 rounded-full bg-white/10 overflow-hidden">
+                        <motion.div initial={{ width: 0 }} animate={{ width: `${stepsPct}%` }} transition={{ duration: 0.8 }}
+                          className="h-full rounded-full" style={{ background: `linear-gradient(90deg, ${color}, ${color}99)` }} />
+                      </div>
+                    </div>
+
+                    {/* Vitals row */}
+                    <div className="grid grid-cols-4 gap-2">
+                      {[
+                        { icon: Heart,    color: '#EF4444', label: 'Heart Rate', value: h.heart_rate   ? `${h.heart_rate} bpm`              : '—' },
+                        { icon: Moon,     color: '#8B5CF6', label: 'Sleep',      value: h.sleep_hours  ? `${h.sleep_hours}h`                 : '—' },
+                        { icon: Droplets, color: '#06B6D4', label: 'Water',      value: h.water_ml     ? `${(h.water_ml/1000).toFixed(1)}L`  : '—' },
+                        { icon: Flame,    color: '#F97316', label: 'Calories',   value: h.calories     ? `${h.calories} cal`                 : '—' },
+                      ].map(({ icon: Icon, color: c, label, value }) => (
+                        <div key={label} className="bg-white/5 rounded-xl p-2 text-center">
+                          <Icon className="w-3.5 h-3.5 mx-auto mb-1" style={{ color: c }} />
+                          <div className="text-xs font-bold text-white leading-tight">{value}</div>
+                          <div className="text-xs text-white/25 mt-0.5 truncate">{label}</div>
+                        </div>
+                      ))}
+                    </div>
+
+                    {h.active_minutes && (
+                      <div className="flex items-center gap-1.5 bg-emerald-500/10 border border-emerald-500/20 rounded-xl px-3 py-1.5">
+                        <Zap className="w-3.5 h-3.5 text-emerald-400" />
+                        <span className="text-xs text-emerald-300 font-semibold">{h.active_minutes} active minutes today</span>
+                      </div>
+                    )}
+                  </>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      )}
     </div>
   );
 }

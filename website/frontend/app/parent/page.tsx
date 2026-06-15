@@ -34,12 +34,12 @@ import {
 import { DashboardSection, AlertsSection } from '@/components/parent/ParentDash'
 import dynamic from 'next/dynamic'
 const UberFamilyMap = dynamic(() => import('@/components/shared/UberFamilyMap'), { ssr: false })
-import { ChildrenMonitorSection, ElderlyMonitorSection, DrivingSection } from '@/components/parent/ParentMonitor'
+import { ChildrenMonitorSection, ElderlyMonitorSection, DrivingSection, HealthMonitorSection } from '@/components/parent/ParentMonitor'
 import { GeofenceSection, JourneySection, FamilyChatSection, ParentSettingsSection, FamilySection } from '@/components/parent/ParentControl'
 import { useRouter } from 'next/navigation'
 import { getUser, clearAuth, type AuthUser } from '@/lib/auth'
 
-type Tab = 'dashboard' | 'map' | 'alerts' | 'children' | 'elderly' | 'driving' | 'geofences' | 'journeys' | 'chat' | 'settings' | 'family'
+type Tab = 'dashboard' | 'map' | 'alerts' | 'children' | 'elderly' | 'driving' | 'geofences' | 'journeys' | 'chat' | 'settings' | 'family' | 'health'
 
 const BOTTOM_TABS = [
   { id: 'dashboard' as Tab, icon: Home, label: 'Home' },
@@ -51,6 +51,7 @@ const BOTTOM_TABS = [
 
 const DRAWER_ITEMS = [
   { id: 'family' as Tab, icon: Users, label: 'Family' },
+  { id: 'health' as Tab, icon: Heart, label: 'Family Health' },
   { id: 'elderly' as Tab, icon: Heart, label: 'Elderly Care' },
   { id: 'driving' as Tab, icon: Car, label: 'Driving Safety' },
   { id: 'geofences' as Tab, icon: Shield, label: 'Geofences' },
@@ -64,6 +65,7 @@ const SECTION_TITLES: Record<Tab, string> = {
   map: 'Live Family Map',
   alerts: 'Safety & Alerts',
   children: 'Children Monitor',
+  health: 'Family Health',
   elderly: 'Elderly Care',
   driving: 'Driving Safety',
   geofences: 'Geofences',
@@ -374,6 +376,7 @@ export default function ParentPage() {
             {activeTab === 'dashboard' && <DashboardSection />}
             {activeTab === 'alerts' && <AlertsSection />}
             {activeTab === 'children' && <ChildrenMonitorSection />}
+            {activeTab === 'health' && <HealthMonitorSection />}
             {activeTab === 'elderly' && <ElderlyMonitorSection />}
             {activeTab === 'driving' && <DrivingSection />}
             {activeTab === 'geofences' && <GeofenceSection />}
