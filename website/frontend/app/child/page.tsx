@@ -135,23 +135,53 @@ export default function ChildPage() {
     if (!user) { router.replace('/login'); return }
     setAuthUser(user)
 
+    // Read real device battery and send heartbeat
+    async function sendHeartbeat(batteryPct?: number) {
+      try {
+        await fetch('/auth/heartbeat', {
+          method: 'POST',
+          headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+          body: JSON.stringify({ battery: batteryPct ?? null }),
+        })
+      } catch { /* ignore */ }
+    }
+
+    async function readBatteryAndHeartbeat() {
+      try {
+        // Browser Battery Status API (works on Android Chrome)
+        const nav = navigator as any
+        if (nav.getBattery) {
+          const bat = await nav.getBattery()
+          const pct = Math.round(bat.level * 100)
+          setBattery(pct)
+          sendHeartbeat(pct)
+          bat.onlevelchange = () => {
+            const updated = Math.round(bat.level * 100)
+            setBattery(updated)
+            sendHeartbeat(updated)
+          }
+        } else {
+          sendHeartbeat()
+        }
+      } catch { sendHeartbeat() }
+    }
+
     async function loadData() {
       try {
         const headers = { Authorization: `Bearer ${token}` }
-        // Get user's family
         const famRes = await fetch('/families/my', { headers })
         if (famRes.ok) {
           const families = await famRes.json()
           if (families.length > 0) {
             const fid = families[0].id
             setFamilyId(fid)
-            // Get live family members (online count + user's battery)
-            const liveRes = await fetch(`/location/live/${fid}`, { headers })
-            if (liveRes.ok) {
-              const live = await liveRes.json()
-              setFamilyOnline(live.length)
-              const me = live.find((m: { user_id: number; battery?: number }) => m.user_id === user!.id)
-              if (me?.battery != null) setBattery(me.battery)
+            // Use /families/members for online count — counts heartbeat-active web users too
+            const membersRes = await fetch(`/families/${fid}/members`, { headers })
+            if (membersRes.ok) {
+              const members = await membersRes.json()
+              setFamilyOnline(members.filter((m: { is_online: boolean }) => m.is_online).length)
+              const me = members.find((m: { user_id: number; battery?: number }) => m.user_id === user!.id)
+              if (me?.battery != null && me.battery > 0) setBattery(me.battery)
             }
           }
         }
@@ -165,25 +195,32 @@ export default function ChildPage() {
             }
           } catch { /* ignore */ }
         }
-        // Fallback: get battery from device via family members endpoint
-        if (battery === 0) {
-          const famRes2 = await fetch('/families/my', { headers })
-          if (famRes2.ok) {
-            const families2 = await famRes2.json()
-            if (families2.length > 0) {
-              const membersRes = await fetch(`/families/${families2[0].id}/members`, { headers })
-              if (membersRes.ok) {
-                const members = await membersRes.json()
-                const me = members.find((m: { user_id: number; battery?: number }) => m.user_id === user!.id)
-                if (me?.battery != null) setBattery(me.battery)
-              }
-            }
-          }
-        }
       } catch (_) {}
       setDataLoaded(true)
     }
+
+    readBatteryAndHeartbeat()
     loadData()
+    const hbInterval = setInterval(() => sendHeartbeat(), 60_000)
+
+    // Share browser GPS location with family
+    const sendLocation = (pos: GeolocationPosition) => {
+      fetch('/location/update', {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ lat: pos.coords.latitude, lng: pos.coords.longitude, accuracy: pos.coords.accuracy }),
+      }).catch(() => {})
+    }
+    let geoWatchId: number | null = null
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(sendLocation, () => {}, { enableHighAccuracy: true })
+      geoWatchId = navigator.geolocation.watchPosition(sendLocation, () => {}, { enableHighAccuracy: true, maximumAge: 30000 })
+    }
+
+    return () => {
+      clearInterval(hbInterval)
+      if (geoWatchId !== null) navigator.geolocation.clearWatch(geoWatchId)
+    }
   }, [router])
 
   function handleTabChange(tab: Tab) {

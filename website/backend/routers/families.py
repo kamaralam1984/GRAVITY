@@ -38,7 +38,7 @@ def create_family(data: FamilyCreate, user: models.User = Depends(get_current_us
 
 @router.post("/join/{invite_code}")
 def join_family(invite_code: str, user: models.User = Depends(get_current_user), db: Session = Depends(get_db)):
-    family = db.query(models.Family).filter(models.Family.invite_code == invite_code).first()
+    family = db.query(models.Family).filter(models.Family.invite_code.ilike(invite_code)).first()
     if not family:
         raise HTTPException(status_code=404, detail="Invalid invite code")
     existing = db.query(models.FamilyMember).filter(models.FamilyMember.family_id == family.id, models.FamilyMember.user_id == user.id).first()

@@ -91,6 +91,33 @@ export default function ParentPage() {
     setAuthUser(getUser())
     const savedTheme = localStorage.getItem('gv_theme')
     if (savedTheme === 'light') setIsDark(false)
+
+    // Mark current user as online — repeated every 60s
+    const sendHeartbeat = () => fetch('/auth/heartbeat', {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${token}` },
+    }).catch(() => {})
+    sendHeartbeat()
+    const hbInterval = setInterval(sendHeartbeat, 60_000)
+
+    // Share browser GPS location with family
+    const sendLocation = (pos: GeolocationPosition) => {
+      fetch('/location/update', {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ lat: pos.coords.latitude, lng: pos.coords.longitude, accuracy: pos.coords.accuracy }),
+      }).catch(() => {})
+    }
+    let geoWatchId: number | null = null
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(sendLocation, () => {}, { enableHighAccuracy: true })
+      geoWatchId = navigator.geolocation.watchPosition(sendLocation, () => {}, { enableHighAccuracy: true, maximumAge: 30000 })
+    }
+
+    return () => {
+      clearInterval(hbInterval)
+      if (geoWatchId !== null) navigator.geolocation.clearWatch(geoWatchId)
+    }
   }, [router])
 
   function toggleTheme() {
