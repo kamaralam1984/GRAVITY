@@ -18,6 +18,7 @@ import {
   Check,
   Clock,
 } from 'lucide-react';
+import { getToken } from '@/lib/auth';
 
 const UberFamilyMap = dynamic(() => import('@/components/shared/UberFamilyMap'), { ssr: false });
 
@@ -68,74 +69,17 @@ interface Geofence {
 // Data
 // ─────────────────────────────────────────────────────────────────────────────
 
-const CONTACTS: Contact[] = [
-  {
-    id: 'mom',
-    name: 'Mom',
-    relationship: 'Parent',
-    phone: '+91 98765 43210',
-    initials: 'M',
-    color: '#10B981',
-  },
-  {
-    id: 'dad',
-    name: 'Dad',
-    relationship: 'Parent',
-    phone: '+91 98765 12345',
-    initials: 'D',
-    color: '#3B82F6',
-  },
-  {
-    id: 'emergency',
-    name: 'Emergency',
-    relationship: 'Police 100',
-    phone: '100',
-    initials: '!',
-    color: '#EF4444',
-  },
-];
+const MEMBER_COLORS = ['#10B981', '#3B82F6', '#F59E0B', '#8B5CF6', '#EC4899', '#06B6D4'];
 
-const FAMILY_MEMBERS: FamilyMember[] = [
-  {
-    id: 'mom',
-    name: 'Mom',
-    initials: 'M',
-    color: '#10B981',
-    glowColor: '#10B98166',
-    angleDeg: 30,
-    distancePx: 60,
-    location: 'Home',
-    status: 'Online',
-    distanceKm: '0.3 km',
-    lastSeen: 'Just now',
-  },
-  {
-    id: 'dad',
-    name: 'Dad',
-    initials: 'D',
-    color: '#3B82F6',
-    glowColor: '#3B82F666',
-    angleDeg: 150,
-    distancePx: 120,
-    location: 'Office',
-    status: 'Online',
-    distanceKm: '4.7 km',
-    lastSeen: '2 min ago',
-  },
-  {
-    id: 'grandma',
-    name: 'Grandma',
-    initials: 'G',
-    color: '#F59E0B',
-    glowColor: '#F59E0B66',
-    angleDeg: 270,
-    distancePx: 40,
-    location: 'Home',
-    status: 'Idle',
-    distanceKm: '0.1 km',
-    lastSeen: '5 min ago',
-  },
-];
+const EMERGENCY_CONTACT: Contact = {
+  id: 'emergency',
+  name: 'Emergency',
+  relationship: 'Police 100',
+  phone: '100',
+  initials: '!',
+  color: '#EF4444',
+};
+
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Helper: polar to cartesian (origin = center of 280px circle → 140px)
@@ -153,10 +97,33 @@ function polarToXY(angleDeg: number, distancePx: number, center = 140) {
 // SOSSection
 // ─────────────────────────────────────────────────────────────────────────────
 
-export function SOSSection() {
+export function SOSSection({ familyId, userId }: { familyId?: number; userId?: number }) {
   const [countdown, setCountdown] = useState<number | null>(null);
   const [sosActive, setSosActive] = useState(false);
   const [sentConfirmed, setSentConfirmed] = useState(false);
+  const [contacts, setContacts] = useState<Contact[]>([EMERGENCY_CONTACT]);
+  const [notifiedNames, setNotifiedNames] = useState<string[]>([]);
+
+  useEffect(() => {
+    if (!familyId) return;
+    const token = getToken();
+    fetch(`/families/${familyId}/members`, { headers: { Authorization: `Bearer ${token}` } })
+      .then(r => r.ok ? r.json() : [])
+      .then((members: { user_id: number; name: string; phone?: string; role: string }[]) => {
+        const others = members.filter(m => m.user_id !== userId);
+        const mapped: Contact[] = others.map((m, i) => ({
+          id: String(m.user_id),
+          name: m.name,
+          relationship: m.role === 'owner' ? 'Parent' : 'Family Member',
+          phone: m.phone ?? '',
+          initials: m.name[0]?.toUpperCase() ?? '?',
+          color: MEMBER_COLORS[i % MEMBER_COLORS.length],
+        }));
+        setContacts([...mapped, EMERGENCY_CONTACT]);
+        setNotifiedNames(others.map(m => m.name));
+      })
+      .catch(() => {});
+  }, [familyId, userId]);
 
   useEffect(() => {
     if (countdown === null) return;
@@ -164,15 +131,36 @@ export function SOSSection() {
       setSosActive(true);
       setSentConfirmed(true);
       setCountdown(null);
+      triggerSOSAlert();
       return;
     }
     const timer = setTimeout(() => setCountdown((c) => (c !== null ? c - 1 : null)), 1000);
     return () => clearTimeout(timer);
   }, [countdown]);
 
-  function handleSOS() {
+  async function handleSOS() {
     if (sentConfirmed) return;
     setCountdown(3);
+  }
+
+  async function triggerSOSAlert() {
+    if (!familyId) return;
+    const token = getToken();
+    try {
+      navigator.geolocation?.getCurrentPosition(async (pos) => {
+        await fetch('/sos/trigger', {
+          method: 'POST',
+          headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+          body: JSON.stringify({ family_id: familyId, lat: pos.coords.latitude, lng: pos.coords.longitude, message: 'SOS Alert triggered' }),
+        });
+      }, async () => {
+        await fetch('/sos/trigger', {
+          method: 'POST',
+          headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+          body: JSON.stringify({ family_id: familyId, message: 'SOS Alert triggered' }),
+        });
+      });
+    } catch { /* ignore */ }
   }
 
   function cancelSOS() {
@@ -408,7 +396,7 @@ export function SOSSection() {
               <span style={{ color: '#10B981', fontWeight: 700, fontSize: 14 }}>Alert Sent to Family</span>
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-              {['Mom', 'Dad'].map((name) => (
+              {(notifiedNames.length > 0 ? notifiedNames : ['Family']).map((name) => (
                 <div key={name} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                   <div
                     style={{
@@ -459,7 +447,7 @@ export function SOSSection() {
           Quick Contacts
         </p>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-          {CONTACTS.map((contact) => (
+          {contacts.map((contact) => (
             <motion.div
               key={contact.id}
               whileHover={{ scale: 1.02, borderColor: contact.color + '66' }}
@@ -497,11 +485,12 @@ export function SOSSection() {
               <div style={{ flex: 1, minWidth: 0 }}>
                 <p style={{ margin: 0, fontSize: 14, fontWeight: 600, color: 'white' }}>{contact.name}</p>
                 <p style={{ margin: 0, fontSize: 12, color: 'rgba(255,255,255,0.4)' }}>
-                  {contact.relationship} · {contact.phone}
+                  {contact.relationship}{contact.phone ? ` · ${contact.phone}` : ''}
                 </p>
               </div>
               {/* Call button */}
-              <motion.button
+              <motion.a
+                href={contact.phone ? `tel:${contact.phone.replace(/\s+/g, '')}` : undefined}
                 whileTap={{ scale: 0.94 }}
                 style={{
                   display: 'flex',
@@ -516,11 +505,13 @@ export function SOSSection() {
                   fontWeight: 600,
                   cursor: 'pointer',
                   flexShrink: 0,
+                  textDecoration: 'none',
+                  opacity: contact.phone ? 1 : 0.4,
                 }}
               >
                 <Phone size={12} />
                 Call
-              </motion.button>
+              </motion.a>
             </motion.div>
           ))}
         </div>

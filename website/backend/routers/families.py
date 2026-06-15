@@ -157,7 +157,7 @@ def get_members(family_id: int, db: Session = Depends(get_db)):
                         except Exception:
                             pass
             battery = next((d.battery_level for d in devices if d.battery_level is not None), None)
-            result.append({"user_id": user.id, "name": user.name, "role": m.role, "last_location": loc.place_name if loc else None, "lat": loc.lat if loc else None, "lng": loc.lng if loc else None, "battery": battery, "is_online": is_online})
+            result.append({"user_id": user.id, "name": user.name, "phone": user.phone, "role": m.role, "last_location": loc.place_name if loc else None, "lat": loc.lat if loc else None, "lng": loc.lng if loc else None, "battery": battery, "is_online": is_online})
     return result
 
 

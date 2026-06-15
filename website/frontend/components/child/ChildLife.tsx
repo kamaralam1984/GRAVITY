@@ -122,10 +122,17 @@ export function SchoolSection() {
         }}>
           <Book size={22} color="#fff" />
         </div>
-        <div>
+        <div style={{ flex: 1 }}>
           <h2 style={{ margin: 0, fontSize: '20px', fontWeight: 700, color: '#fff' }}>School</h2>
-          <p style={{ margin: 0, fontSize: '13px', color: 'rgba(255,255,255,0.5)' }}>Delhi Public School</p>
+          <p style={{ margin: 0, fontSize: '13px', color: 'rgba(255,255,255,0.5)' }}>Sample Schedule</p>
         </div>
+        <span style={{
+          fontSize: '10px', fontWeight: 700, color: '#F59E0B',
+          background: 'rgba(245,158,11,0.15)', border: '1px solid rgba(245,158,11,0.3)',
+          borderRadius: '6px', padding: '3px 8px', letterSpacing: '0.04em',
+        }}>
+          DEMO
+        </span>
       </div>
 
       {/* Today's Schedule */}
