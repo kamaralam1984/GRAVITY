@@ -888,65 +888,6 @@ interface ChatMessage {
   read?: boolean;
 }
 
-const INITIAL_MESSAGES: ChatMessage[] = [
-  {
-    id: 'm1',
-    sender: 'System',
-    initials: '',
-    senderColor: '',
-    text: 'Aarav arrived at School — DPS Mumbai',
-    time: '7:58 AM',
-    type: 'system',
-  },
-  {
-    id: 'm2',
-    sender: 'Priya',
-    initials: 'P',
-    senderColor: '#D4AF37',
-    text: 'Good morning everyone! Have a great day 🌟',
-    time: '8:00 AM',
-    type: 'sent',
-    read: true,
-  },
-  {
-    id: 'm3',
-    sender: 'Rahul',
-    initials: 'R',
-    senderColor: '#3b82f6',
-    text: 'Morning! Heading to office now. Traffic is heavy on the highway.',
-    time: '8:32 AM',
-    type: 'received',
-  },
-  {
-    id: 'm4',
-    sender: 'Aarav',
-    initials: 'A',
-    senderColor: '#a855f7',
-    text: 'Reached school safely! 😊',
-    time: '8:05 AM',
-    type: 'received',
-  },
-  {
-    id: 'm5',
-    sender: 'Priya',
-    initials: 'P',
-    senderColor: '#D4AF37',
-    text: 'Great Aarav! Be good in class.',
-    time: '8:06 AM',
-    type: 'sent',
-    read: true,
-  },
-  {
-    id: 'm6',
-    sender: 'System',
-    initials: '',
-    senderColor: '',
-    text: 'Rahul entered Office — Bandra zone',
-    time: '9:10 AM',
-    type: 'system',
-  },
-];
-
 const QUICK_MESSAGES = [
   { text: 'Where are you?', emoji: '🗺️' },
   { text: 'Come home now', emoji: '🏠' },
@@ -955,16 +896,19 @@ const QUICK_MESSAGES = [
   { text: 'Stay where you are', emoji: '📍' },
 ];
 
-const CHAT_TABS = [
-  { id: 'family', label: 'Family Group', initials: 'FG', color: '#D4AF37' },
-  { id: 'aarav', label: 'Aarav', initials: 'A', color: '#a855f7' },
-  { id: 'rahul', label: 'Rahul', initials: 'R', color: '#3b82f6' },
-];
+const MEMBER_COLORS = ['#10B981', '#8B5CF6', '#3B82F6', '#EF4444', '#F59E0B', '#EC4899', '#06B6D4'];
 
 export function FamilyChatSection() {
-  const [messages, setMessages] = useState<ChatMessage[]>(INITIAL_MESSAGES);
+  const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [inputText, setInputText] = useState('');
   const [activeChat, setActiveChat] = useState('family');
+  const [famId, setFamId] = useState<number | null>(null);
+  const [chatTabs, setChatTabs] = useState<{ id: string; label: string; initials: string; color: string }[]>([
+    { id: 'family', label: 'Family Group', initials: 'FG', color: '#D4AF37' },
+  ]);
+  const [headerAvatars, setHeaderAvatars] = useState<{ i: string; c: string }[]>([]);
+  const [onlineCount, setOnlineCount] = useState(0);
+  const [sending, setSending] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -973,20 +917,105 @@ export function FamilyChatSection() {
     }
   }, [messages]);
 
-  function sendMessage(text: string) {
+  useEffect(() => {
+    let cancelled = false;
+    async function load() {
+      const token = getToken();
+      if (!token) return;
+      const h = { Authorization: `Bearer ${token}` };
+      const me = getUser();
+      try {
+        const famRes = await fetch('/families/my', { headers: h });
+        if (!famRes.ok || cancelled) return;
+        const fam = await famRes.json();
+        const famData = Array.isArray(fam) ? fam[0] : fam;
+        const fid = famData?.id ?? famData?.family?.id;
+        if (!fid || cancelled) return;
+        if (!cancelled) setFamId(fid);
+
+        const [memRes, msgRes] = await Promise.all([
+          fetch(`/families/${fid}/members`, { headers: h }),
+          fetch(`/chat/family/${fid}?limit=50`, { headers: h }),
+        ]);
+
+        if (memRes.ok && !cancelled) {
+          const memData: any[] = await memRes.json();
+          const others = memData.filter(m => m.user_id !== me?.id);
+          const tabs = [
+            { id: 'family', label: 'Family Group', initials: 'FG', color: '#D4AF37' },
+            ...others.map((m, i) => ({
+              id: String(m.user_id ?? i),
+              label: m.name ?? 'Member',
+              initials: (m.name ?? 'M').slice(0, 1).toUpperCase(),
+              color: MEMBER_COLORS[i % MEMBER_COLORS.length],
+            })),
+          ];
+          setChatTabs(tabs);
+          setHeaderAvatars(
+            others.slice(0, 3).map((m, i) => ({
+              i: (m.name ?? 'M').slice(0, 1).toUpperCase(),
+              c: MEMBER_COLORS[i % MEMBER_COLORS.length],
+            }))
+          );
+          setOnlineCount(memData.filter(m => m.is_online).length);
+        }
+
+        if (msgRes.ok && !cancelled) {
+          const raw: any[] = await msgRes.json();
+          const mapped: ChatMessage[] = raw.reverse().map(m => {
+            const isMine = m.sender_id === me?.id;
+            const name: string = m.sender_name ?? 'Member';
+            const initials = name.split(' ').map((w: string) => w[0] ?? '').join('').slice(0, 2).toUpperCase() || '?';
+            const color = isMine ? '#D4AF37' : MEMBER_COLORS[m.sender_id % MEMBER_COLORS.length];
+            return {
+              id: String(m.id),
+              sender: name,
+              initials,
+              senderColor: color,
+              text: m.content,
+              time: m.sent_at ? new Date(m.sent_at).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }) : '',
+              type: isMine ? 'sent' : 'received',
+              read: true,
+            };
+          });
+          if (!cancelled && mapped.length > 0) setMessages(mapped);
+        }
+      } catch {}
+    }
+    load();
+    const iv = setInterval(load, 15000);
+    return () => { cancelled = true; clearInterval(iv); };
+  }, []);
+
+  async function sendMessage(text: string) {
     if (!text.trim()) return;
-    const msg: ChatMessage = {
-      id: `m${Date.now()}`,
-      sender: 'Priya',
-      initials: 'P',
+    const me = getUser();
+    const name = me?.name ?? 'Me';
+    const initials = name.split(' ').map((w: string) => w[0] ?? '').join('').slice(0, 2).toUpperCase() || '?';
+    const optimistic: ChatMessage = {
+      id: `opt-${Date.now()}`,
+      sender: name,
+      initials,
       senderColor: '#D4AF37',
       text: text.trim(),
       time: new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }),
       type: 'sent',
       read: false,
     };
-    setMessages((prev) => [...prev, msg]);
+    setMessages(prev => [...prev, optimistic]);
     setInputText('');
+    if (!famId) return;
+    const token = getToken();
+    if (!token) return;
+    setSending(true);
+    try {
+      await fetch('/chat/send', {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ family_id: famId, content: text.trim(), type: 'text' }),
+      });
+    } catch {}
+    setSending(false);
   }
 
   return (
@@ -999,26 +1028,24 @@ export function FamilyChatSection() {
           </div>
           <div>
             <h2 className="text-xl font-bold text-white">Family Chat</h2>
-            <p className="text-white/50 text-sm">3 members online</p>
+            <p className="text-white/50 text-sm">{onlineCount > 0 ? `${onlineCount} members online` : 'Family group'}</p>
           </div>
         </div>
-        <div className="flex -space-x-1.5">
-          {[
-            { i: 'P', c: '#D4AF37' },
-            { i: 'R', c: '#3b82f6' },
-            { i: 'A', c: '#a855f7' },
-          ].map((m, idx) => (
-            <div key={idx} className="relative">
-              <MemberAvatar initials={m.i} color={m.c} size={28} />
-              <div className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-green-400 border border-[#0a1628]" />
-            </div>
-          ))}
-        </div>
+        {headerAvatars.length > 0 && (
+          <div className="flex -space-x-1.5">
+            {headerAvatars.map((m, idx) => (
+              <div key={idx} className="relative">
+                <MemberAvatar initials={m.i} color={m.c} size={28} />
+                <div className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-green-400 border border-[#0a1628]" />
+              </div>
+            ))}
+          </div>
+        )}
       </div>
 
       {/* Chat Tabs */}
       <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
-        {CHAT_TABS.map((tab) => (
+        {chatTabs.map((tab) => (
           <button
             key={tab.id}
             onClick={() => setActiveChat(tab.id)}
@@ -1040,6 +1067,12 @@ export function FamilyChatSection() {
         className="space-y-3 overflow-y-auto pr-1"
         style={{ height: 350, scrollbarWidth: 'thin', scrollbarColor: 'rgba(255,255,255,0.1) transparent' }}
       >
+        {messages.length === 0 && (
+          <div className="flex flex-col items-center justify-center h-full gap-2 opacity-40">
+            <MessageSquare className="w-8 h-8 text-white/30" />
+            <p className="text-white/30 text-sm">No messages yet. Say hello! 👋</p>
+          </div>
+        )}
         {messages.map((msg, i) => {
           const prevMsg = messages[i - 1];
           const showName = msg.type === 'received' && (!prevMsg || prevMsg.sender !== msg.sender || prevMsg.type !== 'received');

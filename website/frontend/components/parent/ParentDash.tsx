@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { getToken, clearAuth } from '@/lib/auth';
+import { getToken, clearAuth, getUser } from '@/lib/auth';
 import {
   Shield,
   MapPin,
@@ -495,6 +495,13 @@ export function DashboardSection({ onNavigate }: { onNavigate?: (tab: string) =>
         }
         if (famData?.invite_code) setInviteCode(famData.invite_code);
         setFamilyId(fid);
+
+        // Fetch real geofence count
+        const geoRes = await fetch(`/geofences/family/${fid}`, { headers: h });
+        if (geoRes.ok) {
+          const geos: any[] = await geoRes.json();
+          setStats(prev => ({ ...prev, geofences: geos.length }));
+        }
 
         const memRes = await fetch(`/families/${fid}/members`, { headers: h });
         if (!memRes.ok) return;
@@ -1736,10 +1743,87 @@ export function FamilyMapSection() {
 
 type AlertFilter = 'all' | 'sos' | 'geofence' | 'safety' | 'system';
 
+function memberStub(name: string, idx = 0): FamilyMember {
+  const initials = name.split(' ').map(w => w[0] ?? '').join('').slice(0, 2).toUpperCase() || '??';
+  return {
+    id: `stub-${idx}`,
+    name,
+    initials,
+    role: 'Child',
+    status: 'offline',
+    location: 'Unknown',
+    lastSeen: 'Just now',
+    battery: 0,
+    avatarColor: AVATAR_COLORS[idx % AVATAR_COLORS.length],
+    lat: 0, lng: 0,
+    coordinates: 'Unknown',
+    distanceFromHome: '—',
+    accurateLocation: false,
+  };
+}
+
 export function AlertsSection() {
-  const [alerts, setAlerts] = useState<Alert[]>(ALERTS_DATA);
+  const [alerts, setAlerts] = useState<Alert[]>([]);
+  const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<AlertFilter>('all');
   const [visibleCount, setVisibleCount] = useState(5);
+
+  useEffect(() => {
+    async function loadAlerts() {
+      const token = getToken();
+      if (!token) { setLoading(false); return; }
+      const h = { Authorization: `Bearer ${token}` };
+      try {
+        const [sosRes, geoRes] = await Promise.all([
+          fetch('/sos/active', { headers: h }),
+          fetch('/geofences/events?limit=20', { headers: h }),
+        ]);
+
+        const combined: Alert[] = [];
+
+        if (sosRes.ok) {
+          const sosData: any[] = await sosRes.json();
+          sosData.forEach((a, i) => {
+            combined.push({
+              id: `sos-${a.id}`,
+              type: 'sos',
+              severity: 'critical',
+              title: 'SOS Alert',
+              description: `${a.user_name} triggered an emergency SOS${a.place_name ? ` from ${a.place_name}` : ''}.`,
+              member: memberStub(a.user_name ?? 'Member', i),
+              timestamp: a.triggered_at ? new Date(a.triggered_at).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }) : 'Just now',
+              resolved: false,
+              read: false,
+            });
+          });
+        }
+
+        if (geoRes.ok) {
+          const geoData: any[] = await geoRes.json();
+          geoData.slice(0, 10).forEach((e, i) => {
+            const entered = e.event_type === 'enter';
+            combined.push({
+              id: `geo-${e.id}`,
+              type: 'geofence',
+              severity: 'high',
+              title: entered ? 'Geofence Entry' : 'Geofence Exit',
+              description: `${e.user_name} ${entered ? 'entered' : 'left'} the "${e.geofence_name}" zone.`,
+              member: memberStub(e.user_name ?? 'Member', i),
+              timestamp: e.occurred_at ? new Date(e.occurred_at).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }) : 'Recently',
+              resolved: false,
+              read: i > 2,
+            });
+          });
+        }
+
+        setAlerts(combined);
+      } catch {}
+      setLoading(false);
+    }
+    loadAlerts();
+    const iv = setInterval(loadAlerts, 30000);
+    return () => clearInterval(iv);
+  }, []);
 
   const unreadCount = alerts.filter((a) => !a.read).length;
 
@@ -1750,10 +1834,19 @@ export function AlertsSection() {
     return alerts.filter((a) => a.type === type && !a.read).length;
   }
 
-  function resolveAlert(id: string) {
-    setAlerts((prev) =>
-      prev.map((a) => (a.id === id ? { ...a, resolved: true, read: true } : a))
-    );
+  async function resolveAlert(id: string) {
+    setAlerts((prev) => prev.map((a) => (a.id === id ? { ...a, resolved: true, read: true } : a)));
+    if (id.startsWith('sos-')) {
+      const token = getToken();
+      if (!token) return;
+      const sosId = id.replace('sos-', '');
+      try {
+        await fetch(`/sos/${sosId}/resolve`, {
+          method: 'PATCH',
+          headers: { Authorization: `Bearer ${token}` },
+        });
+      } catch {}
+    }
   }
 
   const filters: { key: AlertFilter; label: string; count: number }[] = [
@@ -1876,6 +1969,19 @@ export function AlertsSection() {
 
       {/* Alert cards */}
       <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+        {loading && (
+          <div style={{ textAlign: 'center', padding: '24px 0', color: 'rgba(255,255,255,0.3)', fontSize: 13 }}>
+            <RefreshCw size={18} style={{ display: 'inline-block', marginBottom: 6, animation: 'spin 1s linear infinite' }} />
+            <div>Loading alerts…</div>
+          </div>
+        )}
+        {!loading && visible.length === 0 && (
+          <div style={{ ...glassCard, padding: '28px 20px', textAlign: 'center' }}>
+            <Shield size={32} style={{ color: '#10B981', opacity: 0.5, margin: '0 auto 10px' }} />
+            <div style={{ fontSize: 14, fontWeight: 600, color: 'rgba(255,255,255,0.5)' }}>All Clear</div>
+            <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.25)', marginTop: 4 }}>No active alerts for your family</div>
+          </div>
+        )}
         <AnimatePresence mode="popLayout">
           {visible.map((alert, i) => {
             const borderColor = severityBorderColor(alert.severity);
