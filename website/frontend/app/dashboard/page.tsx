@@ -301,7 +301,8 @@ function ProfileTab({ user, toggles, setToggle, logout, familyRole, familyInvite
     try {
       const res = await fetch(`/families/join/${joinCode.trim()}`, {
         method: 'POST',
-        headers: { Authorization: 'Bearer ' + token },
+        headers: { Authorization: 'Bearer ' + token, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ role: 'parent' }),
       })
       if (res.ok) {
         setJoinMsg({ text: 'Joined! Please refresh.', ok: true })

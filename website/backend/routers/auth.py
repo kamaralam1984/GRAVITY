@@ -25,9 +25,11 @@ def _get_family_role(user_id: int, db: Session) -> str:
     roles = {m.role for m in memberships}
     if "owner" in roles:
         return "parent"
-    if "child" in roles and "owner" not in roles:
+    if "child" in roles:
         return "child"
-    return "parent"  # adult member (non-child, non-owner) → treated as parent
+    if "parent" in roles:
+        return "parent"
+    return "parent"  # fallback for legacy "member" records
 limiter = Limiter(key_func=get_remote_address)
 
 # ── Pydantic schemas ─────────────────────────────────────────────────────────

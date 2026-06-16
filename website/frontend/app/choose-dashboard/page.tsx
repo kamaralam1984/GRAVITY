@@ -68,11 +68,11 @@ function InviteModal({
       const token = getToken()
       const res = await fetch(`/families/join/${code.trim().toUpperCase()}`, {
         method: 'POST',
-        headers: { Authorization: `Bearer ${token}` },
+        headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ role: 'child' }),
       })
       const data = await res.json()
       if (!res.ok) throw new Error(data.detail || 'Invalid invite code')
-      localStorage.setItem('gv_dashboard', 'child')
       setDone(true)
       setTimeout(onSuccess, 1200)
     } catch (err: unknown) {

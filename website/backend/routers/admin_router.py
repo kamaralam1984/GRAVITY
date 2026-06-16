@@ -363,8 +363,8 @@ class FamilyRoleRequest(BaseModel):
 
 @router.patch("/users/{user_id}/family-role")
 def update_user_family_role(user_id: int, data: FamilyRoleRequest, admin=Depends(get_current_admin), db: Session = Depends(get_db)):
-    if data.role not in ("child", "member", "owner"):
-        raise HTTPException(status_code=400, detail="Role must be child, member, or owner")
+    if data.role not in ("child", "parent", "owner"):
+        raise HTTPException(status_code=400, detail="Role must be child, parent, or owner")
     member = db.query(models.FamilyMember).filter(models.FamilyMember.user_id == user_id).first()
     if not member:
         raise HTTPException(status_code=404, detail="User is not in any family")

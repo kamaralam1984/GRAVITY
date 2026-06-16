@@ -1919,7 +1919,7 @@ export default function SuperAdminPage() {
               >
                 <option value="">— No change —</option>
                 <option value="child">Child (monitored by parent)</option>
-                <option value="member">Member (adult member)</option>
+                <option value="parent">Parent (adult member)</option>
               </select>
               <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 4 }}>
                 Current: <strong style={{ color: editUserForm.family_member_role === 'child' || selectedSAUser.family_member_role === 'child' ? '#10B981' : 'var(--text-secondary)' }}>

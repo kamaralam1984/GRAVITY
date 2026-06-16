@@ -512,7 +512,7 @@ export function DashboardSection({ onNavigate }: { onNavigate?: (tab: string) =>
         const mapped: FamilyMember[] = raw.map((m, i) => {
           const name: string = m.name ?? 'Member';
           const initials = name.split(' ').map((w: string) => w[0] ?? '').join('').slice(0, 2).toUpperCase();
-          const role: MemberRole = m.role === 'owner' ? 'Self' : m.role === 'child' ? 'Child' : 'Member';
+          const role: MemberRole = m.role === 'owner' ? 'Self' : m.role === 'child' ? 'Child' : (m.role === 'parent' || m.role === 'member') ? 'Member' : 'Member';
           const isOnline: boolean = !!m.is_online;
           return {
             id: String(m.user_id ?? i),
@@ -979,7 +979,7 @@ export function DashboardSection({ onNavigate }: { onNavigate?: (tab: string) =>
                     >
                       {member.role}
                     </div>
-                    {member.rawRole === 'member' && familyId && (
+                    {(member.rawRole === 'member' || member.rawRole === 'parent') && familyId && (
                       <button
                         onClick={async (e) => {
                           e.stopPropagation();
