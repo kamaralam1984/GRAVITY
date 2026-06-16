@@ -20,6 +20,9 @@ export default function ChildMonitorPanel({ child, famId, onClose }: Props) {
   const videoRef = useRef<HTMLVideoElement | null>(null)
   const [activeMode, setActiveMode] = useState<'mic' | 'camera' | 'screen' | null>(null)
   const activeModeRef = useRef<'mic' | 'camera' | 'screen' | null>(null)
+  const [streamError, setStreamError] = useState<string | null>(null)
+  const [connecting, setConnecting] = useState(false)
+  const connectTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const [logs, setLogs] = useState<LogEntry[]>([])
   const [showLogs, setShowLogs] = useState(false)
   const [wsReady, setWsReady] = useState(false)
@@ -43,9 +46,18 @@ export default function ChildMonitorPanel({ child, famId, onClose }: Props) {
       let msg: any
       try { msg = JSON.parse(evt.data) } catch { return }
       if (msg.type === 'offer') {
+        if (connectTimeoutRef.current) clearTimeout(connectTimeoutRef.current)
+        setConnecting(false)
+        setStreamError(null)
         await handleOffer(msg.sdp, String(child.user_id))
       } else if (msg.type === 'ice' && pcRef.current) {
         try { await pcRef.current.addIceCandidate(new RTCIceCandidate(msg.candidate)) } catch {}
+      } else if (msg.type === 'stream_error') {
+        if (connectTimeoutRef.current) clearTimeout(connectTimeoutRef.current)
+        setConnecting(false)
+        setStreamError(msg.message ?? 'Child device could not share stream')
+        activeModeRef.current = null
+        setActiveMode(null)
       }
     }
 
@@ -81,6 +93,8 @@ export default function ChildMonitorPanel({ child, famId, onClose }: Props) {
   function sendRequest(type: 'mic' | 'camera' | 'screen') {
     if (!wsRef.current || wsRef.current.readyState !== 1) return
     stopMonitoring()
+    setStreamError(null)
+    setConnecting(true)
     activeModeRef.current = type
     setActiveMode(type)
     wsRef.current.send(JSON.stringify({
@@ -89,9 +103,19 @@ export default function ChildMonitorPanel({ child, famId, onClose }: Props) {
       fromId: parentIdRef.current,
       target: String(child.user_id),
     }))
+    // 15s timeout — if no offer arrives, show error
+    connectTimeoutRef.current = setTimeout(() => {
+      setConnecting(false)
+      if (activeModeRef.current === type) {
+        setStreamError('Child did not respond — make sure Gravity app is open on child device')
+        activeModeRef.current = null
+        setActiveMode(null)
+      }
+    }, 15000)
   }
 
   function stopMonitoring() {
+    if (connectTimeoutRef.current) { clearTimeout(connectTimeoutRef.current); connectTimeoutRef.current = null }
     if (wsRef.current?.readyState === 1) {
       wsRef.current.send(JSON.stringify({ type: 'stop_monitoring', target: String(child.user_id) }))
     }
@@ -100,6 +124,8 @@ export default function ChildMonitorPanel({ child, famId, onClose }: Props) {
     if (videoRef.current) { videoRef.current.srcObject = null }
     activeModeRef.current = null
     setActiveMode(null)
+    setConnecting(false)
+    setStreamError(null)
   }
 
   async function fetchLogs() {
@@ -190,8 +216,10 @@ export default function ChildMonitorPanel({ child, famId, onClose }: Props) {
             <video ref={videoRef} autoPlay playsInline muted={false}
               style={{ width: '100%', maxHeight: 260, objectFit: 'contain', display: 'block' }} />
             {!videoRef.current?.srcObject && (
-              <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'rgba(255,255,255,0.3)', fontSize: 13 }}>
-                Connecting...
+              <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
+                <div style={{ width: 24, height: 24, borderRadius: '50%', border: '3px solid rgba(255,255,255,0.15)', borderTopColor: '#8B5CF6', animation: 'spin 0.8s linear infinite' }} />
+                <span style={{ color: 'rgba(255,255,255,0.4)', fontSize: 13 }}>Waiting for child device...</span>
+                <style>{`@keyframes spin { to { transform: rotate(360deg) } }`}</style>
               </div>
             )}
           </div>
@@ -205,6 +233,17 @@ export default function ChildMonitorPanel({ child, famId, onClose }: Props) {
               <div style={{ color: '#10B981', fontWeight: 600, fontSize: 14 }}>Listening to mic</div>
               <div style={{ color: 'rgba(255,255,255,0.4)', fontSize: 12 }}>Child audio is streaming — press Stop to end</div>
             </div>
+          </div>
+        )}
+
+        {/* Stream error banner */}
+        {streamError && (
+          <div style={{ background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.3)', borderRadius: 12, padding: '12px 16px', marginBottom: 16, display: 'flex', alignItems: 'center', gap: 10 }}>
+            <span style={{ fontSize: 18 }}>⚠️</span>
+            <div style={{ flex: 1 }}>
+              <div style={{ color: '#EF4444', fontWeight: 600, fontSize: 13 }}>{streamError}</div>
+            </div>
+            <button onClick={() => setStreamError(null)} style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.4)', cursor: 'pointer', fontSize: 16 }}>✕</button>
           </div>
         )}
 

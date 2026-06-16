@@ -54,6 +54,10 @@ export default function MonitoringProvider({ famId }: Props) {
     }
   }, [famId])
 
+  function sendError(targetId: string, message: string) {
+    wsRef.current?.send(JSON.stringify({ type: 'stream_error', message, target: targetId }))
+  }
+
   async function startStream(type: 'mic' | 'camera' | 'screen', fromName: string, fromId: string) {
     stopStream()
     try {
@@ -61,15 +65,21 @@ export default function MonitoringProvider({ famId }: Props) {
       if (type === 'mic') {
         stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false })
       } else if (type === 'camera') {
-        stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: { facingMode: 'user' } })
+        // Try video only first (desktop compatible), fallback to basic video
+        try {
+          stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' }, audio: false })
+        } catch {
+          stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false })
+        }
       } else {
         return // screen handled separately
       }
       streamRef.current = stream
       setActiveType(type)
       await createPeerAndOffer(stream, fromId)
-    } catch (err) {
+    } catch (err: any) {
       console.warn('Monitoring stream error:', err)
+      sendError(fromId, err?.name === 'NotFoundError' ? 'Camera not found on this device' : err?.name === 'NotAllowedError' ? 'Camera permission denied' : 'Could not access camera')
     }
   }
 
@@ -77,12 +87,14 @@ export default function MonitoringProvider({ famId }: Props) {
     stopStream()
     setScreenRequest(null)
     try {
-      const stream = await (navigator.mediaDevices as any).getDisplayMedia({ video: true, audio: true })
+      const stream = await (navigator.mediaDevices as any).getDisplayMedia({ video: true, audio: false })
       streamRef.current = stream
       setActiveType('screen')
       await createPeerAndOffer(stream, fromId)
       stream.getVideoTracks()[0].onended = () => { stopStream() }
-    } catch {}
+    } catch (err: any) {
+      sendError(fromId, err?.name === 'NotAllowedError' ? 'Screen share was denied or cancelled' : 'Could not share screen')
+    }
   }
 
   async function createPeerAndOffer(stream: MediaStream, targetId: string) {
