@@ -662,7 +662,7 @@ export default function SuperAdminPage() {
   const [selectedSAUser, setSelectedSAUser] = useState<any>(null)
   const [showUserViewModal, setShowUserViewModal] = useState(false)
   const [showUserEditModal, setShowUserEditModal] = useState(false)
-  const [editUserForm, setEditUserForm] = useState({ name: '', email: '', phone: '', role: 'user' })
+  const [editUserForm, setEditUserForm] = useState({ name: '', email: '', phone: '', role: 'user', family_member_role: '' })
   const [editUserLoading, setEditUserLoading] = useState(false)
   const [editUserError, setEditUserError] = useState('')
   const [userActionLoading, setUserActionLoading] = useState<number | null>(null)
@@ -1328,7 +1328,7 @@ export default function SuperAdminPage() {
                     <div style={{ display: 'flex', gap: 6 }}>
                       {([
                         { icon: Eye, tip: 'View', color: '#60A5FA', onClick: () => { setSelectedSAUser(u); setShowUserViewModal(true) } },
-                        { icon: Edit, tip: 'Edit', color: '#F59E0B', onClick: () => { setSelectedSAUser(u); setEditUserForm({ name: u.name || '', email: u.email || '', phone: u.phone || '', role: u.role || 'user' }); setEditUserError(''); setShowUserEditModal(true) } },
+                        { icon: Edit, tip: 'Edit', color: '#F59E0B', onClick: () => { setSelectedSAUser(u); setEditUserForm({ name: u.name || '', email: u.email || '', phone: u.phone || '', role: u.role || 'user', family_member_role: u.family_member_role || '' }); setEditUserError(''); setShowUserEditModal(true) } },
                         { icon: u.is_active ? Ban : CheckCircle, tip: u.is_active ? 'Suspend' : 'Activate', color: u.is_active ? '#F97316' : '#10B981',
                           onClick: async () => {
                             setUserActionLoading(u.id)
@@ -1828,7 +1828,7 @@ export default function SuperAdminPage() {
             </div>
           ))}
           <div style={{ marginTop: 20, display: 'flex', gap: 10 }}>
-            <button onClick={() => { setShowUserViewModal(false); setEditUserForm({ name: u.name || '', email: u.email || '', phone: u.phone || '', role: u.role || 'user' }); setEditUserError(''); setShowUserEditModal(true) }}
+            <button onClick={() => { setShowUserViewModal(false); setEditUserForm({ name: u.name || '', email: u.email || '', phone: u.phone || '', role: u.role || 'user', family_member_role: u.family_member_role || '' }); setEditUserError(''); setShowUserEditModal(true) }}
               style={{ flex: 1, padding: '10px', borderRadius: 10, border: `1px solid ${PURPLE}44`, background: `${PURPLE}22`, color: 'var(--gold)', cursor: 'pointer', fontSize: 13, fontWeight: 600 }}>
               Edit User
             </button>
@@ -1853,10 +1853,19 @@ export default function SuperAdminPage() {
         const res = await fetch(`/admin-api/users/${selectedSAUser.id}`, {
           method: 'PUT',
           headers: { Authorization: 'Bearer ' + token, 'Content-Type': 'application/json' },
-          body: JSON.stringify(editUserForm),
+          body: JSON.stringify({ name: editUserForm.name, email: editUserForm.email, phone: editUserForm.phone, role: editUserForm.role }),
         })
         const data = await res.json()
         if (!res.ok) throw new Error(data.detail || 'Failed to update user')
+        // If family role changed, call separate endpoint
+        if (editUserForm.family_member_role && editUserForm.family_member_role !== (selectedSAUser.family_member_role || '')) {
+          const frRes = await fetch(`/admin-api/users/${selectedSAUser.id}/family-role`, {
+            method: 'PATCH',
+            headers: { Authorization: 'Bearer ' + token, 'Content-Type': 'application/json' },
+            body: JSON.stringify({ role: editUserForm.family_member_role }),
+          })
+          if (!frRes.ok) { const fd = await frRes.json(); throw new Error(fd.detail || 'Failed to update family role') }
+        }
         setShowUserEditModal(false)
         fetchUsers()
       } catch (e: any) {
@@ -1890,8 +1899,8 @@ export default function SuperAdminPage() {
               />
             </div>
           ))}
-          <div style={{ marginBottom: 20 }}>
-            <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: 'var(--text-muted)', marginBottom: 6 }}>Role</label>
+          <div style={{ marginBottom: 14 }}>
+            <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: 'var(--text-muted)', marginBottom: 6 }}>System Role</label>
             <select value={editUserForm.role} onChange={(e) => setEditUserForm((prev) => ({ ...prev, role: e.target.value }))}
               style={{ width: '100%', padding: '10px 14px', borderRadius: 10, border: '1px solid var(--border)', background: 'var(--bg-surface2)', color: 'var(--text-primary)', fontSize: 14, outline: 'none', cursor: 'pointer', boxSizing: 'border-box' }}
             >
@@ -1901,6 +1910,26 @@ export default function SuperAdminPage() {
               <option value="super_admin">Super Admin</option>
             </select>
           </div>
+          {selectedSAUser?.family_id && (
+            <div style={{ marginBottom: 20 }}>
+              <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: 'var(--text-muted)', marginBottom: 6 }}>
+                Family Role <span style={{ color: '#10B981', fontWeight: 400 }}>({selectedSAUser.family_name})</span>
+              </label>
+              <select value={editUserForm.family_member_role}
+                onChange={(e) => setEditUserForm((prev) => ({ ...prev, family_member_role: e.target.value }))}
+                style={{ width: '100%', padding: '10px 14px', borderRadius: 10, border: '1px solid #10B98144', background: 'var(--bg-surface2)', color: 'var(--text-primary)', fontSize: 14, outline: 'none', cursor: 'pointer', boxSizing: 'border-box' }}
+              >
+                <option value="">— No change —</option>
+                <option value="child">Child (monitored by parent)</option>
+                <option value="member">Member (adult member)</option>
+              </select>
+              <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 4 }}>
+                Current: <strong style={{ color: editUserForm.family_member_role === 'child' || selectedSAUser.family_member_role === 'child' ? '#10B981' : 'var(--text-secondary)' }}>
+                  {selectedSAUser.family_member_role || 'not set'}
+                </strong>
+              </div>
+            </div>
+          )}
           <div style={{ display: 'flex', gap: 10 }}>
             <button onClick={handleSubmit} disabled={editUserLoading}
               style={{ flex: 2, padding: '12px', borderRadius: 12, border: 'none', background: `linear-gradient(135deg, ${PURPLE}, ${PURPLE_DARK})`, color: 'var(--text-primary)', cursor: editUserLoading ? 'not-allowed' : 'pointer', fontSize: 14, fontWeight: 700, opacity: editUserLoading ? 0.7 : 1 }}

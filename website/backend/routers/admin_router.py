@@ -276,14 +276,14 @@ def list_users(
         .all()
     )
 
-    # Single query: family memberships + family names + invite codes for these users
+    # Single query: family memberships + family names + invite codes + member role for these users
     family_rows = (
-        db.query(models.FamilyMember.user_id, models.Family.id, models.Family.name, models.Family.invite_code)
+        db.query(models.FamilyMember.user_id, models.FamilyMember.role, models.Family.id, models.Family.name, models.Family.invite_code)
         .join(models.Family, models.Family.id == models.FamilyMember.family_id)
         .filter(models.FamilyMember.user_id.in_(user_ids))
         .all()
     )
-    family_data = {row.user_id: {"name": row.name, "id": row.id, "invite_code": row.invite_code} for row in family_rows}
+    family_data = {row.user_id: {"name": row.name, "id": row.id, "invite_code": row.invite_code, "member_role": row.role} for row in family_rows}
 
     result = []
     for u in users:
@@ -296,6 +296,7 @@ def list_users(
             "devices": device_counts.get(u.id, 0),
             "family_name": fam.get("name", ""),
             "family_id": fam.get("id"),
+            "family_member_role": fam.get("member_role", ""),
             "invite_code": fam.get("invite_code", ""),
             "created_at": u.created_at.isoformat() if u.created_at else None,
             "avatar": (u.name[:2].upper() if u.name and len(u.name) >= 2 else (u.name[0].upper() if u.name else "?")),
@@ -356,6 +357,22 @@ def update_user_status(user_id: int, data: UserStatusRequest, admin=Depends(get_
     user.is_active = data.is_active
     db.commit()
     return {"message": "Status updated"}
+
+class FamilyRoleRequest(BaseModel):
+    role: str
+
+@router.patch("/users/{user_id}/family-role")
+def update_user_family_role(user_id: int, data: FamilyRoleRequest, admin=Depends(get_current_admin), db: Session = Depends(get_db)):
+    if data.role not in ("child", "member", "owner"):
+        raise HTTPException(status_code=400, detail="Role must be child, member, or owner")
+    member = db.query(models.FamilyMember).filter(models.FamilyMember.user_id == user_id).first()
+    if not member:
+        raise HTTPException(status_code=404, detail="User is not in any family")
+    if member.role == "owner" and data.role != "owner":
+        raise HTTPException(status_code=400, detail="Cannot change owner role")
+    member.role = data.role
+    db.commit()
+    return {"user_id": user_id, "family_role": data.role}
 
 @router.post("/users/{user_id}/change-password")
 def change_user_password(user_id: int, data: UserPasswordRequest, admin=Depends(get_current_admin), db: Session = Depends(get_db)):

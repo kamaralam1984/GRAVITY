@@ -495,16 +495,11 @@ export default function LoginPage() {
     document.cookie = `gv_token=${token}; path=/; max-age=604800; SameSite=Lax`
     document.cookie = `gv_user=${encodeURIComponent(JSON.stringify(user))}; path=/; max-age=604800; SameSite=Lax`
 
-    // For user role: auto-detect parent vs child dashboard
+    // For user role: always check fresh family membership from API
     if (user.role === 'user') {
       await new Promise((r) => setTimeout(r, 900))
 
-      // 1. Stored preference from signup/choose-dashboard
-      const pref = localStorage.getItem('gv_dashboard')
-      if (pref === 'parent') { window.location.href = '/parent'; return }
-      if (pref === 'child') { window.location.href = '/child'; return }
-
-      // 2. Check family membership role via API
+      // Always do a fresh API check (don't use cached preference — role can change)
       try {
         const famRes = await fetch('/families/my', {
           headers: { Authorization: `Bearer ${token}` },
@@ -534,7 +529,8 @@ export default function LoginPage() {
         }
       } catch (_) {}
 
-      // 3. No family yet → let user choose
+      // No family yet → let user choose
+      localStorage.removeItem('gv_dashboard')
       window.location.href = '/choose-dashboard'
       return
     }
