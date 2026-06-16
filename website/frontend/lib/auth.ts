@@ -8,6 +8,7 @@ export interface AuthUser {
   email: string
   phone?: string
   role: UserRole
+  family_role?: 'parent' | 'child' | 'none'
   is_active: boolean
 }
 

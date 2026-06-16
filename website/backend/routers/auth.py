@@ -13,6 +13,21 @@ from slowapi import Limiter
 from slowapi.util import get_remote_address
 
 router = APIRouter()
+
+
+def _get_family_role(user_id: int, db: Session) -> str:
+    """Returns 'parent', 'child', or 'none' based on FamilyMember table."""
+    memberships = db.query(models.FamilyMember).filter(
+        models.FamilyMember.user_id == user_id
+    ).all()
+    if not memberships:
+        return "none"
+    roles = {m.role for m in memberships}
+    if "owner" in roles:
+        return "parent"
+    if "child" in roles and "owner" not in roles:
+        return "child"
+    return "parent"  # adult member (non-child, non-owner) → treated as parent
 limiter = Limiter(key_func=get_remote_address)
 
 # ── Pydantic schemas ─────────────────────────────────────────────────────────
@@ -34,6 +49,7 @@ class UserResponse(BaseModel):
     phone: Optional[str]
     is_active: bool
     role: str = "user"
+    family_role: Optional[str] = None
     class Config:
         from_attributes = True
 
@@ -161,7 +177,8 @@ def login(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depend
     if not user.is_active:
         raise HTTPException(status_code=401, detail="Account not verified. Please complete signup first.")
     token = create_access_token({"sub": user.id})
-    return {"access_token": token, "token_type": "bearer", "user": user}
+    user_data = UserResponse(id=user.id, name=user.name, email=user.email, phone=user.phone, is_active=user.is_active, role=user.role, family_role=_get_family_role(user.id, db))
+    return {"access_token": token, "token_type": "bearer", "user": user_data}
 
 @router.post("/login/json", response_model=TokenResponse)
 def login_json(data: UserLogin, db: Session = Depends(get_db)):
@@ -171,7 +188,8 @@ def login_json(data: UserLogin, db: Session = Depends(get_db)):
     if not user.is_active:
         raise HTTPException(status_code=401, detail="Account not verified. Please complete signup first.")
     token = create_access_token({"sub": user.id})
-    return {"access_token": token, "token_type": "bearer", "user": user}
+    user_data = UserResponse(id=user.id, name=user.name, email=user.email, phone=user.phone, is_active=user.is_active, role=user.role, family_role=_get_family_role(user.id, db))
+    return {"access_token": token, "token_type": "bearer", "user": user_data}
 
 @router.post("/login/unified", response_model=TokenResponse)
 @limiter.limit("10/minute")
@@ -183,7 +201,8 @@ def login_unified(request: Request, data: UserLogin, db: Session = Depends(get_d
         if not user.is_active:
             raise HTTPException(status_code=401, detail="Account not verified. Please complete signup first.")
         token = create_access_token({"sub": user.id})
-        return {"access_token": token, "token_type": "bearer", "user": user}
+        user_data = UserResponse(id=user.id, name=user.name, email=user.email, phone=user.phone, is_active=user.is_active, role=user.role, family_role=_get_family_role(user.id, db))
+        return {"access_token": token, "token_type": "bearer", "user": user_data}
 
     # Check AdminUser table (role: admin, super_admin)
     admin = db.query(models.AdminUser).filter(models.AdminUser.email == data.email).first()

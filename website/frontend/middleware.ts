@@ -1,11 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server'
 import type { UserRole } from './lib/auth'
 
-const PROTECTED_ROUTES: Array<{ prefix: string; roles: UserRole[] }> = [
+type FamilyRole = 'parent' | 'child' | 'none'
+
+const PROTECTED_ROUTES: Array<{ prefix: string; roles: UserRole[]; family_roles?: FamilyRole[] }> = [
   { prefix: '/super-admin', roles: ['super_admin'] },
   { prefix: '/admin', roles: ['admin', 'super_admin'] },
   { prefix: '/moderator', roles: ['moderator', 'admin', 'super_admin'] },
   { prefix: '/dashboard', roles: ['user', 'moderator', 'admin', 'super_admin'] },
+  { prefix: '/parent', roles: ['user'], family_roles: ['parent', 'none'] },
+  { prefix: '/child', roles: ['user'], family_roles: ['child'] },
 ]
 
 const KNOWN_ROLES: UserRole[] = ['user', 'moderator', 'admin', 'super_admin']
@@ -20,12 +24,12 @@ function getRoleRedirect(role: UserRole): string {
   }
 }
 
-function parseUserFromCookie(req: NextRequest): { role: UserRole } | null {
+function parseUserFromCookie(req: NextRequest): { role: UserRole; family_role?: FamilyRole } | null {
   const userCookie = req.cookies.get('gv_user')?.value
   if (!userCookie) return null
   try {
     const decoded = decodeURIComponent(userCookie)
-    const user = JSON.parse(decoded) as { role: UserRole }
+    const user = JSON.parse(decoded) as { role: UserRole; family_role?: FamilyRole }
     if (!user.role || !KNOWN_ROLES.includes(user.role)) return null
     return user
   } catch {
@@ -79,17 +83,30 @@ export function middleware(req: NextRequest) {
     return res
   }
 
-  // Role has access → allow
-  if ((matched.roles as string[]).includes(user.role)) {
-    return NextResponse.next()
+  // System role check
+  if (!(matched.roles as string[]).includes(user.role)) {
+    const correctPath = getRoleRedirect(user.role)
+    const redirectUrl = req.nextUrl.clone()
+    redirectUrl.pathname = correctPath
+    redirectUrl.search = ''
+    return NextResponse.redirect(redirectUrl)
   }
 
-  // Wrong role → send to that role's correct dashboard (never loops — all known roles map to distinct paths)
-  const correctPath = getRoleRedirect(user.role)
-  const redirectUrl = req.nextUrl.clone()
-  redirectUrl.pathname = correctPath
-  redirectUrl.search = ''
-  return NextResponse.redirect(redirectUrl)
+  // Family role check (only for /parent and /child routes)
+  if (matched.family_roles) {
+    const userFamilyRole: FamilyRole = user.family_role ?? 'none'
+    if (!matched.family_roles.includes(userFamilyRole)) {
+      // Child trying to access /parent → send to /child
+      // Parent trying to access /child → send to /parent (or /dashboard)
+      const correctPath = userFamilyRole === 'child' ? '/child' : '/dashboard'
+      const redirectUrl = req.nextUrl.clone()
+      redirectUrl.pathname = correctPath
+      redirectUrl.search = ''
+      return NextResponse.redirect(redirectUrl)
+    }
+  }
+
+  return NextResponse.next()
 }
 
 export const config = {
@@ -98,5 +115,7 @@ export const config = {
     '/moderator/:path*',
     '/admin/:path*',
     '/super-admin/:path*',
+    '/parent/:path*',
+    '/child/:path*',
   ],
 }
