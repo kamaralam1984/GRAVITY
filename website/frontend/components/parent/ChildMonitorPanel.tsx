@@ -228,7 +228,7 @@ export default function ChildMonitorPanel({ child, famId, onClose }: Props) {
                     <div style={{ width: 8, height: 8, borderRadius: '50%', background: sectionColor[log.section] ?? sectionColor.default }} />
                     <span style={{ color: '#fff', fontSize: 13, textTransform: 'capitalize' }}>{log.section}</span>
                   </div>
-                  <div style={{ display: 'flex', align: 'center', gap: 12 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
                     <span style={{ color: '#D4A853', fontSize: 13, fontWeight: 600 }}>{formatSec(log.duration_seconds)}</span>
                     <span style={{ color: 'rgba(255,255,255,0.3)', fontSize: 11 }}>{log.logged_at.slice(11, 16)} UTC</span>
                   </div>
