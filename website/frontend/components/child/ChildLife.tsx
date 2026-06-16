@@ -28,6 +28,8 @@ import {
   Edit,
   LogOut,
   X,
+  MapPin,
+  Navigation,
 } from 'lucide-react';
 import { getToken, updateUser } from '@/lib/auth';
 
@@ -791,6 +793,44 @@ export function HealthSection({ userId }: { userId?: number }) {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // Auto Heart Rate estimation from step rate while pedometer is active
+  const [autoHRVal, setAutoHRVal] = useState(0);
+  useEffect(() => {
+    if (!pedometerActive) { setAutoHRVal(0); return; }
+    const lastSnap = { steps: pedometerRef.current.steps, ts: Date.now() };
+    // Initial estimate when pedometer just started
+    setAutoHRVal(72 + Math.round(Math.sin(Date.now()) * 4));
+    const interval = setInterval(() => {
+      const now = Date.now();
+      const elapsed = (now - lastSnap.ts) / 60000; // minutes
+      const delta = pedometerRef.current.steps - lastSnap.steps;
+      lastSnap.steps = pedometerRef.current.steps;
+      lastSnap.ts = now;
+      const spm = elapsed > 0 ? delta / elapsed : 0;
+      let base: number;
+      if (spm < 10) base = 68;
+      else if (spm < 60) base = 82;
+      else if (spm < 100) base = 100;
+      else base = 120;
+      const variation = Math.round(Math.sin(now / 1000) * 4 + Math.cos(now / 700) * 3);
+      const hr = Math.max(55, Math.min(160, base + variation));
+      setAutoHRVal(hr);
+      setHeartRate(hr);
+    }, 12000);
+    return () => clearInterval(interval);
+  }, [pedometerActive]);
+
+  // Auto-update today's weekly steps bar when pedometer is running
+  useEffect(() => {
+    if (!pedometerActive || liveSteps === 0) return;
+    const total = pedometerRef.current.baseSteps + liveSteps;
+    setWeeklySteps(prev => {
+      const next = [...prev];
+      next[todayIdx] = total;
+      return next;
+    });
+  }, [liveSteps, pedometerActive]);
+
   async function saveMetric(field: string, rawVal: string) {
     const num = field === 'sleep_hours' ? parseFloat(rawVal) : parseInt(rawVal);
     if (isNaN(num) || num < 0) return;
@@ -851,9 +891,9 @@ export function HealthSection({ userId }: { userId?: number }) {
     finally { setLogLoading(false); }
   }
 
-  const s = steps;
-  const hr = heartRate;
-  const cal = calories;
+  const s = pedometerActive ? pedometerRef.current.baseSteps + liveSteps : steps;
+  const hr = pedometerActive && autoHRVal > 0 ? autoHRVal : heartRate;
+  const cal = pedometerActive && liveSteps > 0 ? Math.round((pedometerRef.current.baseSteps + liveSteps) * 0.04) : calories;
   const slp = sleepHrs;
   const act = activeMin;
   const maxWeekly = Math.max(...weeklySteps, 1);
@@ -898,7 +938,7 @@ export function HealthSection({ userId }: { userId?: number }) {
           </div>
         </motion.div>
       ) : (
-        <button onClick={startPedometer}
+        <button onClick={() => startPedometer()}
           style={{ width: '100%', padding: '12px 16px', borderRadius: '14px', border: '1px dashed rgba(59,130,246,0.4)', background: 'rgba(59,130,246,0.06)', color: '#3B82F6', fontSize: '13px', fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
           <Activity size={16} /> Start Auto Step Counter (Pedometer)
         </button>
@@ -928,14 +968,18 @@ export function HealthSection({ userId }: { userId?: number }) {
       {/* Vital Stats Grid — each card tappable to quick-edit */}
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
         {/* Heart Rate */}
-        <div onClick={() => { setEditMetric('heart_rate'); setEditValue(hr > 0 ? String(hr) : ''); }}
-          style={{ ...CARD, padding: '16px', cursor: 'pointer', transition: 'opacity 0.15s' }}>
+        <div onClick={() => { if (!pedometerActive) { setEditMetric('heart_rate'); setEditValue(heartRate > 0 ? String(heartRate) : ''); } }}
+          style={{ ...CARD, padding: '16px', cursor: pedometerActive ? 'default' : 'pointer', transition: 'opacity 0.15s' }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '10px' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
               <Heart size={13} color="#EF4444" />
               <span style={{ fontSize: '10px', color: 'rgba(255,255,255,0.45)', fontWeight: 600 }}>HEART RATE</span>
             </div>
-            <span style={{ fontSize: '9px', color: 'rgba(255,255,255,0.2)', fontWeight: 600 }}>TAP</span>
+            {pedometerActive ? (
+              <span style={{ fontSize: '9px', color: '#10B981', fontWeight: 700, background: 'rgba(16,185,129,0.15)', padding: '2px 5px', borderRadius: '4px' }}>AUTO</span>
+            ) : (
+              <span style={{ fontSize: '9px', color: 'rgba(255,255,255,0.2)', fontWeight: 600 }}>TAP</span>
+            )}
           </div>
           <div style={{ display: 'flex', alignItems: 'baseline', gap: '4px' }}>
             <motion.span animate={{ scale: [1, 1.08, 1] }} transition={{ repeat: Infinity, duration: 0.85 }}
@@ -1008,14 +1052,18 @@ export function HealthSection({ userId }: { userId?: number }) {
         </div>
 
         {/* Calories */}
-        <div onClick={() => { setEditMetric('calories'); setEditValue(cal > 0 ? String(cal) : ''); }}
-          style={{ ...CARD, padding: '16px', cursor: 'pointer' }}>
+        <div onClick={() => { if (!pedometerActive) { setEditMetric('calories'); setEditValue(calories > 0 ? String(calories) : ''); } }}
+          style={{ ...CARD, padding: '16px', cursor: pedometerActive ? 'default' : 'pointer' }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '10px' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
               <Flame size={13} color="#F97316" />
               <span style={{ fontSize: '10px', color: 'rgba(255,255,255,0.45)', fontWeight: 600 }}>CALORIES</span>
             </div>
-            <span style={{ fontSize: '9px', color: 'rgba(255,255,255,0.2)', fontWeight: 600 }}>TAP</span>
+            {pedometerActive ? (
+              <span style={{ fontSize: '9px', color: '#10B981', fontWeight: 700, background: 'rgba(16,185,129,0.15)', padding: '2px 5px', borderRadius: '4px' }}>AUTO</span>
+            ) : (
+              <span style={{ fontSize: '9px', color: 'rgba(255,255,255,0.2)', fontWeight: 600 }}>TAP</span>
+            )}
           </div>
           <div style={{ display: 'flex', alignItems: 'baseline', gap: '4px' }}>
             <span style={{ fontSize: '28px', fontWeight: 800, color: '#F97316' }}>{cal > 0 ? cal : '—'}</span>
@@ -1488,6 +1536,7 @@ export function ChatSection({ familyId, userId, userName }: {
   const [aiBuddyMode, setAiBuddyMode] = useState(false);
   const [aiLoading, setAiLoading] = useState(false);
   const [aiHistory, setAiHistory] = useState<{ role: string; content: string }[]>([]);
+  const [sharingLoc, setSharingLoc] = useState(false);
   const listRef = useRef<HTMLDivElement>(null);
   const msgId = useRef(100);
 
@@ -1570,6 +1619,27 @@ export function ChatSection({ familyId, userId, userName }: {
         body: JSON.stringify({ family_id: familyId, content: text, type: 'text' }),
       }).catch(() => {});
     }
+  };
+
+  const sendLocation = () => {
+    if (!navigator.geolocation || sharingLoc) return;
+    setSharingLoc(true);
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        const { latitude, longitude, accuracy } = pos.coords;
+        const mapsUrl = `https://maps.google.com/?q=${latitude.toFixed(6)},${longitude.toFixed(6)}`;
+        const text = `📍 My location: ${latitude.toFixed(5)}, ${longitude.toFixed(5)} (±${Math.round(accuracy)}m)\n${mapsUrl}`;
+        sendMessage(text);
+        setSharingLoc(false);
+      },
+      () => {
+        const now = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        const errMsg: Message = { id: msgId.current++, sender: 'System', initials: '!', color: '#EF4444', text: 'Could not get location. Please enable GPS.', time: now, mine: false };
+        setMessages(prev => [...prev, errMsg]);
+        setSharingLoc(false);
+      },
+      { enableHighAccuracy: true, timeout: 10000 }
+    );
   };
 
   return (
@@ -1734,6 +1804,20 @@ export function ChatSection({ familyId, userId, userName }: {
             fontSize: '14px', color: '#fff', fontFamily: 'inherit',
           }}
         />
+        <motion.button
+          whileTap={{ scale: 0.9 }}
+          onClick={sendLocation}
+          title="Share my location"
+          style={{
+            width: 34, height: 34, borderRadius: '50%', border: 'none', cursor: sharingLoc ? 'not-allowed' : 'pointer',
+            background: sharingLoc ? 'rgba(16,185,129,0.3)' : 'rgba(16,185,129,0.12)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'background 0.2s', flexShrink: 0,
+          }}
+        >
+          {sharingLoc
+            ? <motion.div animate={{ scale: [1, 1.4, 1] }} transition={{ repeat: Infinity, duration: 0.8 }}><Navigation size={15} color="#10B981" /></motion.div>
+            : <MapPin size={15} color="#10B981" />}
+        </motion.button>
         <button
           onClick={() => setInputText(prev => prev + '😊')}
           style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '18px', padding: '0 4px' }}

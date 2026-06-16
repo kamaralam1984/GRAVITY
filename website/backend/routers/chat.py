@@ -52,6 +52,7 @@ def get_messages(
             "id": m.id,
             "content": m.content,
             "type": m.type,
+            "sender_id": m.sender_id,
             "sender_name": sender.name if sender else "Unknown",
             "sent_at": m.sent_at.isoformat() if m.sent_at else None,
             "is_reported": m.is_reported,

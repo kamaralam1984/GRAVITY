@@ -148,14 +148,14 @@ export default function ChildMonitorPanel({ child, famId, onClose }: Props) {
         {/* Connection status */}
         {!wsReady && (
           <div style={{ background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.3)', borderRadius: 12, padding: '10px 14px', marginBottom: 16, color: '#EF4444', fontSize: 13 }}>
-            ⚠️ Child device se connection nahi hai — child Gravity app open kare
+            ⚠️ No connection to child device — child must have Gravity app open
           </div>
         )}
 
         {/* Control Buttons */}
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 12, marginBottom: 20 }}>
           {[
-            { mode: 'mic' as const, icon: <Mic size={22} />, label: 'Mic Suno', color: '#10B981' },
+            { mode: 'mic' as const, icon: <Mic size={22} />, label: 'Listen Mic', color: '#10B981' },
             { mode: 'camera' as const, icon: <Camera size={22} />, label: 'Camera', color: '#3B82F6' },
             { mode: 'screen' as const, icon: <Monitor size={22} />, label: 'Screen', color: '#8B5CF6' },
           ].map(({ mode, icon, label, color }) => (
@@ -199,8 +199,8 @@ export default function ChildMonitorPanel({ child, famId, onClose }: Props) {
           <div style={{ background: 'rgba(16,185,129,0.1)', border: '1px solid rgba(16,185,129,0.3)', borderRadius: 12, padding: '14px 16px', marginBottom: 16, display: 'flex', alignItems: 'center', gap: 12 }}>
             <Mic size={20} color="#10B981" />
             <div>
-              <div style={{ color: '#10B981', fontWeight: 600, fontSize: 14 }}>Mic Sun raha hai</div>
-              <div style={{ color: 'rgba(255,255,255,0.4)', fontSize: 12 }}>Child ki awaz aa rahi hai — Stop karne ke liye button dabao</div>
+              <div style={{ color: '#10B981', fontWeight: 600, fontSize: 14 }}>Listening to mic</div>
+              <div style={{ color: 'rgba(255,255,255,0.4)', fontSize: 12 }}>Child audio is streaming — press Stop to end</div>
             </div>
           </div>
         )}
@@ -220,7 +220,7 @@ export default function ChildMonitorPanel({ child, famId, onClose }: Props) {
             <div style={{ padding: '0 16px 16px', maxHeight: 300, overflowY: 'auto' }}>
               {logs.length === 0 ? (
                 <div style={{ color: 'rgba(255,255,255,0.3)', fontSize: 13, textAlign: 'center', padding: '20px 0' }}>
-                  Abhi koi activity log nahi hai
+                  No activity logs yet
                 </div>
               ) : logs.map((log, i) => (
                 <div key={i} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 0', borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
