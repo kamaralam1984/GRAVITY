@@ -78,7 +78,7 @@ function formatTimeAgo(iso: string): string {
 
 function getTransportMode(speed: number | null): { emoji: string; label: string; color: string } {
   if (speed === null || speed === 0) return { emoji: '—', label: '—', color: 'rgba(255,255,255,0.4)' };
-  if (speed <= 7) return { emoji: '🚶', label: 'Paidal', color: '#10B981' };
+  if (speed <= 7) return { emoji: '🚶', label: 'Walking', color: '#10B981' };
   if (speed <= 15) return { emoji: '🚴', label: 'Running/Cycling', color: '#3B82F6' };
   if (speed <= 40) return { emoji: '🚗', label: 'Vehicle', color: '#F59E0B' };
   return { emoji: '🚌', label: 'Fast Vehicle', color: '#EF4444' };
