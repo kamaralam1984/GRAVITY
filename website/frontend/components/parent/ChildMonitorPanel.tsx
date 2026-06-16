@@ -19,6 +19,7 @@ export default function ChildMonitorPanel({ child, famId, onClose }: Props) {
   const audioRef = useRef<HTMLAudioElement | null>(null)
   const videoRef = useRef<HTMLVideoElement | null>(null)
   const [activeMode, setActiveMode] = useState<'mic' | 'camera' | 'screen' | null>(null)
+  const activeModeRef = useRef<'mic' | 'camera' | 'screen' | null>(null)
   const [logs, setLogs] = useState<LogEntry[]>([])
   const [showLogs, setShowLogs] = useState(false)
   const [wsReady, setWsReady] = useState(false)
@@ -64,7 +65,7 @@ export default function ChildMonitorPanel({ child, famId, onClose }: Props) {
 
     pc.ontrack = (e) => {
       const stream = e.streams[0]
-      if (activeMode === 'mic') {
+      if (activeModeRef.current === 'mic') {
         if (audioRef.current) { audioRef.current.srcObject = stream; audioRef.current.play().catch(() => {}) }
       } else {
         if (videoRef.current) { videoRef.current.srcObject = stream; videoRef.current.play().catch(() => {}) }
@@ -80,6 +81,7 @@ export default function ChildMonitorPanel({ child, famId, onClose }: Props) {
   function sendRequest(type: 'mic' | 'camera' | 'screen') {
     if (!wsRef.current || wsRef.current.readyState !== 1) return
     stopMonitoring()
+    activeModeRef.current = type
     setActiveMode(type)
     wsRef.current.send(JSON.stringify({
       type: `request_${type}`,
@@ -96,6 +98,7 @@ export default function ChildMonitorPanel({ child, famId, onClose }: Props) {
     pcRef.current?.close(); pcRef.current = null
     if (audioRef.current) { audioRef.current.srcObject = null }
     if (videoRef.current) { videoRef.current.srcObject = null }
+    activeModeRef.current = null
     setActiveMode(null)
   }
 
@@ -179,7 +182,7 @@ export default function ChildMonitorPanel({ child, famId, onClose }: Props) {
         </div>
 
         {/* Audio element (hidden) */}
-        <audio ref={audioRef} style={{ display: 'none' }} />
+        <audio ref={audioRef} autoPlay playsInline style={{ display: 'none' }} />
 
         {/* Video display */}
         {(activeMode === 'camera' || activeMode === 'screen') && (

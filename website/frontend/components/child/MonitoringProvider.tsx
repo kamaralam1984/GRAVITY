@@ -128,7 +128,7 @@ export default function MonitoringProvider({ famId }: Props) {
               Screen Share Request
             </div>
             <div style={{ color: 'rgba(255,255,255,0.6)', fontSize: 13, marginBottom: 24 }}>
-              <strong style={{ color: '#D4A853' }}>{screenRequest.from}</strong> aapki screen dekhna chahte hain
+              <strong style={{ color: '#D4A853' }}>{screenRequest.from}</strong> wants to view your screen
             </div>
             <div style={{ display: 'flex', gap: 12 }}>
               <button onClick={() => setScreenRequest(null)}
