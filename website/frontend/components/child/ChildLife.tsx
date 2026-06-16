@@ -654,10 +654,19 @@ export function HealthSection({ userId }: { userId?: number }) {
   const [showGoalEdit, setShowGoalEdit] = useState(false);
   const [goalInput, setGoalInput] = useState('');
 
-  // Pedometer (DeviceMotion API)
-  const [pedometerActive, setPedometerActive] = useState(false);
-  const [liveSteps, setLiveSteps] = useState(0);
-  const pedometerRef = useRef({ steps: 0, lastMag: 0, lastSave: Date.now(), baseSteps: 0 });
+  // Pedometer (DeviceMotion API) — persisted across tab switches
+  const [pedometerActive, setPedometerActive] = useState(() => {
+    try { return localStorage.getItem('gv_pedometer_active') === '1'; } catch { return false; }
+  });
+  const [liveSteps, setLiveSteps] = useState(() => {
+    try { return parseInt(localStorage.getItem('gv_pedometer_live_steps') || '0') || 0; } catch { return 0; }
+  });
+  const pedometerRef = useRef({
+    steps: (() => { try { return parseInt(localStorage.getItem('gv_pedometer_live_steps') || '0') || 0; } catch { return 0; } })(),
+    lastMag: 0,
+    lastSave: Date.now(),
+    baseSteps: 0,
+  });
 
   // Inline quick-edit per metric
   const [editMetric, setEditMetric] = useState<string | null>(null);
@@ -737,7 +746,11 @@ export function HealthSection({ userId }: { userId?: number }) {
       const mag = Math.sqrt((acc.x || 0) ** 2 + (acc.y || 0) ** 2 + (acc.z || 0) ** 2);
       const delta = Math.abs(mag - ref.lastMag);
       ref.lastMag = mag;
-      if (delta > 2.8) { ref.steps += 1; setLiveSteps(ref.steps); }
+      if (delta > 2.8) {
+        ref.steps += 1;
+        setLiveSteps(ref.steps);
+        localStorage.setItem('gv_pedometer_live_steps', String(ref.steps));
+      }
       if (Date.now() - ref.lastSave > 30000 && ref.steps > 0) {
         ref.lastSave = Date.now();
         const total = ref.baseSteps + ref.steps;
@@ -754,17 +767,29 @@ export function HealthSection({ userId }: { userId?: number }) {
     return () => window.removeEventListener('devicemotion', handleMotion);
   }, [pedometerActive]);
 
-  async function startPedometer() {
+  async function startPedometer(resume = false) {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const DME = DeviceMotionEvent as any;
     if (typeof DME.requestPermission === 'function') {
       try {
         const perm = await DME.requestPermission();
-        if (perm !== 'granted') return;
-      } catch { return; }
+        if (perm !== 'granted') { localStorage.removeItem('gv_pedometer_active'); return; }
+      } catch { localStorage.removeItem('gv_pedometer_active'); return; }
     }
-    pedometerRef.current.steps = 0; setLiveSteps(0); setPedometerActive(true);
+    if (!resume) {
+      pedometerRef.current.steps = 0;
+      setLiveSteps(0);
+      localStorage.setItem('gv_pedometer_live_steps', '0');
+    }
+    localStorage.setItem('gv_pedometer_active', '1');
+    setPedometerActive(true);
   }
+
+  // Auto-resume pedometer on mount if it was running before
+  useEffect(() => {
+    if (pedometerActive) { startPedometer(true); }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   async function saveMetric(field: string, rawVal: string) {
     const num = field === 'sleep_hours' ? parseFloat(rawVal) : parseInt(rawVal);
@@ -866,7 +891,7 @@ export function HealthSection({ userId }: { userId?: number }) {
                 </div>
               </div>
             </div>
-            <button onClick={() => { setPedometerActive(false); if (liveSteps > 0) saveMetric('steps', String(pedometerRef.current.baseSteps + liveSteps)); }}
+            <button onClick={() => { setPedometerActive(false); localStorage.removeItem('gv_pedometer_active'); localStorage.removeItem('gv_pedometer_live_steps'); if (liveSteps > 0) saveMetric('steps', String(pedometerRef.current.baseSteps + liveSteps)); }}
               style={{ background: 'rgba(239,68,68,0.15)', border: '1px solid rgba(239,68,68,0.4)', borderRadius: '10px', padding: '8px 14px', color: '#EF4444', cursor: 'pointer', fontSize: '12px', fontWeight: 700 }}>
               Stop & Save
             </button>
