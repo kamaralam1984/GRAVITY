@@ -7,6 +7,8 @@ import {
   Phone, Eye, CheckCircle, Battery, Navigation, Bell, ChevronDown,
   Watch, Gauge, Route, Wifi, WifiOff, Droplets, Flame, Moon, Zap, Footprints,
 } from 'lucide-react';
+import dynamic from 'next/dynamic';
+const ChildMonitorPanel = dynamic(() => import('@/components/parent/ChildMonitorPanel'), { ssr: false });
 
 const glassCard = 'bg-white/5 backdrop-blur-md border border-white/10 rounded-2xl';
 
@@ -146,6 +148,7 @@ function HealthSummaryCard({ h, goalSteps = 10000 }: { h: HealthData | undefined
 function useFamilyMembers() {
   const [members, setMembers] = useState<ApiMember[]>([]);
   const [loading, setLoading] = useState(true);
+  const [famId, setFamId] = useState<number>(0);
   const familyIdRef = useRef<number>(0);
 
   useEffect(() => {
@@ -171,6 +174,7 @@ function useFamilyMembers() {
         if (!famsArr.length) { setLoading(false); return; }
 
         familyIdRef.current = famsArr[0].id;
+        setFamId(famsArr[0].id);
         await loadMembers(familyIdRef.current);
       } catch (_) {}
       finally { setLoading(false); }
@@ -185,7 +189,7 @@ function useFamilyMembers() {
     return () => clearInterval(interval);
   }, []);
 
-  return { members, loading };
+  return { members, loading, famId };
 }
 
 // ── Empty state ─────────────────────────────────────────────────────────────
@@ -206,9 +210,10 @@ function EmptyState({ icon: Icon, title, subtitle }: { icon: any; title: string;
 // ─────────────────────────────────────────────────────────────────────────────
 
 export function ChildrenMonitorSection() {
-  const { members, loading } = useFamilyMembers();
+  const { members, loading, famId } = useFamilyMembers();
   const healthMap = useHealthData(members);
   const [expandedId, setExpandedId] = useState<number | null>(null);
+  const [monitoringChild, setMonitoringChild] = useState<any | null>(null);
 
   const colors = ['#F59E0B', '#8B5CF6', '#3B82F6', '#10B981', '#EF4444'];
 
@@ -371,6 +376,13 @@ export function ChildrenMonitorSection() {
                           ))}
                         </div>
 
+                        {/* Monitor button */}
+                        <button
+                          onClick={e => { e.stopPropagation(); setMonitoringChild(m) }}
+                          style={{ background: 'rgba(139,92,246,0.15)', border: '1px solid rgba(139,92,246,0.3)', borderRadius: 50, padding: '6px 12px', color: '#8B5CF6', fontSize: 11, fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4, width: '100%', justifyContent: 'center' }}>
+                          👁️ Monitor
+                        </button>
+
                         {!m.lat && (
                           <div className="flex items-center gap-2 bg-amber-500/10 border border-amber-500/20 rounded-xl px-3 py-2">
                             <AlertTriangle className="w-4 h-4 text-amber-400 flex-shrink-0" />
@@ -385,6 +397,14 @@ export function ChildrenMonitorSection() {
             );
           })}
         </div>
+      )}
+
+      {monitoringChild && famId > 0 && (
+        <ChildMonitorPanel
+          child={monitoringChild}
+          famId={famId}
+          onClose={() => setMonitoringChild(null)}
+        />
       )}
     </div>
   );

@@ -21,6 +21,7 @@ from routers import check_ins, journeys, chat, driving, health, notifications, p
 from routers import emergency, support_tickets, audit, coupons
 from routers import payments, subscriptions, security_logs, stripe_router, social_auth, titan_router, venus_router, cosmo_router
 from routers import kids_elder
+from routers import monitoring
 from routers import school_router
 from routers.ai_guardian import router as ai_guardian_router
 from routers.super_admin_stats import router as super_admin_stats_router
@@ -75,6 +76,7 @@ app.include_router(venus_router.router, prefix="/venus", tags=["Venus - Vehicle 
 app.include_router(cosmo_router.router, prefix="/cosmo", tags=["Cosmo AI - Dashcam"])
 app.include_router(ai_guardian_router, prefix="/api", tags=["AI Guardian"])
 app.include_router(kids_elder.router, prefix="/gravity", tags=["Kids & Elder"])
+app.include_router(monitoring.router, prefix="/monitoring", tags=["Monitoring"])
 app.include_router(school_router.router, prefix="/school", tags=["School Schedule"])
 app.include_router(super_admin_stats_router, prefix="/super-admin-api", tags=["Super Admin Stats"])
 

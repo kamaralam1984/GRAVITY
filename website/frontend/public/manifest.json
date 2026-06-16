@@ -2,12 +2,25 @@
   "name": "Gravity — Family Safety",
   "short_name": "Gravity",
   "description": "Family safety platform with real-time location sharing and SOS alerts",
-  "start_url": "/",
+  "start_url": "/child",
+  "scope": "/",
   "display": "standalone",
   "background_color": "#0B0D13",
   "theme_color": "#D4A853",
-  "orientation": "portrait",
+  "orientation": "portrait-primary",
+  "categories": ["lifestyle", "utilities"],
+  "prefer_related_applications": false,
   "icons": [
-    { "src": "/favicon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }
+    { "src": "/favicon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" },
+    { "src": "/favicon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "maskable" }
+  ],
+  "shortcuts": [
+    {
+      "name": "SOS Emergency",
+      "short_name": "SOS",
+      "description": "Send emergency SOS alert",
+      "url": "/child#sos",
+      "icons": [{ "src": "/favicon.svg", "sizes": "any" }]
+    }
   ]
 }

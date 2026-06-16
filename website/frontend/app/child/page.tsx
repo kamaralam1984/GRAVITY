@@ -24,6 +24,9 @@ import { useRouter } from 'next/navigation'
 import dynamic from 'next/dynamic'
 const ChildHome = dynamic(() => import('@/components/child/ChildHome'), { ssr: false })
 import { SOSSection, LocationSection, FamilyRadarSection } from '@/components/child/ChildSOS'
+const FloatingSOS = dynamic(() => import('@/components/child/FloatingSOS'), { ssr: false })
+const PWAInstallBanner = dynamic(() => import('@/components/child/PWAInstallBanner'), { ssr: false })
+const MonitoringProvider = dynamic(() => import('@/components/child/MonitoringProvider'), { ssr: false })
 import {
   SchoolSection,
   HealthSection,
@@ -119,6 +122,8 @@ import { getUser, getToken, type AuthUser } from '@/lib/auth'
 export default function ChildPage() {
   const router = useRouter()
   const [activeTab, setActiveTab] = useState<Tab>('home')
+  const tabTimeRef = useRef<number>(Date.now())
+  const lastTabRef = useRef<string>('home')
   const [drawerOpen, setDrawerOpen] = useState(false)
   const [notifCount] = useState(3)
   const [prevTab, setPrevTab] = useState<Tab>('home')
@@ -126,6 +131,7 @@ export default function ChildPage() {
   const [battery, setBattery] = useState<number>(0)
   const [familyOnline, setFamilyOnline] = useState<number>(0)
   const [familyId, setFamilyId] = useState<number | undefined>()
+  const [famId, setFamId] = useState<number | null>(null)
   const [steps, setSteps] = useState(0)
   const [dataLoaded, setDataLoaded] = useState(false)
   const [joinCode, setJoinCode] = useState('')
@@ -180,6 +186,7 @@ export default function ChildPage() {
           if (families.length > 0) {
             const fid = families[0].id
             setFamilyId(fid)
+            if (families[0]?.id) setFamId(families[0].id)
             // Use /families/members for online count — counts heartbeat-active web users too
             const membersRes = await fetch(`/families/${fid}/members`, { headers })
             if (membersRes.ok) {
@@ -222,6 +229,10 @@ export default function ChildPage() {
       geoWatchId = navigator.geolocation.watchPosition(sendLocation, () => {}, { enableHighAccuracy: true, maximumAge: 30000 })
     }
 
+    if (typeof window !== 'undefined' && 'serviceWorker' in navigator) {
+      navigator.serviceWorker.register('/sw.js').catch(() => {})
+    }
+
     return () => {
       clearInterval(hbInterval)
       if (geoWatchId !== null) navigator.geolocation.clearWatch(geoWatchId)
@@ -248,7 +259,22 @@ export default function ChildPage() {
     } finally { setJoinLoading(false) }
   }
 
+  async function logTabActivity(newTab: string) {
+    const duration = Math.round((Date.now() - tabTimeRef.current) / 1000)
+    const token = getToken()
+    if (token && duration > 5) {
+      fetch('/monitoring/activity', {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ section: lastTabRef.current, duration_seconds: duration, family_id: famId ?? 0 })
+      }).catch(() => {})
+    }
+    tabTimeRef.current = Date.now()
+    lastTabRef.current = newTab
+  }
+
   function handleTabChange(tab: Tab) {
+    logTabActivity(tab)
     setPrevTab(activeTab)
     setActiveTab(tab)
     setDrawerOpen(false)
@@ -934,6 +960,10 @@ export default function ChildPage() {
           </>
         )}
       </AnimatePresence>
+
+      <MonitoringProvider famId={famId} />
+      <PWAInstallBanner />
+      <FloatingSOS famId={famId} childName={authUser?.name ?? 'Child'} />
     </>
   )
 }
