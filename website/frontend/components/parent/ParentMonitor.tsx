@@ -6,6 +6,7 @@ import {
   Users, Shield, MapPin, Heart, Activity, AlertTriangle, Car,
   Phone, Eye, CheckCircle, Battery, Navigation, Bell, ChevronDown,
   Watch, Gauge, Route, Wifi, WifiOff, Droplets, Flame, Moon, Zap, Footprints,
+  Mic, Camera, Monitor,
 } from 'lucide-react';
 import dynamic from 'next/dynamic';
 const ChildMonitorPanel = dynamic(() => import('@/components/parent/ChildMonitorPanel'), { ssr: false });
@@ -301,6 +302,22 @@ export function ChildrenMonitorSection() {
                         {locationLabel}
                       </span>
                     </div>
+                  </div>
+                  <div className="flex items-center gap-1.5" onClick={e => e.stopPropagation()}>
+                    <button
+                      title="Listen to mic"
+                      onClick={() => setMonitoringChild(m)}
+                      style={{ width: 34, height: 34, borderRadius: '50%', border: '1px solid rgba(16,185,129,0.4)', background: 'rgba(16,185,129,0.12)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}
+                    >
+                      <Mic size={14} color="#10B981" />
+                    </button>
+                    <button
+                      title="View camera / screen"
+                      onClick={() => setMonitoringChild(m)}
+                      style={{ width: 34, height: 34, borderRadius: '50%', border: '1px solid rgba(59,130,246,0.4)', background: 'rgba(59,130,246,0.12)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}
+                    >
+                      <Camera size={14} color="#3B82F6" />
+                    </button>
                   </div>
                   <motion.div animate={{ rotate: isExpanded ? 180 : 0 }} transition={{ duration: 0.2 }}>
                     <ChevronDown className="w-4 h-4 text-white/40" />
