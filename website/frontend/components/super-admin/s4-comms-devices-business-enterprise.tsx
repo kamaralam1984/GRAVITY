@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import {
   Mail, MessageSquare, Megaphone, Watch, MapPin, Camera,
   Home, Activity, FileText, BarChart2, Globe, School,
@@ -1110,19 +1110,32 @@ export function EnterpriseAnalyticsSection() {
   )
 }
 
-const chatRows = [
-  { family: 'Sharma Family', members: 5, messages: 1284, media: 48, lastActive: '2 min ago', flagged: 0 },
-  { family: 'Singh Family', members: 4, messages: 892, media: 21, lastActive: '15 min ago', flagged: 1 },
-  { family: 'Kumar Family', members: 6, messages: 2341, media: 87, lastActive: '1 hr ago', flagged: 0 },
-  { family: 'Patel Family', members: 3, messages: 441, media: 9, lastActive: '3 hr ago', flagged: 0 },
-  { family: 'Yadav Family', members: 7, messages: 3120, media: 134, lastActive: '30 min ago', flagged: 2 },
-  { family: 'Joshi Family', members: 4, messages: 720, media: 18, lastActive: '5 hr ago', flagged: 0 },
-  { family: 'Nair Family', members: 5, messages: 1890, media: 62, lastActive: '45 min ago', flagged: 0 },
-  { family: 'Reddy Family', members: 4, messages: 560, media: 14, lastActive: '8 hr ago', flagged: 1 },
-]
-
 export function FamilyChatSection() {
   const [search, setSearch] = useState('')
+  const [chatRows, setChatRows] = useState<any[]>([])
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    const token = typeof window !== 'undefined' ? localStorage.getItem('gv_token') : null
+    fetch('/admin-api/messages-summary?limit=50&skip=0', {
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
+    })
+      .then(r => r.json())
+      .then(data => {
+        const arr = Array.isArray(data) ? data : []
+        setChatRows(arr.map((item: any) => ({
+          family: item.family_name ?? '—',
+          members: '—',
+          messages: item.message_count ?? 0,
+          media: item.media_count ?? 0,
+          lastActive: item.last_sent ?? '—',
+          flagged: item.reported_count ?? 0,
+        })))
+      })
+      .catch(() => setChatRows([]))
+      .finally(() => setLoading(false))
+  }, [])
+
   const rows = chatRows.filter(r => r.family.toLowerCase().includes(search.toLowerCase()))
   return (
     <div>
@@ -1150,6 +1163,8 @@ export function FamilyChatSection() {
             <Plus size={14} /> Export
           </button>
         </div>
+        {loading && <div style={{ padding: '24px', textAlign: 'center', color: 'var(--text-muted)', fontSize: 13 }}>Loading...</div>}
+        {!loading && rows.length === 0 && <div style={{ padding: '24px', textAlign: 'center', color: 'var(--text-muted)', fontSize: 13 }}>No data yet</div>}
         <div style={{ overflowX: 'auto' as const }}>
           <table style={{ width: '100%', borderCollapse: 'collapse' as const, fontSize: 13 }}>
             <thead>

@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import {
   TrendingUp, TrendingDown, AlertTriangle, Shield, Brain,
@@ -141,34 +141,62 @@ const scoreRanges = [
   { range: '50-60',  label: '50–60 (Poor)',        color: '#EF4444',     count: 4230  },
 ]
 
-const driverScoreData = [
-  { name: 'Priya Sharma',   family: 'Sharma Family',  score: 94, trips: 312, speed: 2,  brake: 1,  phone: 0,  trend: 'up'   },
-  { name: 'Arjun Mehta',    family: 'Mehta Family',   score: 81, trips: 198, speed: 8,  brake: 5,  phone: 3,  trend: 'up'   },
-  { name: 'Kavya Reddy',    family: 'Reddy Family',   score: 76, trips: 245, speed: 14, brake: 9,  phone: 6,  trend: 'down' },
-  { name: 'Rahul Gupta',    family: 'Gupta Family',   score: 62, trips: 167, speed: 22, brake: 17, phone: 11, trend: 'down' },
-  { name: 'Sneha Iyer',     family: 'Iyer Family',    score: 88, trips: 289, speed: 5,  brake: 3,  phone: 1,  trend: 'up'   },
-  { name: 'Vikram Nair',    family: 'Nair Family',    score: 47, trips: 134, speed: 31, brake: 24, phone: 18, trend: 'down' },
-  { name: 'Anita Joshi',    family: 'Joshi Family',   score: 73, trips: 221, speed: 11, brake: 7,  phone: 4,  trend: 'up'   },
-  { name: 'Dev Patel',      family: 'Patel Family',   score: 91, trips: 356, speed: 1,  brake: 2,  phone: 0,  trend: 'up'   },
-  { name: 'Meera Kapoor',   family: 'Kapoor Family',  score: 58, trips: 143, speed: 26, brake: 19, phone: 14, trend: 'down' },
-  { name: 'Rohan Bansal',   family: 'Bansal Family',  score: 85, trips: 267, speed: 6,  brake: 4,  phone: 2,  trend: 'up'   },
-]
-
 export function DriverScoresSection() {
   const [search, setSearch] = useState('')
   const [filter, setFilter] = useState('all')
+  const [tableRows, setTableRows] = useState<any[]>([])
+  const [tableLoading, setTableLoading] = useState(true)
   const maxCount = Math.max(...scoreRanges.map(r => r.count))
 
-  const filtered = driverScoreData.filter(d => {
+  useEffect(() => {
+    const token = typeof window !== 'undefined' ? localStorage.getItem('gv_token') : null
+    fetch('/admin-api/driving-events-list?limit=50&skip=0', {
+      headers: { Authorization: 'Bearer ' + token },
+    })
+      .then(r => r.json())
+      .then((data: any[]) => {
+        // Build one row per user: most recent event + event count
+        const byUser: Record<string, any> = {}
+        for (const item of data) {
+          const name = item.user_name ?? 'Unknown'
+          if (!byUser[name]) {
+            byUser[name] = { name, eventCount: 0, latestEvent: null, latestTime: null }
+          }
+          byUser[name].eventCount += 1
+          const t = item.occurred_at ? new Date(item.occurred_at).getTime() : 0
+          if (!byUser[name].latestTime || t > byUser[name].latestTime) {
+            byUser[name].latestTime = t
+            byUser[name].latestEvent = item
+          }
+        }
+        const rows = Object.values(byUser).map((u: any) => ({
+          name: u.name,
+          family: '—',
+          score: '—',
+          trips: u.eventCount,
+          speed: '—',
+          brake: '—',
+          phone: '—',
+          trend: null,
+          lastEventType: u.latestEvent?.type ?? '—',
+          lastEventTime: u.latestEvent?.occurred_at
+            ? u.latestEvent.occurred_at.slice(0, 19).replace('T', ' ')
+            : '—',
+        }))
+        setTableRows(rows)
+      })
+      .catch(() => setTableRows([]))
+      .finally(() => setTableLoading(false))
+  }, [])
+
+  const filtered = tableRows.filter(d => {
     const matchSearch = d.name.toLowerCase().includes(search.toLowerCase()) || d.family.toLowerCase().includes(search.toLowerCase())
     if (!matchSearch) return false
-    if (filter === 'excellent') return d.score >= 90
-    if (filter === 'good')      return d.score >= 70 && d.score < 90
-    if (filter === 'poor')      return d.score < 60
+    if (filter === 'excellent') return false  // score unknown from this API
+    if (filter === 'good')      return false
+    if (filter === 'poor')      return false
     return true
   })
-
-  const scoreColor = (s: number) => s >= 90 ? 'var(--gold)' : s >= 80 ? '#10B981' : s >= 70 ? '#F59E0B' : s >= 60 ? '#F97316' : '#EF4444'
 
   return (
     <div>
@@ -213,53 +241,47 @@ export function DriverScoresSection() {
             onChange={e => setFilter(e.target.value)}
             style={{ background: 'var(--bg-surface2)', border: '1px solid var(--border)', borderRadius: 6, padding: '6px 12px', color: 'var(--text-primary)', fontSize: 13, outline: 'none' }}
           >
-            <option value="all">All Scores</option>
-            <option value="excellent">Excellent ≥90</option>
-            <option value="good">Good 70–89</option>
-            <option value="poor">Poor &lt;60</option>
+            <option value="all">All Drivers</option>
           </select>
         </div>
-        <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-          <thead>
-            <tr style={{ borderBottom: '1px solid var(--border)', background: 'var(--bg-surface2)' }}>
-              <Th>Driver</Th><Th>Family</Th><Th>Score</Th><Th>Trips</Th>
-              <Th>Speed Events</Th><Th>Hard Braking</Th><Th>Phone Use</Th><Th>Trend</Th><Th>Actions</Th>
-            </tr>
-          </thead>
-          <tbody>
-            {filtered.map((d, i) => (
-              <motion.tr
-                key={i}
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ delay: i * 0.03 }}
-                style={{ borderBottom: '1px solid var(--border)' }}
-              >
-                <Td><div style={{ fontWeight: 600 }}>{d.name}</div></Td>
-                <Td><span style={{ color: 'var(--text-muted)' }}>{d.family}</span></Td>
-                <Td>
-                  <span style={{ fontSize: 16, fontWeight: 700, color: scoreColor(d.score) }}>{d.score}</span>
-                  <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>/100</span>
-                </Td>
-                <Td>{d.trips}</Td>
-                <Td><span style={{ color: d.speed > 10 ? '#EF4444' : 'var(--text-primary)' }}>{d.speed}</span></Td>
-                <Td><span style={{ color: d.brake > 10 ? '#F59E0B' : 'var(--text-primary)' }}>{d.brake}</span></Td>
-                <Td><span style={{ color: d.phone > 5 ? '#EF4444' : 'var(--text-primary)' }}>{d.phone}</span></Td>
-                <Td>
-                  {d.trend === 'up'
-                    ? <ChevronUp size={16} color="#10B981" />
-                    : <ChevronDown size={16} color="#EF4444" />}
-                </Td>
-                <Td>
-                  <div style={{ display: 'flex', gap: 8 }}>
-                    {badge('View', '#3B82F6')}
-                    {badge('Coach', 'var(--gold)')}
-                  </div>
-                </Td>
-              </motion.tr>
-            ))}
-          </tbody>
-        </table>
+        {tableLoading ? (
+          <div style={{ padding: '32px 0', textAlign: 'center', color: 'var(--text-muted)', fontSize: 13 }}>Loading driver data...</div>
+        ) : filtered.length === 0 ? (
+          <div style={{ padding: '32px 0', textAlign: 'center', color: 'var(--text-muted)', fontSize: 13 }}>No driving events recorded yet</div>
+        ) : (
+          <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+            <thead>
+              <tr style={{ borderBottom: '1px solid var(--border)', background: 'var(--bg-surface2)' }}>
+                <Th>Driver</Th><Th>Family</Th><Th>Score</Th><Th>Events</Th>
+                <Th>Last Event</Th><Th>Last Event Time</Th><Th>Actions</Th>
+              </tr>
+            </thead>
+            <tbody>
+              {filtered.map((d, i) => (
+                <motion.tr
+                  key={i}
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ delay: i * 0.03 }}
+                  style={{ borderBottom: '1px solid var(--border)' }}
+                >
+                  <Td><div style={{ fontWeight: 600 }}>{d.name}</div></Td>
+                  <Td><span style={{ color: 'var(--text-muted)' }}>{d.family}</span></Td>
+                  <Td><span style={{ color: 'var(--text-muted)' }}>{d.score}</span></Td>
+                  <Td>{d.trips}</Td>
+                  <Td><span style={{ fontSize: 12 }}>{d.lastEventType}</span></Td>
+                  <Td><span style={{ color: 'var(--text-muted)', fontSize: 12 }}>{d.lastEventTime}</span></Td>
+                  <Td>
+                    <div style={{ display: 'flex', gap: 8 }}>
+                      {badge('View', '#3B82F6')}
+                      {badge('Coach', 'var(--gold)')}
+                    </div>
+                  </Td>
+                </motion.tr>
+              ))}
+            </tbody>
+          </table>
+        )}
       </div>
     </div>
   )
@@ -1396,20 +1418,36 @@ export function AIConfigSection() {
   )
 }
 
-const drivingEvents = [
-  { driver: 'Rahul Sharma', family: 'Sharma Family', event: 'Hard Braking', severity: 'High', speed: '82 km/h', time: '10:24 AM', location: 'MG Road, Bangalore', score: 72 },
-  { driver: 'Priya Singh', family: 'Singh Family', event: 'Speeding', severity: 'Critical', speed: '118 km/h', time: '09:11 AM', location: 'NH-48, Delhi', score: 54 },
-  { driver: 'Arun Kumar', family: 'Kumar Family', event: 'Phone Usage', severity: 'High', speed: '64 km/h', time: '08:45 AM', location: 'Link Road, Mumbai', score: 61 },
-  { driver: 'Meena Patel', family: 'Patel Family', event: 'Sharp Turn', severity: 'Medium', speed: '55 km/h', time: '11:32 AM', location: 'Ring Road, Surat', score: 79 },
-  { driver: 'Suresh Yadav', family: 'Yadav Family', event: 'Rapid Acceleration', severity: 'Medium', speed: '90 km/h', time: '07:58 AM', location: 'Bypass, Lucknow', score: 68 },
-  { driver: 'Anita Joshi', family: 'Joshi Family', event: 'Night Driving >2AM', severity: 'Low', speed: '48 km/h', time: '02:17 AM', location: 'City Road, Pune', score: 85 },
-  { driver: 'Vikram Nair', family: 'Nair Family', event: 'Speeding', severity: 'Critical', speed: '132 km/h', time: '06:33 AM', location: 'Outer Ring, Kochi', score: 45 },
-  { driver: 'Deepa Reddy', family: 'Reddy Family', event: 'Hard Braking', severity: 'High', speed: '76 km/h', time: '12:05 PM', location: 'IT Hub, Hyderabad', score: 70 },
-]
-
 export function DrivingEventsSection() {
   const [search, setSearch] = useState('')
   const [filter, setFilter] = useState('all')
+  const [drivingEvents, setDrivingEvents] = useState<any[]>([])
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    const token = typeof window !== 'undefined' ? localStorage.getItem('gv_token') : null
+    fetch('/admin-api/driving-events-list?limit=50&skip=0', {
+      headers: { Authorization: 'Bearer ' + token },
+    })
+      .then(r => r.json())
+      .then((data: any[]) => {
+        const mapped = data.map((item: any) => ({
+          driver: item.user_name ?? '—',
+          family: '—',
+          event: item.type ?? '—',
+          severity: item.severity ?? '—',
+          speed: item.speed != null ? `${item.speed} km/h` : '—',
+          time: item.occurred_at ? item.occurred_at.slice(0, 19).replace('T', ' ') : '—',
+          location: item.lat != null && item.lng != null ? `${item.lat}, ${item.lng}` : '—',
+          score: '—',
+          resolved: item.resolved,
+        }))
+        setDrivingEvents(mapped)
+      })
+      .catch(() => setDrivingEvents([]))
+      .finally(() => setLoading(false))
+  }, [])
+
   const sevColor = (s: string) => s === 'Critical' ? '#EF4444' : s === 'High' ? '#F97316' : s === 'Medium' ? '#F59E0B' : '#10B981'
 
   const rows = drivingEvents.filter(d =>
@@ -1441,33 +1479,37 @@ export function DrivingEventsSection() {
             <Download size={14} /> Export CSV
           </button>
         </div>
-        <div style={{ overflowX: 'auto' as const }}>
-          <table style={{ width: '100%', borderCollapse: 'collapse' as const, fontSize: 13 }}>
-            <thead>
-              <tr style={{ borderBottom: '1px solid var(--border)' }}>
-                {['Driver', 'Family', 'Event Type', 'Severity', 'Speed', 'Time', 'Location', 'Score'].map(h => (
-                  <th key={h} style={{ padding: '10px 12px', textAlign: 'left', color: 'var(--text-muted)', fontWeight: 600, fontSize: 12, whiteSpace: 'nowrap' as const }}>{h}</th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {rows.map((r, i) => (
-                <tr key={i} style={{ borderBottom: '1px solid var(--border)', background: i % 2 === 0 ? 'transparent' : 'var(--bg-surface2)' }}>
-                  <td style={{ padding: '10px 12px', fontWeight: 600, color: 'var(--text-primary)' }}>{r.driver}</td>
-                  <td style={{ padding: '10px 12px', color: 'var(--text-muted)' }}>{r.family}</td>
-                  <td style={{ padding: '10px 12px' }}><span style={{ display: 'flex', alignItems: 'center', gap: 4, color: 'var(--text-primary)' }}><Car size={12} />{r.event}</span></td>
-                  <td style={{ padding: '10px 12px' }}>{badge(r.severity, sevColor(r.severity))}</td>
-                  <td style={{ padding: '10px 12px', color: 'var(--text-primary)', fontWeight: 600 }}>{r.speed}</td>
-                  <td style={{ padding: '10px 12px', color: 'var(--text-muted)' }}>{r.time}</td>
-                  <td style={{ padding: '10px 12px', color: 'var(--text-muted)', maxWidth: 160 }}>{r.location}</td>
-                  <td style={{ padding: '10px 12px' }}>
-                    <span style={{ fontWeight: 700, color: r.score >= 80 ? '#10B981' : r.score >= 60 ? '#F59E0B' : '#EF4444' }}>{r.score}</span>
-                  </td>
+        {loading ? (
+          <div style={{ padding: '32px 0', textAlign: 'center', color: 'var(--text-muted)', fontSize: 13 }}>Loading driving events...</div>
+        ) : rows.length === 0 ? (
+          <div style={{ padding: '32px 0', textAlign: 'center', color: 'var(--text-muted)', fontSize: 13 }}>No driving events recorded yet</div>
+        ) : (
+          <div style={{ overflowX: 'auto' as const }}>
+            <table style={{ width: '100%', borderCollapse: 'collapse' as const, fontSize: 13 }}>
+              <thead>
+                <tr style={{ borderBottom: '1px solid var(--border)' }}>
+                  {['Driver', 'Family', 'Event Type', 'Severity', 'Speed', 'Time', 'Location', 'Score'].map(h => (
+                    <th key={h} style={{ padding: '10px 12px', textAlign: 'left', color: 'var(--text-muted)', fontWeight: 600, fontSize: 12, whiteSpace: 'nowrap' as const }}>{h}</th>
+                  ))}
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+              </thead>
+              <tbody>
+                {rows.map((r, i) => (
+                  <tr key={i} style={{ borderBottom: '1px solid var(--border)', background: i % 2 === 0 ? 'transparent' : 'var(--bg-surface2)' }}>
+                    <td style={{ padding: '10px 12px', fontWeight: 600, color: 'var(--text-primary)' }}>{r.driver}</td>
+                    <td style={{ padding: '10px 12px', color: 'var(--text-muted)' }}>{r.family}</td>
+                    <td style={{ padding: '10px 12px' }}><span style={{ display: 'flex', alignItems: 'center', gap: 4, color: 'var(--text-primary)' }}><Car size={12} />{r.event}</span></td>
+                    <td style={{ padding: '10px 12px' }}>{badge(r.severity, sevColor(r.severity))}</td>
+                    <td style={{ padding: '10px 12px', color: 'var(--text-primary)', fontWeight: 600 }}>{r.speed}</td>
+                    <td style={{ padding: '10px 12px', color: 'var(--text-muted)' }}>{r.time}</td>
+                    <td style={{ padding: '10px 12px', color: 'var(--text-muted)', maxWidth: 160 }}>{r.location}</td>
+                    <td style={{ padding: '10px 12px', color: 'var(--text-muted)' }}>{r.score}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
       </Card>
     </div>
   )

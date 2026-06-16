@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import {
   School, Bus, ClipboardCheck, ShieldCheck, Bell, BarChart2,
@@ -126,11 +126,23 @@ export function SchoolManagementSection() {
   const [search, setSearch] = useState('')
   const [boardFilter, setBoardFilter] = useState('')
   const [cityFilter, setCityFilter] = useState('')
+  const [schoolsData, setSchoolsData] = useState<any[]>([])
+  const [loading, setLoading] = useState(true)
 
-  const filtered = SCHOOLS.filter(s =>
-    (!boardFilter || s.board === boardFilter) &&
-    (!cityFilter  || s.city  === cityFilter)  &&
-    (s.name.toLowerCase().includes(search.toLowerCase()) || s.city.toLowerCase().includes(search.toLowerCase()))
+  useEffect(() => {
+    const token = localStorage.getItem('gv_token')
+    fetch('/admin-api/schools-list?limit=50&skip=0', {
+      headers: { Authorization: 'Bearer ' + token }
+    })
+      .then(r => r.ok ? r.json() : Promise.reject(r))
+      .then(data => setSchoolsData(Array.isArray(data) ? data : []))
+      .catch(() => setSchoolsData([]))
+      .finally(() => setLoading(false))
+  }, [])
+
+  const filtered = schoolsData.filter(s =>
+    (s.user_name?.toLowerCase().includes(search.toLowerCase()) ||
+     s.school_name?.toLowerCase().includes(search.toLowerCase()))
   )
 
   return (
@@ -156,26 +168,21 @@ export function SchoolManagementSection() {
       >
         <thead>
           <tr style={{ borderBottom: '1px solid var(--border)', background: 'var(--bg-surface2)' }}>
-            <TH>School Name</TH><TH>City</TH><TH>Board</TH><TH>Students</TH><TH>Contact</TH><TH>Bus Routes</TH><TH>Status</TH><TH>Actions</TH>
+            <TH>User</TH><TH>School Name</TH><TH>Class</TH><TH>Section</TH><TH>Bus Number</TH><TH>Actions</TH>
           </tr>
         </thead>
         <tbody>
-          {filtered.map((s, i) => (
+          {loading ? (
+            <tr><td colSpan={6} style={{ padding: '24px 20px', textAlign: 'center', color: 'var(--text-muted)', fontSize: 13 }}>Loading...</td></tr>
+          ) : filtered.length === 0 ? (
+            <tr><td colSpan={6} style={{ padding: '24px 20px', textAlign: 'center', color: 'var(--text-muted)', fontSize: 13 }}>No data available</td></tr>
+          ) : filtered.map((s, i) => (
             <tr key={i} style={{ borderBottom: '1px solid var(--border)' }}>
-              <TD><span style={{ fontWeight: 600 }}>{s.name}</span></TD>
-              <TD>{s.city}</TD>
-              <TD>
-                <Badge
-                  label={s.board}
-                  color={s.board === 'CBSE' ? '#3B82F6' : s.board === 'ICSE' ? '#8B5CF6' : '#F59E0B'}
-                  bg={s.board === 'CBSE' ? 'rgba(59,130,246,0.1)' : s.board === 'ICSE' ? 'rgba(139,92,246,0.1)' : 'rgba(245,158,11,0.1)'}
-                  border={s.board === 'CBSE' ? 'rgba(59,130,246,0.2)' : s.board === 'ICSE' ? 'rgba(139,92,246,0.2)' : 'rgba(245,158,11,0.2)'}
-                />
-              </TD>
-              <TD style={{ fontWeight: 600 }}>{s.students.toLocaleString()}</TD>
-              <TD style={{ color: 'var(--text-secondary)', fontSize: 12 }}>{s.contact}</TD>
-              <TD style={{ textAlign: 'center' }}>{s.routes}</TD>
-              <TD><StatusBadge status={s.status} /></TD>
+              <TD style={{ fontWeight: 600 }}>{s.user_name ?? '—'}</TD>
+              <TD><span style={{ fontWeight: 500 }}>{s.school_name ?? '—'}</span></TD>
+              <TD style={{ color: 'var(--text-secondary)', fontSize: 12 }}>{s.class_name ?? '—'}</TD>
+              <TD style={{ color: 'var(--text-secondary)', fontSize: 12 }}>{s.section ?? '—'}</TD>
+              <TD style={{ fontFamily: 'monospace', fontSize: 12 }}>{s.bus_number ?? '—'}</TD>
               <TD>
                 <div style={{ display: 'flex', gap: 6 }}>
                   <ActionBtn label="View" color="#3B82F6" />
@@ -684,17 +691,28 @@ export function MedicationSection() {
   const [search, setSearch] = useState('')
   const [statusFilter, setStatusFilter] = useState('')
   const [compFilter, setCompFilter] = useState('')
+  const [medsData, setMedsData] = useState<any[]>([])
+  const [loading, setLoading] = useState(true)
 
-  const filtered = MEDICATIONS.filter(m => {
-    const matchComp = !compFilter ||
-      (compFilter === 'Low (<80%)' && m.compliance < 80) ||
-      (compFilter === 'Medium (80-90%)' && m.compliance >= 80 && m.compliance < 90) ||
-      (compFilter === 'High (>90%)' && m.compliance >= 90)
+  useEffect(() => {
+    const token = localStorage.getItem('gv_token')
+    fetch('/admin-api/medications-list?limit=50&skip=0', {
+      headers: { Authorization: 'Bearer ' + token }
+    })
+      .then(r => r.ok ? r.json() : Promise.reject(r))
+      .then(data => setMedsData(Array.isArray(data) ? data : []))
+      .catch(() => setMedsData([]))
+      .finally(() => setLoading(false))
+  }, [])
+
+  const filtered = medsData.filter(m => {
+    const isActive = m.is_active
+    const status = isActive ? 'Active' : 'Inactive'
+    const matchStatus = !statusFilter || status === statusFilter
     return (
-      (!statusFilter || m.status === statusFilter) &&
-      matchComp &&
-      (m.elder.toLowerCase().includes(search.toLowerCase()) ||
-       m.medication.toLowerCase().includes(search.toLowerCase()))
+      matchStatus &&
+      (String(m.user_name ?? '').toLowerCase().includes(search.toLowerCase()) ||
+       String(m.medication_name ?? '').toLowerCase().includes(search.toLowerCase()))
     )
   })
 
@@ -715,41 +733,41 @@ export function MedicationSection() {
         onSearch={setSearch}
         extra={
           <>
-            <SelectFilter value={statusFilter} onChange={setStatusFilter} options={['Taken','Pending','Missed','Overdue']} label="All Statuses" />
+            <SelectFilter value={statusFilter} onChange={setStatusFilter} options={['Active','Inactive']} label="All Statuses" />
             <SelectFilter value={compFilter} onChange={setCompFilter} options={['Low (<80%)','Medium (80-90%)','High (>90%)']} label="Compliance" />
           </>
         }
       >
         <thead>
           <tr style={{ borderBottom: '1px solid var(--border)', background: 'var(--bg-surface2)' }}>
-            <TH>Elder</TH><TH>Medication</TH><TH>Dosage</TH><TH>Frequency</TH><TH>Next Due</TH><TH>Caregiver</TH><TH>Compliance %</TH><TH>Status</TH>
+            <TH>User</TH><TH>Medication</TH><TH>Dosage</TH><TH>Times</TH><TH>Last Taken</TH><TH>Status</TH>
           </tr>
         </thead>
         <tbody>
-          {filtered.map((m, i) => (
-            <tr key={i} style={{ borderBottom: '1px solid var(--border)', background: m.compliance < 80 ? 'rgba(239,68,68,0.04)' : 'transparent' }}>
-              <TD style={{ fontWeight: 600 }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                  {m.compliance < 80 && <AlertTriangle size={12} color="#EF4444" />}
-                  {m.elder}
-                </div>
-              </TD>
-              <TD style={{ fontWeight: 500 }}>{m.medication}</TD>
-              <TD style={{ color: 'var(--text-secondary)', fontSize: 12 }}>{m.dosage}</TD>
-              <TD style={{ color: 'var(--text-secondary)', fontSize: 12 }}>{m.freq}</TD>
-              <TD style={{ fontFamily: 'monospace', fontSize: 12, fontWeight: 600 }}>{m.nextDue}</TD>
-              <TD style={{ fontSize: 12 }}>{m.caregiver}</TD>
-              <TD>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                  <div style={{ flex: 1, height: 6, background: 'var(--border)', borderRadius: 3, maxWidth: 60 }}>
-                    <div style={{ width: `${m.compliance}%`, height: '100%', background: m.compliance >= 90 ? '#10B981' : m.compliance >= 80 ? '#F59E0B' : '#EF4444', borderRadius: 3 }} />
+          {loading ? (
+            <tr><td colSpan={6} style={{ padding: '24px 20px', textAlign: 'center', color: 'var(--text-muted)', fontSize: 13 }}>Loading...</td></tr>
+          ) : filtered.length === 0 ? (
+            <tr><td colSpan={6} style={{ padding: '24px 20px', textAlign: 'center', color: 'var(--text-muted)', fontSize: 13 }}>No data available</td></tr>
+          ) : filtered.map((m, i) => {
+            const isActive = m.is_active
+            return (
+              <tr key={i} style={{ borderBottom: '1px solid var(--border)', background: !isActive ? 'rgba(239,68,68,0.04)' : 'transparent' }}>
+                <TD style={{ fontWeight: 600 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                    {!isActive && <AlertTriangle size={12} color="#EF4444" />}
+                    {m.user_name ?? '—'}
                   </div>
-                  <span style={{ fontWeight: 700, fontSize: 12, color: m.compliance >= 90 ? '#10B981' : m.compliance >= 80 ? '#F59E0B' : '#EF4444' }}>{m.compliance}%</span>
-                </div>
-              </TD>
-              <TD><StatusBadge status={m.status} /></TD>
-            </tr>
-          ))}
+                </TD>
+                <TD style={{ fontWeight: 500 }}>{m.medication_name ?? '—'}</TD>
+                <TD style={{ color: 'var(--text-secondary)', fontSize: 12 }}>{m.dosage ?? '—'}</TD>
+                <TD style={{ color: 'var(--text-secondary)', fontSize: 12 }}>{m.times ?? '—'}</TD>
+                <TD style={{ fontFamily: 'monospace', fontSize: 12, fontWeight: 600 }}>{m.last_taken ?? '—'}</TD>
+                <TD>
+                  <StatusBadge status={isActive ? 'Active' : 'Inactive'} />
+                </TD>
+              </tr>
+            )
+          })}
         </tbody>
       </TableWrap>
     </motion.div>
@@ -885,10 +903,22 @@ const scoreColor = (s: number) => s >= 85 ? '#10B981' : s >= 70 ? '#F59E0B' : '#
 export function WellnessReportsSection() {
   const [search, setSearch] = useState('')
   const [periodFilter, setPeriodFilter] = useState('')
+  const [wellnessData, setWellnessData] = useState<any[]>([])
+  const [loading, setLoading] = useState(true)
 
-  const filtered = WELLNESS.filter(w =>
-    (!periodFilter || w.period === periodFilter) &&
-    (w.elder.toLowerCase().includes(search.toLowerCase()) || w.caregiver.toLowerCase().includes(search.toLowerCase()))
+  useEffect(() => {
+    const token = localStorage.getItem('gv_token')
+    fetch('/admin-api/health-records-list?limit=50&skip=0', {
+      headers: { Authorization: 'Bearer ' + token }
+    })
+      .then(r => r.ok ? r.json() : Promise.reject(r))
+      .then(data => setWellnessData(Array.isArray(data) ? data : []))
+      .catch(() => setWellnessData([]))
+      .finally(() => setLoading(false))
+  }, [])
+
+  const filtered = wellnessData.filter(w =>
+    String(w.user_name ?? '').toLowerCase().includes(search.toLowerCase())
   )
 
   return (
@@ -909,22 +939,32 @@ export function WellnessReportsSection() {
       >
         <thead>
           <tr style={{ borderBottom: '1px solid var(--border)', background: 'var(--bg-surface2)' }}>
-            <TH>Elder</TH><TH>Report Period</TH><TH>Overall Score</TH><TH>Mobility</TH><TH>Sleep</TH><TH>Med Adherence</TH><TH>Caregiver</TH><TH>Actions</TH>
+            <TH>User</TH><TH>Date</TH><TH>Steps</TH><TH>Heart Rate</TH><TH>Calories</TH><TH>Sleep (hrs)</TH><TH>Actions</TH>
           </tr>
         </thead>
         <tbody>
-          {filtered.map((w, i) => (
+          {loading ? (
+            <tr><td colSpan={7} style={{ padding: '24px 20px', textAlign: 'center', color: 'var(--text-muted)', fontSize: 13 }}>Loading...</td></tr>
+          ) : filtered.length === 0 ? (
+            <tr><td colSpan={7} style={{ padding: '24px 20px', textAlign: 'center', color: 'var(--text-muted)', fontSize: 13 }}>No data available</td></tr>
+          ) : filtered.map((w, i) => (
             <tr key={i} style={{ borderBottom: '1px solid var(--border)' }}>
-              <TD style={{ fontWeight: 600 }}>{w.elder}</TD>
-              <TD style={{ fontSize: 12, color: 'var(--text-secondary)' }}>{w.period}</TD>
+              <TD style={{ fontWeight: 600 }}>{w.user_name ?? '—'}</TD>
+              <TD style={{ fontSize: 12, color: 'var(--text-secondary)' }}>{w.date ?? '—'}</TD>
+              <TD style={{ fontWeight: 600 }}>{w.steps != null ? Number(w.steps).toLocaleString() : '—'}</TD>
               <TD>
-                <span style={{ fontSize: 18, fontWeight: 800, color: scoreColor(w.score) }}>{w.score}</span>
-                <span style={{ fontSize: 11, color: 'var(--text-muted)', marginLeft: 2 }}>/100</span>
+                {w.heart_rate != null
+                  ? <span style={{ fontWeight: 600, color: w.heart_rate > 100 ? '#EF4444' : '#10B981' }}>{w.heart_rate} bpm</span>
+                  : <span style={{ color: 'var(--text-muted)' }}>—</span>
+                }
               </TD>
-              <TD><span style={{ fontWeight: 600, color: scoreColor(w.mobility) }}>{w.mobility}</span></TD>
-              <TD><span style={{ fontWeight: 600, color: scoreColor(w.sleep) }}>{w.sleep}</span></TD>
-              <TD><span style={{ fontWeight: 600, color: scoreColor(w.adherence) }}>{w.adherence}%</span></TD>
-              <TD style={{ fontSize: 12 }}>{w.caregiver}</TD>
+              <TD style={{ fontWeight: 600 }}>{w.calories != null ? `${w.calories} kcal` : '—'}</TD>
+              <TD>
+                {w.sleep_hours != null
+                  ? <span style={{ fontWeight: 600, color: w.sleep_hours >= 7 ? '#10B981' : '#F59E0B' }}>{w.sleep_hours}h</span>
+                  : <span style={{ color: 'var(--text-muted)' }}>—</span>
+                }
+              </TD>
               <TD>
                 <div style={{ display: 'flex', gap: 6 }}>
                   <ActionBtn label="View"     color="#3B82F6" />

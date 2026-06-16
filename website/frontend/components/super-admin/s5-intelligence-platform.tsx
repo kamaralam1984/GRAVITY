@@ -1,5 +1,6 @@
 'use client'
 
+import { useState, useEffect } from 'react'
 import {
   Users2, Shield, Smartphone, DollarSign, Brain, MessageSquare,
   Mail, Bell, MapPin, Settings, Activity, Database, AlertTriangle,
@@ -207,69 +208,103 @@ export function PredictiveInsightsSection() {
 // ─── Support ──────────────────────────────────────────────────────────────────
 
 export function FeedbackSection() {
+  const [feedbackList, setFeedbackList] = useState<any[]>([])
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    const token = typeof window !== 'undefined' ? localStorage.getItem('gv_token') : null
+    fetch('/admin-api/feedback-list?limit=50&skip=0', {
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
+    })
+      .then(r => r.json())
+      .then(data => setFeedbackList(Array.isArray(data) ? data : []))
+      .catch(() => setFeedbackList([]))
+      .finally(() => setLoading(false))
+  }, [])
+
   return (
     <div>
       <SectionHeader icon={MessageSquare} title="User Feedback" subtitle="Collect and analyze user feedback and ratings" />
       <StatGrid items={[
         { label: 'Avg App Rating', value: '4.7 ★', color: '#F59E0B' },
-        { label: 'Feedback This Month', value: '12,840', color: '#3B82F6' },
+        { label: 'Feedback This Month', value: feedbackList.length.toString(), color: '#3B82F6' },
         { label: 'Positive', value: '94.2%', color: '#10B981' },
         { label: 'Feature Requests', value: '1,284', color: '#8B5CF6' },
       ]} />
       <GlassCard style={{ padding: 24 }}>
         <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--text-primary)', marginBottom: 16 }}>Recent Feedback</div>
-        {[
-          { user: 'Priya M.', rating: 5, comment: 'The AI Guardian feature is incredible. Saved my child twice!', date: '2 hours ago' },
-          { user: 'Karan S.', rating: 4, comment: 'Great app, would love dark mode improvements.', date: '5 hours ago' },
-          { user: 'Ananya I.', rating: 5, comment: 'Best family safety app in India. Highly recommend.', date: '1 day ago' },
-          { user: 'Rajesh K.', rating: 3, comment: 'Battery drain is a concern, please optimize.', date: '2 days ago' },
-        ].map((f, i) => (
-          <div key={i} style={{ padding: '12px 0', borderBottom: i < 3 ? '1px solid var(--border)' : 'none' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 6 }}>
-              <div style={{ width: 30, height: 30, borderRadius: '50%', background: 'rgba(139,92,246,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 700, color: '#8B5CF6', flexShrink: 0 }}>{f.user.split(' ').map(w => w[0]).join('')}</div>
-              <div style={{ flex: 1 }}>
-                <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)' }}>{f.user}</span>
-                <span style={{ marginLeft: 8, fontSize: 12, color: '#F59E0B' }}>{'★'.repeat(f.rating)}</span>
+        {loading && <div style={{ color: 'var(--text-muted)', fontSize: 13, padding: '12px 0' }}>Loading...</div>}
+        {!loading && feedbackList.length === 0 && <div style={{ color: 'var(--text-muted)', fontSize: 13, padding: '12px 0' }}>No data yet</div>}
+        {feedbackList.map((f: any, i: number) => {
+          const initials = (f.name || '?').split(' ').map((w: string) => w[0]).join('').toUpperCase().slice(0, 2)
+          return (
+            <div key={i} style={{ padding: '12px 0', borderBottom: i < feedbackList.length - 1 ? '1px solid var(--border)' : 'none' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 6 }}>
+                <div style={{ width: 30, height: 30, borderRadius: '50%', background: 'rgba(139,92,246,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 700, color: '#8B5CF6', flexShrink: 0 }}>{initials}</div>
+                <div style={{ flex: 1 }}>
+                  <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)' }}>{f.name || '—'}</span>
+                  {f.rating ? <span style={{ marginLeft: 8, fontSize: 12, color: '#F59E0B' }}>{'★'.repeat(Math.min(5, Math.max(0, Math.round(f.rating))))}</span> : null}
+                  {f.category ? <span style={{ marginLeft: 8, fontSize: 11, color: 'var(--text-muted)' }}>[{f.category}]</span> : null}
+                </div>
+                <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>{f.created_at ? new Date(f.created_at).toLocaleDateString() : '—'}</span>
               </div>
-              <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>{f.date}</span>
+              <div style={{ fontSize: 12, color: 'var(--text-secondary)', paddingLeft: 40 }}>{f.message || '—'}</div>
             </div>
-            <div style={{ fontSize: 12, color: 'var(--text-secondary)', paddingLeft: 40 }}>{f.comment}</div>
-          </div>
-        ))}
+          )
+        })}
       </GlassCard>
     </div>
   )
 }
 
 export function ContactRequestsSection() {
+  const [contacts, setContacts] = useState<any[]>([])
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    const token = typeof window !== 'undefined' ? localStorage.getItem('gv_token') : null
+    fetch('/admin-api/contact-requests-list?limit=50&skip=0', {
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
+    })
+      .then(r => r.json())
+      .then(data => setContacts(Array.isArray(data) ? data : []))
+      .catch(() => setContacts([]))
+      .finally(() => setLoading(false))
+  }, [])
+
+  const openCount = contacts.filter(c => (c.status || '').toLowerCase() === 'open').length
+  const resolvedCount = contacts.filter(c => (c.status || '').toLowerCase() === 'resolved').length
+
   return (
     <div>
       <SectionHeader icon={Mail} title="Contact Requests" subtitle="Inbound contact form submissions and inquiries" />
       <StatGrid items={[
-        { label: 'Open Requests', value: '142', color: '#F59E0B' },
-        { label: 'Resolved Today', value: '84', color: '#10B981' },
+        { label: 'Open Requests', value: openCount.toString(), color: '#F59E0B' },
+        { label: 'Resolved', value: resolvedCount.toString(), color: '#10B981' },
         { label: 'Avg Response Time', value: '3.2h', color: '#3B82F6' },
-        { label: 'Enterprise Inquiries', value: '28', color: '#8B5CF6' },
+        { label: 'Total', value: contacts.length.toString(), color: '#8B5CF6' },
       ]} />
       <GlassCard style={{ padding: 24 }}>
         <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--text-primary)', marginBottom: 16 }}>Recent Contact Requests</div>
-        {[
-          { from: 'Delhi Public School', subject: 'Enterprise plan inquiry for 50 schools', type: 'enterprise', date: '1h ago', status: 'open' },
-          { from: 'Priya Mehta', subject: 'Cannot access premium features after payment', type: 'support', date: '2h ago', status: 'in-progress' },
-          { from: 'Apollo Hospitals', subject: 'Hospital patient tracking integration', type: 'enterprise', date: '4h ago', status: 'resolved' },
-          { from: 'Karan S.', subject: 'Request for family plan refund', type: 'billing', date: '6h ago', status: 'resolved' },
-        ].map((r, i) => (
-          <div key={i} style={{ padding: '12px 0', borderBottom: i < 3 ? '1px solid var(--border)' : 'none' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 12 }}>
-              <div style={{ flex: 1 }}>
-                <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)', marginBottom: 3 }}>{r.from}</div>
-                <div style={{ fontSize: 12, color: 'var(--text-secondary)' }}>{r.subject}</div>
-                <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 3 }}>{r.date}</div>
+        {loading && <div style={{ color: 'var(--text-muted)', fontSize: 13, padding: '12px 0' }}>Loading...</div>}
+        {!loading && contacts.length === 0 && <div style={{ color: 'var(--text-muted)', fontSize: 13, padding: '12px 0' }}>No data yet</div>}
+        {contacts.map((r: any, i: number) => {
+          const status = (r.status || 'open').toLowerCase()
+          const statusColor = status === 'resolved' ? '#10B981' : status === 'in-progress' || status === 'in_progress' ? '#3B82F6' : '#F59E0B'
+          const statusBg = status === 'resolved' ? 'rgba(16,185,129,0.12)' : status === 'in-progress' || status === 'in_progress' ? 'rgba(59,130,246,0.12)' : 'rgba(245,158,11,0.12)'
+          return (
+            <div key={i} style={{ padding: '12px 0', borderBottom: i < contacts.length - 1 ? '1px solid var(--border)' : 'none' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 12 }}>
+                <div style={{ flex: 1 }}>
+                  <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)', marginBottom: 3 }}>{r.name || '—'} {r.email ? <span style={{ fontSize: 11, color: 'var(--text-muted)', fontWeight: 400 }}>({r.email})</span> : null}</div>
+                  <div style={{ fontSize: 12, color: 'var(--text-secondary)' }}>{r.subject || '—'}</div>
+                  <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 3 }}>{r.created_at ? new Date(r.created_at).toLocaleDateString() : '—'}{r.phone ? ` · ${r.phone}` : ''}</div>
+                </div>
+                <span style={{ fontSize: 11, fontWeight: 700, padding: '3px 10px', borderRadius: 99, whiteSpace: 'nowrap', background: statusBg, color: statusColor, textTransform: 'capitalize' }}>{r.status || 'open'}</span>
               </div>
-              <span style={{ fontSize: 11, fontWeight: 700, padding: '3px 10px', borderRadius: 99, whiteSpace: 'nowrap', background: r.status === 'resolved' ? 'rgba(16,185,129,0.12)' : r.status === 'in-progress' ? 'rgba(59,130,246,0.12)' : 'rgba(245,158,11,0.12)', color: r.status === 'resolved' ? '#10B981' : r.status === 'in-progress' ? '#3B82F6' : '#F59E0B', textTransform: 'capitalize' }}>{r.status}</span>
             </div>
-          </div>
-        ))}
+          )
+        })}
       </GlassCard>
     </div>
   )
@@ -342,7 +377,34 @@ export function CustomerSuccessSection() {
 
 // ─── Security ─────────────────────────────────────────────────────────────────
 
+function formatEventType(et: string): string {
+  const map: Record<string, string> = {
+    login: 'Login',
+    login_failed: 'Login Failed',
+    logout: 'Logout',
+    password_reset: 'Password Reset',
+    account_locked: 'Account Locked',
+    mfa_failed: 'MFA Failed',
+    session_expired: 'Session Expired',
+  }
+  return map[et] || et.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase())
+}
+
 export function LoginActivitySection() {
+  const [loginEvents, setLoginEvents] = useState<any[]>([])
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    const token = typeof window !== 'undefined' ? localStorage.getItem('gv_token') : null
+    fetch('/admin-api/login-activity?limit=50&skip=0', {
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
+    })
+      .then(r => r.json())
+      .then(data => setLoginEvents(Array.isArray(data) ? data : []))
+      .catch(() => setLoginEvents([]))
+      .finally(() => setLoading(false))
+  }, [])
+
   return (
     <div>
       <SectionHeader icon={Activity} title="Login Activity" subtitle="Monitor all login events and session activity" />
@@ -354,72 +416,96 @@ export function LoginActivitySection() {
       ]} />
       <GlassCard style={{ padding: 24 }}>
         <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--text-primary)', marginBottom: 16 }}>Recent Login Events</div>
-        <div style={{ overflowX: 'auto' }}>
-          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12 }}>
-            <thead>
-              <tr style={{ borderBottom: '1px solid var(--border)' }}>
-                {['Time', 'User', 'IP Address', 'Location', 'Status'].map(h => (
-                  <th key={h} style={{ padding: '8px 12px', textAlign: 'left', color: 'var(--text-muted)', fontWeight: 600, whiteSpace: 'nowrap' }}>{h}</th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {[
-                { time: '09:14', user: 'amit@gravity.app', ip: '10.0.0.2', location: 'Delhi', status: 'success' },
-                { time: '09:02', user: 'unknown@test.io', ip: '203.0.113.45', location: 'Russia', status: 'blocked' },
-                { time: '08:51', user: 'priya@gmail.com', ip: '103.21.58.12', location: 'Mumbai', status: 'success' },
-                { time: '08:33', user: 'root@evil.ru', ip: '91.108.4.10', location: 'Belarus', status: 'blocked' },
-                { time: '08:12', user: 'karan@gravity.app', ip: '10.0.0.4', location: 'Mumbai', status: 'success' },
-              ].map((row, i) => (
-                <tr key={i} style={{ borderBottom: '1px solid var(--border)' }}>
-                  <td style={{ padding: '10px 12px', color: 'var(--text-muted)' }}>{row.time}</td>
-                  <td style={{ padding: '10px 12px', color: 'var(--text-primary)' }}>{row.user}</td>
-                  <td style={{ padding: '10px 12px', color: 'var(--text-secondary)', fontFamily: 'monospace' }}>{row.ip}</td>
-                  <td style={{ padding: '10px 12px', color: 'var(--text-secondary)' }}>{row.location}</td>
-                  <td style={{ padding: '10px 12px' }}>
-                    <span style={{ fontSize: 11, fontWeight: 700, padding: '3px 10px', borderRadius: 99, background: row.status === 'success' ? 'rgba(16,185,129,0.12)' : 'rgba(239,68,68,0.12)', color: row.status === 'success' ? '#10B981' : '#EF4444', textTransform: 'capitalize' }}>{row.status}</span>
-                  </td>
+        {loading && <div style={{ color: 'var(--text-muted)', fontSize: 13, padding: '12px 0' }}>Loading...</div>}
+        {!loading && loginEvents.length === 0 && <div style={{ color: 'var(--text-muted)', fontSize: 13, padding: '12px 0' }}>No data yet</div>}
+        {!loading && loginEvents.length > 0 && (
+          <div style={{ overflowX: 'auto' }}>
+            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12 }}>
+              <thead>
+                <tr style={{ borderBottom: '1px solid var(--border)' }}>
+                  {['Event', 'Severity', 'IP Address', 'Description', 'Time'].map(h => (
+                    <th key={h} style={{ padding: '8px 12px', textAlign: 'left', color: 'var(--text-muted)', fontWeight: 600, whiteSpace: 'nowrap' }}>{h}</th>
+                  ))}
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+              </thead>
+              <tbody>
+                {loginEvents.map((row: any, i: number) => {
+                  const sev = (row.severity || '').toLowerCase()
+                  const sevColor = sev === 'critical' ? '#EF4444' : sev === 'high' ? '#F59E0B' : sev === 'medium' ? '#3B82F6' : '#10B981'
+                  return (
+                    <tr key={i} style={{ borderBottom: '1px solid var(--border)' }}>
+                      <td style={{ padding: '10px 12px', color: 'var(--text-primary)', fontWeight: 600 }}>{formatEventType(row.event_type || '')}</td>
+                      <td style={{ padding: '10px 12px' }}>
+                        <span style={{ fontSize: 11, fontWeight: 700, padding: '3px 10px', borderRadius: 99, background: sevColor + '1f', color: sevColor, textTransform: 'capitalize' }}>{row.severity || '—'}</span>
+                      </td>
+                      <td style={{ padding: '10px 12px', color: 'var(--text-secondary)', fontFamily: 'monospace' }}>{row.ip_address || '—'}</td>
+                      <td style={{ padding: '10px 12px', color: 'var(--text-secondary)', maxWidth: 260, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{row.description || '—'}</td>
+                      <td style={{ padding: '10px 12px', color: 'var(--text-muted)' }}>{row.created_at ? new Date(row.created_at).toLocaleString() : '—'}</td>
+                    </tr>
+                  )
+                })}
+              </tbody>
+            </table>
+          </div>
+        )}
       </GlassCard>
     </div>
   )
 }
 
 export function ThreatDetectionSection() {
+  const [threats, setThreats] = useState<any[]>([])
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    const token = typeof window !== 'undefined' ? localStorage.getItem('gv_token') : null
+    fetch('/admin-api/security-logs-list?limit=50&skip=0&severity=high', {
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
+    })
+      .then(r => r.json())
+      .then(data => {
+        const arr = Array.isArray(data) ? data : []
+        setThreats(arr.filter((t: any) => {
+          const sev = (t.severity || '').toLowerCase()
+          return sev === 'high' || sev === 'critical'
+        }))
+      })
+      .catch(() => setThreats([]))
+      .finally(() => setLoading(false))
+  }, [])
+
   return (
     <div>
       <SectionHeader icon={Shield} title="Threat Detection" subtitle="Real-time security threats and anomaly detection" />
       <StatGrid items={[
-        { label: 'Active Threats', value: '3', color: '#EF4444' },
+        { label: 'Active Threats', value: threats.filter(t => !t.resolved).length.toString(), color: '#EF4444' },
         { label: 'Blocked Today', value: '1,284', color: '#F59E0B' },
         { label: 'Anomalies Detected', value: '42', color: '#8B5CF6' },
         { label: 'Threat Score', value: 'Low', color: '#10B981' },
       ]} />
       <GlassCard style={{ padding: 24 }}>
         <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--text-primary)', marginBottom: 16 }}>Active Threat Alerts</div>
-        {[
-          { threat: 'Brute force attack from 185.220.x.x', severity: 'critical', status: 'mitigated', time: '14 min ago' },
-          { threat: 'Unusual API spike — 10x normal rate', severity: 'warning', status: 'monitoring', time: '1h ago' },
-          { threat: 'Multiple accounts from same IP', severity: 'warning', status: 'investigating', time: '2h ago' },
-          { threat: 'SQL injection attempt on /api/users', severity: 'critical', status: 'blocked', time: '3h ago' },
-        ].map((t, i) => (
-          <div key={i} style={{ padding: '12px 0', borderBottom: i < 3 ? '1px solid var(--border)' : 'none' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 12 }}>
-              <div style={{ flex: 1 }}>
-                <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)', marginBottom: 3 }}>{t.threat}</div>
-                <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>{t.time}</div>
-              </div>
-              <div style={{ display: 'flex', gap: 6, flexShrink: 0 }}>
-                <span style={{ fontSize: 10, fontWeight: 700, padding: '2px 8px', borderRadius: 99, background: t.severity === 'critical' ? 'rgba(239,68,68,0.12)' : 'rgba(245,158,11,0.12)', color: t.severity === 'critical' ? '#EF4444' : '#F59E0B', textTransform: 'uppercase' }}>{t.severity}</span>
-                <span style={{ fontSize: 10, fontWeight: 700, padding: '2px 8px', borderRadius: 99, background: 'rgba(16,185,129,0.12)', color: '#10B981', textTransform: 'capitalize' }}>{t.status}</span>
+        {loading && <div style={{ color: 'var(--text-muted)', fontSize: 13, padding: '12px 0' }}>Loading...</div>}
+        {!loading && threats.length === 0 && <div style={{ color: 'var(--text-muted)', fontSize: 13, padding: '12px 0' }}>No data yet</div>}
+        {threats.map((t: any, i: number) => {
+          const sev = (t.severity || '').toLowerCase()
+          const sevColor = sev === 'critical' ? '#EF4444' : '#F59E0B'
+          const resolvedLabel = t.resolved ? 'resolved' : 'active'
+          return (
+            <div key={i} style={{ padding: '12px 0', borderBottom: i < threats.length - 1 ? '1px solid var(--border)' : 'none' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 12 }}>
+                <div style={{ flex: 1 }}>
+                  <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)', marginBottom: 3 }}>{t.description || t.event_type || '—'}</div>
+                  <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>IP: {t.ip_address || '—'} · {t.created_at ? new Date(t.created_at).toLocaleString() : '—'}</div>
+                </div>
+                <div style={{ display: 'flex', gap: 6, flexShrink: 0 }}>
+                  <span style={{ fontSize: 10, fontWeight: 700, padding: '2px 8px', borderRadius: 99, background: sevColor + '1f', color: sevColor, textTransform: 'uppercase' }}>{t.severity}</span>
+                  <span style={{ fontSize: 10, fontWeight: 700, padding: '2px 8px', borderRadius: 99, background: t.resolved ? 'rgba(16,185,129,0.12)' : 'rgba(239,68,68,0.12)', color: t.resolved ? '#10B981' : '#EF4444', textTransform: 'capitalize' }}>{resolvedLabel}</span>
+                </div>
               </div>
             </div>
-          </div>
-        ))}
+          )
+        })}
       </GlassCard>
     </div>
   )
@@ -874,25 +960,75 @@ export function BrandingSection() {
 }
 
 export function SMTPSection() {
+  const [smtpHost, setSmtpHost] = useState('')
+  const [smtpPort, setSmtpPort] = useState('')
+  const [smtpUser, setSmtpUser] = useState('')
+  const [smtpPassword, setSmtpPassword] = useState('')
+  const [smtpFrom, setSmtpFrom] = useState('')
+  const [saved, setSaved] = useState(false)
+  const [saving, setSaving] = useState(false)
+
+  useEffect(() => {
+    const token = typeof window !== 'undefined' ? localStorage.getItem('gv_token') : null
+    fetch('/admin-api/settings-config', {
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
+    })
+      .then(r => r.json())
+      .then(data => {
+        if (data && typeof data === 'object') {
+          setSmtpHost(data.smtp_host || '')
+          setSmtpPort(data.smtp_port || '')
+          setSmtpUser(data.smtp_user || '')
+          setSmtpPassword(data.smtp_password || '')
+          setSmtpFrom(data.smtp_from || '')
+        }
+      })
+      .catch(() => {})
+  }, [])
+
+  const handleSave = () => {
+    setSaving(true)
+    const token = typeof window !== 'undefined' ? localStorage.getItem('gv_token') : null
+    fetch('/admin-api/settings-config', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+      body: JSON.stringify({ smtp_host: smtpHost, smtp_port: smtpPort, smtp_user: smtpUser, smtp_password: smtpPassword, smtp_from: smtpFrom }),
+    })
+      .then(() => { setSaved(true); setTimeout(() => setSaved(false), 3000) })
+      .catch(() => {})
+      .finally(() => setSaving(false))
+  }
+
+  const inputStyle: React.CSSProperties = {
+    width: '100%', boxSizing: 'border-box', padding: '10px 12px',
+    background: 'var(--bg-surface2)', border: '1px solid var(--border)',
+    borderRadius: 8, color: 'var(--text-primary)', fontSize: 13,
+  }
+
   return (
     <div>
       <SectionHeader icon={Mail} title="SMTP Configuration" subtitle="Email delivery configuration and testing" />
       <GlassCard style={{ padding: 24, marginBottom: 16 }}>
         <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--text-primary)', marginBottom: 16 }}>SMTP Settings</div>
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 16 }}>
           {[
-            { label: 'SMTP Host', value: 'smtp.sendgrid.net' },
-            { label: 'SMTP Port', value: '587 (TLS)' },
-            { label: 'From Email', value: 'noreply@gravity.app' },
-            { label: 'From Name', value: 'Gravity Safety' },
-            { label: 'Authentication', value: 'API Key (SendGrid)' },
-            { label: 'Status', value: 'Connected' },
+            { label: 'SMTP Host', value: smtpHost, setter: setSmtpHost },
+            { label: 'SMTP Port', value: smtpPort, setter: setSmtpPort },
+            { label: 'SMTP User', value: smtpUser, setter: setSmtpUser },
+            { label: 'SMTP Password', value: smtpPassword, setter: setSmtpPassword, type: 'password' },
+            { label: 'From Email', value: smtpFrom, setter: setSmtpFrom },
           ].map((s, i) => (
-            <div key={i} style={{ padding: '12px 16px', background: 'var(--bg-surface2)', borderRadius: 8 }}>
+            <div key={i}>
               <div style={{ fontSize: 11, color: 'var(--text-muted)', marginBottom: 4 }}>{s.label}</div>
-              <div style={{ fontSize: 13, fontWeight: 600, color: i === 5 ? '#10B981' : 'var(--text-primary)' }}>{s.value}</div>
+              <input type={(s as any).type || 'text'} value={s.value} onChange={e => s.setter(e.target.value)} style={inputStyle} />
             </div>
           ))}
+        </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+          <button onClick={handleSave} disabled={saving} style={{ padding: '9px 20px', background: 'var(--gold, #D4A853)', color: '#000', border: 'none', borderRadius: 8, cursor: 'pointer', fontWeight: 700, fontSize: 13 }}>
+            {saving ? 'Saving...' : 'Save SMTP'}
+          </button>
+          {saved && <span style={{ fontSize: 13, color: '#10B981', fontWeight: 600 }}>Saved!</span>}
         </div>
       </GlassCard>
       <StatGrid items={[
@@ -906,38 +1042,123 @@ export function SMTPSection() {
 }
 
 export function SMSGatewaySection() {
+  const [smsProvider, setSmsProvider] = useState('')
+  const [smsApiKey, setSmsApiKey] = useState('')
+  const [smsSenderId, setSmsSenderId] = useState('')
+  const [saved, setSaved] = useState(false)
+  const [saving, setSaving] = useState(false)
+
+  useEffect(() => {
+    const token = typeof window !== 'undefined' ? localStorage.getItem('gv_token') : null
+    fetch('/admin-api/settings-config', {
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
+    })
+      .then(r => r.json())
+      .then(data => {
+        if (data && typeof data === 'object') {
+          setSmsProvider(data.sms_provider || '')
+          setSmsApiKey(data.sms_api_key || '')
+          setSmsSenderId(data.sms_sender_id || '')
+        }
+      })
+      .catch(() => {})
+  }, [])
+
+  const handleSave = () => {
+    setSaving(true)
+    const token = typeof window !== 'undefined' ? localStorage.getItem('gv_token') : null
+    fetch('/admin-api/settings-config', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+      body: JSON.stringify({ sms_provider: smsProvider, sms_api_key: smsApiKey, sms_sender_id: smsSenderId }),
+    })
+      .then(() => { setSaved(true); setTimeout(() => setSaved(false), 3000) })
+      .catch(() => {})
+      .finally(() => setSaving(false))
+  }
+
+  const inputStyle: React.CSSProperties = {
+    width: '100%', boxSizing: 'border-box', padding: '10px 12px',
+    background: 'var(--bg-surface2)', border: '1px solid var(--border)',
+    borderRadius: 8, color: 'var(--text-primary)', fontSize: 13,
+  }
+
   return (
     <div>
       <SectionHeader icon={MessageSquare} title="SMS Gateway" subtitle="SMS delivery gateway configuration and status" />
       <StatGrid items={[
-        { label: 'Primary Gateway', value: 'MSG91', color: '#8B5CF6' },
+        { label: 'Primary Gateway', value: smsProvider || 'MSG91', color: '#8B5CF6' },
         { label: 'SMS Sent Today', value: '84K', color: '#3B82F6' },
         { label: 'Delivery Rate', value: '98.7%', color: '#10B981' },
         { label: 'Balance', value: '₹24,800', color: '#F59E0B' },
       ]} />
       <GlassCard style={{ padding: 24 }}>
         <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--text-primary)', marginBottom: 16 }}>Gateway Configuration</div>
-        {[
-          { provider: 'MSG91 (Primary)', region: 'India', status: 'active', deliveryRate: '98.7%', balance: '₹24,800' },
-          { provider: 'Twilio (Fallback)', region: 'Global', status: 'standby', deliveryRate: '99.1%', balance: '$142' },
-          { provider: 'Vonage (Emergency)', region: 'Global', status: 'standby', deliveryRate: '97.4%', balance: '$84' },
-        ].map((g, i) => (
-          <div key={i} style={{ padding: '12px 0', borderBottom: i < 2 ? '1px solid var(--border)' : 'none' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 12 }}>
-              <div>
-                <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)', marginBottom: 3 }}>{g.provider}</div>
-                <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>{g.region} · Delivery: {g.deliveryRate} · Balance: {g.balance}</div>
-              </div>
-              <span style={{ fontSize: 11, fontWeight: 700, padding: '3px 10px', borderRadius: 99, background: g.status === 'active' ? 'rgba(16,185,129,0.12)' : 'rgba(107,114,128,0.12)', color: g.status === 'active' ? '#10B981' : '#9CA3AF', textTransform: 'capitalize' }}>{g.status}</span>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginBottom: 16 }}>
+          {[
+            { label: 'SMS Provider', value: smsProvider, setter: setSmsProvider },
+            { label: 'API Key', value: smsApiKey, setter: setSmsApiKey, type: 'password' },
+            { label: 'Sender ID', value: smsSenderId, setter: setSmsSenderId },
+          ].map((s, i) => (
+            <div key={i}>
+              <div style={{ fontSize: 11, color: 'var(--text-muted)', marginBottom: 4 }}>{s.label}</div>
+              <input type={(s as any).type || 'text'} value={s.value} onChange={e => s.setter(e.target.value)} style={inputStyle} />
             </div>
-          </div>
-        ))}
+          ))}
+        </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+          <button onClick={handleSave} disabled={saving} style={{ padding: '9px 20px', background: 'var(--gold, #D4A853)', color: '#000', border: 'none', borderRadius: 8, cursor: 'pointer', fontWeight: 700, fontSize: 13 }}>
+            {saving ? 'Saving...' : 'Save SMS Gateway'}
+          </button>
+          {saved && <span style={{ fontSize: 13, color: '#10B981', fontWeight: 600 }}>Saved!</span>}
+        </div>
       </GlassCard>
     </div>
   )
 }
 
 export function PushConfigSection() {
+  const [fcmServerKey, setFcmServerKey] = useState('')
+  const [apnsKeyId, setApnsKeyId] = useState('')
+  const [apnsTeamId, setApnsTeamId] = useState('')
+  const [saved, setSaved] = useState(false)
+  const [saving, setSaving] = useState(false)
+
+  useEffect(() => {
+    const token = typeof window !== 'undefined' ? localStorage.getItem('gv_token') : null
+    fetch('/admin-api/settings-config', {
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
+    })
+      .then(r => r.json())
+      .then(data => {
+        if (data && typeof data === 'object') {
+          setFcmServerKey(data.fcm_server_key || '')
+          setApnsKeyId(data.apns_key_id || '')
+          setApnsTeamId(data.apns_team_id || '')
+        }
+      })
+      .catch(() => {})
+  }, [])
+
+  const handleSave = () => {
+    setSaving(true)
+    const token = typeof window !== 'undefined' ? localStorage.getItem('gv_token') : null
+    fetch('/admin-api/settings-config', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+      body: JSON.stringify({ fcm_server_key: fcmServerKey, apns_key_id: apnsKeyId, apns_team_id: apnsTeamId }),
+    })
+      .then(() => { setSaved(true); setTimeout(() => setSaved(false), 3000) })
+      .catch(() => {})
+      .finally(() => setSaving(false))
+  }
+
+  const inputStyle: React.CSSProperties = {
+    width: '100%', boxSizing: 'border-box', padding: '10px 12px',
+    background: 'var(--bg-surface2)', border: '1px solid var(--border)',
+    borderRadius: 8, color: 'var(--text-primary)', fontSize: 13,
+  }
+
   return (
     <div>
       <SectionHeader icon={Bell} title="Push Notifications Config" subtitle="FCM/APNs configuration and delivery settings" />
@@ -948,26 +1169,70 @@ export function PushConfigSection() {
         { label: 'Click-through Rate', value: '14.2%', color: '#F59E0B' },
       ]} />
       <GlassCard style={{ padding: 24 }}>
-        <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--text-primary)', marginBottom: 16 }}>Push Service Status</div>
-        {[
-          { service: 'Firebase FCM (Android)', status: 'operational', sent: '1.2M', deliveryRate: '97.1%' },
-          { service: 'Apple APNs (iOS)', status: 'operational', sent: '640K', deliveryRate: '95.4%' },
-          { service: 'Web Push (PWA)', status: 'operational', sent: '24K', deliveryRate: '89.2%' },
-        ].map((s, i) => (
-          <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 0', borderBottom: i < 2 ? '1px solid var(--border)' : 'none' }}>
-            <div>
-              <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)', marginBottom: 3 }}>{s.service}</div>
-              <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>Sent: {s.sent} · Rate: {s.deliveryRate}</div>
+        <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--text-primary)', marginBottom: 16 }}>Push Service Configuration</div>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginBottom: 16 }}>
+          {[
+            { label: 'FCM Server Key', value: fcmServerKey, setter: setFcmServerKey, type: 'password' },
+            { label: 'APNs Key ID', value: apnsKeyId, setter: setApnsKeyId },
+            { label: 'APNs Team ID', value: apnsTeamId, setter: setApnsTeamId },
+          ].map((s, i) => (
+            <div key={i}>
+              <div style={{ fontSize: 11, color: 'var(--text-muted)', marginBottom: 4 }}>{s.label}</div>
+              <input type={(s as any).type || 'text'} value={s.value} onChange={e => s.setter(e.target.value)} style={inputStyle} />
             </div>
-            <span style={{ fontSize: 11, fontWeight: 700, padding: '3px 10px', borderRadius: 99, background: 'rgba(16,185,129,0.12)', color: '#10B981' }}>{s.status}</span>
-          </div>
-        ))}
+          ))}
+        </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+          <button onClick={handleSave} disabled={saving} style={{ padding: '9px 20px', background: 'var(--gold, #D4A853)', color: '#000', border: 'none', borderRadius: 8, cursor: 'pointer', fontWeight: 700, fontSize: 13 }}>
+            {saving ? 'Saving...' : 'Save Push Config'}
+          </button>
+          {saved && <span style={{ fontSize: 13, color: '#10B981', fontWeight: 600 }}>Saved!</span>}
+        </div>
       </GlassCard>
     </div>
   )
 }
 
 export function MapsAPISection() {
+  const [googleMapsKey, setGoogleMapsKey] = useState('')
+  const [mapboxToken, setMapboxToken] = useState('')
+  const [saved, setSaved] = useState(false)
+  const [saving, setSaving] = useState(false)
+
+  useEffect(() => {
+    const token = typeof window !== 'undefined' ? localStorage.getItem('gv_token') : null
+    fetch('/admin-api/settings-config', {
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
+    })
+      .then(r => r.json())
+      .then(data => {
+        if (data && typeof data === 'object') {
+          setGoogleMapsKey(data.google_maps_key || '')
+          setMapboxToken(data.mapbox_token || '')
+        }
+      })
+      .catch(() => {})
+  }, [])
+
+  const handleSave = () => {
+    setSaving(true)
+    const token = typeof window !== 'undefined' ? localStorage.getItem('gv_token') : null
+    fetch('/admin-api/settings-config', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+      body: JSON.stringify({ google_maps_key: googleMapsKey, mapbox_token: mapboxToken }),
+    })
+      .then(() => { setSaved(true); setTimeout(() => setSaved(false), 3000) })
+      .catch(() => {})
+      .finally(() => setSaving(false))
+  }
+
+  const inputStyle: React.CSSProperties = {
+    width: '100%', boxSizing: 'border-box', padding: '10px 12px',
+    background: 'var(--bg-surface2)', border: '1px solid var(--border)',
+    borderRadius: 8, color: 'var(--text-primary)', fontSize: 13,
+  }
+
   return (
     <div>
       <SectionHeader icon={MapPin} title="Maps API Config" subtitle="Google Maps and location service configuration" />
@@ -977,6 +1242,26 @@ export function MapsAPISection() {
         { label: 'Avg Geocode Time', value: '84ms', color: '#8B5CF6' },
         { label: 'Monthly Cost', value: '₹1.84L', color: '#F59E0B' },
       ]} />
+      <GlassCard style={{ padding: 24, marginBottom: 16 }}>
+        <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--text-primary)', marginBottom: 16 }}>Maps API Keys</div>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginBottom: 16 }}>
+          {[
+            { label: 'Google Maps API Key', value: googleMapsKey, setter: setGoogleMapsKey, type: 'password' },
+            { label: 'Mapbox Token', value: mapboxToken, setter: setMapboxToken, type: 'password' },
+          ].map((s, i) => (
+            <div key={i}>
+              <div style={{ fontSize: 11, color: 'var(--text-muted)', marginBottom: 4 }}>{s.label}</div>
+              <input type={(s as any).type || 'text'} value={s.value} onChange={e => s.setter(e.target.value)} style={inputStyle} />
+            </div>
+          ))}
+        </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+          <button onClick={handleSave} disabled={saving} style={{ padding: '9px 20px', background: 'var(--gold, #D4A853)', color: '#000', border: 'none', borderRadius: 8, cursor: 'pointer', fontWeight: 700, fontSize: 13 }}>
+            {saving ? 'Saving...' : 'Save Maps Config'}
+          </button>
+          {saved && <span style={{ fontSize: 13, color: '#10B981', fontWeight: 600 }}>Saved!</span>}
+        </div>
+      </GlassCard>
       <GlassCard style={{ padding: 24 }}>
         <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--text-primary)', marginBottom: 16 }}>Maps API Usage</div>
         <BarList items={[
@@ -991,31 +1276,75 @@ export function MapsAPISection() {
 }
 
 export function AISettingsSection() {
+  const [openaiApiKey, setOpenaiApiKey] = useState('')
+  const [aiModel, setAiModel] = useState('')
+  const [aiTemperature, setAiTemperature] = useState('')
+  const [saved, setSaved] = useState(false)
+  const [saving, setSaving] = useState(false)
+
+  useEffect(() => {
+    const token = typeof window !== 'undefined' ? localStorage.getItem('gv_token') : null
+    fetch('/admin-api/settings-config', {
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
+    })
+      .then(r => r.json())
+      .then(data => {
+        if (data && typeof data === 'object') {
+          setOpenaiApiKey(data.openai_api_key || '')
+          setAiModel(data.ai_model || '')
+          setAiTemperature(data.ai_temperature !== undefined ? String(data.ai_temperature) : '')
+        }
+      })
+      .catch(() => {})
+  }, [])
+
+  const handleSave = () => {
+    setSaving(true)
+    const token = typeof window !== 'undefined' ? localStorage.getItem('gv_token') : null
+    fetch('/admin-api/settings-config', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+      body: JSON.stringify({ openai_api_key: openaiApiKey, ai_model: aiModel, ai_temperature: aiTemperature }),
+    })
+      .then(() => { setSaved(true); setTimeout(() => setSaved(false), 3000) })
+      .catch(() => {})
+      .finally(() => setSaving(false))
+  }
+
+  const inputStyle: React.CSSProperties = {
+    width: '100%', boxSizing: 'border-box', padding: '10px 12px',
+    background: 'var(--bg-surface2)', border: '1px solid var(--border)',
+    borderRadius: 8, color: 'var(--text-primary)', fontSize: 13,
+  }
+
   return (
     <div>
       <SectionHeader icon={Brain} title="AI Settings" subtitle="AI model configuration and behavior settings" />
       <StatGrid items={[
-        { label: 'AI Model', value: 'GPT-4o', color: '#8B5CF6' },
+        { label: 'AI Model', value: aiModel || 'GPT-4o', color: '#8B5CF6' },
         { label: 'Tokens/Day', value: '42M', color: '#3B82F6' },
         { label: 'AI Cost (30d)', value: '₹2.4L', color: '#F59E0B' },
         { label: 'AI Accuracy', value: '91.4%', color: '#10B981' },
       ]} />
       <GlassCard style={{ padding: 24 }}>
         <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--text-primary)', marginBottom: 16 }}>AI Configuration</div>
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginBottom: 16 }}>
           {[
-            { label: 'Primary Model', value: 'GPT-4o (OpenAI)' },
-            { label: 'Fallback Model', value: 'Claude 3.5 Sonnet' },
-            { label: 'SOS Risk Model', value: 'Custom BERT v2' },
-            { label: 'Driving Coach Model', value: 'Custom CNN v4' },
-            { label: 'Temperature', value: '0.3 (Safety-focused)' },
-            { label: 'Max Tokens/Request', value: '4,096' },
-          ].map((c, i) => (
-            <div key={i} style={{ padding: '12px 16px', background: 'var(--bg-surface2)', borderRadius: 8 }}>
-              <div style={{ fontSize: 11, color: 'var(--text-muted)', marginBottom: 4 }}>{c.label}</div>
-              <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)' }}>{c.value}</div>
+            { label: 'OpenAI API Key', value: openaiApiKey, setter: setOpenaiApiKey, type: 'password' },
+            { label: 'AI Model', value: aiModel, setter: setAiModel },
+            { label: 'Temperature', value: aiTemperature, setter: setAiTemperature },
+          ].map((s, i) => (
+            <div key={i}>
+              <div style={{ fontSize: 11, color: 'var(--text-muted)', marginBottom: 4 }}>{s.label}</div>
+              <input type={(s as any).type || 'text'} value={s.value} onChange={e => s.setter(e.target.value)} style={inputStyle} />
             </div>
           ))}
+        </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+          <button onClick={handleSave} disabled={saving} style={{ padding: '9px 20px', background: 'var(--gold, #D4A853)', color: '#000', border: 'none', borderRadius: 8, cursor: 'pointer', fontWeight: 700, fontSize: 13 }}>
+            {saving ? 'Saving...' : 'Save AI Settings'}
+          </button>
+          {saved && <span style={{ fontSize: 13, color: '#10B981', fontWeight: 600 }}>Saved!</span>}
         </div>
       </GlassCard>
     </div>
@@ -1023,9 +1352,74 @@ export function AISettingsSection() {
 }
 
 export function PlatformConfigSection() {
+  const [appName, setAppName] = useState('')
+  const [supportEmail, setSupportEmail] = useState('')
+  const [maxFamilySize, setMaxFamilySize] = useState('')
+  const [sosResponseTime, setSosResponseTime] = useState('')
+  const [saved, setSaved] = useState(false)
+  const [saving, setSaving] = useState(false)
+
+  useEffect(() => {
+    const token = typeof window !== 'undefined' ? localStorage.getItem('gv_token') : null
+    fetch('/admin-api/settings-config', {
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
+    })
+      .then(r => r.json())
+      .then(data => {
+        if (data && typeof data === 'object') {
+          setAppName(data.app_name || '')
+          setSupportEmail(data.support_email || '')
+          setMaxFamilySize(data.max_family_size !== undefined ? String(data.max_family_size) : '')
+          setSosResponseTime(data.sos_response_time !== undefined ? String(data.sos_response_time) : '')
+        }
+      })
+      .catch(() => {})
+  }, [])
+
+  const handleSave = () => {
+    setSaving(true)
+    const token = typeof window !== 'undefined' ? localStorage.getItem('gv_token') : null
+    fetch('/admin-api/settings-config', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+      body: JSON.stringify({ app_name: appName, support_email: supportEmail, max_family_size: maxFamilySize, sos_response_time: sosResponseTime }),
+    })
+      .then(() => { setSaved(true); setTimeout(() => setSaved(false), 3000) })
+      .catch(() => {})
+      .finally(() => setSaving(false))
+  }
+
+  const inputStyle: React.CSSProperties = {
+    width: '100%', boxSizing: 'border-box', padding: '10px 12px',
+    background: 'var(--bg-surface2)', border: '1px solid var(--border)',
+    borderRadius: 8, color: 'var(--text-primary)', fontSize: 13,
+  }
+
   return (
     <div>
       <SectionHeader icon={Settings} title="Platform Config" subtitle="Core platform configuration and feature flags" />
+      <GlassCard style={{ padding: 24, marginBottom: 16 }}>
+        <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--text-primary)', marginBottom: 16 }}>Platform Settings</div>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 16 }}>
+          {[
+            { label: 'App Name', value: appName, setter: setAppName },
+            { label: 'Support Email', value: supportEmail, setter: setSupportEmail },
+            { label: 'Max Family Size', value: maxFamilySize, setter: setMaxFamilySize },
+            { label: 'SOS Response Time (sec)', value: sosResponseTime, setter: setSosResponseTime },
+          ].map((s, i) => (
+            <div key={i}>
+              <div style={{ fontSize: 11, color: 'var(--text-muted)', marginBottom: 4 }}>{s.label}</div>
+              <input value={s.value} onChange={e => s.setter(e.target.value)} style={inputStyle} />
+            </div>
+          ))}
+        </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+          <button onClick={handleSave} disabled={saving} style={{ padding: '9px 20px', background: 'var(--gold, #D4A853)', color: '#000', border: 'none', borderRadius: 8, cursor: 'pointer', fontWeight: 700, fontSize: 13 }}>
+            {saving ? 'Saving...' : 'Save Platform Config'}
+          </button>
+          {saved && <span style={{ fontSize: 13, color: '#10B981', fontWeight: 600 }}>Saved!</span>}
+        </div>
+      </GlassCard>
       <GlassCard style={{ padding: 24, marginBottom: 16 }}>
         <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--text-primary)', marginBottom: 16 }}>Feature Flags</div>
         {[

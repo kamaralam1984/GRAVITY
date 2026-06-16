@@ -592,3 +592,36 @@ class SchoolPeriod(Base):
     room = Column(String, nullable=True, default="—")
     color = Column(String, nullable=True, default="#3B82F6")
     created_at = Column(DateTime(timezone=True), server_default=func.now())
+
+
+class Feedback(Base):
+    __tablename__ = "feedbacks"
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=True)
+    name = Column(String, nullable=True)
+    email = Column(String, nullable=True)
+    rating = Column(Integer, nullable=True)  # 1-5
+    category = Column(String, default="general")  # general/bug/feature/ux
+    message = Column(Text, nullable=False)
+    status = Column(String, default="new")  # new/reviewed/actioned
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+
+
+class ContactRequest(Base):
+    __tablename__ = "contact_requests"
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String, nullable=False)
+    email = Column(String, nullable=False)
+    phone = Column(String, nullable=True)
+    subject = Column(String, nullable=True)
+    message = Column(Text, nullable=False)
+    status = Column(String, default="new")  # new/replied/closed
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+
+
+class AppSetting(Base):
+    __tablename__ = "app_settings"
+    id = Column(Integer, primary_key=True, index=True)
+    key = Column(String, unique=True, index=True, nullable=False)
+    value = Column(Text, nullable=True)
+    updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())

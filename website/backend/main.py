@@ -25,6 +25,7 @@ from routers import monitoring
 from routers import school_router
 from routers.ai_guardian import router as ai_guardian_router
 from routers.super_admin_stats import router as super_admin_stats_router
+from routers import admin_data_router
 
 app = FastAPI(
     title="Trackalways Gravity API",
@@ -79,6 +80,7 @@ app.include_router(kids_elder.router, prefix="/gravity", tags=["Kids & Elder"])
 app.include_router(monitoring.router, prefix="/monitoring", tags=["Monitoring"])
 app.include_router(school_router.router, prefix="/school", tags=["School Schedule"])
 app.include_router(super_admin_stats_router, prefix="/super-admin-api", tags=["Super Admin Stats"])
+app.include_router(admin_data_router.router, prefix="/admin-api", tags=["Admin Data"])
 
 @app.get("/")
 async def root():
