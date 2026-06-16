@@ -66,8 +66,10 @@ family_data = [
 ]
 families = []
 for fname, owner_idx, plan in family_data:
-    import secrets
-    f = models.Family(name=fname, owner_id=users[owner_idx].id, invite_code=secrets.token_urlsafe(6), plan=plan)
+    import random, string as _str
+    _chars = (_str.ascii_uppercase + _str.digits).replace('O','').replace('I','').replace('L','')
+    _code = ''.join(random.SystemRandom().choice(_chars) for _ in range(6))
+    f = models.Family(name=fname, owner_id=users[owner_idx].id, invite_code=_code, plan=plan)
     db.add(f)
     families.append(f)
 db.commit()

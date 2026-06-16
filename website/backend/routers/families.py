@@ -5,7 +5,7 @@ from sqlalchemy import func, text
 from pydantic import BaseModel
 from typing import Optional, List
 from database import get_db
-import models, secrets, json
+import models, secrets, random, string, json
 from auth import get_current_user
 from datetime import datetime, timezone, timedelta
 
@@ -44,6 +44,13 @@ def log_family_event(db: Session, family_id: int, event_type: str, user_id: int 
 
 router = APIRouter()
 
+def _gen_invite_code() -> str:
+    """6-char uppercase alphanumeric code — easy to type and share."""
+    chars = string.ascii_uppercase + string.digits
+    # Remove confusing chars: O, 0, I, 1, L
+    chars = chars.replace('O', '').replace('I', '').replace('L', '')
+    return ''.join(random.SystemRandom().choice(chars) for _ in range(6))
+
 class FamilyCreate(BaseModel):
     name: str
 
@@ -56,7 +63,7 @@ class FamilyResponse(BaseModel):
 
 @router.post("/create")
 def create_family(data: FamilyCreate, user: models.User = Depends(get_current_user), db: Session = Depends(get_db)):
-    family = models.Family(name=data.name, owner_id=user.id, invite_code=secrets.token_urlsafe(6))
+    family = models.Family(name=data.name, owner_id=user.id, invite_code=_gen_invite_code())
     db.add(family)
     db.commit()
     db.refresh(family)
@@ -148,7 +155,7 @@ def regenerate_invite_code(family_id: int, user: models.User = Depends(get_curre
     family = db.query(models.Family).filter(models.Family.id == family_id, models.Family.owner_id == user.id).first()
     if not family:
         raise HTTPException(status_code=403, detail="Only the owner can regenerate the code")
-    family.invite_code = secrets.token_urlsafe(6)
+    family.invite_code = _gen_invite_code()
     db.commit()
     return {"invite_code": family.invite_code}
 

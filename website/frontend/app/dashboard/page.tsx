@@ -299,7 +299,7 @@ function ProfileTab({ user, toggles, setToggle, logout, familyRole, familyInvite
     const token = localStorage.getItem('gv_token')
     if (!token) return
     try {
-      const res = await fetch(`/families/join/${joinCode.trim()}`, {
+      const res = await fetch(`/families/join/${joinCode.trim().toUpperCase()}`, {
         method: 'POST',
         headers: { Authorization: 'Bearer ' + token, 'Content-Type': 'application/json' },
         body: JSON.stringify({ role: 'parent' }),
