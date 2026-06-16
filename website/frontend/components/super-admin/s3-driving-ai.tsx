@@ -1395,3 +1395,80 @@ export function AIConfigSection() {
     </div>
   )
 }
+
+const drivingEvents = [
+  { driver: 'Rahul Sharma', family: 'Sharma Family', event: 'Hard Braking', severity: 'High', speed: '82 km/h', time: '10:24 AM', location: 'MG Road, Bangalore', score: 72 },
+  { driver: 'Priya Singh', family: 'Singh Family', event: 'Speeding', severity: 'Critical', speed: '118 km/h', time: '09:11 AM', location: 'NH-48, Delhi', score: 54 },
+  { driver: 'Arun Kumar', family: 'Kumar Family', event: 'Phone Usage', severity: 'High', speed: '64 km/h', time: '08:45 AM', location: 'Link Road, Mumbai', score: 61 },
+  { driver: 'Meena Patel', family: 'Patel Family', event: 'Sharp Turn', severity: 'Medium', speed: '55 km/h', time: '11:32 AM', location: 'Ring Road, Surat', score: 79 },
+  { driver: 'Suresh Yadav', family: 'Yadav Family', event: 'Rapid Acceleration', severity: 'Medium', speed: '90 km/h', time: '07:58 AM', location: 'Bypass, Lucknow', score: 68 },
+  { driver: 'Anita Joshi', family: 'Joshi Family', event: 'Night Driving >2AM', severity: 'Low', speed: '48 km/h', time: '02:17 AM', location: 'City Road, Pune', score: 85 },
+  { driver: 'Vikram Nair', family: 'Nair Family', event: 'Speeding', severity: 'Critical', speed: '132 km/h', time: '06:33 AM', location: 'Outer Ring, Kochi', score: 45 },
+  { driver: 'Deepa Reddy', family: 'Reddy Family', event: 'Hard Braking', severity: 'High', speed: '76 km/h', time: '12:05 PM', location: 'IT Hub, Hyderabad', score: 70 },
+]
+
+export function DrivingEventsSection() {
+  const [search, setSearch] = useState('')
+  const [filter, setFilter] = useState('all')
+  const sevColor = (s: string) => s === 'Critical' ? '#EF4444' : s === 'High' ? '#F97316' : s === 'Medium' ? '#F59E0B' : '#10B981'
+
+  const rows = drivingEvents.filter(d =>
+    (d.driver + d.family + d.event + d.location).toLowerCase().includes(search.toLowerCase()) &&
+    (filter === 'all' || d.severity.toLowerCase() === filter)
+  )
+
+  return (
+    <div>
+      <SectionHeader title="Driving Events" subtitle="Real-time platform-wide driving behavior events and violations" />
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 16, marginBottom: 24 }}>
+        <StatCard label="Events Today" value="1,284" sub="+12% vs yesterday" icon={Car} />
+        <StatCard label="Critical Events" value="38" sub="Requires attention" subColor="#EF4444" icon={AlertTriangle} iconColor="#EF4444" />
+        <StatCard label="Families Affected" value="892" sub="Across all plans" icon={Users} iconColor="#8B5CF6" />
+        <StatCard label="Avg Score Impact" value="-4.2 pts" sub="Per event" subColor="#F59E0B" icon={Gauge} iconColor="#F59E0B" />
+      </div>
+      <Card>
+        <div style={{ display: 'flex', gap: 10, alignItems: 'center', marginBottom: 16, flexWrap: 'wrap' as const }}>
+          <SearchBar value={search} onChange={setSearch} placeholder="Search driver, family, or location..." />
+          <select value={filter} onChange={e => setFilter(e.target.value)}
+            style={{ background: 'var(--bg-surface2)', border: '1px solid var(--border)', borderRadius: 6, padding: '6px 12px', color: 'var(--text-primary)', fontSize: 13, outline: 'none' }}>
+            <option value="all">All Severity</option>
+            <option value="critical">Critical</option>
+            <option value="high">High</option>
+            <option value="medium">Medium</option>
+            <option value="low">Low</option>
+          </select>
+          <button style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 6, padding: '6px 14px', background: 'var(--bg-surface2)', border: '1px solid var(--border)', borderRadius: 8, color: 'var(--text-primary)', cursor: 'pointer', fontSize: 13 }}>
+            <Download size={14} /> Export CSV
+          </button>
+        </div>
+        <div style={{ overflowX: 'auto' as const }}>
+          <table style={{ width: '100%', borderCollapse: 'collapse' as const, fontSize: 13 }}>
+            <thead>
+              <tr style={{ borderBottom: '1px solid var(--border)' }}>
+                {['Driver', 'Family', 'Event Type', 'Severity', 'Speed', 'Time', 'Location', 'Score'].map(h => (
+                  <th key={h} style={{ padding: '10px 12px', textAlign: 'left', color: 'var(--text-muted)', fontWeight: 600, fontSize: 12, whiteSpace: 'nowrap' as const }}>{h}</th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {rows.map((r, i) => (
+                <tr key={i} style={{ borderBottom: '1px solid var(--border)', background: i % 2 === 0 ? 'transparent' : 'var(--bg-surface2)' }}>
+                  <td style={{ padding: '10px 12px', fontWeight: 600, color: 'var(--text-primary)' }}>{r.driver}</td>
+                  <td style={{ padding: '10px 12px', color: 'var(--text-muted)' }}>{r.family}</td>
+                  <td style={{ padding: '10px 12px' }}><span style={{ display: 'flex', alignItems: 'center', gap: 4, color: 'var(--text-primary)' }}><Car size={12} />{r.event}</span></td>
+                  <td style={{ padding: '10px 12px' }}>{badge(r.severity, sevColor(r.severity))}</td>
+                  <td style={{ padding: '10px 12px', color: 'var(--text-primary)', fontWeight: 600 }}>{r.speed}</td>
+                  <td style={{ padding: '10px 12px', color: 'var(--text-muted)' }}>{r.time}</td>
+                  <td style={{ padding: '10px 12px', color: 'var(--text-muted)', maxWidth: 160 }}>{r.location}</td>
+                  <td style={{ padding: '10px 12px' }}>
+                    <span style={{ fontWeight: 700, color: r.score >= 80 ? '#10B981' : r.score >= 60 ? '#F59E0B' : '#EF4444' }}>{r.score}</span>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </Card>
+    </div>
+  )
+}

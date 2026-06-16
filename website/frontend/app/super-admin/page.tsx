@@ -8,8 +8,8 @@ import PanelBackground from '@/components/effects/PanelBackground'
 import ThemeToggle from '@/components/ui/ThemeToggle'
 import { LiveOperationsSection, AICopilotSection, PlatformStatusSection, ChildrenSection, ElderlySection, CaregiversSection, UserVerificationSection, EmergencySection, MissingPersonsSection, IncidentReportsSection, RiskMonitoringSection, SafetyScoresSection } from '@/components/super-admin/s1-overview-people-safety'
 import { SchoolManagementSection, SchoolBusTrackingSection, AttendanceSection, PickupVerificationSection, ChildAlertsSection, ChildAnalyticsSection, MedicationSection, FallDetectionSection, WellnessReportsSection, CaregiverConsoleSection, ElderAnalyticsSection } from '@/components/super-admin/s2-child-elder'
-import { DriverScoresSection, SpeedViolationsSection, TeenDrivingSection, RiskDetectionSection, AIDrivingCoachSection, AIGuardianSection, SafetyPredictionsSection, AIReportsSection, AIChatLogsSection, AIModelsSection, AIConfigSection } from '@/components/super-admin/s3-driving-ai'
-import { EmailCampaignsSection, SMSCampaignsSection, AnnouncementsSection, SmartWatchesSection, GPSTrackersSection, CamerasSection, SmartHomeSection, DeviceHealthSection, InvoicesSection, FinancialReportsSection, WhiteLabelSection, SchoolsEnterpriseSection, HospitalsSection, NGOsSection, EnterpriseAnalyticsSection } from '@/components/super-admin/s4-comms-devices-business-enterprise'
+import { DriverScoresSection, SpeedViolationsSection, TeenDrivingSection, RiskDetectionSection, AIDrivingCoachSection, AIGuardianSection, SafetyPredictionsSection, AIReportsSection, AIChatLogsSection, AIModelsSection, AIConfigSection, DrivingEventsSection } from '@/components/super-admin/s3-driving-ai'
+import { EmailCampaignsSection, SMSCampaignsSection, AnnouncementsSection, SmartWatchesSection, GPSTrackersSection, CamerasSection, SmartHomeSection, DeviceHealthSection, InvoicesSection, FinancialReportsSection, WhiteLabelSection, SchoolsEnterpriseSection, HospitalsSection, NGOsSection, EnterpriseAnalyticsSection, FamilyChatSection } from '@/components/super-admin/s4-comms-devices-business-enterprise'
 import { FamilyAnalyticsSection, SafetyAnalyticsSection, DeviceAnalyticsSection, RevenueAnalyticsSection, PredictiveInsightsSection, FeedbackSection, ContactRequestsSection, KnowledgeBaseSection, CustomerSuccessSection, LoginActivitySection, ThreatDetectionSection, PermissionsSection, ComplianceCenterSection, RolesSection, TeamsSection, AccessControlSection, WebhooksSection, IntegrationsSection, SDKAccessSection, APIAnalyticsSection, DBHealthSection, QueueMonitoringSection, ErrorLogsSection, BackupsSection, BrandingSection, SMTPSection, SMSGatewaySection, PushConfigSection, MapsAPISection, AISettingsSection, PlatformConfigSection } from '@/components/super-admin/s5-intelligence-platform'
 import {
   Crown,
@@ -3870,8 +3870,8 @@ export default function SuperAdminPage() {
       case 'check-ins': return <Geofences />
       case 'location-history': return <Analytics />
       case 'location-intel': return <Analytics />
-      case 'driving': return <AdminsMods />
-      case 'family-chat': return <Notifications />
+      case 'driving': return <DrivingEventsSection />
+      case 'family-chat': return <FamilyChatSection />
       case 'payments': return <Revenue />
       case 'coupons': return <Plans />
       default: return <CommandCenter />

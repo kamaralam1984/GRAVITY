@@ -1109,3 +1109,75 @@ export function EnterpriseAnalyticsSection() {
     </div>
   )
 }
+
+const chatRows = [
+  { family: 'Sharma Family', members: 5, messages: 1284, media: 48, lastActive: '2 min ago', flagged: 0 },
+  { family: 'Singh Family', members: 4, messages: 892, media: 21, lastActive: '15 min ago', flagged: 1 },
+  { family: 'Kumar Family', members: 6, messages: 2341, media: 87, lastActive: '1 hr ago', flagged: 0 },
+  { family: 'Patel Family', members: 3, messages: 441, media: 9, lastActive: '3 hr ago', flagged: 0 },
+  { family: 'Yadav Family', members: 7, messages: 3120, media: 134, lastActive: '30 min ago', flagged: 2 },
+  { family: 'Joshi Family', members: 4, messages: 720, media: 18, lastActive: '5 hr ago', flagged: 0 },
+  { family: 'Nair Family', members: 5, messages: 1890, media: 62, lastActive: '45 min ago', flagged: 0 },
+  { family: 'Reddy Family', members: 4, messages: 560, media: 14, lastActive: '8 hr ago', flagged: 1 },
+]
+
+export function FamilyChatSection() {
+  const [search, setSearch] = useState('')
+  const rows = chatRows.filter(r => r.family.toLowerCase().includes(search.toLowerCase()))
+  return (
+    <div>
+      <div style={{ marginBottom: 24 }}>
+        <h2 style={{ fontSize: 20, fontWeight: 700, color: 'var(--text-primary)', margin: 0 }}>Family Chat</h2>
+        <p style={{ fontSize: 13, color: 'var(--text-muted)', margin: '4px 0 0' }}>Monitor family chat activity and flag any issues across all families</p>
+      </div>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 16, marginBottom: 24 }}>
+        {[
+          { label: 'Active Chats', value: '12,840', color: '#3B82F6' },
+          { label: 'Messages Today', value: '4.2L', color: '#10B981' },
+          { label: 'Media Shared', value: '18,430', color: '#8B5CF6' },
+          { label: 'Flagged Msgs', value: '23', color: '#EF4444' },
+        ].map(s => (
+          <div key={s.label} style={{ background: 'var(--bg-surface)', border: '1px solid var(--border)', borderRadius: 12, padding: 20 }}>
+            <div style={{ fontSize: 12, color: 'var(--text-muted)', marginBottom: 6 }}>{s.label}</div>
+            <div style={{ fontSize: 24, fontWeight: 800, color: s.color }}>{s.value}</div>
+          </div>
+        ))}
+      </div>
+      <div style={{ background: 'var(--bg-surface)', border: '1px solid var(--border)', borderRadius: 12, overflow: 'hidden' }}>
+        <div style={{ padding: '12px 20px', borderBottom: '1px solid var(--border)', display: 'flex', gap: 10, alignItems: 'center' }}>
+          <SearchBar value={search} onChange={setSearch} />
+          <button style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 6, padding: '6px 14px', background: 'var(--bg-surface2)', border: '1px solid var(--border)', borderRadius: 8, color: 'var(--text-primary)', cursor: 'pointer', fontSize: 13 }}>
+            <Plus size={14} /> Export
+          </button>
+        </div>
+        <div style={{ overflowX: 'auto' as const }}>
+          <table style={{ width: '100%', borderCollapse: 'collapse' as const, fontSize: 13 }}>
+            <thead>
+              <tr style={{ borderBottom: '1px solid var(--border)' }}>
+                {['Family', 'Members', 'Messages', 'Media', 'Last Active', 'Flagged'].map(h => (
+                  <th key={h} style={{ padding: '10px 16px', textAlign: 'left', color: 'var(--text-muted)', fontWeight: 600, fontSize: 12 }}>{h}</th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {rows.map((r, i) => (
+                <tr key={i} style={{ borderBottom: '1px solid var(--border)', background: i % 2 === 0 ? 'transparent' : 'var(--bg-surface2)' }}>
+                  <td style={{ padding: '10px 16px', fontWeight: 600, color: 'var(--text-primary)' }}>{r.family}</td>
+                  <td style={{ padding: '10px 16px', color: 'var(--text-muted)' }}>{r.members}</td>
+                  <td style={{ padding: '10px 16px', color: 'var(--text-primary)' }}>{r.messages.toLocaleString()}</td>
+                  <td style={{ padding: '10px 16px', color: 'var(--text-muted)' }}>{r.media}</td>
+                  <td style={{ padding: '10px 16px', color: 'var(--text-muted)' }}>{r.lastActive}</td>
+                  <td style={{ padding: '10px 16px' }}>
+                    {r.flagged > 0
+                      ? <span style={{ background: '#EF444420', color: '#EF4444', border: '1px solid #EF444433', borderRadius: 99, fontSize: 11, fontWeight: 700, padding: '2px 8px' }}>{r.flagged} flagged</span>
+                      : <span style={{ color: '#10B981', fontSize: 12 }}>Clean</span>}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  )
+}
