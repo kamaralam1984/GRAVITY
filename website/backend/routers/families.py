@@ -72,19 +72,42 @@ def create_family(data: FamilyCreate, user: models.User = Depends(get_current_us
     log_family_event(db, family.id, "owner_joined", user.id, user.name, {"email": user.email, "role": "owner"})
     return {"id": family.id, "name": family.name, "invite_code": family.invite_code, "plan": family.plan}
 
+class JoinRequest(BaseModel):
+    role: Optional[str] = "member"
+
 @router.post("/join/{invite_code}")
-def join_family(invite_code: str, user: models.User = Depends(get_current_user), db: Session = Depends(get_db)):
+def join_family(invite_code: str, body: Optional[JoinRequest] = None, user: models.User = Depends(get_current_user), db: Session = Depends(get_db)):
     family = db.query(models.Family).filter(models.Family.invite_code.ilike(invite_code)).first()
     if not family:
         raise HTTPException(status_code=404, detail="Invalid invite code")
     existing = db.query(models.FamilyMember).filter(models.FamilyMember.family_id == family.id, models.FamilyMember.user_id == user.id).first()
     if existing:
         raise HTTPException(status_code=400, detail="Already a member")
-    member = models.FamilyMember(family_id=family.id, user_id=user.id, role="member")
+    role = (body.role if body and body.role in ("child", "member") else "member")
+    member = models.FamilyMember(family_id=family.id, user_id=user.id, role=role)
     db.add(member)
     db.commit()
-    log_family_event(db, family.id, "member_joined", user.id, user.name, {"email": user.email, "role": "member", "family_name": family.name})
-    return {"message": "Joined family", "family_name": family.name, "family_id": family.id}
+    log_family_event(db, family.id, "member_joined", user.id, user.name, {"email": user.email, "role": role, "family_name": family.name})
+    return {"message": "Joined family", "family_name": family.name, "family_id": family.id, "role": role}
+
+class RoleUpdateRequest(BaseModel):
+    role: str
+
+@router.patch("/{family_id}/members/{user_id}/role")
+def update_member_role(family_id: int, user_id: int, data: RoleUpdateRequest, user: models.User = Depends(get_current_user), db: Session = Depends(get_db)):
+    family = db.query(models.Family).filter(models.Family.id == family_id, models.Family.owner_id == user.id).first()
+    if not family:
+        raise HTTPException(status_code=403, detail="Only the owner can change member roles")
+    if data.role not in ("child", "member", "owner"):
+        raise HTTPException(status_code=400, detail="Role must be child, member, or owner")
+    member = db.query(models.FamilyMember).filter(models.FamilyMember.family_id == family_id, models.FamilyMember.user_id == user_id).first()
+    if not member:
+        raise HTTPException(status_code=404, detail="Member not found")
+    if member.role == "owner":
+        raise HTTPException(status_code=400, detail="Cannot change owner role")
+    member.role = data.role
+    db.commit()
+    return {"user_id": user_id, "role": data.role}
 
 @router.get("/my")
 def my_families(user: models.User = Depends(get_current_user), db: Session = Depends(get_db)):

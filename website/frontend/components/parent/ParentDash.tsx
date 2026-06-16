@@ -40,13 +40,14 @@ import {
 // ─── Shared types ─────────────────────────────────────────────────────────────
 
 type MemberStatus = 'safe' | 'sos' | 'alert' | 'offline';
-type MemberRole = 'Child' | 'Elder' | 'Self';
+type MemberRole = 'Child' | 'Elder' | 'Self' | 'Member';
 
 interface FamilyMember {
   id: string;
   name: string;
   initials: string;
   role: MemberRole;
+  rawRole?: string;
   status: MemberStatus;
   location: string;
   lastSeen: string;
@@ -511,13 +512,14 @@ export function DashboardSection({ onNavigate }: { onNavigate?: (tab: string) =>
         const mapped: FamilyMember[] = raw.map((m, i) => {
           const name: string = m.name ?? 'Member';
           const initials = name.split(' ').map((w: string) => w[0] ?? '').join('').slice(0, 2).toUpperCase();
-          const role: MemberRole = m.role === 'owner' ? 'Self' : 'Child';
+          const role: MemberRole = m.role === 'owner' ? 'Self' : m.role === 'child' ? 'Child' : 'Member';
           const isOnline: boolean = !!m.is_online;
           return {
             id: String(m.user_id ?? i),
             name,
             initials,
             role,
+            rawRole: m.role,
             status: isOnline ? 'safe' : 'offline',
             location: m.last_location ?? 'Location unavailable',
             lastSeen: 'Recently',
@@ -962,20 +964,40 @@ export function DashboardSection({ onNavigate }: { onNavigate?: (tab: string) =>
                   >
                     {member.name}
                   </div>
-                  <div
-                    style={{
-                      display: 'inline-block',
-                      fontSize: 9,
-                      fontWeight: 600,
-                      color: member.avatarColor,
-                      background: `${member.avatarColor}18`,
-                      borderRadius: 4,
-                      padding: '1px 5px',
-                      letterSpacing: '0.5px',
-                      marginTop: 1,
-                    }}
-                  >
-                    {member.role}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 4, marginTop: 1, flexWrap: 'wrap' }}>
+                    <div
+                      style={{
+                        display: 'inline-block',
+                        fontSize: 9,
+                        fontWeight: 600,
+                        color: member.avatarColor,
+                        background: `${member.avatarColor}18`,
+                        borderRadius: 4,
+                        padding: '1px 5px',
+                        letterSpacing: '0.5px',
+                      }}
+                    >
+                      {member.role}
+                    </div>
+                    {member.rawRole === 'member' && familyId && (
+                      <button
+                        onClick={async (e) => {
+                          e.stopPropagation();
+                          const token = localStorage.getItem('gv_token') || '';
+                          const res = await fetch(`/families/${familyId}/members/${member.id}/role`, {
+                            method: 'PATCH',
+                            headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ role: 'child' }),
+                          });
+                          if (res.ok) {
+                            setMembers(prev => prev.map(m => m.id === member.id ? { ...m, role: 'Child', rawRole: 'child' } : m));
+                          }
+                        }}
+                        style={{ fontSize: 8, fontWeight: 700, color: '#10B981', background: '#10B98118', border: '1px solid #10B98133', borderRadius: 4, padding: '1px 5px', cursor: 'pointer', letterSpacing: '0.3px' }}
+                      >
+                        + Set as Child
+                      </button>
+                    )}
                   </div>
                 </div>
               </div>
