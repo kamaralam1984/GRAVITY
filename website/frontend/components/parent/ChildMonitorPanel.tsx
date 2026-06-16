@@ -156,15 +156,17 @@ export default function ChildMonitorPanel({ child, famId, onClose }: Props) {
   return (
     <div style={{
       position: 'fixed', inset: 0, zIndex: 10000,
-      background: 'rgba(0,0,0,0.85)', display: 'flex', alignItems: 'flex-end',
-      backdropFilter: 'blur(12px)',
+      background: 'rgba(0,0,0,0.88)', display: 'flex', alignItems: 'flex-start',
+      backdropFilter: 'blur(14px)',
     }} onClick={onClose}>
       <div style={{
-        width: '100%', maxHeight: '90vh', overflowY: 'auto',
+        width: '100%', maxHeight: '92vh', overflowY: 'auto',
         background: 'linear-gradient(180deg, #0f1117 0%, #0B0D13 100%)',
-        borderRadius: '28px 28px 0 0',
-        border: '1px solid rgba(255,255,255,0.08)',
-        padding: '24px 20px 40px',
+        borderRadius: '0 0 28px 28px',
+        border: '1px solid rgba(255,255,255,0.1)',
+        borderTop: 'none',
+        padding: '52px 20px 32px',
+        boxShadow: '0 8px 40px rgba(0,0,0,0.7)',
       }} onClick={e => e.stopPropagation()}>
 
         {/* Header */}
@@ -218,7 +220,7 @@ export default function ChildMonitorPanel({ child, famId, onClose }: Props) {
         {(activeMode === 'camera' || activeMode === 'screen') && (
           <div style={{ borderRadius: 16, overflow: 'hidden', background: '#000', marginBottom: 16, position: 'relative' }}>
             <video ref={videoRef} autoPlay playsInline muted={false}
-              style={{ width: '100%', maxHeight: 260, objectFit: 'contain', display: 'block' }} />
+              style={{ width: '100%', maxHeight: 320, objectFit: 'contain', display: 'block' }} />
             {!videoRef.current?.srcObject && (
               <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
                 <div style={{ width: 24, height: 24, borderRadius: '50%', border: '3px solid rgba(255,255,255,0.15)', borderTopColor: '#8B5CF6', animation: 'spin 0.8s linear infinite' }} />
