@@ -243,9 +243,10 @@ const PURPLE_DARK = '#6D28D9'
 function roleBadge(role: string) {
   const map: Record<string, { bg: string; color: string; label: string }> = {
     super_admin: { bg: 'rgba(236,72,153,0.15)', color: '#EC4899', label: 'Super Admin' },
-    admin: { bg: 'rgba(139,92,246,0.15)', color: PURPLE, label: 'Admin' },
-    moderator: { bg: 'rgba(245,158,11,0.15)', color: '#F59E0B', label: 'Moderator' },
-    user: { bg: 'rgba(59,130,246,0.12)', color: '#60A5FA', label: 'User' },
+    superadmin:  { bg: 'rgba(236,72,153,0.15)', color: '#EC4899', label: 'Super Admin' },
+    admin:       { bg: 'rgba(139,92,246,0.15)', color: PURPLE, label: 'Admin' },
+    moderator:   { bg: 'rgba(245,158,11,0.15)', color: '#F59E0B', label: 'Moderator' },
+    user:        { bg: 'rgba(59,130,246,0.12)', color: '#60A5FA', label: 'User' },
   }
   const s = map[role] ?? map.user
   return (
@@ -1676,7 +1677,7 @@ export default function SuperAdminPage() {
                   style={{ width: '100%', padding: '10px 14px', borderRadius: 10, border: '1px solid var(--border)', background: 'var(--bg-surface2)', color: 'var(--text-primary)', fontSize: 14, outline: 'none', cursor: 'pointer', boxSizing: 'border-box' }}
                 >
                   <option value="admin" style={{ background: '#1a1030' }}>Admin</option>
-                  <option value="superadmin" style={{ background: '#1a1030' }}>Super Admin</option>
+                  <option value="super_admin" style={{ background: '#1a1030' }}>Super Admin</option>
                   <option value="moderator" style={{ background: '#1a1030' }}>Moderator</option>
                 </select>
               </div>
@@ -1767,7 +1768,7 @@ export default function SuperAdminPage() {
               <option value="user">User</option>
               <option value="moderator">Moderator</option>
               <option value="admin">Admin</option>
-              <option value="superadmin">Super Admin</option>
+              <option value="super_admin">Super Admin</option>
             </select>
           </div>
           <button onClick={handleSubmit} disabled={addUserLoading}
@@ -1893,7 +1894,7 @@ export default function SuperAdminPage() {
               <option value="user">User</option>
               <option value="moderator">Moderator</option>
               <option value="admin">Admin</option>
-              <option value="superadmin">Super Admin</option>
+              <option value="super_admin">Super Admin</option>
             </select>
           </div>
           <div style={{ display: 'flex', gap: 10 }}>

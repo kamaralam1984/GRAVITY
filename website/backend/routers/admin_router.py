@@ -194,7 +194,7 @@ def analytics_data(admin=Depends(get_current_admin), db: Session = Depends(get_d
 
 # ── User Management ───────────────────────────────────────────────
 
-VALID_ROLES = ["user", "moderator", "admin", "superadmin"]
+VALID_ROLES = ["user", "moderator", "admin", "super_admin", "superadmin"]
 
 class UserCreateRequest(BaseModel):
     name: str
