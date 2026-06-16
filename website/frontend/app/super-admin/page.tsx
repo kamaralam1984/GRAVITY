@@ -66,6 +66,7 @@ import {
   CheckSquare,
   Car,
   Tag,
+  KeyRound,
 } from 'lucide-react'
 
 // ─── Types ───────────────────────────────────────────────────────────────────
@@ -664,6 +665,12 @@ export default function SuperAdminPage() {
   const [editUserLoading, setEditUserLoading] = useState(false)
   const [editUserError, setEditUserError] = useState('')
   const [userActionLoading, setUserActionLoading] = useState<number | null>(null)
+  const [showPasswordModal, setShowPasswordModal] = useState(false)
+  const [passwordUser, setPasswordUser] = useState<any>(null)
+  const [newPassword, setNewPassword] = useState('')
+  const [passwordLoading, setPasswordLoading] = useState(false)
+  const [passwordError, setPasswordError] = useState('')
+  const [passwordSuccess, setPasswordSuccess] = useState(false)
   const [selectedSAFamily, setSelectedSAFamily] = useState<any>(null)
   const [showFamilyViewModal, setShowFamilyViewModal] = useState(false)
   const [familiesPage, setFamiliesPage] = useState(1)
@@ -1327,6 +1334,7 @@ export default function SuperAdminPage() {
                       {([
                         { icon: Eye, tip: 'View', color: '#60A5FA', onClick: () => { setSelectedSAUser(u); setShowUserViewModal(true) } },
                         { icon: Edit, tip: 'Edit', color: '#F59E0B', onClick: () => { setSelectedSAUser(u); setEditUserForm({ name: u.name || '', email: u.email || '', phone: u.phone || '', role: u.role || 'user', family_member_role: u.family_member_role || '' }); setEditUserError(''); setShowUserEditModal(true) } },
+                        { icon: KeyRound, tip: 'Change Password', color: '#A78BFA', onClick: () => { setPasswordUser(u); setNewPassword(''); setPasswordError(''); setPasswordSuccess(false); setShowPasswordModal(true) } },
                         { icon: u.is_active ? Ban : CheckCircle, tip: u.is_active ? 'Suspend' : 'Activate', color: u.is_active ? '#F97316' : '#10B981',
                           onClick: async () => {
                             setUserActionLoading(u.id)
@@ -1407,6 +1415,9 @@ export default function SuperAdminPage() {
       </AnimatePresence>
       <AnimatePresence>
         <UserEditModal />
+      </AnimatePresence>
+      <AnimatePresence>
+        <PasswordModal />
       </AnimatePresence>
     </div>
   )
@@ -1940,6 +1951,82 @@ export default function SuperAdminPage() {
               Cancel
             </button>
           </div>
+        </motion.div>
+      </motion.div>
+    )
+  }
+
+  // ── Password Change Modal ──
+  const PasswordModal = () => {
+    if (!showPasswordModal || !passwordUser) return null
+    async function handleChangePassword() {
+      if (!newPassword || newPassword.length < 6) { setPasswordError('Password must be at least 6 characters'); return }
+      setPasswordLoading(true); setPasswordError('')
+      try {
+        const token = getAuthToken()
+        const res = await fetch(`/admin-api/users/${passwordUser.id}/change-password`, {
+          method: 'POST',
+          headers: { Authorization: 'Bearer ' + token, 'Content-Type': 'application/json' },
+          body: JSON.stringify({ new_password: newPassword }),
+        })
+        const data = await res.json()
+        if (!res.ok) throw new Error(data.detail || 'Failed to change password')
+        setPasswordSuccess(true)
+        setTimeout(() => setShowPasswordModal(false), 1500)
+      } catch (e: any) {
+        setPasswordError(e.message || 'Failed to change password')
+      } finally { setPasswordLoading(false) }
+    }
+    return (
+      <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+        style={{ position: 'fixed', inset: 0, zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(8px)', padding: 20 }}
+        onClick={(e) => { if (e.target === e.currentTarget) setShowPasswordModal(false) }}
+      >
+        <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.9, opacity: 0 }}
+          style={{ width: '100%', maxWidth: 420, background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 20, padding: '28px 28px', position: 'relative' }}
+        >
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+              <div style={{ width: 36, height: 36, borderRadius: 10, background: 'rgba(167,139,250,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <KeyRound size={18} color="#A78BFA" />
+              </div>
+              <div>
+                <div style={{ fontSize: 16, fontWeight: 700, color: 'var(--text-primary)' }}>Change Password</div>
+                <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>{passwordUser.name} · {passwordUser.email}</div>
+              </div>
+            </div>
+            <button onClick={() => setShowPasswordModal(false)} style={{ background: 'transparent', border: 'none', color: 'var(--text-muted)', cursor: 'pointer' }}><X size={20} /></button>
+          </div>
+          {passwordSuccess ? (
+            <div style={{ textAlign: 'center', padding: '20px 0' }}>
+              <div style={{ width: 52, height: 52, borderRadius: '50%', background: 'linear-gradient(135deg,#10B981,#059669)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 12px', boxShadow: '0 0 24px rgba(16,185,129,0.4)' }}>
+                <CheckCircle size={24} color="#fff" />
+              </div>
+              <div style={{ fontSize: 15, fontWeight: 700, color: 'var(--text-primary)' }}>Password Changed!</div>
+            </div>
+          ) : (
+            <>
+              <div style={{ marginBottom: 16 }}>
+                <label style={{ fontSize: 13, color: 'var(--text-secondary)', fontWeight: 600, display: 'block', marginBottom: 6 }}>New Password</label>
+                <input
+                  type="password"
+                  value={newPassword}
+                  onChange={(e) => setNewPassword(e.target.value)}
+                  onKeyDown={(e) => e.key === 'Enter' && handleChangePassword()}
+                  placeholder="Min 6 characters"
+                  style={{ width: '100%', padding: '10px 14px', borderRadius: 10, border: `1px solid ${passwordError ? '#EF444460' : 'var(--border)'}`, background: 'var(--bg-surface2)', color: 'var(--text-primary)', fontSize: 14, outline: 'none', boxSizing: 'border-box' }}
+                />
+                {passwordError && <div style={{ fontSize: 12, color: '#EF4444', marginTop: 6 }}>{passwordError}</div>}
+              </div>
+              <button
+                onClick={handleChangePassword}
+                disabled={passwordLoading}
+                style={{ width: '100%', height: 44, borderRadius: 10, border: 'none', background: 'linear-gradient(135deg,#A78BFA,#7C3AED)', color: '#fff', fontSize: 14, fontWeight: 700, cursor: passwordLoading ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}
+              >
+                {passwordLoading ? <RefreshCw size={16} style={{ animation: 'spin 1s linear infinite' }} /> : <><KeyRound size={15} /> Change Password</>}
+              </button>
+            </>
+          )}
         </motion.div>
       </motion.div>
     )
