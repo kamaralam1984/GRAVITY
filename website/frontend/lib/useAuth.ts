@@ -9,6 +9,7 @@ export function useAuth() {
   const router = useRouter()
   const [user, setUser] = useState<AuthUser | null>(null)
   const [isAuthenticated, setIsAuthenticated] = useState(false)
+  const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     const token = getToken()
@@ -20,6 +21,7 @@ export function useAuth() {
       setUser(null)
       setIsAuthenticated(false)
     }
+    setLoading(false)
   }, [])
 
   const logout = useCallback((currentRole?: string) => {
@@ -36,5 +38,5 @@ export function useAuth() {
 
   const role: UserRole | null = user ? user.role : null
 
-  return { user, role, isAuthenticated, logout }
+  return { user, role, isAuthenticated, loading, logout }
 }

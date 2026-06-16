@@ -571,8 +571,12 @@ export default function DashboardPage() {
       .then(async (families: any[]) => {
         if (!Array.isArray(families) || families.length === 0) { setFamilyLoading(false); return }
         const fid = families[0].id
+        const myRole = families[0].role || 'member'
+        // Redirect to role-specific dashboard
+        if (myRole === 'child') { router.replace('/child'); return }
+        if (myRole === 'owner' || myRole === 'member') { router.replace('/parent'); return }
         setFamilyId(fid)
-        setFamilyRole(families[0].role || 'member')
+        setFamilyRole(myRole)
         setFamilyInviteCode(families[0].invite_code || '')
         setFamilyName(families[0].name || 'My Family')
         try {
