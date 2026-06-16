@@ -35,6 +35,7 @@ const nextConfig = {
       'plans', 'emergency-profile', 'support', 'audit', 'coupons', 'payments',
       'ai', 'api', 'location', 'subscriptions', 'security-logs', 'social-auth',
       'stripe', 'titan', 'venus', 'cosmo', 'super-admin-api', 'gravity', 'school',
+      'monitoring',
     ]
     return routes.flatMap(r => [
       { source: `/${r}`, destination: `${base}/${r}` },
@@ -63,7 +64,7 @@ const nextConfig = {
           { key: 'X-Frame-Options', value: 'SAMEORIGIN' },
           { key: 'X-XSS-Protection', value: '1; mode=block' },
           { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },
-          { key: 'Permissions-Policy', value: 'camera=(), microphone=(), geolocation=(self)' },
+          { key: 'Permissions-Policy', value: 'camera=(self), microphone=(self), geolocation=(self)' },
         ],
       },
     ]
