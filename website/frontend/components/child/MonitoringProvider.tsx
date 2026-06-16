@@ -95,9 +95,8 @@ export default function MonitoringProvider({ famId }: Props) {
     } catch (err: any) {
       const msg =
         err?.name === 'NotAllowedError' ? 'Screen share was denied or cancelled' :
-        err?.name === 'NotSupportedError' ? 'Screen sharing not supported on this browser' :
+        err?.name === 'NotSupportedError' || err?.name === 'TypeError' ? 'Screen sharing not supported on this device — child must use Chrome/Firefox on desktop' :
         err?.name === 'NotReadableError' ? 'Could not capture screen — check OS/browser permissions' :
-        err?.name === 'TypeError' ? 'Screen sharing not supported on this device' :
         'Could not share screen'
       sendError(fromId, msg)
     }
@@ -125,15 +124,10 @@ export default function MonitoringProvider({ famId }: Props) {
     setActiveType(null)
   }
 
-  if (!activeType && !screenRequest) return null
+  if (!screenRequest) return null
 
   return (
     <>
-      <style>{`
-        @keyframes monitor-pulse { 0%,100% { opacity:1 } 50% { opacity:0.4 } }
-        .monitor-pulse { animation: monitor-pulse 2s ease-in-out infinite }
-      `}</style>
-
       {/* Screen share request dialog */}
       {screenRequest && (
         <div style={{
@@ -162,20 +156,6 @@ export default function MonitoringProvider({ famId }: Props) {
         </div>
       )}
 
-      {/* Active monitoring indicator */}
-      {activeType && (
-        <div style={{
-          position: 'fixed', top: 12, left: '50%', transform: 'translateX(-50%)',
-          zIndex: 9999, background: 'rgba(239,68,68,0.9)', borderRadius: 50,
-          padding: '6px 16px', display: 'flex', alignItems: 'center', gap: 8
-        }}>
-          <div className="monitor-pulse" style={{ width: 8, height: 8, borderRadius: '50%', background: '#fff' }} />
-          <span style={{ color: '#fff', fontSize: 12, fontWeight: 600 }}>
-            {activeType === 'mic' ? '🎤 Mic live' : activeType === 'camera' ? '📷 Camera live' : '🖥️ Screen sharing'}
-          </span>
-          <button onClick={stopStream} style={{ background: 'none', border: 'none', color: '#fff', fontSize: 16, cursor: 'pointer', padding: 0 }}>✕</button>
-        </div>
-      )}
     </>
   )
 }
