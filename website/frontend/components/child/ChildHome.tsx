@@ -318,25 +318,25 @@ export default function ChildHome({
           setFamilyMembers(members);
           const me = members.find((m) => m.user_id === user!.id);
           if (me?.last_location) setLastLocation(me.last_location);
-          const parents = members.filter((m: ApiMember) => (m.role === 'owner' || m.role === 'parent') && m.is_online && m.user_id !== user!.id);
+          const parents = members.filter((m: ApiMember) => (m.role === 'owner' || m.role === 'member') && m.is_online && m.user_id !== user!.id);
           if (parents.length > 0) setParentWatching(parents[0].name.split(' ')[0]);
+          else setParentWatching(null);
         }
 
-        // Active journey for speed/transport
-        try {
-          const jRes = await fetch('/journeys/active', { headers });
-          if (jRes.ok) {
-            const jData = await jRes.json();
-            const journeys: Array<{ user_id?: number; user_name?: string; speed?: number | null }> = jData.journeys || [];
-            const myJ = journeys.find((j) => j.user_id === user!.id || j.user_name === user!.name);
-            if (myJ) {
-              const spd = myJ.speed != null ? Math.round(myJ.speed) : 0;
-              setSpeed(spd);
-              const mode = getTransportMode(spd);
-              setTransport(mode.label);
-            }
-          }
-        } catch (_) {}
+        // Speed from GPS (real-time, no journey needed)
+        if (navigator.geolocation) {
+          navigator.geolocation.getCurrentPosition(
+            (pos) => {
+              if (pos.coords.speed != null && pos.coords.speed >= 0) {
+                const kmh = Math.round(pos.coords.speed * 3.6);
+                setSpeed(kmh);
+                setTransport(getTransportMode(kmh).label);
+              }
+            },
+            () => {},
+            { enableHighAccuracy: true, maximumAge: 10000 }
+          );
+        }
 
         // Geofences
         try {
@@ -367,6 +367,45 @@ export default function ChildHome({
       } catch (_) {}
     }
     load();
+
+    // Watch GPS speed continuously
+    let watchId: number | null = null;
+    if (navigator.geolocation) {
+      watchId = navigator.geolocation.watchPosition(
+        (pos) => {
+          if (pos.coords.speed != null && pos.coords.speed >= 0) {
+            const kmh = Math.round(pos.coords.speed * 3.6);
+            setSpeed(kmh);
+            setTransport(getTransportMode(kmh).label);
+          }
+        },
+        () => {},
+        { enableHighAccuracy: true, maximumAge: 5000 }
+      );
+    }
+
+    // Refresh parent watching every 30s
+    const parentInterval = setInterval(async () => {
+      const t = getToken();
+      const u = getUser();
+      if (!t || !u) return;
+      try {
+        const famR = await fetch('/families/my', { headers: { Authorization: `Bearer ${t}` } });
+        if (!famR.ok) return;
+        const fams = await famR.json();
+        if (!Array.isArray(fams) || !fams[0]) return;
+        const mR = await fetch(`/families/${fams[0].id}/members`, { headers: { Authorization: `Bearer ${t}` } });
+        if (!mR.ok) return;
+        const mems: ApiMember[] = await mR.json();
+        const watching = mems.filter((m) => (m.role === 'owner' || m.role === 'member') && m.is_online && m.user_id !== u.id);
+        setParentWatching(watching.length > 0 ? watching[0].name.split(' ')[0] : null);
+      } catch (_) {}
+    }, 30_000);
+
+    return () => {
+      if (watchId !== null) navigator.geolocation.clearWatch(watchId);
+      clearInterval(parentInterval);
+    };
   }, []);
 
   const onlineMembers = familyMembers.filter((m) => m.is_online);
