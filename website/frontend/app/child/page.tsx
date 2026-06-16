@@ -332,7 +332,7 @@ export default function ChildPage() {
       case 'sos':
         return <SOSSection familyId={familyId} userId={authUser?.id} />
       case 'location':
-        return <LocationSection />
+        return <LocationSection famId={famId} />
       case 'family-radar':
         return <FamilyRadarSection />
       case 'school':

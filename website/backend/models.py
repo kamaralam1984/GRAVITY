@@ -195,6 +195,21 @@ class JourneyPoint(Base):
     recorded_at = Column(DateTime(timezone=True), server_default=func.now())
     journey = relationship("Journey", back_populates="points")
 
+class LocationStop(Base):
+    """Auto-detected stay at a place — populated on each location update."""
+    __tablename__ = "location_stops"
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    lat = Column(Float, nullable=False)
+    lng = Column(Float, nullable=False)
+    place_name = Column(String, nullable=True)
+    arrived_at = Column(DateTime(timezone=True), server_default=func.now())
+    left_at = Column(DateTime(timezone=True), nullable=True)
+    duration_minutes = Column(Integer, default=0)
+    # transport mode used to REACH this stop from previous stop
+    transport_mode = Column(String, default="unknown")  # walking / bike / car / unknown
+    distance_from_prev_km = Column(Float, default=0.0)
+
 class Message(Base):
     __tablename__ = "messages"
     id = Column(Integer, primary_key=True, index=True)

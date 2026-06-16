@@ -544,239 +544,166 @@ export function SOSSection({ familyId, userId }: { familyId?: number; userId?: n
 // LocationSection
 // ─────────────────────────────────────────────────────────────────────────────
 
-export function LocationSection() {
-  const [pinPulse, setPinPulse] = useState(true);
+interface TimelineStop {
+  type: 'stop' | 'transit';
+  id?: number;
+  lat?: number; lng?: number;
+  place_name?: string;
+  arrived_at?: string;
+  left_at?: string;
+  duration_minutes?: number;
+  is_current?: boolean;
+  transport_mode?: string;
+  distance_km?: number;
+}
 
-  const visitedPlaces: VisitedPlace[] = [
-    {
-      id: 'home',
-      name: 'Home',
-      time: '8:00 AM',
-      distance: '0.0 km',
-      dotColor: '#10B981',
-      icon: <Home size={14} color="#10B981" />,
-    },
-    {
-      id: 'school',
-      name: 'DPS School',
-      time: '9:15 AM',
-      distance: '2.3 km',
-      dotColor: '#3B82F6',
-      icon: <School size={14} color="#3B82F6" />,
-    },
-    {
-      id: 'mall',
-      name: 'City Mall',
-      time: '4:40 PM',
-      distance: '5.1 km',
-      dotColor: '#F59E0B',
-      icon: <Car size={14} color="#F59E0B" />,
-    },
-  ];
+interface RealGeofence {
+  id: number; name: string; radius_meters: number; type: string;
+  center_lat: number; center_lng: number;
+}
 
-  const geofences: Geofence[] = [
-    { id: 'home', name: 'Home Zone', radius: '200 m', inside: true },
-    { id: 'school', name: 'School Zone', radius: '500 m', inside: false },
-    { id: 'safe', name: 'Safe Area', radius: '1 km', inside: true },
-  ];
+function fmtTime(iso?: string | null) {
+  if (!iso) return '';
+  return new Date(iso).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', hour12: true });
+}
+function fmtDur(mins?: number) {
+  if (!mins || mins < 1) return '';
+  if (mins < 60) return `${mins}m`;
+  return `${Math.floor(mins / 60)}h ${mins % 60}m`;
+}
+function transportIcon(mode?: string) {
+  if (mode === 'car') return '🚗';
+  if (mode === 'bike') return '🏍️';
+  if (mode === 'walking') return '🚶';
+  return '➡️';
+}
+function stopColor(idx: number, isCurrent: boolean) {
+  if (isCurrent) return '#10B981';
+  const cols = ['#3B82F6', '#8B5CF6', '#F59E0B', '#EC4899', '#06B6D4'];
+  return cols[idx % cols.length];
+}
+
+export function LocationSection({ famId }: { famId?: number | null }) {
+  const [timeline, setTimeline] = useState<TimelineStop[]>([]);
+  const [geofences, setGeofences] = useState<RealGeofence[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const token = getToken();
+    if (!token) return;
+    const h = { Authorization: `Bearer ${token}` };
+
+    Promise.all([
+      fetch('/journeys/my-timeline?hours=24', { headers: h }).then(r => r.ok ? r.json() : null),
+      famId ? fetch(`/geofences/family/${famId}`, { headers: h }).then(r => r.ok ? r.json() : null) : Promise.resolve(null),
+    ]).then(([tj, gf]) => {
+      if (tj?.timeline) setTimeline(tj.timeline);
+      if (gf?.geofences) setGeofences(gf.geofences);
+    }).finally(() => setLoading(false));
+  }, [famId]);
+
+  const stops = timeline.filter(t => t.type === 'stop');
 
   return (
-    <div
-      style={{
-        minHeight: '100vh',
-        background: 'linear-gradient(180deg, #0A0A14 0%, #0F0F1E 100%)',
-        padding: '24px 16px 40px',
-        display: 'flex',
-        flexDirection: 'column',
-        gap: 24,
-      }}
-    >
+    <div style={{ minHeight: '100vh', background: 'linear-gradient(180deg, #0A0A14 0%, #0F0F1E 100%)', padding: '24px 16px 40px', display: 'flex', flexDirection: 'column', gap: 24 }}>
       {/* Header */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
         <div>
           <h1 style={{ fontSize: 22, fontWeight: 800, color: 'white', margin: 0 }}>My Location</h1>
-          <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.4)', margin: '4px 0 0' }}>
-            Real-time position tracking
-          </p>
+          <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.4)', margin: '4px 0 0' }}>Real-time position tracking</p>
         </div>
-        {/* Live badge */}
-        <div
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: 6,
-            padding: '6px 12px',
-            background: 'rgba(16,185,129,0.12)',
-            border: '1px solid rgba(16,185,129,0.3)',
-            borderRadius: 20,
-          }}
-        >
-          <motion.div
-            animate={{ opacity: [1, 0.3, 1] }}
-            transition={{ duration: 1.2, repeat: Infinity }}
-            style={{ width: 7, height: 7, borderRadius: '50%', background: '#10B981' }}
-          />
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '6px 12px', background: 'rgba(16,185,129,0.12)', border: '1px solid rgba(16,185,129,0.3)', borderRadius: 20 }}>
+          <motion.div animate={{ opacity: [1, 0.3, 1] }} transition={{ duration: 1.2, repeat: Infinity }} style={{ width: 7, height: 7, borderRadius: '50%', background: '#10B981' }} />
           <span style={{ fontSize: 12, fontWeight: 700, color: '#10B981' }}>LIVE</span>
         </div>
       </div>
 
-      {/* Real Map card */}
+      {/* Map */}
       <div style={{ borderRadius: 20, overflow: 'hidden', height: 300, position: 'relative' }}>
         <UberFamilyMap height="300px" showMemberList={false} />
-        {/* Share location CTA overlay */}
-        <div style={{
-          position: 'absolute', bottom: 0, left: 0, right: 0,
-          padding: '12px 14px',
-          background: 'linear-gradient(0deg, rgba(10,10,20,0.95) 60%, transparent)',
-          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-        }}>
+        <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, padding: '12px 14px', background: 'linear-gradient(0deg, rgba(10,10,20,0.95) 60%, transparent)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <div>
             <p style={{ margin: 0, fontSize: 13, fontWeight: 700, color: 'white' }}>Family Map</p>
             <p style={{ margin: 0, fontSize: 11, color: 'rgba(255,255,255,0.4)' }}>Real-time locations</p>
           </div>
-          <motion.a
-            href="/track"
-            whileTap={{ scale: 0.94 }}
-            style={{
-              display: 'flex', alignItems: 'center', gap: 5,
-              padding: '7px 14px', borderRadius: 20,
-              background: 'rgba(16,185,129,0.2)',
-              border: '1px solid rgba(16,185,129,0.4)',
-              color: '#10B981', fontSize: 11, fontWeight: 700,
-              cursor: 'pointer', textDecoration: 'none',
-            }}
-          >
-            <Navigation size={11} />
-            Share My Location
+          <motion.a href="/track" whileTap={{ scale: 0.94 }} style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '7px 14px', borderRadius: 20, background: 'rgba(16,185,129,0.2)', border: '1px solid rgba(16,185,129,0.4)', color: '#10B981', fontSize: 11, fontWeight: 700, cursor: 'pointer', textDecoration: 'none' }}>
+            <Navigation size={11} />Share My Location
           </motion.a>
         </div>
       </div>
 
-      {/* Location timeline */}
+      {/* Today's Journey — real data */}
       <div>
-        <p
-          style={{
-            fontSize: 12,
-            fontWeight: 600,
-            color: 'rgba(255,255,255,0.4)',
-            letterSpacing: '0.1em',
-            textTransform: 'uppercase',
-            marginBottom: 12,
-          }}
-        >
-          Today's Journey
-        </p>
-        <div
-          style={{
-            background: 'rgba(255,255,255,0.03)',
-            border: '1px solid rgba(255,255,255,0.07)',
-            borderRadius: 16,
-            overflow: 'hidden',
-          }}
-        >
-          {visitedPlaces.map((place, idx) => (
-            <div
-              key={place.id}
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: 14,
-                padding: '14px 16px',
-                borderBottom: idx < visitedPlaces.length - 1 ? '1px solid rgba(255,255,255,0.05)' : 'none',
-              }}
-            >
-              {/* Dot + vertical line */}
-              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 0 }}>
-                <div
-                  style={{
-                    width: 10,
-                    height: 10,
-                    borderRadius: '50%',
-                    background: place.dotColor,
-                    boxShadow: `0 0 8px ${place.dotColor}80`,
-                    flexShrink: 0,
-                  }}
-                />
-                {idx < visitedPlaces.length - 1 && (
-                  <div
-                    style={{
-                      width: 1,
-                      height: 20,
-                      background: 'rgba(255,255,255,0.08)',
-                      marginTop: 4,
-                    }}
-                  />
-                )}
-              </div>
-              <div style={{ flexShrink: 0 }}>{place.icon}</div>
-              <div style={{ flex: 1 }}>
-                <p style={{ margin: 0, fontSize: 13, fontWeight: 600, color: 'white' }}>{place.name}</p>
-              </div>
-              <div style={{ textAlign: 'right' }}>
-                <p style={{ margin: 0, fontSize: 12, color: 'rgba(255,255,255,0.5)' }}>{place.time}</p>
-                <p style={{ margin: 0, fontSize: 11, color: 'rgba(255,255,255,0.3)' }}>{place.distance}</p>
-              </div>
-            </div>
-          ))}
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
+          <p style={{ fontSize: 12, fontWeight: 600, color: 'rgba(255,255,255,0.4)', letterSpacing: '0.1em', textTransform: 'uppercase', margin: 0 }}>Today's Journey</p>
+          <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.3)' }}>Last 24 hours</span>
+        </div>
+        <div style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 16, overflow: 'hidden' }}>
+          {loading ? (
+            <div style={{ padding: '20px 16px', color: 'rgba(255,255,255,0.3)', fontSize: 13, textAlign: 'center' }}>Loading...</div>
+          ) : stops.length === 0 ? (
+            <div style={{ padding: '20px 16px', color: 'rgba(255,255,255,0.3)', fontSize: 13, textAlign: 'center' }}>No journey recorded yet today</div>
+          ) : (
+            timeline.map((item, idx) => {
+              if (item.type === 'transit') {
+                return (
+                  <div key={`t-${idx}`} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '6px 16px', borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
+                    <div style={{ width: 10, display: 'flex', justifyContent: 'center' }}>
+                      <div style={{ width: 1, height: 20, background: 'rgba(255,255,255,0.08)' }} />
+                    </div>
+                    <span style={{ fontSize: 14 }}>{transportIcon(item.transport_mode)}</span>
+                    <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.3)' }}>
+                      {item.distance_km ? `${item.distance_km} km` : ''} {item.transport_mode || ''}
+                    </span>
+                  </div>
+                );
+              }
+              const stopIdx = timeline.slice(0, idx).filter(t => t.type === 'stop').length;
+              const color = stopColor(stopIdx, !!item.is_current);
+              return (
+                <div key={`s-${item.id ?? idx}`} style={{ display: 'flex', alignItems: 'flex-start', gap: 14, padding: '14px 16px', borderBottom: idx < timeline.length - 1 ? '1px solid rgba(255,255,255,0.05)' : 'none' }}>
+                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', paddingTop: 2 }}>
+                    <div style={{ width: 10, height: 10, borderRadius: '50%', background: color, boxShadow: `0 0 8px ${color}80`, flexShrink: 0 }} />
+                    {item.is_current && <div style={{ width: 6, height: 6, borderRadius: '50%', background: color, marginTop: 4, animation: 'pulse 1s infinite' }} />}
+                  </div>
+                  <div style={{ flex: 1 }}>
+                    <p style={{ margin: 0, fontSize: 13, fontWeight: 600, color: 'white' }}>{item.place_name}</p>
+                    {item.duration_minutes && item.duration_minutes > 0 ? (
+                      <p style={{ margin: '2px 0 0', fontSize: 11, color: 'rgba(255,255,255,0.35)' }}>Stayed {fmtDur(item.duration_minutes)}</p>
+                    ) : null}
+                  </div>
+                  <div style={{ textAlign: 'right' }}>
+                    <p style={{ margin: 0, fontSize: 12, color: 'rgba(255,255,255,0.5)' }}>{fmtTime(item.arrived_at)}</p>
+                    {item.left_at && <p style={{ margin: 0, fontSize: 11, color: 'rgba(255,255,255,0.3)' }}>→ {fmtTime(item.left_at)}</p>}
+                    {item.is_current && <span style={{ fontSize: 10, color: '#10B981', fontWeight: 700 }}>HERE NOW</span>}
+                  </div>
+                </div>
+              );
+            })
+          )}
         </div>
       </div>
 
-      {/* Geofences */}
-      <div>
-        <p
-          style={{
-            fontSize: 12,
-            fontWeight: 600,
-            color: 'rgba(255,255,255,0.4)',
-            letterSpacing: '0.1em',
-            textTransform: 'uppercase',
-            marginBottom: 12,
-          }}
-        >
-          Active Geofences
-        </p>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-          {geofences.map((gf) => (
-            <motion.div
-              key={gf.id}
-              whileHover={{ scale: 1.01 }}
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: 12,
-                padding: '12px 16px',
-                background: 'rgba(255,255,255,0.03)',
-                border: `1px solid ${gf.inside ? 'rgba(16,185,129,0.2)' : 'rgba(245,158,11,0.2)'}`,
-                borderRadius: 12,
-              }}
-            >
-              <Shield size={16} color={gf.inside ? '#10B981' : '#F59E0B'} />
-              <div style={{ flex: 1 }}>
-                <p style={{ margin: 0, fontSize: 13, fontWeight: 600, color: 'white' }}>{gf.name}</p>
-                <p style={{ margin: 0, fontSize: 11, color: 'rgba(255,255,255,0.4)' }}>Radius: {gf.radius}</p>
+      {/* Active Geofences — real data */}
+      {geofences.length > 0 && (
+        <div>
+          <p style={{ fontSize: 12, fontWeight: 600, color: 'rgba(255,255,255,0.4)', letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 12 }}>Active Geofences</p>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+            {geofences.map((gf) => (
+              <div key={gf.id} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 16px', background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(16,185,129,0.2)', borderRadius: 12 }}>
+                <Shield size={16} color="#10B981" />
+                <div style={{ flex: 1 }}>
+                  <p style={{ margin: 0, fontSize: 13, fontWeight: 600, color: 'white' }}>{gf.name}</p>
+                  <p style={{ margin: 0, fontSize: 11, color: 'rgba(255,255,255,0.4)' }}>Radius: {gf.radius_meters >= 1000 ? `${(gf.radius_meters/1000).toFixed(1)} km` : `${gf.radius_meters} m`}</p>
+                </div>
+                <div style={{ padding: '4px 10px', borderRadius: 20, background: 'rgba(16,185,129,0.15)', border: '1px solid rgba(16,185,129,0.4)' }}>
+                  <span style={{ fontSize: 11, fontWeight: 700, color: '#10B981' }}>Active</span>
+                </div>
               </div>
-              <div
-                style={{
-                  padding: '4px 10px',
-                  borderRadius: 20,
-                  background: gf.inside ? 'rgba(16,185,129,0.15)' : 'rgba(245,158,11,0.15)',
-                  border: `1px solid ${gf.inside ? 'rgba(16,185,129,0.4)' : 'rgba(245,158,11,0.4)'}`,
-                }}
-              >
-                <span
-                  style={{
-                    fontSize: 11,
-                    fontWeight: 700,
-                    color: gf.inside ? '#10B981' : '#F59E0B',
-                  }}
-                >
-                  {gf.inside ? 'Inside' : 'Outside'}
-                </span>
-              </div>
-            </motion.div>
-          ))}
+            ))}
+          </div>
         </div>
-      </div>
+      )}
     </div>
   );
 }

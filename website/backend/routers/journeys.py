@@ -1,4 +1,4 @@
-from fastapi import APIRouter, HTTPException, Depends
+from fastapi import APIRouter, HTTPException, Depends, Query
 from sqlalchemy.orm import Session
 from sqlalchemy import desc, func
 from pydantic import BaseModel
@@ -6,7 +6,7 @@ from typing import Optional, List
 from database import get_db
 import models
 from auth import get_current_user
-from datetime import datetime
+from datetime import datetime, timedelta
 
 router = APIRouter()
 
@@ -95,3 +95,115 @@ def journey_stats(db: Session = Depends(get_db)):
     active = db.query(func.count(models.Journey.id)).filter(models.Journey.status == "active").scalar()
     completed = db.query(func.count(models.Journey.id)).filter(models.Journey.status == "completed").scalar()
     return {"total": total, "active": active, "completed": completed}
+
+
+def _stops_to_timeline(stops: list) -> list:
+    """Convert LocationStop rows to a timeline list."""
+    result = []
+    for i, s in enumerate(stops):
+        if i > 0:
+            prev = stops[i - 1]
+            result.append({
+                "type": "transit",
+                "transport_mode": s.transport_mode,
+                "distance_km": s.distance_from_prev_km,
+            })
+        result.append({
+            "type": "stop",
+            "id": s.id,
+            "lat": s.lat,
+            "lng": s.lng,
+            "place_name": s.place_name or f"{s.lat:.4f},{s.lng:.4f}",
+            "arrived_at": s.arrived_at.isoformat() if s.arrived_at else None,
+            "left_at": s.left_at.isoformat() if s.left_at else None,
+            "duration_minutes": s.duration_minutes,
+            "is_current": s.left_at is None,
+        })
+    return result
+
+
+@router.get("/my-timeline")
+def my_timeline(
+    hours: int = 24,
+    user: models.User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """Child's own journey timeline — last N hours (default 24)."""
+    since = datetime.utcnow() - timedelta(hours=hours)
+    stops = (db.query(models.LocationStop)
+        .filter(models.LocationStop.user_id == user.id,
+                models.LocationStop.arrived_at >= since)
+        .order_by(models.LocationStop.arrived_at)
+        .all())
+    return {"timeline": _stops_to_timeline(stops), "hours": hours}
+
+
+@router.get("/timeline/{child_user_id}")
+def child_timeline(
+    child_user_id: int,
+    date: Optional[str] = Query(None),    # YYYY-MM-DD
+    week: Optional[str] = Query(None),    # YYYY-WNN  e.g. 2026-W24
+    year: Optional[int] = Query(None),
+    hours: Optional[int] = Query(None),
+    current_user: models.User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """Parent views a child's journey history — day / week / year."""
+    # Verify same family
+    my_families = [m.family_id for m in db.query(models.FamilyMember)
+                   .filter(models.FamilyMember.user_id == current_user.id).all()]
+    child_in_family = db.query(models.FamilyMember).filter(
+        models.FamilyMember.user_id == child_user_id,
+        models.FamilyMember.family_id.in_(my_families)).first()
+    if not child_in_family and current_user.id != child_user_id:
+        raise HTTPException(status_code=403, detail="Not in same family")
+
+    now = datetime.utcnow()
+    if hours:
+        since, until = now - timedelta(hours=hours), now
+    elif date:
+        since = datetime.strptime(date, "%Y-%m-%d")
+        until = since + timedelta(days=1)
+    elif week:
+        y, w = week.split("-W")
+        # Monday of that week
+        since = datetime.strptime(f"{y}-W{int(w):02d}-1", "%Y-W%W-%w")
+        until = since + timedelta(weeks=1)
+    elif year:
+        since = datetime(year, 1, 1)
+        until = datetime(year + 1, 1, 1)
+    else:
+        since = now.replace(hour=0, minute=0, second=0, microsecond=0)
+        until = since + timedelta(days=1)
+
+    stops = (db.query(models.LocationStop)
+        .filter(models.LocationStop.user_id == child_user_id,
+                models.LocationStop.arrived_at >= since,
+                models.LocationStop.arrived_at < until)
+        .order_by(models.LocationStop.arrived_at)
+        .all())
+
+    # For year view, also return daily summary
+    daily_summary = None
+    if year:
+        from sqlalchemy import cast, Date as SqlDate
+        rows = (db.query(
+                func.date(models.LocationStop.arrived_at).label("day"),
+                func.count(models.LocationStop.id).label("stops"),
+                func.sum(models.LocationStop.distance_from_prev_km).label("km"),
+                func.sum(models.LocationStop.duration_minutes).label("mins"))
+            .filter(models.LocationStop.user_id == child_user_id,
+                    models.LocationStop.arrived_at >= since,
+                    models.LocationStop.arrived_at < until)
+            .group_by(func.date(models.LocationStop.arrived_at))
+            .all())
+        daily_summary = [{"date": str(r.day), "stops": r.stops,
+                          "km": round(float(r.km or 0), 1),
+                          "active_minutes": int(r.mins or 0)} for r in rows]
+
+    return {
+        "timeline": _stops_to_timeline(stops),
+        "daily_summary": daily_summary,
+        "total_stops": len(stops),
+        "total_km": round(sum(s.distance_from_prev_km for s in stops), 1),
+    }

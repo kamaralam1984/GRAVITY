@@ -94,6 +94,52 @@ async def update_location(
 
     db.commit()
 
+    # ── Auto-detect location stops ────────────────────────────────────────────
+    try:
+        def _hav_m(lat1, lng1, lat2, lng2):
+            R = 6371000
+            p1, p2 = math.radians(lat1), math.radians(lat2)
+            dp = math.radians(lat2 - lat1); dl = math.radians(lng2 - lng1)
+            a = math.sin(dp/2)**2 + math.cos(p1)*math.cos(p2)*math.sin(dl/2)**2
+            return 2 * R * math.asin(math.sqrt(a))
+
+        def _transport(speed_ms):
+            if speed_ms is None: return "unknown"
+            kmh = speed_ms * 3.6
+            if kmh < 5: return "walking"
+            if kmh < 25: return "bike"
+            return "car"
+
+        open_stop = (db.query(models.LocationStop)
+            .filter(models.LocationStop.user_id == user.id,
+                    models.LocationStop.left_at == None)
+            .order_by(models.LocationStop.arrived_at.desc())
+            .first())
+
+        if open_stop is None:
+            db.add(models.LocationStop(
+                user_id=user.id, lat=data.lat, lng=data.lng,
+                place_name=data.place_name, transport_mode=_transport(data.speed)))
+        else:
+            dist = _hav_m(open_stop.lat, open_stop.lng, data.lat, data.lng)
+            if dist <= 120:
+                # still at same stop — extend duration
+                duration = (datetime.utcnow() - open_stop.arrived_at.replace(tzinfo=None)).total_seconds() / 60
+                open_stop.duration_minutes = int(duration)
+                if data.place_name and not open_stop.place_name:
+                    open_stop.place_name = data.place_name
+            else:
+                # user moved — close stop, start new one
+                open_stop.left_at = datetime.utcnow()
+                open_stop.duration_minutes = int((open_stop.left_at - open_stop.arrived_at.replace(tzinfo=None)).total_seconds() / 60)
+                db.add(models.LocationStop(
+                    user_id=user.id, lat=data.lat, lng=data.lng,
+                    place_name=data.place_name, transport_mode=_transport(data.speed),
+                    distance_from_prev_km=round(dist / 1000, 2)))
+        db.commit()
+    except Exception:
+        pass
+
     # Log location to family's dedicated table (every 5th update to avoid bloat)
     if family_id:
         try:

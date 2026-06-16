@@ -653,453 +653,224 @@ export function GeofenceSection() {
 
 // ─── JourneySection ────────────────────────────────────────────────────────────
 
-interface Journey {
-  id: string;
-  member: string;
-  initials: string;
-  memberColor: string;
-  from: string;
-  to: string;
-  startTime: string;
-  mode: 'bus' | 'car' | 'walk';
-  distance: number;
-  status: 'active' | 'completed';
-  progress: number;
-  eta?: string;
-  speed?: number;
-  score?: number;
-  date: 'today' | 'yesterday' | 'week';
+// ── Journey timeline types ───────────────────────────────────────────────────
+interface TStop {
+  type: 'stop' | 'transit';
+  id?: number; lat?: number; lng?: number; place_name?: string;
+  arrived_at?: string; left_at?: string; duration_minutes?: number; is_current?: boolean;
+  transport_mode?: string; distance_km?: number;
 }
+interface DaySummary { date: string; stops: number; km: number; active_minutes: number }
+interface FamMember { user_id: number; name: string; role: string }
 
-const MODE_CONFIG = {
-  bus: { icon: '🚌', label: 'Bus', color: '#3b82f6' },
-  car: { icon: '🚗', label: 'Car', color: '#f59e0b' },
-  walk: { icon: '🚶', label: 'Walk', color: '#22c55e' },
-};
-
-const MEMBER_COLORS = ['#a855f7','#3b82f6','#10b981','#f59e0b','#ef4444','#D4AF37'];
-function nameToColor(name: string) {
-  let h = 0; for (let i = 0; i < name.length; i++) h = (h * 31 + name.charCodeAt(i)) % MEMBER_COLORS.length;
-  return MEMBER_COLORS[h];
+function jFmtTime(iso?: string | null) {
+  if (!iso) return '';
+  return new Date(iso).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', hour12: true });
 }
-function formatTime(iso: string | null) {
-  if (!iso) return '--';
-  const d = new Date(iso);
-  return d.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', hour12: true });
+function jFmtDur(m?: number) {
+  if (!m || m < 1) return '';
+  return m < 60 ? `${m}m` : `${Math.floor(m/60)}h ${m%60}m`;
 }
-function getDateLabel(iso: string | null): 'today' | 'yesterday' | 'week' {
-  if (!iso) return 'week';
-  const d = new Date(iso); const now = new Date();
-  const daysDiff = Math.floor((now.getTime() - d.getTime()) / 86400000);
-  if (daysDiff === 0) return 'today';
-  if (daysDiff === 1) return 'yesterday';
-  return 'week';
+function jTransportIcon(mode?: string) {
+  if (mode === 'car') return '🚗'; if (mode === 'bike') return '🏍️'; if (mode === 'walking') return '🚶'; return '➡️';
 }
-
-interface ApiJourney { id: number; from_location: string; to_location: string; started_at: string; arrived_at: string | null; status: string; distance_km: number | null; speed: number | null; user_name?: string; from?: string; to?: string; }
-
-function apiToJourney(j: ApiJourney, memberName: string): Journey {
-  return {
-    id: String(j.id),
-    member: j.user_name || memberName,
-    initials: (j.user_name || memberName).charAt(0).toUpperCase(),
-    memberColor: nameToColor(j.user_name || memberName),
-    from: j.from_location || j.from || 'Unknown',
-    to: j.to_location || j.to || 'Unknown',
-    startTime: formatTime(j.started_at),
-    mode: 'car',
-    distance: j.distance_km ?? 0,
-    status: j.status === 'active' ? 'active' : 'completed',
-    progress: j.status === 'active' ? 50 : 100,
-    speed: j.speed ?? undefined,
-    date: getDateLabel(j.started_at),
-  };
-}
+const STOP_COLORS = ['#3B82F6','#8B5CF6','#F59E0B','#EC4899','#06B6D4','#10B981'];
 
 export function JourneySection() {
-  const [selectedJourney, setSelectedJourney] = useState<string | null>(null);
-  const [journeys, setJourneys] = useState<Journey[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [showStart, setShowStart] = useState(false);
-  const [startForm, setStartForm] = useState({ from: '', to: '' });
-  const [starting, setStarting] = useState(false);
+  const [period, setPeriod] = useState<'day' | 'week' | 'year'>('day');
+  const [selectedDate, setSelectedDate] = useState(() => new Date().toISOString().slice(0, 10));
+  const [selectedWeek, setSelectedWeek] = useState('');
+  const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
+  const [members, setMembers] = useState<FamMember[]>([]);
+  const [selectedMember, setSelectedMember] = useState<number | null>(null);
+  const [timeline, setTimeline] = useState<TStop[]>([]);
+  const [dailySummary, setDailySummary] = useState<DaySummary[]>([]);
+  const [totalKm, setTotalKm] = useState(0);
+  const [loading, setLoading] = useState(false);
+  const [famId, setFamId] = useState<number | null>(null);
 
-  async function fetchJourneys() {
-    setLoading(true);
-    try {
-      const token = typeof window !== 'undefined' ? localStorage.getItem('gv_token') || '' : '';
-      const headers: Record<string,string> = token ? { Authorization: `Bearer ${token}` } : {};
-      const [activeRes, myRes] = await Promise.all([
-        fetch('/journeys/active', { headers }),
-        fetch('/journeys/my', { headers }),
-      ]);
-      const allMap = new Map<string, Journey>();
-      if (activeRes.ok) {
-        const data = await activeRes.json();
-        (data.journeys || []).forEach((j: ApiJourney) => {
-          const journey = apiToJourney(j, j.user_name || 'Member');
-          allMap.set(journey.id, journey);
-        });
-      }
-      if (myRes.ok) {
-        const data = await myRes.json();
-        (data.journeys || []).forEach((j: ApiJourney) => {
-          if (!allMap.has(String(j.id))) {
-            const user = typeof window !== 'undefined' ? JSON.parse(localStorage.getItem('gv_user') || '{}') : {};
-            const journey = apiToJourney(j, user.name || 'You');
-            allMap.set(journey.id, journey);
-          }
-        });
-      }
-      setJourneys(Array.from(allMap.values()));
-    } catch (_) {}
-    setLoading(false);
-  }
-
-  useEffect(() => { fetchJourneys(); }, []);
-
-  async function handleStartJourney() {
-    if (!startForm.from || !startForm.to) return;
-    setStarting(true);
-    try {
-      const token = localStorage.getItem('gv_token') || '';
-      const res = await fetch('/journeys/start', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-        body: JSON.stringify({ from_location: startForm.from, to_location: startForm.to }),
+  // Init: get family + members
+  useEffect(() => {
+    const token = getToken(); if (!token) return;
+    const h = { Authorization: `Bearer ${token}` };
+    fetch('/families/my', { headers: h }).then(r => r.ok ? r.json() : null).then(data => {
+      const fid = data?.families?.[0]?.id || data?.id;
+      if (!fid) return;
+      setFamId(fid);
+      fetch(`/families/${fid}/members`, { headers: h }).then(r => r.ok ? r.json() : null).then(ms => {
+        const list: FamMember[] = (ms || []).map((m: any) => ({ user_id: m.user_id, name: m.name, role: m.role }));
+        setMembers(list);
+        if (list.length > 0) setSelectedMember(list[0].user_id);
       });
-      if (res.ok) { setShowStart(false); setStartForm({ from: '', to: '' }); fetchJourneys(); }
-    } catch (_) {}
-    setStarting(false);
-  }
+    });
+    // default week: current ISO week
+    const now = new Date();
+    const yr = now.getFullYear();
+    const wk = Math.ceil(((now.getTime() - new Date(yr, 0, 1).getTime()) / 86400000 + new Date(yr, 0, 1).getDay() + 1) / 7);
+    setSelectedWeek(`${yr}-W${String(wk).padStart(2,'0')}`);
+  }, []);
 
-  const activeJourneys = journeys.filter((j) => j.status === 'active');
-  const historyJourneys = journeys.filter((j) => j.status === 'completed');
-  const todayJourneys = historyJourneys.filter((j) => j.date === 'today');
-  const yesterdayJourneys = historyJourneys.filter((j) => j.date === 'yesterday');
-  const weekJourneys = historyJourneys.filter((j) => j.date === 'week');
+  // Fetch timeline when member/period/date changes
+  useEffect(() => {
+    if (!selectedMember) return;
+    const token = getToken(); if (!token) return;
+    setLoading(true);
+    let url = `/journeys/timeline/${selectedMember}?`;
+    if (period === 'day') url += `date=${selectedDate}`;
+    else if (period === 'week') url += `week=${selectedWeek}`;
+    else url += `year=${selectedYear}`;
+    fetch(url, { headers: { Authorization: `Bearer ${token}` } })
+      .then(r => r.ok ? r.json() : null)
+      .then(d => {
+        setTimeline(d?.timeline || []);
+        setDailySummary(d?.daily_summary || []);
+        setTotalKm(d?.total_km || 0);
+      }).finally(() => setLoading(false));
+  }, [selectedMember, period, selectedDate, selectedWeek, selectedYear]);
+
+  const stops = timeline.filter(t => t.type === 'stop');
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-5">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-blue-500/20 flex items-center justify-center">
-            <Route className="w-5 h-5 text-blue-400" />
-          </div>
-          <div>
-            <h2 className="text-xl font-bold text-white">Family Journeys</h2>
-            <p className="text-white/50 text-sm">Live tracking & history</p>
-          </div>
+      <div className="flex items-center gap-3">
+        <div className="w-10 h-10 rounded-xl bg-blue-500/20 flex items-center justify-center">
+          <Route className="w-5 h-5 text-blue-400" />
         </div>
-        <div className="flex items-center gap-2">
-          {activeJourneys.length > 0 && (
-            <motion.div
-              animate={{ scale: [1, 1.05, 1] }}
-              transition={{ duration: 1.5, repeat: Infinity }}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-green-500/20 border border-green-500/30"
-            >
-              <div className="w-1.5 h-1.5 rounded-full bg-green-400" />
-              <span className="text-green-400 text-xs font-semibold">{activeJourneys.length} Active</span>
-            </motion.div>
-          )}
-          <motion.button
-            whileTap={{ scale: 0.95 }}
-            onClick={() => setShowStart(true)}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#D4AF37] text-black text-xs font-bold"
-          >
-            <Zap className="w-3.5 h-3.5" />
-            Start
-          </motion.button>
+        <div>
+          <h2 className="text-xl font-bold text-white">Journey History</h2>
+          <p className="text-white/50 text-sm">Real GPS timeline — all locations saved</p>
         </div>
       </div>
 
-      {/* Start Journey Modal */}
-      <AnimatePresence>
-        {showStart && (
-          <>
-            <motion.div
-              initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-              className="fixed inset-0 z-50 bg-black/60"
-              onClick={() => setShowStart(false)}
-            />
-            <motion.div
-              initial={{ opacity: 0, scale: 0.92, y: 20 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.92, y: 20 }}
-              className="fixed inset-x-4 top-1/2 -translate-y-1/2 z-50 rounded-2xl p-5 space-y-4"
-              style={{ background: 'rgba(18,22,36,0.98)', border: '1px solid rgba(212,175,55,0.2)' }}
-            >
-              <h3 className="text-white font-bold text-lg">Start New Journey</h3>
-              <div className="space-y-3">
-                <input
-                  value={startForm.from}
-                  onChange={e => setStartForm(p => ({ ...p, from: e.target.value }))}
-                  placeholder="From (e.g. Home)"
-                  className="w-full px-4 py-3 rounded-xl text-white text-sm outline-none"
-                  style={{ background: 'rgba(255,255,255,0.07)', border: '1px solid rgba(255,255,255,0.1)' }}
-                />
-                <input
-                  value={startForm.to}
-                  onChange={e => setStartForm(p => ({ ...p, to: e.target.value }))}
-                  placeholder="To (e.g. School)"
-                  className="w-full px-4 py-3 rounded-xl text-white text-sm outline-none"
-                  style={{ background: 'rgba(255,255,255,0.07)', border: '1px solid rgba(255,255,255,0.1)' }}
-                />
-              </div>
-              <div className="flex gap-3">
-                <button onClick={() => setShowStart(false)} className="flex-1 py-3 rounded-xl text-white/50 text-sm font-semibold border border-white/10">Cancel</button>
-                <motion.button
-                  whileTap={{ scale: 0.97 }}
-                  onClick={handleStartJourney}
-                  disabled={starting || !startForm.from || !startForm.to}
-                  className="flex-1 py-3 rounded-xl bg-[#D4AF37] text-black text-sm font-bold disabled:opacity-50"
-                >{starting ? 'Starting...' : 'Start Journey'}</motion.button>
-              </div>
-            </motion.div>
-          </>
-        )}
-      </AnimatePresence>
+      {/* Member selector */}
+      {members.length > 0 && (
+        <div className="flex gap-2 overflow-x-auto pb-1">
+          {members.map(m => (
+            <button key={m.user_id} onClick={() => setSelectedMember(m.user_id)}
+              className="flex-shrink-0 px-3 py-1.5 rounded-full text-xs font-semibold transition-all"
+              style={{ background: selectedMember === m.user_id ? '#D4AF37' : 'rgba(255,255,255,0.06)', color: selectedMember === m.user_id ? '#000' : 'rgba(255,255,255,0.5)', border: '1px solid', borderColor: selectedMember === m.user_id ? '#D4AF37' : 'rgba(255,255,255,0.1)' }}>
+              {m.name}
+            </button>
+          ))}
+        </div>
+      )}
+
+      {/* Period tabs */}
+      <div className="flex gap-1 p-1 rounded-xl" style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.07)' }}>
+        {(['day','week','year'] as const).map(p => (
+          <button key={p} onClick={() => setPeriod(p)}
+            className="flex-1 py-2 rounded-lg text-xs font-bold capitalize transition-all"
+            style={{ background: period === p ? '#D4AF37' : 'transparent', color: period === p ? '#000' : 'rgba(255,255,255,0.4)' }}>
+            {p === 'day' ? 'Day' : p === 'week' ? 'Week' : 'Year'}
+          </button>
+        ))}
+      </div>
+
+      {/* Date picker */}
+      {period === 'day' && (
+        <input type="date" value={selectedDate} onChange={e => setSelectedDate(e.target.value)} max={new Date().toISOString().slice(0,10)}
+          className="w-full px-3 py-2 rounded-xl text-white text-sm outline-none"
+          style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)' }} />
+      )}
+      {period === 'week' && (
+        <input type="week" value={selectedWeek} onChange={e => setSelectedWeek(e.target.value)}
+          className="w-full px-3 py-2 rounded-xl text-white text-sm outline-none"
+          style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)' }} />
+      )}
+      {period === 'year' && (
+        <div className="flex gap-2">
+          {[new Date().getFullYear(), new Date().getFullYear()-1].map(y => (
+            <button key={y} onClick={() => setSelectedYear(y)}
+              className="flex-1 py-2 rounded-xl text-sm font-semibold"
+              style={{ background: selectedYear === y ? 'rgba(212,175,55,0.15)' : 'rgba(255,255,255,0.04)', color: selectedYear === y ? '#D4AF37' : 'rgba(255,255,255,0.4)', border: `1px solid ${selectedYear === y ? 'rgba(212,175,55,0.3)' : 'rgba(255,255,255,0.08)'}` }}>
+              {y}
+            </button>
+          ))}
+        </div>
+      )}
+
+      {/* Stats row */}
+      {!loading && (stops.length > 0 || dailySummary.length > 0) && (
+        <div className="grid grid-cols-2 gap-3">
+          <div className="rounded-xl p-3" style={{ background: 'rgba(59,130,246,0.08)', border: '1px solid rgba(59,130,246,0.15)' }}>
+            <p className="text-white/40 text-xs mb-1">Places Visited</p>
+            <p className="text-white font-bold text-xl">{period === 'year' ? dailySummary.reduce((a,d) => a+d.stops,0) : stops.length}</p>
+          </div>
+          <div className="rounded-xl p-3" style={{ background: 'rgba(16,185,129,0.08)', border: '1px solid rgba(16,185,129,0.15)' }}>
+            <p className="text-white/40 text-xs mb-1">Distance</p>
+            <p className="text-white font-bold text-xl">{period === 'year' ? dailySummary.reduce((a,d) => a+d.km,0).toFixed(1) : totalKm} <span className="text-sm font-normal text-white/40">km</span></p>
+          </div>
+        </div>
+      )}
 
       {/* Loading */}
-      {loading && (
-        <div className="flex items-center justify-center py-12">
-          <div className="w-8 h-8 rounded-full border-2 border-[#D4AF37] border-t-transparent animate-spin" />
+      {loading && <div className="flex justify-center py-10"><div className="w-7 h-7 rounded-full border-2 border-[#D4AF37] border-t-transparent animate-spin" /></div>}
+
+      {/* Year view — daily summary heatmap */}
+      {!loading && period === 'year' && dailySummary.length > 0 && (
+        <div className="space-y-2">
+          <p className="text-white/40 text-xs font-semibold uppercase tracking-wider">Daily Activity — {selectedYear}</p>
+          {dailySummary.map(d => (
+            <div key={d.date} className="flex items-center gap-3 py-2 px-3 rounded-xl" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }}>
+              <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: 'rgba(212,175,55,0.1)', border: '1px solid rgba(212,175,55,0.2)' }}>
+                <Calendar className="w-4 h-4 text-[#D4AF37]" />
+              </div>
+              <div className="flex-1">
+                <p className="text-white text-sm font-semibold">{new Date(d.date).toLocaleDateString('en-IN', { day:'numeric', month:'short', weekday:'short' })}</p>
+                <p className="text-white/40 text-xs">{d.stops} stops · {jFmtDur(d.active_minutes)} active</p>
+              </div>
+              <span className="text-[#D4AF37] text-sm font-bold">{d.km} km</span>
+            </div>
+          ))}
         </div>
       )}
 
-      {/* Empty state */}
-      {!loading && journeys.length === 0 && (
-        <div className="rounded-2xl p-8 text-center space-y-3" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)' }}>
+      {/* Day/Week view — full timeline */}
+      {!loading && period !== 'year' && timeline.length === 0 && (
+        <div className="rounded-2xl p-8 text-center space-y-2" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)' }}>
           <div className="text-4xl">🗺️</div>
-          <p className="text-white font-semibold">No journeys yet</p>
-          <p className="text-white/40 text-sm">Tap "Start" to begin tracking a journey. Your family will see it live.</p>
-          <motion.button whileTap={{ scale: 0.97 }} onClick={() => setShowStart(true)} className="mt-2 px-6 py-2.5 rounded-xl bg-[#D4AF37] text-black text-sm font-bold">Start First Journey</motion.button>
+          <p className="text-white font-semibold">No journey data</p>
+          <p className="text-white/40 text-sm">Location must be active on child's device to record stops.</p>
         </div>
       )}
 
-      {/* Active Journeys */}
-      {!loading && activeJourneys.length > 0 && (
-        <div className="space-y-3">
-          <h3 className="text-white/50 text-xs font-semibold uppercase tracking-wider">Live Now</h3>
-          {activeJourneys.map((journey) => {
-            const mode = MODE_CONFIG[journey.mode];
-            return (
-              <motion.div
-                key={journey.id}
-                layout
-                className="rounded-2xl p-4 border border-white/10 cursor-pointer"
-                style={{
-                  background: 'linear-gradient(135deg, rgba(59,130,246,0.08) 0%, rgba(255,255,255,0.03) 100%)',
-                }}
-                onClick={() => setSelectedJourney(journey.id === selectedJourney ? null : journey.id)}
-              >
-                <div className="flex items-center gap-3 mb-3">
-                  <MemberAvatar initials={journey.initials} color={journey.memberColor} size={36} />
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2">
-                      <span className="text-white font-semibold text-sm">{journey.member}</span>
-                      <span className="text-lg">{mode.icon}</span>
-                      {journey.speed && (
-                        <span
-                          className="text-xs px-2 py-0.5 rounded-full font-medium"
-                          style={{ background: `${mode.color}22`, color: mode.color }}
-                        >
-                          {journey.speed} km/h
-                        </span>
-                      )}
-                    </div>
-                    <div className="flex items-center gap-1.5 text-white/50 text-xs mt-0.5">
-                      <span>{journey.from}</span>
-                      <Navigation className="w-3 h-3" />
-                      <span>{journey.to}</span>
-                    </div>
-                  </div>
-                  <div className="text-right">
-                    {journey.eta ? (
-                      <>
-                        <p className="text-white/40 text-xs">ETA</p>
-                        <p className="text-[#D4AF37] font-bold text-sm">{journey.eta}</p>
-                      </>
-                    ) : (
-                      <span className="flex items-center gap-1 text-green-400 text-sm font-semibold">
-                        <Check className="w-3.5 h-3.5" />
-                        Arrived
-                      </span>
-                    )}
-                  </div>
-                </div>
-
-                {/* Progress bar */}
-                <div className="mb-3">
-                  <div className="flex justify-between text-xs text-white/30 mb-1.5">
-                    <span>{journey.from}</span>
-                    <span>{journey.distance} km</span>
-                    <span>{journey.to}</span>
-                  </div>
-                  <div className="h-2 rounded-full bg-white/10 overflow-hidden">
-                    <motion.div
-                      className="h-full rounded-full"
-                      style={{ background: `linear-gradient(90deg, ${mode.color}, ${journey.eta ? '#D4AF37' : '#22c55e'})` }}
-                      initial={{ width: 0 }}
-                      animate={{ width: `${journey.progress}%` }}
-                      transition={{ duration: 1, ease: 'easeOut' }}
-                    />
-                  </div>
-                  {/* Moving dot */}
-                  <div className="relative h-0">
-                    <motion.div
-                      className="absolute top-0 w-3 h-3 rounded-full -translate-y-2.5 -translate-x-1.5 border-2 border-white"
-                      style={{
-                        left: `${journey.progress}%`,
-                        background: journey.eta ? '#D4AF37' : '#22c55e',
-                      }}
-                      animate={{ scale: [1, 1.2, 1] }}
-                      transition={{ duration: 1, repeat: Infinity }}
-                    />
-                  </div>
-                </div>
-
-                {/* Actions */}
-                <div className="flex items-center gap-2 mt-4">
-                  <motion.button
-                    whileHover={{ scale: 1.03 }}
-                    whileTap={{ scale: 0.97 }}
-                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#D4AF37] text-black text-xs font-bold"
-                  >
-                    <Navigation className="w-3.5 h-3.5" />
-                    Track Live
-                  </motion.button>
-                  <span className="text-white/30 text-xs ml-auto">Started {journey.startTime}</span>
-                </div>
-
-                {/* Route placeholder */}
-                <AnimatePresence>
-                  {selectedJourney === journey.id && (
-                    <motion.div
-                      initial={{ height: 0, opacity: 0 }}
-                      animate={{ height: 'auto', opacity: 1 }}
-                      exit={{ height: 0, opacity: 0 }}
-                      className="mt-3 overflow-hidden"
-                    >
-                      <div
-                        className="rounded-xl p-4 relative"
-                        style={{ height: 120, background: 'linear-gradient(135deg, #0a1628, #0f2040)', border: '1px solid rgba(255,255,255,0.08)' }}
-                      >
-                        {/* Dotted route */}
-                        <svg className="absolute inset-0 w-full h-full">
-                          <line x1="15%" y1="50%" x2="85%" y2="50%" stroke={mode.color} strokeWidth="2" strokeDasharray="6 4" opacity="0.6" />
-                          <circle cx="15%" cy="50%" r="6" fill={mode.color} opacity="0.9" />
-                          <circle cx="85%" cy="50%" r="6" fill="#22c55e" opacity="0.9" />
-                          {/* Progress dot */}
-                          <circle cx={`${15 + journey.progress * 0.7}%`} cy="50%" r="5" fill="#D4AF37">
-                            <animate attributeName="r" values="4;7;4" dur="1.5s" repeatCount="indefinite" />
-                          </circle>
-                        </svg>
-                        <div className="absolute bottom-3 left-4 text-white/30 text-xs">{journey.from}</div>
-                        <div className="absolute bottom-3 right-4 text-white/30 text-xs">{journey.to}</div>
-                      </div>
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-              </motion.div>
-            );
-          })}
-        </div>
-      )}
-
-      {/* Journey History */}
-      {!loading && historyJourneys.length > 0 && (
+      {!loading && period !== 'year' && timeline.length > 0 && (
         <div>
-          <h3 className="text-white/50 text-xs font-semibold uppercase tracking-wider mb-4">Journey History</h3>
-          <div className="relative">
-            <div className="absolute left-3.5 top-2 bottom-2 w-0.5 bg-white/10 rounded-full" />
-            <div className="space-y-0">
-              {todayJourneys.length > 0 && (
-                <>
-                  <div className="flex items-center gap-3 mb-3 pl-10">
-                    <Calendar className="w-3.5 h-3.5 text-[#D4AF37]" />
-                    <span className="text-[#D4AF37] text-xs font-bold uppercase tracking-widest">Today</span>
+          <p className="text-white/40 text-xs font-semibold uppercase tracking-wider mb-3">Timeline</p>
+          <div style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 16, overflow: 'hidden' }}>
+            {timeline.map((item, idx) => {
+              if (item.type === 'transit') {
+                return (
+                  <div key={`t-${idx}`} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '6px 16px', borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
+                    <div style={{ width: 10, display: 'flex', justifyContent: 'center' }}><div style={{ width: 1, height: 18, background: 'rgba(255,255,255,0.08)' }} /></div>
+                    <span style={{ fontSize: 13 }}>{jTransportIcon(item.transport_mode)}</span>
+                    <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.3)' }}>{item.distance_km ? `${item.distance_km} km` : ''} {item.transport_mode || ''}</span>
                   </div>
-                  {todayJourneys.map((journey) => (
-                    <JourneyHistoryItem key={journey.id} journey={journey} />
-                  ))}
-                </>
-              )}
-              {yesterdayJourneys.length > 0 && (
-                <>
-                  <div className="flex items-center gap-3 mb-3 mt-4 pl-10">
-                    <Calendar className="w-3.5 h-3.5 text-white/30" />
-                    <span className="text-white/30 text-xs font-bold uppercase tracking-widest">Yesterday</span>
+                );
+              }
+              const stopIdx = timeline.slice(0, idx).filter(t => t.type === 'stop').length;
+              const color = item.is_current ? '#10B981' : STOP_COLORS[stopIdx % STOP_COLORS.length];
+              return (
+                <div key={`s-${item.id ?? idx}`} style={{ display: 'flex', alignItems: 'flex-start', gap: 14, padding: '14px 16px', borderBottom: idx < timeline.length - 1 ? '1px solid rgba(255,255,255,0.05)' : 'none' }}>
+                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', paddingTop: 2, flexShrink: 0 }}>
+                    <div style={{ width: 10, height: 10, borderRadius: '50%', background: color, boxShadow: `0 0 8px ${color}80` }} />
                   </div>
-                  {yesterdayJourneys.map((journey) => (
-                    <JourneyHistoryItem key={journey.id} journey={journey} />
-                  ))}
-                </>
-              )}
-              {weekJourneys.length > 0 && (
-                <>
-                  <div className="flex items-center gap-3 mb-3 mt-4 pl-10">
-                    <Calendar className="w-3.5 h-3.5 text-white/20" />
-                    <span className="text-white/20 text-xs font-bold uppercase tracking-widest">Earlier</span>
+                  <div style={{ flex: 1 }}>
+                    <p style={{ margin: 0, fontSize: 13, fontWeight: 600, color: 'white' }}>{item.place_name}</p>
+                    {item.duration_minutes && item.duration_minutes > 0 ? <p style={{ margin: '2px 0 0', fontSize: 11, color: 'rgba(255,255,255,0.35)' }}>Stayed {jFmtDur(item.duration_minutes)}</p> : null}
                   </div>
-                  {weekJourneys.map((journey) => (
-                    <JourneyHistoryItem key={journey.id} journey={journey} />
-                  ))}
-                </>
-              )}
-            </div>
+                  <div style={{ textAlign: 'right', flexShrink: 0 }}>
+                    <p style={{ margin: 0, fontSize: 12, color: 'rgba(255,255,255,0.5)' }}>{jFmtTime(item.arrived_at)}</p>
+                    {item.left_at && <p style={{ margin: 0, fontSize: 11, color: 'rgba(255,255,255,0.3)' }}>→ {jFmtTime(item.left_at)}</p>}
+                    {item.is_current && <span style={{ fontSize: 10, color: '#10B981', fontWeight: 700 }}>HERE NOW</span>}
+                  </div>
+                </div>
+              );
+            })}
           </div>
         </div>
       )}
-    </div>
-  );
-}
-
-function JourneyHistoryItem({ journey }: { journey: Journey }) {
-  const mode = MODE_CONFIG[journey.mode];
-  return (
-    <div className="flex items-start gap-3 mb-4">
-      {/* Timeline dot */}
-      <div
-        className="w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5 border-2 border-[#0a1628] z-10"
-        style={{ background: mode.color }}
-      >
-        <span className="text-xs">{mode.icon}</span>
-      </div>
-
-      {/* Content */}
-      <div
-        className="flex-1 rounded-2xl p-3 border border-white/8"
-        style={{ background: 'rgba(255,255,255,0.03)' }}
-      >
-        <div className="flex items-center justify-between mb-1">
-          <div className="flex items-center gap-2">
-            <MemberAvatar initials={journey.initials} color={journey.memberColor} size={22} />
-            <span className="text-white font-semibold text-sm">{journey.member}</span>
-          </div>
-          {journey.score !== undefined && (
-            <div className="flex items-center gap-1">
-              <Star className="w-3 h-3 text-[#D4AF37]" />
-              <span className="text-[#D4AF37] text-xs font-bold">{journey.score}</span>
-            </div>
-          )}
-        </div>
-        <div className="flex items-center gap-1.5 text-white/50 text-xs">
-          <span>{journey.from}</span>
-          <Navigation className="w-3 h-3" />
-          <span>{journey.to}</span>
-        </div>
-        <div className="flex items-center gap-3 mt-1.5">
-          <span className="text-white/30 text-xs">{journey.startTime}</span>
-          <span className="text-white/20">•</span>
-          <span className="text-white/30 text-xs">{journey.distance} km</span>
-          <span className="text-white/20">•</span>
-          <span className="text-xs font-medium" style={{ color: mode.color }}>{mode.label}</span>
-          <span className="ml-auto flex items-center gap-1 text-green-400 text-xs">
-            <Check className="w-3 h-3" />
-            Completed
-          </span>
-        </div>
-      </div>
     </div>
   );
 }
