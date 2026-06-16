@@ -691,6 +691,10 @@ export default function SuperAdminPage() {
   const [familiesPlanDist, setFamiliesPlanDist] = useState({ free: 0, premium: 0, family: 0 })
   const [familiesPlanFilter, setFamiliesPlanFilter] = useState('')
   const [familiesSearch, setFamiliesSearch] = useState('')
+  const [familiesModalOpen, setFamiliesModalOpen] = useState(false)
+  const [addFamilyForm, setAddFamilyForm] = useState({ name: '', owner_email: '', plan: 'free' })
+  const [addFamilyLoading, setAddFamilyLoading] = useState(false)
+  const [addFamilyError, setAddFamilyError] = useState('')
 
   function getAuthToken(): string {
     if (typeof document === 'undefined') return ''
@@ -2689,7 +2693,8 @@ export default function SuperAdminPage() {
           >
             <Download size={14} /> Export
           </button>
-          <button style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '8px 14px', borderRadius: 10, border: 'none', background: 'var(--gold)', color: '#000', cursor: 'pointer', fontSize: 13, fontWeight: 700 }}>
+          <button onClick={() => { setFamiliesModalOpen(true); setAddFamilyForm({ name: '', owner_email: '', plan: 'free' }); setAddFamilyError('') }}
+            style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '8px 14px', borderRadius: 10, border: 'none', background: 'var(--gold)', color: '#000', cursor: 'pointer', fontSize: 13, fontWeight: 700 }}>
             <Plus size={14} /> Add Family
           </button>
         </div>
@@ -2793,6 +2798,67 @@ export default function SuperAdminPage() {
         <AnimatePresence>
           <FamilyViewModal />
         </AnimatePresence>
+        {familiesModalOpen && (
+          <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.65)', zIndex: 2000, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+            onClick={() => setFamiliesModalOpen(false)}>
+            <div style={{ background: 'var(--bg-surface)', border: '1px solid var(--border)', borderRadius: 18, padding: 32, width: 420, maxWidth: '92vw' }}
+              onClick={(e) => e.stopPropagation()}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 24 }}>
+                <div style={{ fontSize: 18, fontWeight: 800, color: 'var(--text-primary)' }}>Create New Family</div>
+                <button onClick={() => setFamiliesModalOpen(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)', fontSize: 22, lineHeight: 1 }}>×</button>
+              </div>
+              {addFamilyError && (
+                <div style={{ background: '#EF444420', border: '1px solid #EF444444', borderRadius: 8, padding: '8px 12px', fontSize: 13, color: '#EF4444', marginBottom: 16 }}>{addFamilyError}</div>
+              )}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+                <div>
+                  <label style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-muted)', display: 'block', marginBottom: 6 }}>FAMILY NAME</label>
+                  <input type="text" placeholder="e.g. The Sharma Family" value={addFamilyForm.name}
+                    onChange={(e) => setAddFamilyForm(f => ({ ...f, name: e.target.value }))}
+                    style={{ width: '100%', padding: '10px 12px', borderRadius: 8, border: '1px solid var(--border)', background: 'var(--bg-surface2)', color: 'var(--text-primary)', fontSize: 14, outline: 'none', boxSizing: 'border-box' }} />
+                </div>
+                <div>
+                  <label style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-muted)', display: 'block', marginBottom: 6 }}>OWNER EMAIL (existing user)</label>
+                  <input type="email" placeholder="owner@example.com" value={addFamilyForm.owner_email}
+                    onChange={(e) => setAddFamilyForm(f => ({ ...f, owner_email: e.target.value }))}
+                    style={{ width: '100%', padding: '10px 12px', borderRadius: 8, border: '1px solid var(--border)', background: 'var(--bg-surface2)', color: 'var(--text-primary)', fontSize: 14, outline: 'none', boxSizing: 'border-box' }} />
+                </div>
+                <div>
+                  <label style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-muted)', display: 'block', marginBottom: 6 }}>PLAN</label>
+                  <select value={addFamilyForm.plan} onChange={(e) => setAddFamilyForm(f => ({ ...f, plan: e.target.value }))}
+                    style={{ width: '100%', padding: '10px 12px', borderRadius: 8, border: '1px solid var(--border)', background: 'var(--bg-surface2)', color: 'var(--text-primary)', fontSize: 14, outline: 'none', cursor: 'pointer' }}>
+                    <option value="free" style={{ background: '#1a1030' }}>Free</option>
+                    <option value="premium" style={{ background: '#1a1030' }}>Premium</option>
+                    <option value="family" style={{ background: '#1a1030' }}>Family+</option>
+                  </select>
+                </div>
+              </div>
+              <div style={{ display: 'flex', gap: 10, marginTop: 24 }}>
+                <button onClick={() => setFamiliesModalOpen(false)}
+                  style={{ flex: 1, padding: '10px 0', borderRadius: 10, border: '1px solid var(--border)', background: 'transparent', color: 'var(--text-secondary)', fontSize: 14, fontWeight: 600, cursor: 'pointer' }}>
+                  Cancel
+                </button>
+                <button disabled={addFamilyLoading || !addFamilyForm.name.trim() || !addFamilyForm.owner_email.trim()}
+                  onClick={async () => {
+                    setAddFamilyLoading(true); setAddFamilyError('')
+                    try {
+                      const token = getAuthToken()
+                      const res = await fetch('/admin-api/families', { method: 'POST', headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' }, body: JSON.stringify(addFamilyForm) })
+                      if (!res.ok) { const d = await res.json(); throw new Error(d.detail || 'Failed to create family') }
+                      const newFam = await res.json()
+                      setFamiliesData(prev => [newFam, ...prev])
+                      setFamiliesTotal(t => t + 1)
+                      setFamiliesModalOpen(false)
+                    } catch (err: any) { setAddFamilyError(err.message || 'Error creating family') }
+                    finally { setAddFamilyLoading(false) }
+                  }}
+                  style={{ flex: 2, padding: '10px 0', borderRadius: 10, border: 'none', background: addFamilyLoading ? 'var(--border)' : 'var(--gold)', color: '#000', fontSize: 14, fontWeight: 700, cursor: addFamilyLoading ? 'not-allowed' : 'pointer' }}>
+                  {addFamilyLoading ? 'Creating…' : 'Create Family'}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     )
   }

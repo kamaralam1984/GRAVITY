@@ -9,6 +9,7 @@ import models
 from auth import verify_password, create_access_token, get_password_hash, get_current_admin
 from functools import partial
 from datetime import datetime, timedelta
+import uuid
 
 router = APIRouter()
 
@@ -104,6 +105,28 @@ def list_families(skip: int = 0, limit: int = 20, plan: Optional[str] = None, ad
             "status": "active",
         })
     return {"total": total, "families": result}
+
+class CreateFamilyRequest(BaseModel):
+    name: str
+    owner_email: str
+    plan: Optional[str] = "free"
+
+@router.post("/families")
+def create_family(data: CreateFamilyRequest, admin=Depends(get_current_admin), db: Session = Depends(get_db)):
+    owner = db.query(models.User).filter(models.User.email == data.owner_email).first()
+    if not owner:
+        raise HTTPException(status_code=404, detail="User not found with that email")
+    invite = uuid.uuid4().hex[:8].upper()
+    family = models.Family(name=data.name, owner_id=owner.id, invite_code=invite, plan=data.plan or "free")
+    db.add(family)
+    db.flush()
+    member = models.FamilyMember(family_id=family.id, user_id=owner.id, role="owner")
+    db.add(member)
+    db.commit()
+    db.refresh(family)
+    return {"id": family.id, "name": family.name, "plan": family.plan, "invite_code": family.invite_code,
+            "member_count": 1, "created_at": family.created_at.isoformat() if family.created_at else None,
+            "monthly_spend": 0, "status": "active"}
 
 @router.get("/devices")
 def list_devices(skip: int = 0, limit: int = 20, status: Optional[str] = None, admin=Depends(get_current_admin), db: Session = Depends(get_db)):

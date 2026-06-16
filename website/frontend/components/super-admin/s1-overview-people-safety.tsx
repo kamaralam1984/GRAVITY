@@ -647,13 +647,15 @@ export function ChildrenSection() {
   const [total, setTotal] = useState(0)
   const [loading, setLoading] = useState(true)
   const [stats, setStats] = useState({ safe: 0, offline: 0, alert: 0 })
+  const [selectedChild, setSelectedChild] = useState<ChildRow | null>(null)
+  const [page, setPage] = useState(1)
   const searchTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   useEffect(() => {
     const token = localStorage.getItem('gv_token') || ''
     setLoading(true)
     const tid = setTimeout(() => {
-      fetch('/admin-api/children?limit=50&search=' + encodeURIComponent(search), {
+      fetch('/admin-api/children?limit=50&skip=' + ((page - 1) * 50) + '&search=' + encodeURIComponent(search), {
         headers: { Authorization: 'Bearer ' + token }
       })
         .then(r => r.json())
@@ -667,7 +669,7 @@ export function ChildrenSection() {
     }, 300)
     searchTimerRef.current = tid
     return () => clearTimeout(tid)
-  }, [search])
+  }, [search, page])
 
   const filtered = statusFilter === 'All' ? children : children.filter(c => c.status === statusFilter)
 
@@ -741,7 +743,14 @@ export function ChildrenSection() {
               </span>
             </FilterBtn>
           ))}
-          <button style={{
+          <button
+            onClick={() => {
+              const rows = [['Name','Family','Parent','Device','Status','Joined'], ...children.map(c => [c.name, c.family_name, c.parent_name, c.device, c.status, c.joined_at ? new Date(c.joined_at).toLocaleDateString('en-IN') : '—'])]
+              const csv = rows.map(r => r.map(v => '"' + String(v).replace(/"/g,'""') + '"').join(',')).join('\n')
+              const blob = new Blob([csv], {type:'text/csv'})
+              const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'gravity_children.csv'; a.click()
+            }}
+            style={{
             marginLeft: 'auto',
             display: 'flex',
             alignItems: 'center',
@@ -818,7 +827,7 @@ export function ChildrenSection() {
                     <TD>{badge(c.status, childStatusColor[c.status] ?? '#6B7280')}</TD>
                     <TD muted>{joinedDate}</TD>
                     <td style={{ padding: '12px 20px' }}>
-                      <button style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)' }}>
+                      <button onClick={() => setSelectedChild(c)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)' }}>
                         <Eye size={14} />
                       </button>
                     </td>
@@ -838,8 +847,45 @@ export function ChildrenSection() {
           color: 'var(--text-muted)',
         }}>
           <span>Showing {filtered.length} of {total.toLocaleString()} children</span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <button
+              onClick={() => setPage(p => Math.max(1, p - 1))}
+              disabled={page === 1}
+              style={{ background: 'var(--bg-surface2)', border: '1px solid var(--border)', borderRadius: 6, padding: '4px 10px', fontSize: 12, fontWeight: 600, color: 'var(--text-secondary)', cursor: page === 1 ? 'not-allowed' : 'pointer', opacity: page === 1 ? 0.5 : 1 }}
+            >Prev</button>
+            <span style={{ fontWeight: 600, color: 'var(--text-primary)' }}>Page {page}</span>
+            <button
+              onClick={() => setPage(p => p + 1)}
+              disabled={filtered.length < 50}
+              style={{ background: 'var(--bg-surface2)', border: '1px solid var(--border)', borderRadius: 6, padding: '4px 10px', fontSize: 12, fontWeight: 600, color: 'var(--text-secondary)', cursor: filtered.length < 50 ? 'not-allowed' : 'pointer', opacity: filtered.length < 50 ? 0.5 : 1 }}
+            >Next</button>
+          </div>
         </div>
       </div>
+      {selectedChild && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+          onClick={() => setSelectedChild(null)}>
+          <div style={{ background: 'var(--bg-surface)', border: '1px solid var(--border)', borderRadius: 16, padding: 28, width: 380, maxWidth: '90vw' }}
+            onClick={e => e.stopPropagation()}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                <div style={{ width: 40, height: 40, borderRadius: '50%', background: '#3B82F620', color: '#3B82F6', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16, fontWeight: 700 }}>{selectedChild.name.charAt(0)}</div>
+                <div>
+                  <div style={{ fontSize: 16, fontWeight: 700, color: 'var(--text-primary)' }}>{selectedChild.name}</div>
+                  <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>Child Profile</div>
+                </div>
+              </div>
+              <button onClick={() => setSelectedChild(null)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)', fontSize: 20 }}>×</button>
+            </div>
+            {[['Family', selectedChild.family_name], ['Parent', selectedChild.parent_name], ['Device', selectedChild.device], ['Status', selectedChild.status], ['Joined', selectedChild.joined_at ? new Date(selectedChild.joined_at).toLocaleDateString('en-IN') : '—']].map(([label, value]) => (
+              <div key={label} style={{ display: 'flex', justifyContent: 'space-between', padding: '10px 0', borderBottom: '1px solid var(--border)' }}>
+                <span style={{ fontSize: 13, color: 'var(--text-muted)' }}>{label}</span>
+                <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)' }}>{value}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   )
 }
@@ -866,6 +912,8 @@ export function ElderlySection() {
   const [total, setTotal] = useState(0)
   const [loading, setLoading] = useState(true)
   const [stats, setStats] = useState({ stable: 0, atRisk: 0, critical: 0 })
+  const [selectedElderly, setSelectedElderly] = useState<ElderlyMember | null>(null)
+  const [elderlyPage, setElderlyPage] = useState(1)
 
   const healthColor: Record<string, string> = {
     Stable: '#10B981',
@@ -877,7 +925,7 @@ export function ElderlySection() {
     const token = localStorage.getItem('gv_token') || ''
     setLoading(true)
     const timer = setTimeout(() => {
-      fetch('/admin-api/elderly?limit=50&search=' + encodeURIComponent(search), {
+      fetch('/admin-api/elderly?limit=50&skip=' + (elderlyPage - 1) * 50 + '&search=' + encodeURIComponent(search), {
         headers: { Authorization: 'Bearer ' + token },
       })
         .then(r => r.json())
@@ -894,7 +942,7 @@ export function ElderlySection() {
         .catch(() => setLoading(false))
     }, 300)
     return () => clearTimeout(timer)
-  }, [search])
+  }, [search, elderlyPage])
 
   const filtered = elderly.filter(e => {
     const matchHealth = healthFilter === 'All' || e.health === healthFilter
@@ -978,6 +1026,15 @@ export function ElderlySection() {
               </span>
             </FilterBtn>
           ))}
+          <button style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 5, background: 'var(--bg-surface2)', border: '1px solid var(--border)', borderRadius: 6, padding: '5px 12px', fontSize: 12, fontWeight: 600, color: 'var(--text-secondary)', cursor: 'pointer', whiteSpace: 'nowrap' as const }}
+            onClick={() => {
+              const rows = [['Name','Caregiver','Health','Heart Rate','Steps','Last Check-in','Device'], ...elderly.map(e => [e.name, e.caregiver, e.health, e.heart_rate ? e.heart_rate + ' bpm' : '—', e.steps != null ? String(e.steps) : '—', e.last_checkin || '—', e.device])]
+              const csv = rows.map(r => r.map(v => '"' + String(v).replace(/"/g,'""') + '"').join(',')).join('\n')
+              const blob = new Blob([csv], {type:'text/csv'})
+              const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'gravity_elderly.csv'; a.click()
+            }}>
+            <FileText size={12} />Export CSV
+          </button>
         </div>
         <div style={{ overflowX: 'auto' }}>
           <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: 900 }}>
@@ -1050,7 +1107,7 @@ export function ElderlySection() {
                     <TD muted>{e.device}</TD>
                     <td style={{ padding: '12px 20px' }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                        <button style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)' }}>
+                        <button style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)' }} onClick={() => setSelectedElderly(e)}>
                           <Eye size={14} />
                         </button>
                         {isCritical && (
@@ -1086,12 +1143,36 @@ export function ElderlySection() {
         }}>
           <span>Showing {filtered.length} of {total.toLocaleString()} elderly members</span>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            <button style={{ background: 'var(--bg-surface2)', border: '1px solid var(--border)', borderRadius: 4, padding: '3px 8px', fontSize: 12, color: 'var(--text-secondary)', cursor: 'pointer' }}>Prev</button>
-            <span style={{ fontWeight: 600, color: 'var(--text-primary)' }}>Page 1</span>
-            <button style={{ background: 'var(--bg-surface2)', border: '1px solid var(--border)', borderRadius: 4, padding: '3px 8px', fontSize: 12, color: 'var(--text-secondary)', cursor: 'pointer' }}>Next</button>
+            <button style={{ background: 'var(--bg-surface2)', border: '1px solid var(--border)', borderRadius: 4, padding: '3px 8px', fontSize: 12, color: 'var(--text-secondary)', cursor: 'pointer' }} onClick={() => setElderlyPage(p => Math.max(1, p - 1))} disabled={elderlyPage === 1}>Prev</button>
+            <span style={{ fontWeight: 600, color: 'var(--text-primary)' }}>Page {elderlyPage}</span>
+            <button style={{ background: 'var(--bg-surface2)', border: '1px solid var(--border)', borderRadius: 4, padding: '3px 8px', fontSize: 12, color: 'var(--text-secondary)', cursor: 'pointer' }} onClick={() => setElderlyPage(p => p + 1)} disabled={elderly.length < 50}>Next</button>
           </div>
         </div>
       </div>
+      {selectedElderly && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+          onClick={() => setSelectedElderly(null)}>
+          <div style={{ background: 'var(--bg-surface)', border: '1px solid var(--border)', borderRadius: 16, padding: 28, width: 400, maxWidth: '90vw' }}
+            onClick={e => e.stopPropagation()}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                <div style={{ width: 40, height: 40, borderRadius: '50%', background: selectedElderly.health === 'Critical' ? '#EF444420' : selectedElderly.health === 'At Risk' ? '#F59E0B20' : '#10B98120', color: selectedElderly.health === 'Critical' ? '#EF4444' : selectedElderly.health === 'At Risk' ? '#F59E0B' : '#10B981', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16, fontWeight: 700 }}>{selectedElderly.name.charAt(0)}</div>
+                <div>
+                  <div style={{ fontSize: 16, fontWeight: 700, color: 'var(--text-primary)' }}>{selectedElderly.name}</div>
+                  <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>Elderly Profile</div>
+                </div>
+              </div>
+              <button onClick={() => setSelectedElderly(null)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)', fontSize: 20 }}>×</button>
+            </div>
+            {[['Caregiver', selectedElderly.caregiver], ['Health Status', selectedElderly.health], ['Heart Rate', selectedElderly.heart_rate ? selectedElderly.heart_rate + ' bpm' : '—'], ['Daily Steps', selectedElderly.steps != null ? selectedElderly.steps.toLocaleString() : '—'], ['Device', selectedElderly.device], ['Last Check-in', formatCheckin(selectedElderly.last_checkin)]].map(([label, value]) => (
+              <div key={label} style={{ display: 'flex', justifyContent: 'space-between', padding: '10px 0', borderBottom: '1px solid var(--border)' }}>
+                <span style={{ fontSize: 13, color: 'var(--text-muted)' }}>{label}</span>
+                <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)' }}>{String(value)}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   )
 }
@@ -1118,11 +1199,12 @@ export function CaregiversSection() {
   const [total, setTotal] = useState(0)
   const [loading, setLoading] = useState(true)
   const [stats, setStats] = useState({ active: 0, inactive: 0 })
+  const [caregiverPage, setCaregiverPage] = useState(1)
 
   useEffect(() => {
     const timer = setTimeout(() => {
       const token = localStorage.getItem('gv_token') || ''
-      fetch('/admin-api/caregivers?limit=50&search=' + encodeURIComponent(search), {
+      fetch('/admin-api/caregivers?limit=50&search=' + encodeURIComponent(search) + '&skip=' + ((caregiverPage - 1) * 50), {
         headers: { Authorization: `Bearer ${token}` },
       })
         .then(r => r.json())
@@ -1139,7 +1221,7 @@ export function CaregiversSection() {
         .finally(() => setLoading(false))
     }, 300)
     return () => clearTimeout(timer)
-  }, [search])
+  }, [search, caregiverPage])
 
   const filtered = caregivers.filter(c => {
     if (statusFilter === 'All') return true
@@ -1240,7 +1322,14 @@ export function CaregiversSection() {
             </FilterBtn>
           ))}
           <div style={{ marginLeft: 'auto' }}>
-            <button style={{
+            <button
+              onClick={() => {
+                const rows = [['Name','Phone','Family Members','Elders Monitored','Status','Joined'], ...caregivers.map(c => [c.name, c.phone, String(c.family_members), String(c.elders_monitored), c.status, c.joined_at ? new Date(c.joined_at).toLocaleDateString('en-IN') : '—'])]
+                const csv = rows.map(r => r.map(v => '"'+String(v).replace(/"/g,'""')+'"').join(',')).join('\n')
+                const blob = new Blob([csv],{type:'text/csv'})
+                const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='gravity_caregivers.csv';a.click()
+              }}
+              style={{
               display: 'flex',
               alignItems: 'center',
               gap: 5,
@@ -1381,9 +1470,9 @@ export function CaregiversSection() {
         }}>
           <span>Showing <strong style={{ color: 'var(--text-primary)' }}>{filtered.length}</strong> of <strong style={{ color: 'var(--text-primary)' }}>{total.toLocaleString()}</strong> caregivers</span>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            <button style={{ background: 'var(--bg-surface2)', border: '1px solid var(--border)', borderRadius: 4, padding: '3px 8px', fontSize: 12, color: 'var(--text-secondary)', cursor: 'pointer' }}>Prev</button>
-            <span style={{ fontWeight: 600, color: 'var(--text-primary)' }}>Page 1</span>
-            <button style={{ background: 'var(--bg-surface2)', border: '1px solid var(--border)', borderRadius: 4, padding: '3px 8px', fontSize: 12, color: 'var(--text-secondary)', cursor: 'pointer' }}>Next</button>
+            <button onClick={() => setCaregiverPage(p => Math.max(1, p - 1))} disabled={caregiverPage === 1} style={{ background: 'var(--bg-surface2)', border: '1px solid var(--border)', borderRadius: 4, padding: '3px 8px', fontSize: 12, color: 'var(--text-secondary)', cursor: 'pointer' }}>Prev</button>
+            <span style={{ fontWeight: 600, color: 'var(--text-primary)' }}>Page {caregiverPage}</span>
+            <button onClick={() => setCaregiverPage(p => p + 1)} disabled={caregivers.length < 50} style={{ background: 'var(--bg-surface2)', border: '1px solid var(--border)', borderRadius: 4, padding: '3px 8px', fontSize: 12, color: 'var(--text-secondary)', cursor: 'pointer' }}>Next</button>
           </div>
         </div>
       </div>
@@ -1419,6 +1508,7 @@ export function UserVerificationSection() {
   const [total, setTotal] = useState(0)
   const [loading, setLoading] = useState(true)
   const [stats, setStats] = useState({ pending: 0, verified: 0, rejected: 0 })
+  const [verifPage, setVerifPage] = useState(1)
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -1429,7 +1519,8 @@ export function UserVerificationSection() {
           '&status_filter=' +
           encodeURIComponent(statusFilter) +
           '&type_filter=' +
-          encodeURIComponent(typeFilter),
+          encodeURIComponent(typeFilter) +
+          '&skip=' + ((verifPage - 1) * 50),
         { headers: { Authorization: `Bearer ${token}` } }
       )
         .then(r => r.json())
@@ -1447,7 +1538,7 @@ export function UserVerificationSection() {
         .finally(() => setLoading(false))
     }, 300)
     return () => clearTimeout(timer)
-  }, [search, statusFilter, typeFilter])
+  }, [search, statusFilter, typeFilter, verifPage])
 
   const typeFilterCounts: Record<string, number> = {
     All: verifications.length,
@@ -1536,7 +1627,14 @@ export function UserVerificationSection() {
             </FilterBtn>
           ))}
           <div style={{ marginLeft: 'auto' }}>
-            <button style={{
+            <button
+              onClick={() => {
+                const rows = [['User','Email','Phone','Submitted','Type','Status'], ...verifications.map(v => [v.user, v.email, v.phone, v.submitted, v.type, v.status])]
+                const csv = rows.map(r => r.map(v => '"'+String(v).replace(/"/g,'""')+'"').join(',')).join('\n')
+                const blob = new Blob([csv],{type:'text/csv'})
+                const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='gravity_verifications.csv';a.click()
+              }}
+              style={{
               display: 'flex',
               alignItems: 'center',
               gap: 6,
@@ -1608,8 +1706,20 @@ export function UserVerificationSection() {
                       <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
                         {isPending && (
                           <>
-                            <button style={{ background: '#10B98120', color: '#10B981', border: '1px solid #10B98133', fontSize: 11, fontWeight: 600, padding: '3px 8px', borderRadius: 6, cursor: 'pointer' }}>Approve</button>
-                            <button style={{ background: '#EF444420', color: '#EF4444', border: '1px solid #EF444433', fontSize: 11, fontWeight: 600, padding: '3px 8px', borderRadius: 6, cursor: 'pointer' }}>Reject</button>
+                            <button
+                              onClick={async () => {
+                                const token = localStorage.getItem('gv_token') || ''
+                                await fetch('/admin-api/users/'+v.id+'/status', {method:'PATCH', headers:{'Authorization':'Bearer '+token,'Content-Type':'application/json'}, body: JSON.stringify({is_active:true})})
+                                setVerifications(prev => prev.map(x => x.id === v.id ? {...x, status: 'Verified' as const} : x))
+                              }}
+                              style={{ background: '#10B98120', color: '#10B981', border: '1px solid #10B98133', fontSize: 11, fontWeight: 600, padding: '3px 8px', borderRadius: 6, cursor: 'pointer' }}>Approve</button>
+                            <button
+                              onClick={async () => {
+                                const token = localStorage.getItem('gv_token') || ''
+                                await fetch('/admin-api/users/'+v.id+'/status', {method:'PATCH', headers:{'Authorization':'Bearer '+token,'Content-Type':'application/json'}, body: JSON.stringify({is_active:false})})
+                                setVerifications(prev => prev.map(x => x.id === v.id ? {...x, status: 'Rejected' as const} : x))
+                              }}
+                              style={{ background: '#EF444420', color: '#EF4444', border: '1px solid #EF444433', fontSize: 11, fontWeight: 600, padding: '3px 8px', borderRadius: 6, cursor: 'pointer' }}>Reject</button>
                           </>
                         )}
                         <button style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)' }}>
@@ -1636,8 +1746,9 @@ export function UserVerificationSection() {
         }}>
           <span>Showing <strong style={{ color: 'var(--text-secondary)' }}>{verifications.length}</strong> of <strong style={{ color: 'var(--text-secondary)' }}>{total.toLocaleString()}</strong> verifications</span>
           <div style={{ display: 'flex', gap: 6 }}>
-            <button style={{ background: 'var(--bg-surface2)', border: '1px solid var(--border)', borderRadius: 6, padding: '3px 10px', fontSize: 12, color: 'var(--text-muted)', cursor: 'pointer' }}>Prev</button>
-            <button style={{ background: 'var(--bg-surface2)', border: '1px solid var(--border)', borderRadius: 6, padding: '3px 10px', fontSize: 12, color: 'var(--text-muted)', cursor: 'pointer' }}>Next</button>
+            <button onClick={() => setVerifPage(p => Math.max(1, p - 1))} disabled={verifPage === 1} style={{ background: 'var(--bg-surface2)', border: '1px solid var(--border)', borderRadius: 6, padding: '3px 10px', fontSize: 12, color: 'var(--text-muted)', cursor: 'pointer' }}>Prev</button>
+            <span style={{padding:'3px 8px',fontSize:12,color:'var(--text-primary)',fontWeight:600}}>Page {verifPage}</span>
+            <button onClick={() => setVerifPage(p => p + 1)} disabled={verifications.length < 50} style={{ background: 'var(--bg-surface2)', border: '1px solid var(--border)', borderRadius: 6, padding: '3px 10px', fontSize: 12, color: 'var(--text-muted)', cursor: 'pointer' }}>Next</button>
           </div>
         </div>
       </div>
