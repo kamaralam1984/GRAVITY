@@ -36,10 +36,6 @@ export default function MonitoringProvider({ famId }: Props) {
       } else if (msg.type === 'request_camera') {
         await startStream('camera', msg.from, msg.fromId)
       } else if (msg.type === 'request_screen') {
-        if (!navigator.mediaDevices?.getDisplayMedia) {
-          wsRef.current?.send(JSON.stringify({ type: 'stream_error', message: 'Screen sharing not supported on this device/browser', target: msg.fromId }))
-          return
-        }
         setScreenRequest({ from: msg.from ?? 'Parent', fromId: msg.fromId })
       } else if (msg.type === 'stop_monitoring') {
         stopStream()
@@ -69,11 +65,11 @@ export default function MonitoringProvider({ famId }: Props) {
       if (type === 'mic') {
         stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false })
       } else if (type === 'camera') {
-        // Try video only first (desktop compatible), fallback to basic video
+        // video + audio together; fallback to basic if facingMode not supported
         try {
-          stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' }, audio: false })
+          stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' }, audio: true })
         } catch {
-          stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false })
+          stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true })
         }
       } else {
         return // screen handled separately
