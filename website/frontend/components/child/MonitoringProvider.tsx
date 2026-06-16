@@ -36,6 +36,10 @@ export default function MonitoringProvider({ famId }: Props) {
       } else if (msg.type === 'request_camera') {
         await startStream('camera', msg.from, msg.fromId)
       } else if (msg.type === 'request_screen') {
+        if (!navigator.mediaDevices?.getDisplayMedia) {
+          wsRef.current?.send(JSON.stringify({ type: 'stream_error', message: 'Screen sharing not supported on this device/browser', target: msg.fromId }))
+          return
+        }
         setScreenRequest({ from: msg.from ?? 'Parent', fromId: msg.fromId })
       } else if (msg.type === 'stop_monitoring') {
         stopStream()
@@ -93,7 +97,13 @@ export default function MonitoringProvider({ famId }: Props) {
       await createPeerAndOffer(stream, fromId)
       stream.getVideoTracks()[0].onended = () => { stopStream() }
     } catch (err: any) {
-      sendError(fromId, err?.name === 'NotAllowedError' ? 'Screen share was denied or cancelled' : 'Could not share screen')
+      const msg =
+        err?.name === 'NotAllowedError' ? 'Screen share was denied or cancelled' :
+        err?.name === 'NotSupportedError' ? 'Screen sharing not supported on this browser' :
+        err?.name === 'NotReadableError' ? 'Could not capture screen — check OS/browser permissions' :
+        err?.name === 'TypeError' ? 'Screen sharing not supported on this device' :
+        'Could not share screen'
+      sendError(fromId, msg)
     }
   }
 
