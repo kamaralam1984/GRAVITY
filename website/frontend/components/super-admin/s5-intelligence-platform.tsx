@@ -1450,3 +1450,222 @@ export function PlatformConfigSection() {
     </div>
   )
 }
+
+// ─── Database Explorer ────────────────────────────────────────────────────────
+
+interface DBTable { table: string; rows: number; columns: string[] }
+interface DBRow { [key: string]: any }
+
+export function DatabaseExplorerSection() {
+  const [tables, setTables] = useState<DBTable[]>([])
+  const [loading, setLoading] = useState(true)
+  const [selectedTable, setSelectedTable] = useState<string | null>(null)
+  const [rows, setRows] = useState<DBRow[]>([])
+  const [columns, setColumns] = useState<string[]>([])
+  const [total, setTotal] = useState(0)
+  const [page, setPage] = useState(0)
+  const [search, setSearch] = useState('')
+  const [tableLoading, setTableLoading] = useState(false)
+  const limit = 50
+
+  const getToken = () => typeof window !== 'undefined' ? localStorage.getItem('gv_token') : null
+
+  useEffect(() => {
+    const token = getToken()
+    fetch('/admin-api/db/tables', { headers: { Authorization: `Bearer ${token}` } })
+      .then(r => r.json())
+      .then(d => { setTables(d.tables || []); setLoading(false) })
+      .catch(() => setLoading(false))
+  }, [])
+
+  const loadTable = (tname: string, pg = 0, q = '') => {
+    setTableLoading(true)
+    setPage(pg)
+    const token = getToken()
+    const params = new URLSearchParams({ skip: String(pg * limit), limit: String(limit), search: q })
+    fetch(`/admin-api/db/table/${tname}?${params}`, { headers: { Authorization: `Bearer ${token}` } })
+      .then(r => r.json())
+      .then(d => {
+        setRows(d.rows || [])
+        setColumns(d.columns || [])
+        setTotal(d.total || 0)
+        setTableLoading(false)
+      })
+      .catch(() => setTableLoading(false))
+  }
+
+  const handleTableClick = (tname: string) => {
+    setSelectedTable(tname)
+    setSearch('')
+    loadTable(tname, 0, '')
+  }
+
+  const handleSearch = (q: string) => {
+    setSearch(q)
+    if (selectedTable) loadTable(selectedTable, 0, q)
+  }
+
+  const TABLE_COLORS: Record<string, string> = {
+    users: '#3B82F6', families: '#8B5CF6', family_members: '#10B981',
+    admin_users: '#EC4899', devices: '#F59E0B', locations: '#06B6D4',
+    geofences: '#84CC16', geofence_events: '#65A30D', sos_alerts: '#EF4444',
+    check_in_rules: '#F97316', check_in_events: '#FB923C', journeys: '#A78BFA',
+    journey_points: '#C4B5FD', messages: '#34D399', driving_events: '#FCD34D',
+    health_records: '#F472B6', medication_reminders: '#FB7185', subscriptions: '#60A5FA',
+    notifications: '#38BDF8', feedbacks: '#A3E635', contact_requests: '#4ADE80',
+    app_settings: '#E879F9', otp_codes: '#94A3B8', behavior_scores: '#FDBA74',
+  }
+
+  const formatVal = (val: any) => {
+    if (val === null || val === undefined) return <span style={{ color: 'var(--text-muted)', fontStyle: 'italic' }}>null</span>
+    const str = String(val)
+    if (str.length > 60) return <span title={str}>{str.slice(0, 60)}…</span>
+    return str
+  }
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+      <SectionHeader icon={Database} title="Database Explorer" subtitle="Sabhi database tables aur unka real data" />
+
+      {loading ? (
+        <GlassCard style={{ padding: 40, textAlign: 'center', color: 'var(--text-muted)' }}>
+          <RefreshCw size={24} style={{ margin: '0 auto 12px', display: 'block' }} />
+          Loading tables…
+        </GlassCard>
+      ) : (
+        <div style={{ display: 'grid', gridTemplateColumns: selectedTable ? '280px 1fr' : '1fr', gap: 16, alignItems: 'start' }}>
+
+          {/* Tables List */}
+          <GlassCard style={{ padding: 16 }}>
+            <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-muted)', marginBottom: 12, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+              {tables.length} Tables
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 6, maxHeight: 600, overflowY: 'auto' }}>
+              {tables.map(t => (
+                <button
+                  key={t.table}
+                  onClick={() => handleTableClick(t.table)}
+                  style={{
+                    display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                    padding: '10px 12px', borderRadius: 8, border: 'none', cursor: 'pointer', textAlign: 'left',
+                    background: selectedTable === t.table ? 'rgba(139,92,246,0.15)' : 'transparent',
+                    outline: selectedTable === t.table ? '1px solid rgba(139,92,246,0.4)' : '1px solid transparent',
+                    transition: 'all 0.15s',
+                  }}
+                >
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                    <div style={{
+                      width: 10, height: 10, borderRadius: '50%',
+                      background: TABLE_COLORS[t.table] || '#6B7280', flexShrink: 0
+                    }} />
+                    <span style={{ fontSize: 13, fontWeight: 500, color: 'var(--text-primary)', fontFamily: 'monospace' }}>{t.table}</span>
+                  </div>
+                  <span style={{
+                    fontSize: 11, fontWeight: 600, padding: '2px 8px', borderRadius: 20,
+                    background: 'rgba(139,92,246,0.15)', color: '#8B5CF6'
+                  }}>{t.rows.toLocaleString()}</span>
+                </button>
+              ))}
+            </div>
+          </GlassCard>
+
+          {/* Table Data Viewer */}
+          {selectedTable && (
+            <GlassCard style={{ padding: 20, overflow: 'hidden' }}>
+              {/* Header */}
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16, flexWrap: 'wrap', gap: 12 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                  <div style={{ width: 12, height: 12, borderRadius: '50%', background: TABLE_COLORS[selectedTable] || '#6B7280' }} />
+                  <span style={{ fontSize: 16, fontWeight: 700, color: 'var(--text-primary)', fontFamily: 'monospace' }}>{selectedTable}</span>
+                  <span style={{ fontSize: 12, color: 'var(--text-muted)', background: 'var(--bg-surface2)', padding: '2px 8px', borderRadius: 20 }}>
+                    {total.toLocaleString()} rows
+                  </span>
+                </div>
+                <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                  <input
+                    value={search}
+                    onChange={e => handleSearch(e.target.value)}
+                    placeholder="Search…"
+                    style={{
+                      padding: '7px 12px', borderRadius: 8, border: '1px solid var(--border)',
+                      background: 'var(--bg-surface2)', color: 'var(--text-primary)', fontSize: 13, outline: 'none', width: 180
+                    }}
+                  />
+                  <button
+                    onClick={() => loadTable(selectedTable, page, search)}
+                    style={{ padding: '7px 12px', borderRadius: 8, background: 'rgba(139,92,246,0.15)', border: '1px solid rgba(139,92,246,0.3)', color: '#8B5CF6', cursor: 'pointer', fontSize: 13 }}
+                  >
+                    <RefreshCw size={14} />
+                  </button>
+                </div>
+              </div>
+
+              {/* Columns badge row */}
+              <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 14 }}>
+                {columns.map(c => (
+                  <span key={c} style={{ fontSize: 11, padding: '2px 8px', borderRadius: 20, background: 'var(--bg-surface2)', color: 'var(--text-muted)', fontFamily: 'monospace', border: '1px solid var(--border)' }}>{c}</span>
+                ))}
+              </div>
+
+              {/* Table */}
+              {tableLoading ? (
+                <div style={{ padding: 32, textAlign: 'center', color: 'var(--text-muted)' }}>Loading…</div>
+              ) : rows.length === 0 ? (
+                <div style={{ padding: 32, textAlign: 'center', color: 'var(--text-muted)' }}>No records found</div>
+              ) : (
+                <div style={{ overflowX: 'auto' }}>
+                  <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12 }}>
+                    <thead>
+                      <tr>
+                        {columns.map(c => (
+                          <th key={c} style={{
+                            padding: '8px 12px', textAlign: 'left', fontWeight: 600, fontFamily: 'monospace',
+                            color: 'var(--text-muted)', borderBottom: '1px solid var(--border)', whiteSpace: 'nowrap',
+                            background: 'var(--bg-surface)', fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.04em'
+                          }}>{c}</th>
+                        ))}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {rows.map((row, i) => (
+                        <tr key={i} style={{ borderBottom: '1px solid var(--border)', background: i % 2 === 0 ? 'transparent' : 'rgba(255,255,255,0.02)' }}>
+                          {columns.map(c => (
+                            <td key={c} style={{ padding: '8px 12px', color: 'var(--text-primary)', whiteSpace: 'nowrap', maxWidth: 220, overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                              {formatVal(row[c])}
+                            </td>
+                          ))}
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+
+              {/* Pagination */}
+              {total > limit && (
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 16, paddingTop: 16, borderTop: '1px solid var(--border)' }}>
+                  <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>
+                    {page * limit + 1}–{Math.min((page + 1) * limit, total)} of {total.toLocaleString()}
+                  </span>
+                  <div style={{ display: 'flex', gap: 8 }}>
+                    <button
+                      onClick={() => { const p = page - 1; setPage(p); loadTable(selectedTable, p, search) }}
+                      disabled={page === 0}
+                      style={{ padding: '6px 14px', borderRadius: 8, border: '1px solid var(--border)', background: 'var(--bg-surface2)', color: 'var(--text-primary)', cursor: page === 0 ? 'not-allowed' : 'pointer', opacity: page === 0 ? 0.4 : 1, fontSize: 12 }}
+                    >← Prev</button>
+                    <button
+                      onClick={() => { const p = page + 1; setPage(p); loadTable(selectedTable, p, search) }}
+                      disabled={(page + 1) * limit >= total}
+                      style={{ padding: '6px 14px', borderRadius: 8, border: '1px solid var(--border)', background: 'var(--bg-surface2)', color: 'var(--text-primary)', cursor: (page + 1) * limit >= total ? 'not-allowed' : 'pointer', opacity: (page + 1) * limit >= total ? 0.4 : 1, fontSize: 12 }}
+                    >Next →</button>
+                  </div>
+                </div>
+              )}
+            </GlassCard>
+          )}
+        </div>
+      )}
+    </div>
+  )
+}
+}

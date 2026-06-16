@@ -10,7 +10,7 @@ import { LiveOperationsSection, AICopilotSection, PlatformStatusSection, Childre
 import { SchoolManagementSection, SchoolBusTrackingSection, AttendanceSection, PickupVerificationSection, ChildAlertsSection, ChildAnalyticsSection, MedicationSection, FallDetectionSection, WellnessReportsSection, CaregiverConsoleSection, ElderAnalyticsSection } from '@/components/super-admin/s2-child-elder'
 import { DriverScoresSection, SpeedViolationsSection, TeenDrivingSection, RiskDetectionSection, AIDrivingCoachSection, AIGuardianSection, SafetyPredictionsSection, AIReportsSection, AIChatLogsSection, AIModelsSection, AIConfigSection, DrivingEventsSection } from '@/components/super-admin/s3-driving-ai'
 import { EmailCampaignsSection, SMSCampaignsSection, AnnouncementsSection, SmartWatchesSection, GPSTrackersSection, CamerasSection, SmartHomeSection, DeviceHealthSection, InvoicesSection, FinancialReportsSection, WhiteLabelSection, SchoolsEnterpriseSection, HospitalsSection, NGOsSection, EnterpriseAnalyticsSection, FamilyChatSection } from '@/components/super-admin/s4-comms-devices-business-enterprise'
-import { FamilyAnalyticsSection, SafetyAnalyticsSection, DeviceAnalyticsSection, RevenueAnalyticsSection, PredictiveInsightsSection, FeedbackSection, ContactRequestsSection, KnowledgeBaseSection, CustomerSuccessSection, LoginActivitySection, ThreatDetectionSection, PermissionsSection, ComplianceCenterSection, RolesSection, TeamsSection, AccessControlSection, WebhooksSection, IntegrationsSection, SDKAccessSection, APIAnalyticsSection, DBHealthSection, QueueMonitoringSection, ErrorLogsSection, BackupsSection, BrandingSection, SMTPSection, SMSGatewaySection, PushConfigSection, MapsAPISection, AISettingsSection, PlatformConfigSection } from '@/components/super-admin/s5-intelligence-platform'
+import { FamilyAnalyticsSection, SafetyAnalyticsSection, DeviceAnalyticsSection, RevenueAnalyticsSection, PredictiveInsightsSection, FeedbackSection, ContactRequestsSection, KnowledgeBaseSection, CustomerSuccessSection, LoginActivitySection, ThreatDetectionSection, PermissionsSection, ComplianceCenterSection, RolesSection, TeamsSection, AccessControlSection, WebhooksSection, IntegrationsSection, SDKAccessSection, APIAnalyticsSection, DBHealthSection, QueueMonitoringSection, ErrorLogsSection, BackupsSection, BrandingSection, SMTPSection, SMSGatewaySection, PushConfigSection, MapsAPISection, AISettingsSection, PlatformConfigSection, DatabaseExplorerSection } from '@/components/super-admin/s5-intelligence-platform'
 import {
   Crown,
   Home,
@@ -91,6 +91,7 @@ type NavSection =
   | 'api' | 'webhooks' | 'integrations' | 'sdk-access' | 'api-analytics'
   | 'whitelabel' | 'db-health' | 'queue-monitoring' | 'error-logs' | 'backups'
   | 'settings' | 'branding' | 'smtp' | 'sms-gateway' | 'push-config' | 'maps-api' | 'ai-settings' | 'platform-config'
+  | 'db-explorer'
 
 // ─── Mock Data ────────────────────────────────────────────────────────────────
 
@@ -617,6 +618,7 @@ const NAV_GROUPS_SA = [
   [
     { id: 'health' as NavSection, label: 'System Health', icon: Server },
     { id: 'db-health' as NavSection, label: 'Database Health', icon: Database },
+    { id: 'db-explorer' as NavSection, label: 'Database Explorer', icon: Database },
     { id: 'queue-monitoring' as NavSection, label: 'Queue Monitoring', icon: Activity },
     { id: 'error-logs' as NavSection, label: 'Error Logs', icon: AlertTriangle },
     { id: 'backups' as NavSection, label: 'Backups', icon: HardDrive },
@@ -3855,6 +3857,7 @@ export default function SuperAdminPage() {
       case 'sdk-access': return <SDKAccessSection />
       case 'api-analytics': return <APIAnalyticsSection />
       case 'db-health': return <DBHealthSection />
+      case 'db-explorer': return <DatabaseExplorerSection />
       case 'queue-monitoring': return <QueueMonitoringSection />
       case 'error-logs': return <ErrorLogsSection />
       case 'backups': return <BackupsSection />

@@ -1,6 +1,6 @@
 # GRAVITY — FULL SYSTEM DOCUMENTATION
 ### Trackalways Technologies Pvt Ltd
-**Platform:** Family Safety App | **Version:** 2.0.0 | **Last Updated:** June 2026
+**Platform:** Family Safety App | **Version:** 2.1.0 | **Last Updated:** June 2026
 
 ---
 
@@ -158,6 +158,13 @@ TRACKALWAYS GRAVITY 2.0/
     │   │   │   ├── ChildHome.tsx           ← Child home tab (real API data)
     │   │   │   ├── ChildSOS.tsx            ← SOS, LocationSection, FamilyRadarSection
     │   │   │   └── ChildLife.tsx           ← School, Health, Achievements, Chat, Settings
+    │   │   ├── super-admin/
+    │   │   │   ├── s1-overview-people-location.tsx          ← Overview, People Mgmt, Location tabs
+    │   │   │   ├── s2-child-elder.tsx                       ← School Safety, Health/Elderly (real DB)
+    │   │   │   ├── s3-driving-ai.tsx                        ← Driving Safety, AI Center (real DB)
+    │   │   │   ├── s4-comms-devices-business-enterprise.tsx ← Comms, Devices, Business, Enterprise
+    │   │   │   ├── s5-intelligence-platform.tsx             ← Analytics, Support, Security, Config (real DB)
+    │   │   │   └── SUPER_ADMIN_GUIDE.md                     ← Full tab guide (what each does + how to use)
     │   │   └── effects/
     │   │       ├── AIAssistant.tsx
     │   │       ├── ParticleField.tsx
@@ -184,7 +191,7 @@ TRACKALWAYS GRAVITY 2.0/
     └── backend/                      ← FastAPI backend
         ├── main.py                   ← App entry, all routers registered
         ├── database.py               ← SQLAlchemy engine + SessionLocal
-        ├── models.py                 ← All 18 ORM table models
+        ├── models.py                 ← All 21 ORM table models (incl. Feedback, ContactRequest, AppSetting)
         ├── auth.py                   ← JWT + bcrypt utilities
         ├── seed.py                   ← Database seeding script
         ├── .env                      ← DATABASE_URL, SECRET_KEY, etc.
@@ -193,7 +200,8 @@ TRACKALWAYS GRAVITY 2.0/
         ├── venv/                     ← Python virtual environment
         └── routers/
             ├── auth.py               ← /auth/* user + unified login
-            ├── admin_router.py       ← /admin-api/* admin endpoints
+            ├── admin_router.py       ← /admin-api/* admin CRUD + password change
+            ├── admin_data_router.py  ← /admin-api/* 17 real-data endpoints (NEW)
             ├── families.py           ← /families/* family circles (is_online via GPS recency)
             ├── devices.py            ← /devices/* device management
             ├── location.py           ← /location/* GPS tracking
@@ -267,6 +275,16 @@ All dashboards share one login page (`/login`) but redirect to separate panels b
 | `admin` | `/admin` | Blue `#3B82F6` |
 | `super_admin` | `/super-admin` | Purple `#8B5CF6` |
 
+### Family Roles (FamilyMember.role)
+| Role | Meaning |
+|---|---|
+| `owner` | Family creator — treated as "parent" in UI |
+| `parent` | Non-owner adult family member |
+| `child` | Child/minor in the family |
+| ~~`member`~~ | **Removed** — legacy records fall back to "parent" in `_get_family_role()` |
+
+> New joins from `/dashboard` use `role: 'parent'`. New joins from `/choose-dashboard` use `role: 'child'`.
+
 ### User Dashboard (`/dashboard`)
 - **File:** `app/dashboard/page.tsx`
 - **Design:** Premium dark glass UI — deep navy `#050D1A` background, gold accents
@@ -317,10 +335,14 @@ All dashboards share one login page (`/login`) but redirect to separate panels b
 - **Sections:** Overview / Tickets / Reports / Content / Announcements / Analytics
 
 ### Super Admin Panel (`/super-admin`)
-- **File:** `app/super-admin/page.tsx`
+- **File:** `app/super-admin/page.tsx` + `components/super-admin/s1–s5.tsx`
 - **Accent:** Purple `#8B5CF6`, crown icon
-- **Sections:** 8 sidebar sections including Command Center
+- **19 sidebar categories, 100+ sections** — split across 5 component files (s1–s5)
 - **Hero stats:** 2.8M users, ₹48.7L MRR, 99.97% uptime
+- **Real DB data in:** Location History, Login Activity, SOS Alerts, Driving Events, Driver Scores, Medications, Wellness Reports, School Management, Family Chat (messages summary), Payments, Security Logs, Audit Logs, Threat Detection, Notifications, Feedback, Contact Requests, all Settings (SMTP/SMS/Push/Maps/AI/Platform)
+- **Password change:** All Users tab → Key icon → POST `/admin-api/users/{id}/change-password`
+- **Full guide:** `components/super-admin/SUPER_ADMIN_GUIDE.md`
+- **Categories:** Overview, People Management, Location, Safety & Emergency, School Safety, Health & Elderly, Driving Safety, AI Center, Communications, Devices & IoT, Business, Enterprise, Intelligence/Analytics, Support, Security, Administration, Developer Hub, System Monitoring, Configuration
 
 ### Middleware (Route Protection)
 - **File:** `middleware.ts`
@@ -380,11 +402,12 @@ All dashboards share one login page (`/login`) but redirect to separate panels b
 - **Docs:** http://localhost:8000/docs (Swagger UI)
 - **CORS:** Allows all origins (configured in main.py)
 
-### Router Modules (15 routers)
+### Router Modules (16 routers)
 
 | Module | Prefix | Purpose |
 |---|---|---|
-| `admin_router.py` | `/admin-api` | Admin dashboard, families, devices, SOS, analytics |
+| `admin_router.py` | `/admin-api` | Admin dashboard, users (CRUD + password change), families, devices, SOS, analytics |
+| `admin_data_router.py` | `/admin-api` | 17 real-data endpoints — location, driving, health, school, security logs, settings, feedback, contact requests |
 | `auth.py` | `/auth` | User register, login, unified login, profile |
 | `families.py` | `/families` | Family circle CRUD, invite codes, online detection via GPS recency |
 | `devices.py` | `/devices` | Device registration, battery updates |
@@ -451,7 +474,7 @@ Database file: `backend/gravity.db` (SQLite)
 | id | Integer PK | |
 | family_id | FK → families | Which family |
 | user_id | FK → users | Which user |
-| role | String | owner / member / child |
+| role | String | owner / child / parent (`member` removed — legacy records still work via fallback) |
 | joined_at | DateTime | When joined |
 
 ### Table 4: admin_users
@@ -667,21 +690,85 @@ Database file: `backend/gravity.db` (SQLite)
 | sent_at | DateTime | |
 | read_at | DateTime | |
 
+### Table 20: feedbacks *(NEW)*
+| Column | Type | Description |
+|---|---|---|
+| id | Integer PK | |
+| user_id | FK → users | Who submitted (optional) |
+| name | String | Submitter name |
+| email | String | Submitter email |
+| rating | Integer | 1–5 star rating |
+| category | String | app / support / feature / other |
+| message | Text | Feedback message |
+| status | String | new / reviewed / actioned |
+| created_at | DateTime | |
+
+### Table 21: contact_requests *(NEW)*
+| Column | Type | Description |
+|---|---|---|
+| id | Integer PK | |
+| name | String | Contact person name |
+| email | String | Contact email |
+| phone | String | Contact phone |
+| subject | String | Subject line |
+| message | Text | Message body |
+| status | String | new / in_progress / closed |
+| created_at | DateTime | |
+
+### Table 22: app_settings *(NEW)*
+| Column | Type | Description |
+|---|---|---|
+| id | Integer PK | |
+| key | String UNIQUE | Setting key (e.g. `smtp_host`, `fcm_key`, `openai_key`) |
+| value | Text | Setting value |
+| updated_at | DateTime | Last saved timestamp |
+
+> **Used by:** SMTP, SMS Gateway, Push Notifications, Maps API, AI Settings, Platform Config tabs in Super Admin → Configuration section. Save = upsert by key.
+
 ---
 
 ## 9. API ENDPOINTS — COMPLETE LIST
 
 ### Admin API (`/admin-api`)
+
+**Core admin endpoints (admin_router.py):**
 ```
-POST   /admin-api/login                    Admin login → JWT token
-GET    /admin-api/dashboard                Dashboard stats (families, devices, SOS, MRR)
-GET    /admin-api/families                 List all families (paginated, filter by plan)
-GET    /admin-api/devices                  List all devices (filter: online/offline/low_battery)
-GET    /admin-api/sos-alerts               List SOS alerts (filter by status)
-PATCH  /admin-api/sos-alerts/{id}/resolve  Resolve an alert
-GET    /admin-api/notifications            List all notifications
-POST   /admin-api/notifications/send       Send a broadcast notification
-GET    /admin-api/analytics                Analytics overview data
+POST   /admin-api/login                         Admin login → JWT token
+GET    /admin-api/dashboard                     Dashboard stats (families, devices, SOS, MRR)
+GET    /admin-api/users                         All users (paginated, search, role filter)
+PATCH  /admin-api/users/{id}                    Update user (name, email, phone, role, status)
+POST   /admin-api/users/{id}/change-password    Change user password (min 6 chars)
+DELETE /admin-api/users/{id}                    Delete user permanently
+POST   /admin-api/users                         Create new user
+GET    /admin-api/families                      List all families (paginated, filter by plan)
+PATCH  /admin-api/families/{id}/role            Change family member role (child/parent/owner)
+GET    /admin-api/devices                       List all devices (filter: online/offline/low_battery)
+GET    /admin-api/sos-alerts                    List SOS alerts (filter by status)
+PATCH  /admin-api/sos-alerts/{id}/resolve       Resolve an alert
+GET    /admin-api/notifications                 List all notifications
+POST   /admin-api/notifications/send            Send a broadcast notification
+GET    /admin-api/analytics                     Analytics overview data
+```
+
+**Real data endpoints (admin_data_router.py) — all require admin/super_admin JWT:**
+```
+GET    /admin-api/location-history              Location records JOIN User
+GET    /admin-api/login-activity                SecurityLog WHERE event_type IN (login/logout/login_failed)
+GET    /admin-api/notifications-list            All Notification records
+GET    /admin-api/driving-events-list           DrivingEvent JOIN User (severity filter optional)
+GET    /admin-api/health-records-list           HealthRecord JOIN User
+GET    /admin-api/medications-list              MedicationReminder JOIN User
+GET    /admin-api/messages-summary              Messages grouped by family_id JOIN Family
+GET    /admin-api/payments-list                 Payment JOIN User
+GET    /admin-api/security-logs-list            SecurityLog (?severity=high for threat detection)
+GET    /admin-api/audit-logs-list               AuditLog ordered by created_at desc
+GET    /admin-api/schools-list                  SchoolInfo JOIN User
+GET    /admin-api/analytics-summary             Aggregate counts (users/families/SOS/devices/subscriptions)
+GET    /admin-api/feedback-list                 Feedback table
+POST   /admin-api/feedback-list                 Update feedback status
+GET    /admin-api/contact-requests-list         ContactRequest table
+GET    /admin-api/settings-config               AppSetting key-value store (all settings)
+POST   /admin-api/settings-config               Upsert AppSetting by key
 ```
 
 ### User Auth (`/auth`)
@@ -1061,7 +1148,7 @@ sqlite3 gravity.db "ALTER TABLE users ADD COLUMN role VARCHAR DEFAULT 'user';"
 |---|---|
 | Provider | Hostinger VPS |
 | OS | Ubuntu |
-| Project path | `/root/gravity/` |
+| Project path | `/var/www/gravity/` |
 | Frontend port | **3100** (PM2: `gravity-frontend`) |
 | Backend port | **8001** (PM2: `gravity-backend`) |
 | Live domain | https://gravity.kvlbusinessssolutions.com |
@@ -1078,12 +1165,12 @@ id 51 → gravity-frontend   (port 3100)
 
 ### Deploy Command (run on VPS)
 ```bash
-cd /root/gravity && git pull origin main && cd website/frontend && npm run build && pm2 restart gravity-frontend
+cd /var/www/gravity && git pull origin main && cd website/frontend && npm run build && pm2 restart gravity-frontend
 ```
 
 ### Deploy with Backend Restart
 ```bash
-cd /root/gravity && git pull origin main
+cd /var/www/gravity && git pull origin main
 cd website/frontend && npm run build && pm2 restart gravity-frontend
 cd ../backend && pm2 restart gravity-backend
 ```
@@ -1186,7 +1273,7 @@ PARENT:        https://gravity.kvlbusinessssolutions.com/parent
 CHILD:         https://gravity.kvlbusinessssolutions.com/child
 SUPER ADMIN:   https://gravity.kvlbusinessssolutions.com/super-admin
 LOGIN:         https://gravity.kvlbusinessssolutions.com/login
-VPS PATH:      /root/gravity/
+VPS PATH:      /var/www/gravity/
 FRONTEND PORT: 3100 (PM2: gravity-frontend, id 51)
 BACKEND PORT:  8001 (PM2: gravity-backend, id 50)
 
@@ -1206,8 +1293,13 @@ User:     priya.sharma@gmail.com / Password@123
 Admin:    kamaralamjdu@gmail.com / K12345678
 
 ─── DEPLOY TO VPS ────────────────────────────────────────────────
-cd /root/gravity && git pull origin main
+# Frontend only:
+cd /var/www/gravity && git pull origin main && cd website/frontend && npm run build && pm2 restart gravity-frontend
+
+# Frontend + Backend:
+cd /var/www/gravity && git pull origin main
 cd website/frontend && npm run build && pm2 restart gravity-frontend
+cd ../backend && pm2 restart gravity-backend
 
 ─── START LOCAL ──────────────────────────────────────────────────
 # Backend (port 8000)

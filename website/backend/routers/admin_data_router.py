@@ -1,10 +1,10 @@
 """Admin Data Router — real DB-backed endpoints for the super admin panel."""
 from fastapi import APIRouter, Depends, Query, HTTPException
 from sqlalchemy.orm import Session
-from sqlalchemy import func, desc
+from sqlalchemy import func, desc, text, inspect
 from pydantic import BaseModel
-from typing import Optional, Dict, Any
-from database import get_db
+from typing import Optional, Dict, Any, List
+from database import get_db, engine
 import models
 from auth import get_current_admin
 
@@ -591,3 +591,77 @@ def upsert_settings_config(
         updated.append(key)
     db.commit()
     return {"updated": updated, "count": len(updated)}
+
+
+# ---------------------------------------------------------------------------
+# 18. Database Explorer
+# ---------------------------------------------------------------------------
+
+# Tables that should NOT be exposed (sensitive)
+_HIDDEN_TABLES = {"alembic_version"}
+
+@router.get("/db/tables")
+def db_tables(
+    admin=Depends(get_current_admin),
+    db: Session = Depends(get_db),
+):
+    """List all tables with row counts and column names."""
+    insp = inspect(engine)
+    table_names = [t for t in insp.get_table_names() if t not in _HIDDEN_TABLES]
+    result = []
+    for tname in sorted(table_names):
+        try:
+            count = db.execute(text(f'SELECT COUNT(*) FROM "{tname}"')).scalar()
+        except Exception:
+            count = 0
+        cols = [c["name"] for c in insp.get_columns(tname)]
+        result.append({"table": tname, "rows": count, "columns": cols})
+    return {"tables": result, "total": len(result)}
+
+
+@router.get("/db/table/{table_name}")
+def db_table_data(
+    table_name: str,
+    skip: int = Query(0, ge=0),
+    limit: int = Query(50, ge=1, le=200),
+    search: str = Query(""),
+    admin=Depends(get_current_admin),
+    db: Session = Depends(get_db),
+):
+    """Return paginated rows from any table. Super admin only."""
+    insp = inspect(engine)
+    all_tables = insp.get_table_names()
+    if table_name not in all_tables or table_name in _HIDDEN_TABLES:
+        raise HTTPException(status_code=404, detail="Table not found")
+
+    cols = [c["name"] for c in insp.get_columns(table_name)]
+
+    # Build query — search across text columns if search provided
+    if search:
+        text_cols = [c["name"] for c in insp.get_columns(table_name)
+                     if "VARCHAR" in str(c["type"]).upper() or "TEXT" in str(c["type"]).upper()]
+        if text_cols:
+            like_clauses = " OR ".join([f'"{c}" LIKE :q' for c in text_cols])
+            total = db.execute(
+                text(f'SELECT COUNT(*) FROM "{table_name}" WHERE {like_clauses}'),
+                {"q": f"%{search}%"}
+            ).scalar()
+            rows_raw = db.execute(
+                text(f'SELECT * FROM "{table_name}" WHERE {like_clauses} LIMIT :lim OFFSET :skip'),
+                {"q": f"%{search}%", "lim": limit, "skip": skip}
+            ).fetchall()
+        else:
+            total = db.execute(text(f'SELECT COUNT(*) FROM "{table_name}"')).scalar()
+            rows_raw = db.execute(
+                text(f'SELECT * FROM "{table_name}" LIMIT :lim OFFSET :skip'),
+                {"lim": limit, "skip": skip}
+            ).fetchall()
+    else:
+        total = db.execute(text(f'SELECT COUNT(*) FROM "{table_name}"')).scalar()
+        rows_raw = db.execute(
+            text(f'SELECT * FROM "{table_name}" LIMIT :lim OFFSET :skip'),
+            {"lim": limit, "skip": skip}
+        ).fetchall()
+
+    rows = [dict(zip(cols, row)) for row in rows_raw]
+    return {"table": table_name, "columns": cols, "rows": rows, "total": total, "skip": skip, "limit": limit}
