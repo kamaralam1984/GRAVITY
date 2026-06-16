@@ -1,6 +1,6 @@
 # GRAVITY — FULL SYSTEM DOCUMENTATION
 ### Trackalways Technologies Pvt Ltd
-**Platform:** Family Safety App | **Version:** 2.1.0 | **Last Updated:** June 2026
+**Platform:** Family Safety App | **Version:** 2.2.0 | **Last Updated:** June 2026
 
 ---
 
@@ -340,6 +340,7 @@ All dashboards share one login page (`/login`) but redirect to separate panels b
 - **19 sidebar categories, 100+ sections** — split across 5 component files (s1–s5)
 - **Hero stats:** 2.8M users, ₹48.7L MRR, 99.97% uptime
 - **Real DB data in:** Location History, Login Activity, SOS Alerts, Driving Events, Driver Scores, Medications, Wellness Reports, School Management, Family Chat (messages summary), Payments, Security Logs, Audit Logs, Threat Detection, Notifications, Feedback, Contact Requests, all Settings (SMTP/SMS/Push/Maps/AI/Platform)
+- **Database Explorer:** Infrastructure → Database Explorer — saari DB tables list, click karke real rows browse karo, search + pagination
 - **Password change:** All Users tab → Key icon → POST `/admin-api/users/{id}/change-password`
 - **Full guide:** `components/super-admin/SUPER_ADMIN_GUIDE.md`
 - **Categories:** Overview, People Management, Location, Safety & Emergency, School Safety, Health & Elderly, Driving Safety, AI Center, Communications, Devices & IoT, Business, Enterprise, Intelligence/Analytics, Support, Security, Administration, Developer Hub, System Monitoring, Configuration
@@ -434,6 +435,16 @@ if loc and loc.recorded_at:
     is_online = (datetime.now(timezone.utc) - rec).total_seconds() < 1800
 elif device:
     is_online = device.is_online
+```
+
+**`families.py` — Invite code generation:**
+```python
+def _gen_invite_code() -> str:
+    # 6-char uppercase alphanumeric — easy to type and share
+    # O, I, L removed (look like 0, 1, 1)
+    chars = (string.ascii_uppercase + string.digits).replace('O','').replace('I','').replace('L','')
+    return ''.join(random.SystemRandom().choice(chars) for _ in range(6))
+# Example output: "A4BX2K", "8TR5NW"
 ```
 
 ---
@@ -769,6 +780,8 @@ POST   /admin-api/feedback-list                 Update feedback status
 GET    /admin-api/contact-requests-list         ContactRequest table
 GET    /admin-api/settings-config               AppSetting key-value store (all settings)
 POST   /admin-api/settings-config               Upsert AppSetting by key
+GET    /admin-api/db/tables                     List all DB tables with row counts + column names
+GET    /admin-api/db/table/{table_name}         Paginated rows from any table (?skip, ?limit, ?search)
 ```
 
 ### User Auth (`/auth`)
@@ -788,14 +801,19 @@ GET    /auth/me                Get current user profile
 
 ### Families (`/families`)
 ```
-POST   /families/create           Create new family circle
-POST   /families/join/{code}      Join via invite code
-GET    /families/my               My family memberships → returns ARRAY (use famsArr[0].id)
-GET    /families/{id}/members     Members of a family
-                                  Returns: [{ user_id, name, role, last_location, lat, lng, battery, is_online }]
+POST   /families/create                            Create new family circle
+POST   /families/join/{code}                       Join via invite code (code is uppercased before lookup)
+GET    /families/my                                My family memberships → returns ARRAY (use famsArr[0].id)
+GET    /families/{id}/members                      Members of a family
+                                                   Returns: [{ user_id, name, role, last_location, lat, lng, battery, is_online }]
+POST   /families/{family_id}/regenerate-code       Generate new invite code for family (owner only)
+PATCH  /families/{family_id}/members/{user_id}/role  Change member role (child/parent/owner, owner only)
+DELETE /families/{family_id}/members/{user_id}     Remove member from family (owner only)
 ```
 
 > **Important:** `/families/my` always returns an **array**. Always use `Array.isArray(data) ? data : [data]` pattern.
+
+> **Invite Code format:** 6-char uppercase alphanumeric (A-Z, 0-9). Confusing chars O, I, L removed. Frontend always `.toUpperCase()` before sending. Backend uses `.ilike()` for case-insensitive lookup.
 
 ### Devices (`/devices`)
 ```
@@ -1318,6 +1336,29 @@ curl http://localhost:8000/
 curl -X POST http://localhost:8000/auth/login/unified \
   -H "Content-Type: application/json" \
   -d '{"email":"priya.sharma@gmail.com","password":"Password@123"}'
+
+─── INVITE CODE ──────────────────────────────────────────────────
+Format: 6-char uppercase alphanumeric (e.g. A4BX2K)
+Chars: A-Z + 0-9 (O, I, L removed to avoid confusion)
+Frontend: always .toUpperCase() before sending to backend
+Backend: .ilike() for case-insensitive DB lookup
+Regenerate: POST /families/{id}/regenerate-code (owner only)
+
+─── CREATE USER ON VPS DB ────────────────────────────────────────
+cd /var/www/gravity/website/backend && python3 -c "
+from database import SessionLocal
+import models
+from auth import get_password_hash
+db = SessionLocal()
+u = models.User(name='Name', email='email@gmail.com', phone='',
+    password_hash=get_password_hash('Password'), role='user', is_active=True)
+db.add(u); db.commit(); print('Done')
+"
+
+─── DB EXPLORER (SUPER ADMIN) ────────────────────────────────────
+Super Admin → Infrastructure → Database Explorer
+GET /admin-api/db/tables           → all tables + row counts
+GET /admin-api/db/table/{name}     → rows with search & pagination
 ```
 
 ---
