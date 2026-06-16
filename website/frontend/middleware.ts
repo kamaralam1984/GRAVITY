@@ -41,6 +41,11 @@ function clearAuthCookies(res: NextResponse) {
 export function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl
 
+  // Skip auth check for dedicated login pages
+  if (pathname === '/super-admin/login' || pathname === '/admin/login') {
+    return NextResponse.next()
+  }
+
   const matched = PROTECTED_ROUTES.find((r) => pathname.startsWith(r.prefix))
   if (!matched) return NextResponse.next()
 
@@ -91,7 +96,7 @@ export const config = {
   matcher: [
     '/dashboard/:path*',
     '/moderator/:path*',
-    '/admin/((?!login).*)',
-    '/super-admin/((?!login).*)',
+    '/admin/:path*',
+    '/super-admin/:path*',
   ],
 }
