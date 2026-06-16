@@ -642,7 +642,7 @@ export default function SuperAdminPage() {
   // ── Role guard: only super_admin allowed ──────────────────────
   useEffect(() => {
     const t = setTimeout(() => {
-      if (!isAuthenticated) { router.push('/login'); return }
+      if (!isAuthenticated) { router.push('/super-admin/login'); return }
       if (role && role !== 'super_admin') {
         router.push(role === 'admin' ? '/admin' : '/dashboard')
       }
@@ -924,7 +924,7 @@ export default function SuperAdminPage() {
             <div style={{ fontSize: 10, color: 'var(--gold)', fontWeight: 600, letterSpacing: '0.04em' }}>SUPER ADMIN</div>
           </div>
           <button
-            onClick={logout}
+            onClick={() => logout()}
             title="Log out"
             style={{ background: 'transparent', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', padding: 4, display: 'flex', alignItems: 'center', borderRadius: 6 }}
             onMouseEnter={(e) => { e.currentTarget.style.color = '#EF4444' }}

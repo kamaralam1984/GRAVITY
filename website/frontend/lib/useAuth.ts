@@ -22,16 +22,17 @@ export function useAuth() {
     }
   }, [])
 
-  const logout = useCallback(() => {
-    // Clear localStorage
+  const logout = useCallback((currentRole?: string) => {
+    const role = currentRole || user?.role
     clearAuth()
-    // Clear cookies
     document.cookie = 'gv_token=; path=/; max-age=0'
     document.cookie = 'gv_user=; path=/; max-age=0'
     setUser(null)
     setIsAuthenticated(false)
-    router.push('/login')
-  }, [router])
+    if (role === 'super_admin') router.push('/super-admin/login')
+    else if (role === 'admin') router.push('/admin/login')
+    else router.push('/login')
+  }, [router, user])
 
   const role: UserRole | null = user ? user.role : null
 

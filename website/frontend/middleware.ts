@@ -46,20 +46,28 @@ export function middleware(req: NextRequest) {
 
   const token = req.cookies.get('gv_token')?.value
 
-  // No token → redirect to login (preserve destination)
+  // Pick the right login page based on the route being accessed
+  function getLoginPath(prefix: string): string {
+    if (prefix === '/super-admin') return '/super-admin/login'
+    if (prefix === '/admin') return '/admin/login'
+    return '/login'
+  }
+  const loginPath = getLoginPath(matched.prefix)
+
+  // No token → redirect to the correct login page
   if (!token) {
     const loginUrl = req.nextUrl.clone()
-    loginUrl.pathname = '/login'
+    loginUrl.pathname = loginPath
     loginUrl.searchParams.set('next', pathname)
     return NextResponse.redirect(loginUrl)
   }
 
   const user = parseUserFromCookie(req)
 
-  // Token present but user cookie missing or invalid → clear cookies + redirect to login
+  // Token present but user cookie missing or invalid → clear cookies + redirect to correct login
   if (!user) {
     const loginUrl = req.nextUrl.clone()
-    loginUrl.pathname = '/login'
+    loginUrl.pathname = loginPath
     loginUrl.search = ''
     const res = NextResponse.redirect(loginUrl)
     clearAuthCookies(res)
@@ -80,5 +88,10 @@ export function middleware(req: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/dashboard/:path*', '/moderator/:path*', '/admin/:path*', '/super-admin/:path*'],
+  matcher: [
+    '/dashboard/:path*',
+    '/moderator/:path*',
+    '/admin/((?!login).*)',
+    '/super-admin/((?!login).*)',
+  ],
 }

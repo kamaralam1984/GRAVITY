@@ -272,7 +272,7 @@ function Sidebar({ active, setActive, moderatorName, logout }: {
           <span style={{ fontSize: 11, color: 'var(--text-secondary)', fontWeight: 500 }}>On Duty</span>
         </div>
         <button
-          onClick={logout}
+          onClick={() => logout()}
           style={{
             display: 'flex',
             alignItems: 'center',

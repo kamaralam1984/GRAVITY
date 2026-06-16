@@ -424,7 +424,7 @@ function ProfileTab({ user, toggles, setToggle, logout, familyRole, familyInvite
       ))}
 
       {/* Logout */}
-      <motion.button whileHover={{scale:1.02}} whileTap={{scale:0.97}} onClick={logout}
+      <motion.button whileHover={{scale:1.02}} whileTap={{scale:0.97}} onClick={() => logout()}
         className="w-full flex items-center justify-center gap-2 py-3 rounded-2xl text-sm font-bold transition-all mt-1"
         style={{background:'rgba(239,68,68,0.08)',border:'1px solid rgba(239,68,68,0.25)',color:'#F87171',
                 boxShadow:'0 0 0 0 rgba(239,68,68,0)'}}>
