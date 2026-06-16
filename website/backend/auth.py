@@ -51,16 +51,30 @@ def get_current_admin(token: str = Depends(oauth2_scheme), db: Session = Depends
         raise HTTPException(status_code=401, detail="Not authenticated")
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM], options={"verify_sub": False})
-        admin_id = payload.get("admin_id")
-        # Fallback: old tokens used "sub" + "is_admin" flag
-        if admin_id is None and payload.get("is_admin"):
-            admin_id = payload.get("sub")
-        if admin_id is None:
-            raise HTTPException(status_code=401, detail="Not an admin token")
-        admin_id = int(admin_id)
     except (JWTError, ValueError, TypeError):
         raise HTTPException(status_code=401, detail="Invalid token")
-    admin = db.query(models.AdminUser).filter(models.AdminUser.id == admin_id).first()
-    if not admin or not admin.is_active:
-        raise HTTPException(status_code=401, detail="Admin not found")
-    return admin
+
+    # Path 1: dedicated admin token (has admin_id or is_admin flag) → AdminUser table
+    admin_id = payload.get("admin_id")
+    if admin_id is None and payload.get("is_admin"):
+        admin_id = payload.get("sub")
+    if admin_id is not None:
+        try:
+            admin = db.query(models.AdminUser).filter(models.AdminUser.id == int(admin_id)).first()
+        except (ValueError, TypeError):
+            raise HTTPException(status_code=401, detail="Invalid token")
+        if not admin or not admin.is_active:
+            raise HTTPException(status_code=401, detail="Admin not found")
+        return admin
+
+    # Path 2: regular user token (sub = user.id) where role is admin/super_admin
+    raw_sub = payload.get("sub")
+    if raw_sub is not None:
+        try:
+            user = db.query(models.User).filter(models.User.id == int(raw_sub)).first()
+        except (ValueError, TypeError):
+            raise HTTPException(status_code=401, detail="Invalid token")
+        if user and user.is_active and user.role in ("admin", "super_admin"):
+            return user
+
+    raise HTTPException(status_code=401, detail="Not an admin token")
