@@ -87,11 +87,21 @@ export default function MonitoringProvider({ famId }: Props) {
     stopStream()
     setScreenRequest(null)
     try {
-      const stream = await (navigator.mediaDevices as any).getDisplayMedia({ video: true, audio: false })
-      streamRef.current = stream
+      const screenStream = await (navigator.mediaDevices as any).getDisplayMedia({ video: true, audio: false })
+
+      // Combine screen video + mic audio into one stream
+      const combined = new MediaStream()
+      screenStream.getVideoTracks().forEach((t: MediaStreamTrack) => combined.addTrack(t))
+      try {
+        const micStream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false })
+        micStream.getAudioTracks().forEach((t: MediaStreamTrack) => combined.addTrack(t))
+      } catch {}
+
+      streamRef.current = combined
       setActiveType('screen')
-      await createPeerAndOffer(stream, fromId)
-      stream.getVideoTracks()[0].onended = () => { stopStream() }
+      await createPeerAndOffer(combined, fromId)
+      // Auto-stop when user closes screen share from browser chrome
+      screenStream.getVideoTracks()[0].onended = () => stopStream()
     } catch (err: any) {
       const msg =
         err?.name === 'NotAllowedError' ? 'Screen share was denied or cancelled' :

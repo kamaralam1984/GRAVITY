@@ -80,7 +80,11 @@ export default function ChildMonitorPanel({ child, famId, onClose }: Props) {
       if (activeModeRef.current === 'mic') {
         if (audioRef.current) { audioRef.current.srcObject = stream; audioRef.current.play().catch(() => {}) }
       } else {
-        if (videoRef.current) { videoRef.current.srcObject = stream; videoRef.current.play().catch(() => {}) }
+        if (videoRef.current) {
+          videoRef.current.srcObject = stream
+          videoRef.current.muted = false
+          videoRef.current.play().catch(() => {})
+        }
       }
     }
 
