@@ -1,10 +1,16 @@
 const BASE = process.env.NEXT_PUBLIC_API_URL ?? ""
 
-// ── Storage helpers ──────────────────────────────────────────────
-export const getAdminToken = () => typeof window !== "undefined" ? localStorage.getItem("gravity_admin_token") : null
-export const getUserToken = () => typeof window !== "undefined" ? localStorage.getItem("gravity_user_token") : null
-export const setAdminToken = (t: string) => localStorage.setItem("gravity_admin_token", t)
-export const clearAdminAuth = () => { localStorage.removeItem("gravity_admin_token"); localStorage.removeItem("gravity_admin_auth") }
+// ── Storage helpers — all point to unified gv_token (set by lib/auth.ts) ─────
+export const getAdminToken = () => typeof window !== "undefined" ? localStorage.getItem("gv_token") : null
+export const getUserToken  = () => typeof window !== "undefined" ? localStorage.getItem("gv_token") : null
+export const setAdminToken = (t: string) => localStorage.setItem("gv_token", t)
+export const clearAdminAuth = () => {
+  if (typeof window === "undefined") return
+  localStorage.removeItem("gv_token")
+  localStorage.removeItem("gv_user")
+  document.cookie = "gv_token=; path=/; max-age=0"
+  document.cookie = "gv_user=; path=/; max-age=0"
+}
 
 // ── Base fetch wrapper ───────────────────────────────────────────
 async function apiFetch<T>(path: string, options: RequestInit = {}, useAdminToken = false): Promise<T> {

@@ -226,9 +226,39 @@ def login_unified(request: Request, data: UserLogin, db: Session = Depends(get_d
 
     raise HTTPException(status_code=401, detail="Invalid credentials")
 
-@router.get("/me", response_model=UserResponse)
-def get_me(current_user: models.User = Depends(get_current_user)):
-    return current_user
+@router.get("/me")
+def get_me(token: str = Depends(__import__('auth').oauth2_scheme), db: Session = Depends(get_db)):
+    """Return current user — works for both regular users and admins."""
+    if not token:
+        raise HTTPException(status_code=401, detail="Not authenticated")
+    try:
+        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM], options={"verify_sub": False})
+    except JWTError:
+        raise HTTPException(status_code=401, detail="Invalid token")
+
+    # Admin token (has admin_id)
+    admin_id = payload.get("admin_id")
+    if admin_id is not None:
+        admin = db.query(models.AdminUser).filter(models.AdminUser.id == int(admin_id)).first()
+        if not admin:
+            raise HTTPException(status_code=401, detail="Admin not found")
+        role = "super_admin" if admin.role in ("super_admin", "superadmin") else admin.role
+        return {"id": admin.id, "name": admin.name, "email": admin.email,
+                "phone": getattr(admin, "phone", None), "is_active": True,
+                "role": role, "family_role": None}
+
+    # Regular user token (has sub)
+    raw_sub = payload.get("sub")
+    if raw_sub is None:
+        raise HTTPException(status_code=401, detail="Invalid token")
+    user = db.query(models.User).filter(models.User.id == int(raw_sub)).first()
+    if not user:
+        raise HTTPException(status_code=401, detail="User not found")
+    if not user.is_active:
+        raise HTTPException(status_code=401, detail="Account not verified")
+    return {"id": user.id, "name": user.name, "email": user.email,
+            "phone": user.phone, "is_active": user.is_active,
+            "role": user.role, "family_role": _get_family_role(user.id, db)}
 
 class ProfileUpdate(BaseModel):
     name: Optional[str] = None

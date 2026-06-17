@@ -37,10 +37,10 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | null>(null)
 
 // ─────────────────────────────────────────────────────────────
-// Storage keys
+// Storage keys — must match lib/auth.ts (gv_token / gv_user)
 // ─────────────────────────────────────────────────────────────
-const TOKEN_KEY = 'gravity_token'
-const USER_KEY = 'gravity_user'
+const TOKEN_KEY = 'gv_token'
+const USER_KEY = 'gv_user'
 
 // ─────────────────────────────────────────────────────────────
 // AuthProvider
