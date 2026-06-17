@@ -11,6 +11,7 @@ from datetime import datetime
 from ws_manager import manager
 from jose import JWTError, jwt
 import os
+import cache
 
 router = APIRouter()
 
@@ -49,7 +50,7 @@ class SOSEvent(BaseModel):
 
 
 def _verify_ws_token(token: str, db: Session) -> models.User:
-    """Validate a JWT token for WebSocket connections (token passed as query param)."""
+    """Validate a JWT token for WebSocket connections."""
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM], options={"verify_sub": False})
         raw_sub = payload.get("sub")
@@ -123,13 +124,11 @@ async def update_location(
         else:
             dist = _hav_m(open_stop.lat, open_stop.lng, data.lat, data.lng)
             if dist <= 120:
-                # still at same stop — extend duration
                 duration = (datetime.utcnow() - open_stop.arrived_at.replace(tzinfo=None)).total_seconds() / 60
                 open_stop.duration_minutes = int(duration)
                 if data.place_name and not open_stop.place_name:
                     open_stop.place_name = data.place_name
             else:
-                # user moved — close stop, start new one
                 open_stop.left_at = datetime.utcnow()
                 open_stop.duration_minutes = int((open_stop.left_at - open_stop.arrived_at.replace(tzinfo=None)).total_seconds() / 60)
                 db.add(models.LocationStop(
@@ -151,25 +150,22 @@ async def update_location(
         except Exception:
             pass
 
-    # After saving location, check geofences
+    # ── Geofence check ───────────────────────────────────────────────────────
     if family_id:
         geofences = db.query(models.Geofence).filter(
             models.Geofence.family_id == family_id,
             models.Geofence.is_active == True
         ).all()
         for fence in geofences:
-            # Haversine distance calculation
-            R = 6371000  # Earth radius in meters
+            R = 6371000
             lat1, lng1 = math.radians(data.lat), math.radians(data.lng)
             lat2, lng2 = math.radians(fence.center_lat), math.radians(fence.center_lng)
             dlat = lat2 - lat1
             dlng = lng2 - lng1
             a = math.sin(dlat/2)**2 + math.cos(lat1)*math.cos(lat2)*math.sin(dlng/2)**2
             distance_m = 2 * R * math.asin(math.sqrt(a))
-
             is_inside = distance_m <= fence.radius_meters
 
-            # Check last geofence event for this user+geofence
             last_event = db.query(models.GeofenceEvent).filter(
                 models.GeofenceEvent.geofence_id == fence.id,
                 models.GeofenceEvent.user_id == user.id
@@ -178,23 +174,20 @@ async def update_location(
             last_was_inside = last_event and last_event.event_type == "enter"
 
             if is_inside and not last_was_inside and fence.alert_on_enter:
-                event = models.GeofenceEvent(
+                db.add(models.GeofenceEvent(
                     geofence_id=fence.id, user_id=user.id,
                     event_type="enter", lat=data.lat, lng=data.lng
-                )
-                db.add(event)
-                # Broadcast geofence enter via WebSocket
+                ))
                 await manager.broadcast_to_room(str(family_id), {
                     "type": "geofence_enter",
                     "user_id": user.id, "user_name": user.name,
                     "geofence_name": fence.name, "geofence_id": fence.id,
                 })
             elif not is_inside and last_was_inside and fence.alert_on_exit:
-                event = models.GeofenceEvent(
+                db.add(models.GeofenceEvent(
                     geofence_id=fence.id, user_id=user.id,
                     event_type="exit", lat=data.lat, lng=data.lng
-                )
-                db.add(event)
+                ))
                 await manager.broadcast_to_room(str(family_id), {
                     "type": "geofence_exit",
                     "user_id": user.id, "user_name": user.name,
@@ -221,10 +214,19 @@ async def update_location(
             },
         )
 
+    # ── Cache invalidation on new location ───────────────────────────────────
+    # Bust live map + member list for this family; bust this user's history
+    if family_id:
+        cache.cdel(
+            cache.ck("family", family_id, "live"),
+            cache.ck("family", family_id, "members"),
+        )
+    cache.cdel_pattern(f"location:{user.id}:history:*")
+
     return {"message": "Location updated", "lat": data.lat, "lng": data.lng}
 
 
-# ── WebSocket: token passed as query param (WS headers not supported in browsers) ──
+# ── WebSocket ────────────────────────────────────────────────────────────────
 
 @router.websocket("/ws/{family_id}")
 async def location_websocket(
@@ -279,7 +281,7 @@ async def location_websocket(
         })
 
 
-# ── REST: history & live snapshot ───────────────────────────────────────────
+# ── REST: history & live snapshot ────────────────────────────────────────────
 
 @router.get("/history/{user_id}")
 def get_location_history(
@@ -288,9 +290,8 @@ def get_location_history(
     current_user: models.User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
-    # Users can only view their own history; admins can view any
+    # Access control
     if current_user.id != user_id:
-        # verify they share a family
         shared = db.query(models.FamilyMember).filter(
             models.FamilyMember.user_id == current_user.id
         ).all()
@@ -302,6 +303,11 @@ def get_location_history(
         if not target_in_family:
             raise HTTPException(status_code=403, detail="Not in the same family")
 
+    key = cache.ck("location", user_id, "history", limit)
+    cached = cache.cget(key)
+    if cached is not None:
+        return cached
+
     locs = (
         db.query(models.Location)
         .filter(models.Location.user_id == user_id)
@@ -309,7 +315,7 @@ def get_location_history(
         .limit(limit)
         .all()
     )
-    return [
+    result = [
         {
             "lat": l.lat,
             "lng": l.lng,
@@ -319,6 +325,8 @@ def get_location_history(
         }
         for l in locs
     ]
+    cache.cset(key, result, cache.TTL.LOC_HISTORY)
+    return result
 
 
 @router.get("/live/{family_id}")
@@ -327,13 +335,17 @@ def get_family_live_locations(
     current_user: models.User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
-    # Verify user is a member of this family
     membership = db.query(models.FamilyMember).filter(
         models.FamilyMember.family_id == family_id,
         models.FamilyMember.user_id == current_user.id,
     ).first()
     if not membership:
         raise HTTPException(status_code=403, detail="Not a member of this family")
+
+    key = cache.ck("family", family_id, "live")
+    cached = cache.cget(key)
+    if cached is not None:
+        return cached
 
     members = db.query(models.FamilyMember).filter(models.FamilyMember.family_id == family_id).all()
     result = []
@@ -358,20 +370,16 @@ def get_family_live_locations(
                 "is_online": device.is_online if device else False,
                 "recorded_at": loc.recorded_at.isoformat() if loc.recorded_at else None,
             })
+
+    cache.cset(key, result, cache.TTL.LIVE_LOCATION)
     return result
 
 
 @router.post("/geofence")
-async def create_geofence(
-    req: GeofenceRequest,
-    user: models.User = Depends(get_current_user),
-):
+async def create_geofence(req: GeofenceRequest, user: models.User = Depends(get_current_user)):
     return {"message": "Geofence created", "name": req.name, "radius": req.radius_meters}
 
 
 @router.post("/sos")
-async def trigger_sos(
-    event: SOSEvent,
-    user: models.User = Depends(get_current_user),
-):
+async def trigger_sos(event: SOSEvent, user: models.User = Depends(get_current_user)):
     return {"message": "SOS triggered", "user_id": user.id, "status": "notified"}

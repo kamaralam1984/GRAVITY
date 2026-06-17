@@ -1,13 +1,14 @@
 """Main FastAPI application - updated with DB and all routers."""
-from fastapi import FastAPI
+from fastapi import FastAPI, Depends
 from fastapi.middleware.cors import CORSMiddleware
 from dotenv import load_dotenv
 from slowapi import Limiter, _rate_limit_exceeded_handler
 from slowapi.util import get_remote_address
 from slowapi.errors import RateLimitExceeded
-import os
+import os, logging
 
 load_dotenv()
+logging.basicConfig(level=logging.INFO)
 
 # Import database and create tables
 from database import engine
@@ -26,6 +27,8 @@ from routers import school_router
 from routers.ai_guardian import router as ai_guardian_router
 from routers.super_admin_stats import router as super_admin_stats_router
 from routers import admin_data_router
+from auth import get_current_admin
+import cache
 
 app = FastAPI(
     title="Trackalways Gravity API",
@@ -45,11 +48,10 @@ app.add_middleware(
     allow_headers=["Authorization", "Content-Type", "Accept", "X-Requested-With"],
 )
 
-# Original routers
+# ── Routers ───────────────────────────────────────────────────────────────────
+
 app.include_router(ai.router, prefix="/ai", tags=["AI"])
 app.include_router(location.router, prefix="/location", tags=["Location"])
-
-# New routers
 app.include_router(auth.router, prefix="/auth", tags=["Auth"])
 app.include_router(admin_router.router, prefix="/admin-api", tags=["Admin"])
 app.include_router(families.router, prefix="/families", tags=["Families"])
@@ -82,6 +84,17 @@ app.include_router(school_router.router, prefix="/school", tags=["School Schedul
 app.include_router(super_admin_stats_router, prefix="/super-admin-api", tags=["Super Admin Stats"])
 app.include_router(admin_data_router.router, prefix="/admin-api", tags=["Admin Data"])
 
+
+# ── Lifecycle ─────────────────────────────────────────────────────────────────
+
+@app.on_event("startup")
+async def startup():
+    ok = cache.reconnect()
+    logging.getLogger(__name__).info(f"Redis cache: {'CONNECTED' if ok else 'UNAVAILABLE (degraded mode)'}")
+
+
+# ── Core endpoints ────────────────────────────────────────────────────────────
+
 @app.get("/")
 async def root():
     return {"service": "Trackalways Gravity API", "version": "2.0.0", "status": "running"}
@@ -93,3 +106,25 @@ async def health_check():
 @app.get("/health")
 async def health():
     return {"status": "ok"}
+
+
+# ── Cache management endpoints ────────────────────────────────────────────────
+
+@app.get("/cache/stats", tags=["Cache"])
+def cache_stats(admin=Depends(get_current_admin)):
+    """Redis cache performance metrics — admin only."""
+    return cache.stats()
+
+
+@app.post("/cache/flush", tags=["Cache"])
+def cache_flush(admin=Depends(get_current_admin)):
+    """Flush all gravity:* cache keys — admin only."""
+    deleted = cache.flush()
+    return {"message": f"Cache flushed", "keys_deleted": deleted}
+
+
+@app.delete("/cache/key/{namespace}", tags=["Cache"])
+def cache_bust_namespace(namespace: str, admin=Depends(get_current_admin)):
+    """Bust a specific cache namespace (e.g. 'admin', 'family', 'user')."""
+    deleted = cache.cdel_pattern(f"{namespace}:*")
+    return {"namespace": namespace, "keys_deleted": deleted}

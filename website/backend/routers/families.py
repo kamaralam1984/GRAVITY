@@ -4,23 +4,26 @@ from sqlalchemy.orm import Session
 from sqlalchemy import func, text
 from pydantic import BaseModel
 from typing import Optional, List
-from database import get_db
+from database import get_db, DATABASE_URL
 import models, secrets, random, string, json
 from auth import get_current_user
 from datetime import datetime, timezone, timedelta
+import cache
 
 
 def create_family_table(db: Session, family_id: int, family_name: str):
-    """Create a per-family data table when a new family is registered."""
+    """Create a per-family event table (PostgreSQL + SQLite compatible)."""
     table = f"family_{family_id}_data"
+    is_pg = DATABASE_URL.startswith("postgresql")
+    id_col = "id SERIAL PRIMARY KEY" if is_pg else "id INTEGER PRIMARY KEY AUTOINCREMENT"
     db.execute(text(f"""
         CREATE TABLE IF NOT EXISTS {table} (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            {id_col},
             event_type TEXT NOT NULL,
             user_id INTEGER,
             user_name TEXT,
             data_json TEXT,
-            recorded_at DATETIME DEFAULT CURRENT_TIMESTAMP
+            recorded_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )
     """))
     db.execute(text(f"""
@@ -42,14 +45,27 @@ def log_family_event(db: Session, family_id: int, event_type: str, user_id: int 
     except Exception:
         pass  # Don't break main flow if family table missing
 
+
 router = APIRouter()
 
 def _gen_invite_code() -> str:
     """6-char uppercase alphanumeric code — easy to type and share."""
     chars = string.ascii_uppercase + string.digits
-    # Remove confusing chars: O, 0, I, 1, L
     chars = chars.replace('O', '').replace('I', '').replace('L', '')
     return ''.join(random.SystemRandom().choice(chars) for _ in range(6))
+
+
+def _invalidate_family(family_id: int):
+    """Bust all cache keys scoped to a specific family."""
+    cache.cdel_pattern(f"family:{family_id}:*")
+
+
+def _invalidate_user_families(user_id: int):
+    """Bust the family-list cache for a specific user."""
+    cache.cdel(cache.ck("user", user_id, "families"))
+
+
+# ── Schemas ───────────────────────────────────────────────────────────────────
 
 class FamilyCreate(BaseModel):
     name: str
@@ -61,26 +77,33 @@ class FamilyResponse(BaseModel):
     invite_code: str
     created_at: Optional[str]
 
+class JoinRequest(BaseModel):
+    role: Optional[str] = "child"
+
+class RoleUpdateRequest(BaseModel):
+    role: str
+
+
+# ── Endpoints ─────────────────────────────────────────────────────────────────
+
 @router.post("/create")
 def create_family(data: FamilyCreate, user: models.User = Depends(get_current_user), db: Session = Depends(get_db)):
     family = models.Family(name=data.name, owner_id=user.id, invite_code=_gen_invite_code())
     db.add(family)
     db.commit()
     db.refresh(family)
-    # Add owner as first member
     member = models.FamilyMember(family_id=family.id, user_id=user.id, role="owner")
     db.add(member)
-    # Add free subscription
     sub = models.Subscription(family_id=family.id, plan="free", price_inr=0, status="active")
     db.add(sub)
     db.commit()
-    # Create per-family dedicated table
     create_family_table(db, family.id, family.name)
     log_family_event(db, family.id, "owner_joined", user.id, user.name, {"email": user.email, "role": "owner"})
+    # New family → user's family list changed; admin stats changed
+    _invalidate_user_families(user.id)
+    cache.cdel_pattern("admin:*")
     return {"id": family.id, "name": family.name, "invite_code": family.invite_code, "plan": family.plan}
 
-class JoinRequest(BaseModel):
-    role: Optional[str] = "child"
 
 @router.post("/join/{invite_code}")
 def join_family(invite_code: str, body: Optional[JoinRequest] = None, user: models.User = Depends(get_current_user), db: Session = Depends(get_db)):
@@ -95,10 +118,11 @@ def join_family(invite_code: str, body: Optional[JoinRequest] = None, user: mode
     db.add(member)
     db.commit()
     log_family_event(db, family.id, "member_joined", user.id, user.name, {"email": user.email, "role": role, "family_name": family.name})
+    # Member list + user's family list both changed
+    _invalidate_family(family.id)
+    _invalidate_user_families(user.id)
     return {"message": "Joined family", "family_name": family.name, "family_id": family.id, "role": role}
 
-class RoleUpdateRequest(BaseModel):
-    role: str
 
 @router.patch("/{family_id}/members/{user_id}/role")
 def update_member_role(family_id: int, user_id: int, data: RoleUpdateRequest, user: models.User = Depends(get_current_user), db: Session = Depends(get_db)):
@@ -114,18 +138,31 @@ def update_member_role(family_id: int, user_id: int, data: RoleUpdateRequest, us
         raise HTTPException(status_code=400, detail="Cannot change owner role")
     member.role = data.role
     db.commit()
+    _invalidate_family(family_id)
     return {"user_id": user_id, "role": data.role}
+
 
 @router.get("/my")
 def my_families(user: models.User = Depends(get_current_user), db: Session = Depends(get_db)):
+    key = cache.ck("user", user.id, "families")
+    cached = cache.cget(key)
+    if cached is not None:
+        return cached
+
     memberships = db.query(models.FamilyMember).filter(models.FamilyMember.user_id == user.id).all()
     result = []
     for m in memberships:
         family = db.query(models.Family).filter(models.Family.id == m.family_id).first()
         if family:
             members = db.query(models.FamilyMember).filter(models.FamilyMember.family_id == family.id).all()
-            result.append({"id": family.id, "name": family.name, "plan": family.plan, "role": m.role, "member_count": len(members), "invite_code": family.invite_code})
+            result.append({
+                "id": family.id, "name": family.name, "plan": family.plan,
+                "role": m.role, "member_count": len(members), "invite_code": family.invite_code,
+            })
+
+    cache.cset(key, result, cache.TTL.USER_FAMILIES)
     return result
+
 
 @router.patch("/{family_id}/rename")
 def rename_family(family_id: int, data: dict, user: models.User = Depends(get_current_user), db: Session = Depends(get_db)):
@@ -134,7 +171,10 @@ def rename_family(family_id: int, data: dict, user: models.User = Depends(get_cu
         raise HTTPException(status_code=404, detail="Family not found or not owner")
     family.name = data.get("name", family.name)
     db.commit()
+    _invalidate_family(family_id)
+    _invalidate_user_families(user.id)
     return {"id": family.id, "name": family.name, "invite_code": family.invite_code}
+
 
 @router.delete("/{family_id}/members/{user_id}")
 def remove_member(family_id: int, user_id: int, user: models.User = Depends(get_current_user), db: Session = Depends(get_db)):
@@ -148,7 +188,10 @@ def remove_member(family_id: int, user_id: int, user: models.User = Depends(get_
         raise HTTPException(status_code=404, detail="Member not found")
     db.delete(member)
     db.commit()
+    _invalidate_family(family_id)
+    _invalidate_user_families(user_id)
     return {"message": "Member removed"}
+
 
 @router.post("/{family_id}/regenerate-code")
 def regenerate_invite_code(family_id: int, user: models.User = Depends(get_current_user), db: Session = Depends(get_db)):
@@ -157,10 +200,17 @@ def regenerate_invite_code(family_id: int, user: models.User = Depends(get_curre
         raise HTTPException(status_code=403, detail="Only the owner can regenerate the code")
     family.invite_code = _gen_invite_code()
     db.commit()
+    _invalidate_user_families(user.id)
     return {"invite_code": family.invite_code}
+
 
 @router.get("/{family_id}/members")
 def get_members(family_id: int, db: Session = Depends(get_db)):
+    key = cache.ck("family", family_id, "members")
+    cached = cache.cget(key)
+    if cached is not None:
+        return cached
+
     members = db.query(models.FamilyMember).filter(models.FamilyMember.family_id == family_id).all()
     result = []
     for m in members:
@@ -168,7 +218,6 @@ def get_members(family_id: int, db: Session = Depends(get_db)):
         if user:
             loc = db.query(models.Location).filter(models.Location.user_id == user.id).order_by(models.Location.recorded_at.desc()).first()
             devices = db.query(models.Device).filter(models.Device.user_id == user.id).all()
-            # Online if: location within 30 min OR any device heartbeat within 5 min
             is_online = False
             if loc and loc.recorded_at:
                 try:
@@ -187,7 +236,14 @@ def get_members(family_id: int, db: Session = Depends(get_db)):
                         except Exception:
                             pass
             battery = next((d.battery_level for d in devices if d.battery_level is not None), None)
-            result.append({"user_id": user.id, "name": user.name, "phone": user.phone, "role": m.role, "last_location": loc.place_name if loc else None, "lat": loc.lat if loc else None, "lng": loc.lng if loc else None, "battery": battery, "is_online": is_online})
+            result.append({
+                "user_id": user.id, "name": user.name, "phone": user.phone,
+                "role": m.role, "last_location": loc.place_name if loc else None,
+                "lat": loc.lat if loc else None, "lng": loc.lng if loc else None,
+                "battery": battery, "is_online": is_online,
+            })
+
+    cache.cset(key, result, cache.TTL.MEMBERS)
     return result
 
 
@@ -209,7 +265,6 @@ def init_family_table(family_id: int, db: Session = Depends(get_db)):
     if not family:
         raise HTTPException(status_code=404, detail="Family not found")
     create_family_table(db, family.id, family.name)
-    # Log all existing members
     members = db.query(models.FamilyMember).filter(models.FamilyMember.family_id == family_id).all()
     for m in members:
         u = db.query(models.User).filter(models.User.id == m.user_id).first()
