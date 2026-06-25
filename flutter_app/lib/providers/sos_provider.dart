@@ -54,8 +54,9 @@ class SosNotifier extends StateNotifier<SosState> {
   Future<void> loadActive() async {
     state = state.copyWith(isLoading: true, clearError: true);
     try {
-      final alerts = await _repo.getActiveSos();
-      state = state.copyWith(activeSos: alerts, isLoading: false);
+      final alert = await _repo.getActiveSos();
+      state = state.copyWith(
+          activeSos: alert != null ? [alert] : <SosAlert>[], isLoading: false);
     } catch (e) {
       state = state.copyWith(isLoading: false, error: e.toString());
     }
@@ -147,7 +148,8 @@ class SosNotifier extends StateNotifier<SosState> {
 
 // ── Providers ─────────────────────────────────────────────────────────────────
 
-final sosRepositoryProvider = Provider<SosRepository>((ref) => SosRepository());
+final sosRepositoryProvider =
+    Provider<SosRepository>((ref) => SosRepository.instance);
 
 final sosProvider = StateNotifierProvider<SosNotifier, SosState>((ref) {
   return SosNotifier(ref.read(sosRepositoryProvider));

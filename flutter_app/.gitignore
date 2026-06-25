@@ -1,0 +1,30 @@
+# Miscellaneous
+*.class
+*.log
+*.swp
+.DS_Store
+
+# Flutter/Dart/Pub
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+.pub-cache/
+.pub/
+/build/
+build/
+
+# Android
+android/.gradle/
+android/captures/
+android/local.properties
+android/key.properties
+**/GeneratedPluginRegistrant.java
+*.jks
+*.keystore
+
+# iOS
+ios/Flutter/.last_build_id
+ios/Flutter/Generated.xcconfig
+ios/Flutter/flutter_export_environment.sh
+ios/ServiceDefinitions.json
+ios/Runner/GeneratedPluginRegistrant.*

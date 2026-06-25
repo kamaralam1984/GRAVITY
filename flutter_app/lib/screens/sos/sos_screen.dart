@@ -173,7 +173,7 @@ class _SosScreenState extends ConsumerState<SosScreen>
                                 context.push(RouteNames.sosActive),
                           ),
 
-                        const SizedBox(height: hasActive ? 24 : 48),
+                        SizedBox(height: hasActive ? 24 : 48),
 
                         // Main button
                         _SosMainButton(
@@ -803,7 +803,7 @@ class _EmergencyContactsList extends StatelessWidget {
                   shape: BoxShape.circle,
                   color: m.isOnline
                       ? const Color(0xFF10B981)
-                      : Colors.white20,
+                      : Colors.white24,
                   boxShadow: m.isOnline
                       ? [
                           BoxShadow(

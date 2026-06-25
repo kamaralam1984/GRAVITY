@@ -7,10 +7,7 @@ import '../core/theme/app_dimensions.dart';
 import '../services/notification_service.dart';
 import 'route_names.dart';
 
-/// Shared navigator key — exposed so NotificationService can route taps.
-final appNavigatorKey = GlobalKey<NavigatorState>();
-
-// ── Screen imports (stubs created in screens/) ────────────────────────────
+// ── Screen imports ─────────────────────────────────────────────────────────
 import '../screens/auth/splash_screen.dart';
 import '../screens/auth/onboarding_screen.dart';
 import '../screens/auth/login_screen.dart';
@@ -46,6 +43,9 @@ import '../screens/settings/security_screen.dart';
 import '../screens/settings/devices_screen.dart';
 import '../screens/settings/privacy_screen.dart';
 import '../screens/settings/subscription_screen.dart';
+
+/// Shared navigator key — exposed so NotificationService can route taps.
+final appNavigatorKey = GlobalKey<NavigatorState>();
 
 // ── 404 ────────────────────────────────────────────────────────────────────
 
