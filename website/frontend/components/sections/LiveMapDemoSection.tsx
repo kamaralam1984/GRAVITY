@@ -208,7 +208,7 @@ export default function LiveMapDemoSection() {
           className="absolute top-4 left-4 z-[900] flex items-center gap-2 rounded-xl px-3 py-2"
           style={{ background: 'rgba(7,20,40,0.90)', backdropFilter: 'blur(16px)', border: '1px solid rgba(255,255,255,0.09)' }}
         >
-          <p className="text-white text-xs font-bold">GRAVITY Family Map</p>
+          <p className="text-white text-xs font-bold">KVL TRACK Family Map</p>
           <div className="flex items-center gap-1 rounded-lg px-2 py-0.5"
                style={{ background: 'rgba(16,185,129,0.2)', border: '1px solid rgba(16,185,129,0.35)' }}>
             <motion.span animate={{ opacity: [1, 0.3, 1] }} transition={{ duration: 1.2, repeat: Infinity }}

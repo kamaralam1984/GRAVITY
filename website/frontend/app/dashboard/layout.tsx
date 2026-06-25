@@ -1,7 +1,7 @@
 import type { Metadata } from 'next'
 
 export const metadata: Metadata = {
-  title: 'My Dashboard — GRAVITY',
+  title: 'My Dashboard — KVL TRACK',
   description: 'Your family safety dashboard — real-time location, alerts, and family status.',
 }
 

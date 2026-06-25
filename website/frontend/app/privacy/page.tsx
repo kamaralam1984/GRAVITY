@@ -11,7 +11,7 @@ const SECTIONS = [
     id: "introduction",
     title: "1. Introduction",
     icon: Shield,
-    content: "Trackalways Technologies Private Limited operates the Gravity family safety application. This Privacy Policy explains how we collect, use, and protect information about you when you use our service. We are committed to handling your personal information with transparency, care, and respect. This policy applies to all users of the Gravity mobile application, web dashboard, and related services. By using Gravity, you agree to the practices described in this policy. If you do not agree with any part of this policy, please discontinue use of the service. We encourage you to read this document carefully and contact us with any questions.",
+    content: "Trackalways Technologies Private Limited operates the KVL Track family safety application. This Privacy Policy explains how we collect, use, and protect information about you when you use our service. We are committed to handling your personal information with transparency, care, and respect. This policy applies to all users of the KVL Track mobile application, web dashboard, and related services. By using KVL Track, you agree to the practices described in this policy. If you do not agree with any part of this policy, please discontinue use of the service. We encourage you to read this document carefully and contact us with any questions.",
     bullets: [] as string[],
   },
   {
@@ -31,7 +31,7 @@ const SECTIONS = [
     id: "usage",
     title: "3. How We Use Information",
     icon: Eye,
-    content: "We use the information we collect solely to operate and improve the Gravity service. We do not use your data for purposes beyond what is described in this policy without your explicit consent.",
+    content: "We use the information we collect solely to operate and improve the KVL Track service. We do not use your data for purposes beyond what is described in this policy without your explicit consent.",
     bullets: [
       "Provide the Service: deliver real-time location sharing, SOS alerts, and family circle features",
       "Send Safety Alerts: notify circle members of SOS events, arrival confirmations, and geofence triggers",
@@ -44,7 +44,7 @@ const SECTIONS = [
     id: "location",
     title: "4. Location Data",
     icon: Globe,
-    content: "Location data is the core of the Gravity service and receives special treatment. We treat location data with heightened sensitivity and apply additional safeguards beyond those applied to other categories of information. Location access requires explicit permission through the OS permission dialog before any data is collected. You may revoke location permission at any time through your device settings, though this will limit the functionality of the service. Location data is shared only with members of your approved family circle — never with advertisers, data brokers, or other third parties. We do not use location data for advertising targeting of any kind. Location history is retained on a rolling 30-day basis and automatically purged beyond that window unless retained as part of an SOS event record.",
+    content: "Location data is the core of the KVL Track service and receives special treatment. We treat location data with heightened sensitivity and apply additional safeguards beyond those applied to other categories of information. Location access requires explicit permission through the OS permission dialog before any data is collected. You may revoke location permission at any time through your device settings, though this will limit the functionality of the service. Location data is shared only with members of your approved family circle — never with advertisers, data brokers, or other third parties. We do not use location data for advertising targeting of any kind. Location history is retained on a rolling 30-day basis and automatically purged beyond that window unless retained as part of an SOS event record.",
     bullets: [] as string[],
   },
   {
@@ -90,7 +90,7 @@ const SECTIONS = [
     id: "children",
     title: "8. Children and Minors",
     icon: Shield,
-    content: "The Gravity service is designed for users aged 13 and older. We do not knowingly collect personal information from children under 13 without verifiable parental consent. If a parent or guardian believes their child under 13 has provided personal information without consent, they should contact us immediately at privacy@trackalways.com and we will promptly delete that information. For users between 13 and 18, we encourage parental involvement in setting up and reviewing account settings. Parental consent features are available within the app to allow guardians to review and approve the family circle configuration for minor members.",
+    content: "The KVL Track service is designed for users aged 13 and older. We do not knowingly collect personal information from children under 13 without verifiable parental consent. If a parent or guardian believes their child under 13 has provided personal information without consent, they should contact us immediately at privacy@trackalways.com and we will promptly delete that information. For users between 13 and 18, we encourage parental involvement in setting up and reviewing account settings. Parental consent features are available within the app to allow guardians to review and approve the family circle configuration for minor members.",
     bullets: [] as string[],
   },
   {
@@ -110,7 +110,7 @@ const SECTIONS = [
     id: "third-party",
     title: "10. Third-Party Services",
     icon: Globe,
-    content: "We integrate certain third-party services to power features of the Gravity application. Each of these providers operates under its own privacy policy and data processing terms. We encourage you to review their policies to understand how they handle information.",
+    content: "We integrate certain third-party services to power features of the KVL Track application. Each of these providers operates under its own privacy policy and data processing terms. We encourage you to review their policies to understand how they handle information.",
     bullets: [
       "Google Maps: provides mapping and geolocation display features — governed by the Google Privacy Policy",
       "Firebase (Google): provides backend infrastructure, authentication, and push notifications — governed by the Google Privacy Policy",
@@ -209,7 +209,7 @@ export default function PrivacyPage() {
             </h1>
             <p className="text-slate-300 text-lg leading-relaxed max-w-2xl mx-auto">
               We believe transparency is the foundation of trust. This policy explains exactly
-              how Gravity collects, uses, and protects your information.
+              how KVL Track collects, uses, and protects your information.
             </p>
             <div className="mt-6 flex flex-wrap items-center justify-center gap-6 text-sm text-slate-400">
               <span>Last Updated: June 2025</span>
@@ -303,7 +303,7 @@ export default function PrivacyPage() {
                 href="/"
                 className="inline-flex items-center gap-2 border border-slate-600 hover:border-slate-400 text-slate-300 hover:text-white font-semibold px-6 py-3 rounded-xl transition-colors duration-200"
               >
-                Return to Gravity Home
+                Return to KVL Track Home
               </Link>
             </div>
             <p className="mt-6 text-slate-500 text-sm">

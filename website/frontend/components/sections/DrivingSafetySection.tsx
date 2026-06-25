@@ -132,7 +132,7 @@ export default function DrivingSafetySection() {
               fontSize: 'clamp(2rem, 4vw, 3rem)', fontWeight: 900,
               color: '#F1EDE4', lineHeight: 1.1, letterSpacing: '-0.02em', marginBottom: 18,
             }}>
-              Gravity{' '}
+              KVL Track{' '}
               <span style={{ background: 'linear-gradient(135deg, #3B82F6, #06B6D4)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
                 Driving Shield
               </span>

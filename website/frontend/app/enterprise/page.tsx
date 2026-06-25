@@ -285,14 +285,14 @@ const ENTERPRISE_LOGOS = [
 const FAQ_ITEMS = [
   {
     q: 'What is the minimum contract size?',
-    a: 'Enterprise plans start at 100 users with annual contracts. We also offer 30-day pilot programs for organizations that want to validate Gravity before committing.',
+    a: 'Enterprise plans start at 100 users with annual contracts. We also offer 30-day pilot programs for organizations that want to validate KVL Track before committing.',
   },
   {
     q: 'Can we white-label the app?',
     a: 'Yes, full white-labeling including custom domain, App Store listings under your brand, custom UI themes, and branded onboarding flow. Our design team assists with brand alignment at no extra cost.',
   },
   {
-    q: 'Is Gravity GDPR compliant?',
+    q: 'Is KVL Track GDPR compliant?',
     a: 'Yes. We offer Data Processing Agreements (DPAs), right to erasure, data portability, and EU-based data hosting options. Our DPO is available for compliance discussions.',
   },
   {
@@ -402,7 +402,7 @@ function HeroSection() {
             }}
           >
             <span className="w-1.5 h-1.5 rounded-full animate-pulse" style={{ background: '#4B80F0' }} />
-            GRAVITY ENTERPRISE
+            KVL TRACK ENTERPRISE
           </span>
         </motion.div>
 
@@ -430,7 +430,7 @@ function HeroSection() {
           className="mt-6 max-w-2xl mx-auto text-xl leading-relaxed"
           style={{ fontFamily: "'Inter', sans-serif", color: 'var(--text-secondary)' }}
         >
-          Deploy Gravity across your entire organization — schools, hospitals, NGOs, or corporations.
+          Deploy KVL Track across your entire organization — schools, hospitals, NGOs, or corporations.
           Multi-tenant architecture, white-label ready, SOC 2 certified, and 99.9% SLA guaranteed.
         </motion.p>
 
@@ -549,7 +549,7 @@ function TargetMarketsSection() {
             className="mt-4 max-w-xl mx-auto text-base"
             style={{ color: 'var(--text-secondary)', fontFamily: "'Inter', sans-serif" }}
           >
-            From a single school campus to a global corporation — Gravity Enterprise adapts to your structure.
+            From a single school campus to a global corporation — KVL Track Enterprise adapts to your structure.
           </p>
         </motion.div>
 
@@ -749,7 +749,7 @@ function WhiteLabelSection() {
             className="mt-4 max-w-xl mx-auto text-base"
             style={{ color: 'var(--text-secondary)', fontFamily: "'Inter', sans-serif" }}
           >
-            Deliver a fully branded safety experience — your logo, your colors, your domain. Powered by Gravity under the hood.
+            Deliver a fully branded safety experience — your logo, your colors, your domain. Powered by KVL Track under the hood.
           </p>
         </motion.div>
 
@@ -866,7 +866,7 @@ function ApiMarketplaceSection() {
             className="text-4xl md:text-5xl font-extrabold"
             style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", color: 'var(--text-primary)' }}
           >
-            Gravity{' '}
+            KVL Track{' '}
             <span
               style={{
                 background: 'linear-gradient(90deg, #10B981, #34D399)',
@@ -882,7 +882,7 @@ function ApiMarketplaceSection() {
             className="mt-4 max-w-xl mx-auto text-base"
             style={{ color: 'var(--text-secondary)', fontFamily: "'Inter', sans-serif" }}
           >
-            Connect Gravity to your existing tech stack. 50+ integrations available out of the box.
+            Connect KVL Track to your existing tech stack. 50+ integrations available out of the box.
           </p>
         </motion.div>
 
@@ -1264,7 +1264,7 @@ function ContactSection() {
               className="text-base leading-relaxed mb-10"
               style={{ color: 'var(--text-secondary)', fontFamily: "'Inter', sans-serif" }}
             >
-              Whether you are exploring Gravity for the first time or ready to sign, our enterprise team
+              Whether you are exploring KVL Track for the first time or ready to sign, our enterprise team
               will help you find the right solution within 2 hours.
             </p>
             <div className="flex flex-col gap-5">
@@ -1434,7 +1434,7 @@ function ContactSection() {
                   <textarea
                     name="message"
                     rows={4}
-                    placeholder="Describe your organization's current safety challenges and what you want to achieve with Gravity..."
+                    placeholder="Describe your organization's current safety challenges and what you want to achieve with KVL Track..."
                     className="rounded-xl px-4 py-3 text-sm outline-none resize-none"
                     style={{
                       background: 'var(--bg-surface2)',
@@ -1607,7 +1607,7 @@ function BottomCta() {
               className="text-lg mb-10 max-w-xl mx-auto"
               style={{ color: 'var(--text-secondary)', fontFamily: "'Inter', sans-serif" }}
             >
-              Join 5,600+ organizations already using Gravity to keep their people safe.
+              Join 5,600+ organizations already using KVL Track to keep their people safe.
             </p>
             <div className="flex flex-wrap justify-center gap-4">
               <a

@@ -276,7 +276,7 @@ export function AnnouncementsSection() {
 
   const active = [
     { title: '🚨 Server Maintenance — 2 AM to 4 AM IST', body: 'Scheduled maintenance on June 15. App will be in read-only mode. SOS alerts unaffected.', target: 'All Users', channels: 'App, Email, SMS', views: '2,34,567', status: 'Active' },
-    { title: 'New Feature: Live Audio Monitoring', body: 'Premium users can now enable live audio monitoring on Gravity Watch Pro. Upgrade to access.', target: 'Premium Users', channels: 'App, Push, Email', views: '89,230', status: 'Active' },
+    { title: 'New Feature: Live Audio Monitoring', body: 'Premium users can now enable live audio monitoring on KVL Track Watch Pro. Upgrade to access.', target: 'Premium Users', channels: 'App, Push, Email', views: '89,230', status: 'Active' },
     { title: 'School Safety Month — June 2026', body: 'Special discounts for schools enrolling in June. Contact your district coordinator for bulk pricing.', target: 'Schools', channels: 'Email, SMS', views: '12,450', status: 'Active' },
   ]
 
@@ -373,16 +373,16 @@ export function SmartWatchesSection() {
   const [search, setSearch] = useState('')
 
   const rows = [
-    { id: 'GW-10023', model: 'Gravity Pro X2', owner: 'Priya Sharma', battery: 87, sync: '2 min ago', hr: '72 bpm', status: 'Active' },
-    { id: 'GW-10045', model: 'Gravity Kids S1', owner: 'Arjun Mehta', battery: 45, sync: '15 min ago', hr: '88 bpm', status: 'Active' },
-    { id: 'GW-10089', model: 'Gravity Elder E1', owner: 'Kavya Reddy', battery: 12, sync: '1 hr ago', hr: '67 bpm', status: 'Active' },
-    { id: 'GW-10102', model: 'Gravity Pro X2', owner: 'Rahul Gupta', battery: 93, sync: '5 min ago', hr: '78 bpm', status: 'Active' },
-    { id: 'GW-10234', model: 'Gravity Kids S1', owner: 'Anjali Singh', battery: 8, sync: '3 hr ago', hr: '—', status: 'Offline' },
-    { id: 'GW-10345', model: 'Gravity Lite L1', owner: 'Vikram Nair', battery: 56, sync: '30 min ago', hr: '82 bpm', status: 'Active' },
-    { id: 'GW-10456', model: 'Gravity Pro X2', owner: 'Sunita Rao', battery: 74, sync: '8 min ago', hr: '91 bpm', status: 'Active' },
-    { id: 'GW-10567', model: 'Gravity Elder E1', owner: 'Deepak Joshi', battery: 31, sync: '2 hr ago', hr: '65 bpm', status: 'Active' },
-    { id: 'GW-10678', model: 'Gravity Kids S1', owner: 'Meera Pillai', battery: 18, sync: '45 min ago', hr: '95 bpm', status: 'Active' },
-    { id: 'GW-10789', model: 'Gravity Pro X2', owner: 'Rohan Verma', battery: 0, sync: '24 hr ago', hr: '—', status: 'Offline' },
+    { id: 'GW-10023', model: 'KVL Track Pro X2', owner: 'Priya Sharma', battery: 87, sync: '2 min ago', hr: '72 bpm', status: 'Active' },
+    { id: 'GW-10045', model: 'KVL Track Kids S1', owner: 'Arjun Mehta', battery: 45, sync: '15 min ago', hr: '88 bpm', status: 'Active' },
+    { id: 'GW-10089', model: 'KVL Track Elder E1', owner: 'Kavya Reddy', battery: 12, sync: '1 hr ago', hr: '67 bpm', status: 'Active' },
+    { id: 'GW-10102', model: 'KVL Track Pro X2', owner: 'Rahul Gupta', battery: 93, sync: '5 min ago', hr: '78 bpm', status: 'Active' },
+    { id: 'GW-10234', model: 'KVL Track Kids S1', owner: 'Anjali Singh', battery: 8, sync: '3 hr ago', hr: '—', status: 'Offline' },
+    { id: 'GW-10345', model: 'KVL Track Lite L1', owner: 'Vikram Nair', battery: 56, sync: '30 min ago', hr: '82 bpm', status: 'Active' },
+    { id: 'GW-10456', model: 'KVL Track Pro X2', owner: 'Sunita Rao', battery: 74, sync: '8 min ago', hr: '91 bpm', status: 'Active' },
+    { id: 'GW-10567', model: 'KVL Track Elder E1', owner: 'Deepak Joshi', battery: 31, sync: '2 hr ago', hr: '65 bpm', status: 'Active' },
+    { id: 'GW-10678', model: 'KVL Track Kids S1', owner: 'Meera Pillai', battery: 18, sync: '45 min ago', hr: '95 bpm', status: 'Active' },
+    { id: 'GW-10789', model: 'KVL Track Pro X2', owner: 'Rohan Verma', battery: 0, sync: '24 hr ago', hr: '—', status: 'Offline' },
   ].filter(r => r.id.toLowerCase().includes(search.toLowerCase()) || r.owner.toLowerCase().includes(search.toLowerCase()))
 
   return (
@@ -483,14 +483,14 @@ export function CamerasSection() {
   const [search, setSearch] = useState('')
 
   const rows = [
-    { id: 'CAM-2001', model: 'Gravity Cam 4K', owner: 'DPS Noida', status: 'Active', lastEvent: 'Motion — 5 min ago', storage: '234 GB', storageUsed: 72 },
-    { id: 'CAM-2002', model: 'Gravity Doorbell', owner: 'Priya Sharma', status: 'Active', lastEvent: 'Ring — 1 hr ago', storage: '45 GB', storageUsed: 38 },
-    { id: 'CAM-2003', model: 'Gravity Cam 4K', owner: 'AIIMS Delhi', status: 'Active', lastEvent: 'Person — 2 min ago', storage: '890 GB', storageUsed: 91 },
-    { id: 'CAM-2004', model: 'Gravity Indoor', owner: 'Rahul Gupta', status: 'Offline', lastEvent: '2 days ago', storage: '120 GB', storageUsed: 55 },
-    { id: 'CAM-2005', model: 'Gravity PTZ', owner: 'Ryan International', status: 'Active', lastEvent: 'Motion — 10 min ago', storage: '450 GB', storageUsed: 67 },
-    { id: 'CAM-2006', model: 'Gravity Cam 4K', owner: 'Vikram Nair', status: 'Active', lastEvent: 'SOS triggered — 3 hr ago', storage: '78 GB', storageUsed: 44 },
-    { id: 'CAM-2007', model: 'Gravity Doorbell', owner: 'Anjali Singh', status: 'Active', lastEvent: 'Package detected — 30 min ago', storage: '32 GB', storageUsed: 28 },
-    { id: 'CAM-2008', model: 'Gravity PTZ', owner: 'CBSE Board HQ', status: 'Active', lastEvent: 'Face rec — 8 min ago', storage: '670 GB', storageUsed: 83 },
+    { id: 'CAM-2001', model: 'KVL Track Cam 4K', owner: 'DPS Noida', status: 'Active', lastEvent: 'Motion — 5 min ago', storage: '234 GB', storageUsed: 72 },
+    { id: 'CAM-2002', model: 'KVL Track Doorbell', owner: 'Priya Sharma', status: 'Active', lastEvent: 'Ring — 1 hr ago', storage: '45 GB', storageUsed: 38 },
+    { id: 'CAM-2003', model: 'KVL Track Cam 4K', owner: 'AIIMS Delhi', status: 'Active', lastEvent: 'Person — 2 min ago', storage: '890 GB', storageUsed: 91 },
+    { id: 'CAM-2004', model: 'KVL Track Indoor', owner: 'Rahul Gupta', status: 'Offline', lastEvent: '2 days ago', storage: '120 GB', storageUsed: 55 },
+    { id: 'CAM-2005', model: 'KVL Track PTZ', owner: 'Ryan International', status: 'Active', lastEvent: 'Motion — 10 min ago', storage: '450 GB', storageUsed: 67 },
+    { id: 'CAM-2006', model: 'KVL Track Cam 4K', owner: 'Vikram Nair', status: 'Active', lastEvent: 'SOS triggered — 3 hr ago', storage: '78 GB', storageUsed: 44 },
+    { id: 'CAM-2007', model: 'KVL Track Doorbell', owner: 'Anjali Singh', status: 'Active', lastEvent: 'Package detected — 30 min ago', storage: '32 GB', storageUsed: 28 },
+    { id: 'CAM-2008', model: 'KVL Track PTZ', owner: 'CBSE Board HQ', status: 'Active', lastEvent: 'Face rec — 8 min ago', storage: '670 GB', storageUsed: 83 },
   ].filter(r => r.id.toLowerCase().includes(search.toLowerCase()) || r.owner.toLowerCase().includes(search.toLowerCase()))
 
   return (

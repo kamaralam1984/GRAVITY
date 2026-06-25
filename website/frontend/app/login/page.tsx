@@ -783,7 +783,7 @@ export default function LoginPage() {
                   transition={{ delay: 0.5 }}
                   style={{ color: 'rgba(255,255,255,0.4)', fontSize: 14 }}
                 >
-                  Entering GRAVITY...
+                  Entering KVL TRACK...
                 </motion.p>
               </motion.div>
             )}
@@ -833,7 +833,7 @@ export default function LoginPage() {
                   lineHeight: 1,
                 }}
               >
-                GRAVITY
+                KVL TRACK
               </motion.h1>
             </motion.div>
 
@@ -1173,7 +1173,7 @@ export default function LoginPage() {
           {/* ── Footer ── */}
           <div style={{ marginTop: 28, textAlign: 'center' }}>
             <p style={{ margin: 0, color: 'rgba(255,255,255,0.3)', fontSize: 13 }}>
-              New to GRAVITY?{' '}
+              New to KVL TRACK?{' '}
               <Link
                 href="/signup"
                 style={{

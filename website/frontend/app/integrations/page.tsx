@@ -26,7 +26,7 @@ const PRIMARY_INTEGRATIONS = [
     id: "titan",
     name: "Titan",
     tagline: "Smart Home Security",
-    description: "Smart lock integration with biometric access, remote control, and automated family arrival notifications directly in the Gravity dashboard.",
+    description: "Smart lock integration with biometric access, remote control, and automated family arrival notifications directly in the KVL Track dashboard.",
     icon: <Lock size={32} />,
     gradient: "linear-gradient(135deg, #0f2027 0%, #0a3a3a 50%, #0d2e2e 100%)",
     headerGradient: "linear-gradient(135deg, #0d3030 0%, #0a4040 50%, #06282a 100%)",
@@ -406,7 +406,7 @@ export default function IntegrationsHub() {
             style={{ marginBottom: 32, textAlign: "left" }}
           >
             <Link href="/" style={{ color: "rgba(255,255,255,0.35)", textDecoration: "none", fontSize: "0.88rem", display: "inline-flex", alignItems: "center", gap: 6 }}>
-              ← Back to Gravity Home
+              ← Back to KVL Track Home
             </Link>
           </motion.div>
 
@@ -460,7 +460,7 @@ export default function IntegrationsHub() {
               letterSpacing: "-0.02em",
             }}
           >
-            GRAVITY{" "}
+            KVL TRACK{" "}
             <span style={{
               background: "linear-gradient(90deg, #D4A853, #F5D78E, #D4A853)",
               WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent",
@@ -528,10 +528,10 @@ export default function IntegrationsHub() {
               fontSize: "clamp(1.8rem, 4vw, 2.8rem)",
               fontWeight: 800, color: "#FFF", marginBottom: 16,
             }}>
-              Built-For-Gravity Hardware
+              Built-For-KVL Track Hardware
             </h2>
             <p style={{ color: "rgba(255,255,255,0.45)", maxWidth: 600, margin: "0 auto", lineHeight: 1.7 }}>
-              Every Trackalways device is engineered from the ground up to integrate seamlessly with the Gravity platform — one dashboard, total visibility.
+              Every Trackalways device is engineered from the ground up to integrate seamlessly with the KVL Track platform — one dashboard, total visibility.
             </p>
           </motion.div>
 
@@ -567,7 +567,7 @@ export default function IntegrationsHub() {
               Connect Everything Else
             </h2>
             <p style={{ color: "rgba(255,255,255,0.4)", maxWidth: 560, margin: "0 auto", lineHeight: 1.7 }}>
-              Wearables, smart speakers, asset trackers — the Gravity ecosystem extends beyond Trackalways hardware to your entire world.
+              Wearables, smart speakers, asset trackers — the KVL Track ecosystem extends beyond Trackalways hardware to your entire world.
             </p>
           </motion.div>
 
@@ -657,10 +657,10 @@ export default function IntegrationsHub() {
                 fontWeight: 800, color: "#FFF",
                 marginBottom: 16, lineHeight: 1.2,
               }}>
-                Build on the Gravity Platform
+                Build on the KVL Track Platform
               </h2>
               <p style={{ color: "rgba(255,255,255,0.45)", lineHeight: 1.75, marginBottom: 28, fontSize: "0.93rem" }}>
-                The Gravity REST API gives developers full programmatic access to family safety data — with webhooks, native SDKs, and comprehensive documentation for building custom safety applications.
+                The KVL Track REST API gives developers full programmatic access to family safety data — with webhooks, native SDKs, and comprehensive documentation for building custom safety applications.
               </p>
               <Link
                 href="/contact"
@@ -729,8 +729,8 @@ export default function IntegrationsHub() {
             {[
               { icon: <Shield size={22} />, title: "Schools", desc: "Safety dashboards integrated with school management systems.", color: "#3B82F6" },
               { icon: <Car size={22} />, title: "Insurance", desc: "Opt-in telematics data for usage-based policy pricing.", color: "#10B981" },
-              { icon: <Smartphone size={22} />, title: "Telecom", desc: "White-label Gravity as a premium subscriber safety service.", color: "#D4A853" },
-              { icon: <Heart size={22} />, title: "Elder Care", desc: "Professional caregiver tools built on Gravity wellness data.", color: "#EC4899" },
+              { icon: <Smartphone size={22} />, title: "Telecom", desc: "White-label KVL Track as a premium subscriber safety service.", color: "#D4A853" },
+              { icon: <Heart size={22} />, title: "Elder Care", desc: "Professional caregiver tools built on KVL Track wellness data.", color: "#EC4899" },
             ].map((p) => (
               <motion.div
                 key={p.title}
@@ -823,7 +823,7 @@ export default function IntegrationsHub() {
             fontSize: "clamp(1.8rem, 4vw, 2.8rem)",
             fontWeight: 800, color: "#FFF", marginBottom: 16,
           }}>
-            Start with Gravity, Expand Everything
+            Start with KVL Track, Expand Everything
           </h2>
           <p style={{ color: "rgba(255,255,255,0.45)", maxWidth: 520, margin: "0 auto 40px", lineHeight: 1.75 }}>
             Begin free, then connect Trackalways hardware, wearables, and smart home devices as your family's needs grow.
@@ -848,7 +848,7 @@ export default function IntegrationsHub() {
             </Link>
           </div>
           <Link href="/" style={{ color: "rgba(255,255,255,0.3)", fontSize: "0.85rem", textDecoration: "none" }}>
-            ← Back to Gravity Home
+            ← Back to KVL Track Home
           </Link>
         </div>
       </section>

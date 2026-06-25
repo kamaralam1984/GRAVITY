@@ -4,7 +4,7 @@ import { motion } from 'framer-motion';
 import { ArrowRight } from 'lucide-react';
 
 const WHATSAPP_URL =
-  'https://wa.me/919999999999?text=Hi%20I%20want%20to%20know%20about%20Gravity';
+  'https://wa.me/919999999999?text=Hi%20I%20want%20to%20know%20about%20KVL Track';
 
 function WhatsAppIcon({ className }: { className?: string }) {
   return (
@@ -102,7 +102,7 @@ export default function WhatsAppCTASection() {
           viewport={{ once: true }}
           transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1], delay: 0.1 }}
         >
-          Get Gravity on{' '}
+          Get KVL Track on{' '}
           <span
             className="bg-clip-text text-transparent"
             style={{ backgroundImage: 'linear-gradient(135deg, #25D366 0%, #128C7E 100%)' }}
@@ -120,7 +120,7 @@ export default function WhatsAppCTASection() {
           viewport={{ once: true }}
           transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1], delay: 0.18 }}
         >
-          Send your family location, SOS alerts, and check-ins directly via WhatsApp — no extra app, no extra step. Gravity meets your family where they already are.
+          Send your family location, SOS alerts, and check-ins directly via WhatsApp — no extra app, no extra step. KVL Track meets your family where they already are.
         </motion.p>
 
         {/* Feature pills */}

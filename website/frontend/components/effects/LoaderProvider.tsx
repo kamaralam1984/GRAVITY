@@ -4,7 +4,7 @@ import { createContext, useContext, useState, useEffect, useCallback, useRef } f
 import { usePathname } from 'next/navigation'
 import dynamic from 'next/dynamic'
 
-const GravityLoader = dynamic(() => import('./GravityLoader'), { ssr: false })
+const KVLTrackLoader = dynamic(() => import('./KVLTrackLoader'), { ssr: false })
 
 interface LoaderCtx {
   show: () => void
@@ -54,7 +54,7 @@ export default function LoaderProvider({ children }: { children: React.ReactNode
 
   return (
     <Ctx.Provider value={{ show, hide }}>
-      <GravityLoader isVisible={visible} />
+      <KVLTrackLoader isVisible={visible} />
       {children}
     </Ctx.Provider>
   )

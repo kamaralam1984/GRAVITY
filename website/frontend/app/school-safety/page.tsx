@@ -102,7 +102,7 @@ const STEPS = [
     icon: <MapPin size={22} />,
     color: '#3B82F6',
     title: 'Set School Geofence',
-    desc: 'Draw the school boundary in the app. Gravity monitors entry and exit automatically every school day.',
+    desc: 'Draw the school boundary in the app. KVL Track monitors entry and exit automatically every school day.',
   },
   {
     num: '02',
@@ -122,7 +122,7 @@ const STEPS = [
 
 /* ── Stats ────────────────────────────────────────────────────────────────── */
 const STATS = [
-  { value: '2,400+', label: 'Schools using Gravity' },
+  { value: '2,400+', label: 'Schools using KVL Track' },
   { value: '98%', label: 'Pickup verification accuracy' },
   { value: '30s', label: 'Alert delivery time' },
   { value: '99.8%', label: 'GPS accuracy' },
@@ -241,7 +241,7 @@ export default function SchoolSafetyPage() {
               color: 'rgba(255,255,255,0.5)', textDecoration: 'none',
               fontSize: '0.9rem', display: 'inline-flex', alignItems: 'center', gap: 6,
             }}>
-              ← Back to Gravity Home
+              ← Back to KVL Track Home
             </Link>
           </motion.div>
 
@@ -428,7 +428,7 @@ export default function SchoolSafetyPage() {
               fontFamily: 'var(--font-display)', fontSize: 'clamp(1.8rem, 4vw, 2.8rem)',
               fontWeight: 700, color: 'var(--text-primary)', marginBottom: 16,
             }}>
-              A Typical School Day with Gravity
+              A Typical School Day with KVL Track
             </h2>
             <p style={{ color: 'var(--text-muted)', maxWidth: 560, margin: '0 auto', lineHeight: 1.7 }}>
               Every checkpoint, automatically tracked. Every milestone, instantly notified. You know where your child is at every moment of the school day — without a single phone call.
@@ -634,7 +634,7 @@ export default function SchoolSafetyPage() {
                 fontFamily: 'var(--font-display)', fontSize: 'clamp(1.8rem, 3.5vw, 2.6rem)',
                 fontWeight: 700, color: 'var(--text-primary)', marginBottom: 16, lineHeight: 1.2,
               }}>
-                Gravity School Edition
+                KVL Track School Edition
               </h2>
               <p style={{ color: 'var(--text-muted)', lineHeight: 1.75, marginBottom: 28 }}>
                 Designed for institutional use — give your school administration complete oversight, emergency tools, and parent communication in one unified platform.
@@ -741,7 +741,7 @@ export default function SchoolSafetyPage() {
               color: 'var(--text-secondary)', fontSize: 'clamp(1rem, 2vw, 1.15rem)',
               lineHeight: 1.8, fontStyle: 'italic', marginBottom: 28,
             }}>
-              With Gravity, our school reduced late pickup incidents by 78%. Parents love the real-time notifications — and our admin team can finally focus on education instead of fielding "where is my child?" calls all day.
+              With KVL Track, our school reduced late pickup incidents by 78%. Parents love the real-time notifications — and our admin team can finally focus on education instead of fielding "where is my child?" calls all day.
             </p>
             <div>
               <div style={{ fontWeight: 700, color: 'var(--text-primary)', fontSize: '1rem' }}>
@@ -784,7 +784,7 @@ export default function SchoolSafetyPage() {
             Start Protecting Your Child's School Journey
           </h2>
           <p style={{ color: 'rgba(255,255,255,0.65)', maxWidth: 520, margin: '0 auto 40px', lineHeight: 1.75 }}>
-            Join thousands of Indian parents and schools who rely on Gravity for complete school-to-home safety coverage. Free to start, no credit card required.
+            Join thousands of Indian parents and schools who rely on KVL Track for complete school-to-home safety coverage. Free to start, no credit card required.
           </p>
           <div style={{ display: 'flex', gap: 16, justifyContent: 'center', flexWrap: 'wrap', marginBottom: 24 }}>
             <Link href="/" style={{
@@ -805,7 +805,7 @@ export default function SchoolSafetyPage() {
             </Link>
           </div>
           <Link href="/" style={{ color: 'rgba(255,255,255,0.45)', fontSize: '0.88rem', textDecoration: 'none' }}>
-            ← Back to Gravity Home
+            ← Back to KVL Track Home
           </Link>
         </div>
       </section>

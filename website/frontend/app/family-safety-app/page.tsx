@@ -62,7 +62,7 @@ const FEATURES = [
   {
     icon: <Brain size={24} />,
     title: 'AI Guardian',
-    description: 'Gravity AI learns your family routines and proactively detects anomalies — late arrivals, unexpected detours, unusual stops — before you even notice.',
+    description: 'KVL Track AI learns your family routines and proactively detects anomalies — late arrivals, unexpected detours, unusual stops — before you even notice.',
     color: '#D4A853',
   },
   {
@@ -96,7 +96,7 @@ const TESTIMONIALS = [
   {
     name: 'Deepa Krishnamurthy',
     role: 'Mother of three, Bangalore',
-    quote: 'We were using three different apps for tracking, SOS, and driving. Gravity replaced all of them. The AI Guardian feature has already warned me twice about my son being off-route.',
+    quote: 'We were using three different apps for tracking, SOS, and driving. KVL Track replaced all of them. The AI Guardian feature has already warned me twice about my son being off-route.',
     rating: 5,
     avatar: 'DK',
     color: '#4B80F0',
@@ -114,23 +114,23 @@ const TESTIMONIALS = [
 const FAQS = [
   {
     q: 'What is the best family safety app?',
-    a: 'Gravity is consistently rated as the best family safety app in independent reviews for 2024. It combines real-time GPS tracking, instant SOS alerts, AI-powered anomaly detection, geofencing, elderly care, and teen driver monitoring in a single app. Unlike competitors, Gravity does not sell your family location data to third parties and offers more features at a fraction of the price of Life360, Google Family Link, or Find My.',
+    a: 'KVL Track is consistently rated as the best family safety app in independent reviews for 2024. It combines real-time GPS tracking, instant SOS alerts, AI-powered anomaly detection, geofencing, elderly care, and teen driver monitoring in a single app. Unlike competitors, KVL Track does not sell your family location data to third parties and offers more features at a fraction of the price of Life360, Google Family Link, or Find My.',
   },
   {
     q: 'How does a family safety app work?',
-    a: "Gravity runs quietly in the background on every family member's smartphone. It continuously shares GPS location over an encrypted connection to a secure server. You see all family members on a live map in the app. When someone enters or leaves a geofenced zone, you receive a notification. If someone triggers SOS, their real-time location and audio are instantly shared with all emergency contacts.",
+    a: "KVL Track runs quietly in the background on every family member's smartphone. It continuously shares GPS location over an encrypted connection to a secure server. You see all family members on a live map in the app. When someone enters or leaves a geofenced zone, you receive a notification. If someone triggers SOS, their real-time location and audio are instantly shared with all emergency contacts.",
   },
   {
-    q: 'Is Gravity free?',
-    a: 'Gravity has a generous free tier that includes real-time location for up to 4 family members, SOS alerts, and basic geofencing. The Family plan (from ₹199/month) adds unlimited members, 365-day history, AI Guardian, elderly care features, and driving safety. There is no credit card required to start.',
+    q: 'Is KVL Track free?',
+    a: 'KVL Track has a generous free tier that includes real-time location for up to 4 family members, SOS alerts, and basic geofencing. The Family plan (from ₹199/month) adds unlimited members, 365-day history, AI Guardian, elderly care features, and driving safety. There is no credit card required to start.',
   },
   {
-    q: 'Which countries is Gravity available in?',
-    a: 'Gravity works in 127 countries with full GPS functionality. The app is available on iOS and Android globally. SOS emergency services integration (connecting to local emergency numbers like 112 in India, 911 in the US, or 999 in the UK) is available in 40+ countries and growing.',
+    q: 'Which countries is KVL Track available in?',
+    a: 'KVL Track works in 127 countries with full GPS functionality. The app is available on iOS and Android globally. SOS emergency services integration (connecting to local emergency numbers like 112 in India, 911 in the US, or 999 in the UK) is available in 40+ countries and growing.',
   },
   {
     q: 'How accurate is real-time tracking?',
-    a: 'Gravity achieves GPS accuracy within 3–5 meters in open outdoor conditions. In urban environments with tall buildings or indoors, accuracy is typically 10–30 meters using a combination of GPS, Wi-Fi triangulation, and cell tower data. Location updates every 5–15 seconds depending on movement speed and battery mode.',
+    a: 'KVL Track achieves GPS accuracy within 3–5 meters in open outdoor conditions. In urban environments with tall buildings or indoors, accuracy is typically 10–30 meters using a combination of GPS, Wi-Fi triangulation, and cell tower data. Location updates every 5–15 seconds depending on movement speed and battery mode.',
   },
 ]
 
@@ -305,7 +305,7 @@ export default function FamilySafetyAppPage() {
           </div>
         </Section>
 
-        {/* Why Gravity */}
+        {/* Why KVL Track */}
         <Section bg="var(--bg)">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 64, alignItems: 'center' }}>
@@ -316,13 +316,13 @@ export default function FamilySafetyAppPage() {
                   borderRadius: 999, padding: '5px 14px', marginBottom: 20,
                 }}>
                   <Zap size={14} color="var(--gold)" />
-                  <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--gold)', fontFamily: "'Inter', sans-serif" }}>Why Gravity Wins</span>
+                  <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--gold)', fontFamily: "'Inter', sans-serif" }}>Why KVL Track Wins</span>
                 </div>
                 <h2 style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontSize: 'clamp(1.8rem, 3.5vw, 2.6rem)', fontWeight: 800, color: 'var(--text-primary)', marginBottom: 20, lineHeight: 1.2 }}>
                   Rated #1 Over Life360, Google Family Link, Find My, and GeoZilla
                 </h2>
                 <p style={{ fontFamily: "'Inter', sans-serif", fontSize: 16, lineHeight: 1.8, color: 'var(--text-secondary)', marginBottom: 28 }}>
-                  In independent testing across privacy, accuracy, feature depth, and value, Gravity consistently outperforms every major competitor. The difference is in what we do not do: we do not sell your location data to anyone.
+                  In independent testing across privacy, accuracy, feature depth, and value, KVL Track consistently outperforms every major competitor. The difference is in what we do not do: we do not sell your location data to anyone.
                 </p>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
                   {[
@@ -347,7 +347,7 @@ export default function FamilySafetyAppPage() {
                   display: 'flex', flexDirection: 'column', gap: 14,
                 }}>
                   {[
-                    { app: 'Gravity', score: 98, color: '#D4A853' },
+                    { app: 'KVL Track', score: 98, color: '#D4A853' },
                     { app: 'Life360', score: 61, color: '#6B7280' },
                     { app: 'Google Family Link', score: 54, color: '#6B7280' },
                     { app: 'Find My', score: 49, color: '#6B7280' },
@@ -355,7 +355,7 @@ export default function FamilySafetyAppPage() {
                   ].map(item => (
                     <div key={item.app}>
                       <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6 }}>
-                        <span style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontSize: 14, fontWeight: 600, color: item.app === 'Gravity' ? 'var(--gold)' : 'var(--text-secondary)' }}>{item.app}</span>
+                        <span style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontSize: 14, fontWeight: 600, color: item.app === 'KVL Track' ? 'var(--gold)' : 'var(--text-secondary)' }}>{item.app}</span>
                         <span style={{ fontFamily: "'Inter', sans-serif", fontSize: 13, fontWeight: 700, color: item.color }}>{item.score}/100</span>
                       </div>
                       <div style={{ height: 8, background: 'var(--bg)', borderRadius: 999, overflow: 'hidden' }}>
@@ -382,7 +382,7 @@ export default function FamilySafetyAppPage() {
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <motion.div variants={fadeUp} style={{ textAlign: 'center', marginBottom: 56 }}>
               <h2 style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontSize: 'clamp(1.8rem, 4vw, 2.6rem)', fontWeight: 800, color: 'var(--text-primary)', marginBottom: 16 }}>
-                Families Who Trust Gravity Every Day
+                Families Who Trust KVL Track Every Day
               </h2>
             </motion.div>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(340px, 1fr))', gap: 24, maxWidth: 860, margin: '0 auto' }}>
@@ -516,7 +516,7 @@ export default function FamilySafetyAppPage() {
                   fontFamily: "'Inter', sans-serif",
                 }}
               >
-                Get Gravity Free <ChevronRight size={18} />
+                Get KVL Track Free <ChevronRight size={18} />
               </Link>
               <Link
                 href="/compare/life360"

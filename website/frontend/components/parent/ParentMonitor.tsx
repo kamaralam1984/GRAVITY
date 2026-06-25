@@ -403,7 +403,7 @@ export function ChildrenMonitorSection() {
                         {!m.lat && (
                           <div className="flex items-center gap-2 bg-amber-500/10 border border-amber-500/20 rounded-xl px-3 py-2">
                             <AlertTriangle className="w-4 h-4 text-amber-400 flex-shrink-0" />
-                            <span className="text-xs text-amber-300">Location sharing not started. Ask member to open Gravity app and start sharing.</span>
+                            <span className="text-xs text-amber-300">Location sharing not started. Ask member to open KVL Track app and start sharing.</span>
                           </div>
                         )}
                       </div>
@@ -531,7 +531,7 @@ export function ElderlyMonitorSection() {
           <Watch className="w-5 h-5 text-violet-400" />
         </div>
         <div className="flex-1">
-          <p className="text-sm font-semibold text-white">Connect Gravity Watch</p>
+          <p className="text-sm font-semibold text-white">Connect KVL Track Watch</p>
           <p className="text-xs text-white/50">Enable heart rate, BP and fall detection monitoring</p>
         </div>
         <motion.button
@@ -973,7 +973,7 @@ export function DrivingSection() {
         <div className="grid grid-cols-3 gap-2 text-center">
           {[
             { step: '1', text: 'Start a journey', icon: '🚗' },
-            { step: '2', text: 'Drive with Gravity', icon: '📍' },
+            { step: '2', text: 'Drive with KVL Track', icon: '📍' },
             { step: '3', text: 'See your score', icon: '⭐' },
           ].map(s => (
             <div key={s.step} className="bg-white/5 rounded-xl p-2">

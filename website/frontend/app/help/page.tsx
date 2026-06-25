@@ -24,7 +24,7 @@ const categories = [
   {
     icon: BookOpen,
     title: 'Getting Started',
-    description: 'Install Gravity, set up your circle, and get everyone connected.',
+    description: 'Install KVL Track, set up your circle, and get everyone connected.',
     count: 12,
     color: 'var(--primary)',
     colorRgb: 'var(--primary-rgb)',
@@ -84,35 +84,35 @@ const popularArticles = [
 
 const faqs = [
   {
-    q: `How does Gravity's location tracking actually work?`,
-    a: `Gravity uses your phone's built-in GPS combined with Wi-Fi triangulation and cell tower data to determine location. The app sends encrypted location updates to Gravity's servers at adaptive intervals — more frequently when you're moving, less often when you're stationary. All data is end-to-end encrypted in transit and at rest, and only your approved circle members can view your location. Battery impact is minimized through smart polling algorithms.`,
+    q: `How does KVL Track's location tracking actually work?`,
+    a: `KVL Track uses your phone's built-in GPS combined with Wi-Fi triangulation and cell tower data to determine location. The app sends encrypted location updates to KVL Track's servers at adaptive intervals — more frequently when you're moving, less often when you're stationary. All data is end-to-end encrypted in transit and at rest, and only your approved circle members can view your location. Battery impact is minimized through smart polling algorithms.`,
   },
   {
-    q: 'Will Gravity drain my phone battery significantly?',
-    a: `Gravity is engineered to minimize battery usage. We use adaptive location polling — when you're stationary, location checks slow to every 10–15 minutes; when you're actively moving, they increase to every 2–3 minutes. In real-world testing, most users see less than 3–5% additional daily battery drain. If you're experiencing heavy drain, ensure you have the latest app version and check that no other apps are conflicting with background permissions.`,
+    q: 'Will KVL Track drain my phone battery significantly?',
+    a: `KVL Track is engineered to minimize battery usage. We use adaptive location polling — when you're stationary, location checks slow to every 10–15 minutes; when you're actively moving, they increase to every 2–3 minutes. In real-world testing, most users see less than 3–5% additional daily battery drain. If you're experiencing heavy drain, ensure you have the latest app version and check that no other apps are conflicting with background permissions.`,
   },
   {
     q: 'Is my location visible to anyone outside my circle?',
-    a: 'No. Your location is only shared with people inside your personal Gravity circle — people you have explicitly invited and who have accepted your invitation. Gravity never shares location data with advertisers, third-party apps, or any entity outside your circle. Our servers store your location data encrypted, and our privacy policy strictly prohibits selling or licensing location data to external parties. You are always in full control.',
+    a: 'No. Your location is only shared with people inside your personal KVL Track circle — people you have explicitly invited and who have accepted your invitation. KVL Track never shares location data with advertisers, third-party apps, or any entity outside your circle. Our servers store your location data encrypted, and our privacy policy strictly prohibits selling or licensing location data to external parties. You are always in full control.',
   },
   {
-    q: 'How many members can I have in my Gravity circle?',
+    q: 'How many members can I have in my KVL Track circle?',
     a: 'On the free plan, you can have up to 5 members in a single circle. The Premium plan allows up to 10 members, and the Family plan supports unlimited members across multiple circles. This means you can have a main family circle, a separate circle for elderly parents, and another for your children — all managed from one account. Circles are independent, and members only see others in circles they have been added to.',
   },
   {
-    q: 'Can I use Gravity on multiple devices?',
-    a: `Each Gravity account is tied to one primary device at a time. If you get a new phone, simply log into your account on the new device — your circles and settings transfer automatically. You can be a member of multiple circles across different accounts. For example, a parent can be in their children's circle and also a member of a circle managed by their own parents, all from a single account on one device.`,
+    q: 'Can I use KVL Track on multiple devices?',
+    a: `Each KVL Track account is tied to one primary device at a time. If you get a new phone, simply log into your account on the new device — your circles and settings transfer automatically. You can be a member of multiple circles across different accounts. For example, a parent can be in their children's circle and also a member of a circle managed by their own parents, all from a single account on one device.`,
   },
   {
-    q: 'How long does Gravity store my location history?',
+    q: 'How long does KVL Track store my location history?',
     a: 'Free plan users get 24 hours of location history. Premium users get 7 days, and Family plan users get up to 30 days of detailed location history. You can clear your location history at any time from Settings > Privacy > Clear Location History. When you delete your account, all associated location data is permanently purged from our servers within 30 days in accordance with our data retention policy and applicable Indian data protection laws.',
   },
   {
-    q: 'Can I share my Gravity account with someone?',
+    q: 'Can I share my KVL Track account with someone?',
     a: `Account sharing is not supported or recommended, as each account represents one individual's location identity. However, you can invite as many family members as your plan allows — each gets their own account but joins your shared circle. This is important for accuracy and safety: if two people share an account, emergency SOS and location alerts would be ambiguous. Instead, invite each family member so everyone has their own profile in the circle.`,
   },
   {
-    q: 'How do I cancel my Gravity subscription?',
+    q: 'How do I cancel my KVL Track subscription?',
     a: `You can cancel your subscription at any time from inside the app or through the App Store / Google Play subscription management page. Go to Settings > Subscription > Cancel Plan. Your Premium features remain active until the end of the current billing cycle — you will not be charged again after cancellation. Your account and circles are preserved on the free tier. No cancellation fees, no long-term commitments. We also offer a full refund within 7 days of any new paid subscription if you're not satisfied.`,
   },
 ]
@@ -206,7 +206,7 @@ export default function HelpPage() {
                 }}
               >
                 Search our knowledge base, browse help categories, or connect with our support team.
-                We`re here to make sure Gravity works perfectly for your family.`
+                We`re here to make sure KVL Track works perfectly for your family.`
               </p>
 
               {/* Search Input */}
@@ -669,7 +669,7 @@ export default function HelpPage() {
                   }}
                 >
                   <ArrowLeft size={15} />
-                  Return to Gravity Home
+                  Return to KVL Track Home
                 </Link>
               </div>
             </motion.div>

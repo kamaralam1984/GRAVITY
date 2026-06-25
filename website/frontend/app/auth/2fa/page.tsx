@@ -538,7 +538,7 @@ function TwoFactorInner() {
                   transition={{ delay: 0.5 }}
                   style={{ color: 'rgba(255,255,255,0.4)', fontSize: 14, margin: 0 }}
                 >
-                  Entering GRAVITY...
+                  Entering KVL TRACK...
                 </motion.p>
                 <motion.div
                   initial={{ scaleX: 0 }}
@@ -732,7 +732,7 @@ function TwoFactorInner() {
               letterSpacing: '1px', textTransform: 'uppercase',
             }}
           >
-            Secured by GRAVITY Shield
+            Secured by KVL TRACK Shield
           </motion.p>
         </motion.div>
       </motion.div>

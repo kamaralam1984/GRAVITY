@@ -564,11 +564,11 @@ const PRICING_FAQ = [
   },
   {
     question: 'Can I track without the person knowing?',
-    answer: 'No — every member must accept an invitation and can see who views their location. Privacy hours let any member pause sharing. Gravity is built for consensual family safety.',
+    answer: 'No — every member must accept an invitation and can see who views their location. Privacy hours let any member pause sharing. KVL Track is built for consensual family safety.',
   },
   {
     question: 'Does it work offline?',
-    answer: 'Gravity requires internet for live tracking. The last known location is always cached and viewable offline. SOS alerts are also sent via SMS as a backup when connectivity drops.',
+    answer: 'KVL Track requires internet for live tracking. The last known location is always cached and viewable offline. SOS alerts are also sent via SMS as a backup when connectivity drops.',
   },
   {
     question: 'What happens during an SOS emergency?',
@@ -588,7 +588,7 @@ const PRICING_FAQ = [
   },
   {
     question: 'Is there an API?',
-    answer: 'Yes — Gravity offers a full REST + WebSocket API for enterprise and white-label customers. 50+ endpoints covering location, safety events, notifications, and analytics. Visit our API Marketplace for documentation.',
+    answer: 'Yes — KVL Track offers a full REST + WebSocket API for enterprise and white-label customers. 50+ endpoints covering location, safety events, notifications, and analytics. Visit our API Marketplace for documentation.',
   },
   {
     question: 'Can white label use a custom domain?',

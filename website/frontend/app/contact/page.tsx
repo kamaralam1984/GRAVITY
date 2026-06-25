@@ -43,23 +43,23 @@ interface ContactCardProps {
 const FAQ_DATA: FaqItem[] = [
   {
     q: "Is my location data private?",
-    a: "Absolutely. Gravity only shares your location with members of your personal circle that you have explicitly approved. We never sell your data to third parties, advertisers, or analytics platforms. Your privacy is the foundation everything we build stands on.",
+    a: "Absolutely. KVL Track only shares your location with members of your personal circle that you have explicitly approved. We never sell your data to third parties, advertisers, or analytics platforms. Your privacy is the foundation everything we build stands on.",
   },
   {
     q: "Why isn't my location updating for my family members?",
-    a: "This is almost always caused by background app permissions being restricted by the operating system. On iOS, ensure Gravity has Always On location access in Settings. On Android, disable battery optimisation for Gravity so the app can post updates in the background without interruption.",
+    a: "This is almost always caused by background app permissions being restricted by the operating system. On iOS, ensure KVL Track has Always On location access in Settings. On Android, disable battery optimisation for KVL Track so the app can post updates in the background without interruption.",
   },
   {
-    q: "How do I add someone to my Gravity circle?",
+    q: "How do I add someone to my KVL Track circle?",
     a: "Open the app, tap the People icon in the bottom navigation, then tap Invite Member. You can share a direct invite link or enter the person's phone number or email address. They'll receive a request and must accept before location sharing begins between you.",
   },
   {
     q: "Can I pause sharing my location without leaving the circle?",
-    a: "Yes. Gravity's Ghost Mode lets you pause your location visibility for a set duration — 1 hour, 4 hours, or until you manually turn it back on. Other circle members will see that you are currently paused, so there is never any confusion about why your dot isn't moving.",
+    a: "Yes. KVL Track's Ghost Mode lets you pause your location visibility for a set duration — 1 hour, 4 hours, or until you manually turn it back on. Other circle members will see that you are currently paused, so there is never any confusion about why your dot isn't moving.",
   },
   {
     q: "What happens to my data if I delete my account?",
-    a: "When you delete your Gravity account, all location history, profile data, and circle associations are permanently removed from our servers within 30 days. You will receive an email confirmation once deletion is complete. The process is irreversible, so please export anything you need first.",
+    a: "When you delete your KVL Track account, all location history, profile data, and circle associations are permanently removed from our servers within 30 days. You will receive an email confirmation once deletion is complete. The process is irreversible, so please export anything you need first.",
   },
 ]
 
@@ -411,7 +411,7 @@ export default function ContactPage() {
                   textDecoration: 'none',
                 }}
               >
-                ← Return to Gravity Home
+                ← Return to KVL Track Home
               </Link>
             </motion.div>
           </motion.div>
@@ -448,7 +448,7 @@ export default function ContactPage() {
               title="Partnerships"
               detail="partners@trackalways.com"
               href="mailto:partners@trackalways.com"
-              note="Interested in integrating Gravity into your platform, exploring co-marketing, or reselling to enterprise clients? We'd love to explore this together."
+              note="Interested in integrating KVL Track into your platform, exploring co-marketing, or reselling to enterprise clients? We'd love to explore this together."
             />
             <ContactCard
               icon={<Phone size={22} />}
@@ -505,7 +505,7 @@ export default function ContactPage() {
                 >
                   Fill out the form and a member of our team will get back to you as soon as
                   possible. We read every message carefully and take all feedback seriously —
-                  your experience with Gravity shapes the product.
+                  your experience with KVL Track shapes the product.
                 </p>
               </div>
 
@@ -886,7 +886,7 @@ export default function ContactPage() {
                   lineHeight: 1.75,
                 }}
               >
-                Gravity is proudly built in India. Our teams across Mumbai and Bangalore collaborate
+                KVL Track is proudly built in India. Our teams across Mumbai and Bangalore collaborate
                 daily to deliver a product that families across the country trust.
               </p>
             </motion.div>
@@ -1088,7 +1088,7 @@ export default function ContactPage() {
                     }}
                   >
                     Our Bangalore hub is home to the engineering, infrastructure, and data science
-                    teams. The people who keep Gravity fast, reliable, and secure operate from this
+                    teams. The people who keep KVL Track fast, reliable, and secure operate from this
                     office.
                   </p>
                 </div>
@@ -1224,7 +1224,7 @@ export default function ContactPage() {
               }}
             >
               Our support team is standing by. Don't hesitate to reach out — we're a friendly bunch
-              and we genuinely love hearing from the people who use Gravity every day. No bots, no
+              and we genuinely love hearing from the people who use KVL Track every day. No bots, no
               automated runarounds. Just real people who care.
             </p>
 
@@ -1272,7 +1272,7 @@ export default function ContactPage() {
                   textDecoration: 'none',
                 }}
               >
-                Return to Gravity Home
+                Return to KVL Track Home
               </Link>
             </div>
           </div>

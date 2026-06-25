@@ -1,5 +1,5 @@
 """
-Gravity Kids & Gravity Elder — FastAPI router.
+KVL Track Kids & KVL Track Elder — FastAPI router.
 All endpoints use real DB data.
 """
 from __future__ import annotations

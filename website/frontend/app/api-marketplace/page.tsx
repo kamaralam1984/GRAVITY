@@ -532,7 +532,7 @@ export default function APIMarketplacePage() {
             className="text-4xl md:text-5xl lg:text-6xl font-extrabold leading-tight mb-6"
             style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}
           >
-            <span className="text-[#F8FAFC]">Gravity Developer Platform</span>
+            <span className="text-[#F8FAFC]">KVL Track Developer Platform</span>
             <br />
             <span
               style={{
@@ -554,7 +554,7 @@ export default function APIMarketplacePage() {
             style={{ fontFamily: "'Inter', sans-serif" }}
           >
             50+ REST + WebSocket endpoints covering location, safety alerts, notifications, and analytics.
-            Build safety-critical applications on Gravity's battle-tested infrastructure.
+            Build safety-critical applications on KVL Track's battle-tested infrastructure.
           </motion.p>
 
           <motion.div

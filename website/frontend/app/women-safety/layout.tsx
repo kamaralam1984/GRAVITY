@@ -1,9 +1,9 @@
 import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
-  title: 'Women Safety App India — Gravity | Panic SOS, Safe Walk, Live Location',
+  title: 'Women Safety App India — KVL Track | Panic SOS, Safe Walk, Live Location',
   description:
-    'Gravity Women Safety: Shake-to-SOS, live location sharing for 2 hours, fake call feature, Safe Walk mode with auto check-in. Free women safety app available in Delhi, Mumbai, Bengaluru, Hyderabad, Chennai, Pune. Download free on Android & iOS.',
+    'KVL Track Women Safety: Shake-to-SOS, live location sharing for 2 hours, fake call feature, Safe Walk mode with auto check-in. Free women safety app available in Delhi, Mumbai, Bengaluru, Hyderabad, Chennai, Pune. Download free on Android & iOS.',
   keywords: [
     'women safety app India',
     'women safety app Delhi',
@@ -22,7 +22,7 @@ export const metadata: Metadata = {
     'women safety app Android iOS',
   ],
   openGraph: {
-    title: 'Gravity Women Safety — Because Every Woman Deserves to Feel Safe',
+    title: 'KVL Track Women Safety — Because Every Woman Deserves to Feel Safe',
     description:
       'Panic SOS, Safe Walk, live location sharing, fake call — free women safety app for India. Available on Android & iOS.',
     type: 'website',
@@ -32,13 +32,13 @@ export const metadata: Metadata = {
         url: 'https://gravity.trackalways.com/og/women-safety.png',
         width: 1200,
         height: 630,
-        alt: 'Gravity Women Safety App',
+        alt: 'KVL Track Women Safety App',
       },
     ],
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Gravity Women Safety — Because Every Woman Deserves to Feel Safe',
+    title: 'KVL Track Women Safety — Because Every Woman Deserves to Feel Safe',
     description:
       'Panic SOS, Safe Walk, live location sharing, fake call — free women safety app. Download free on Android & iOS.',
     images: ['https://gravity.trackalways.com/og/women-safety.png'],

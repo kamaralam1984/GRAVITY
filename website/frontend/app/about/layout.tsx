@@ -1,26 +1,26 @@
 import type { Metadata } from 'next'
 
 export const metadata: Metadata = {
-  title: 'About Trackalways | Gravity Family Safety App',
+  title: 'About Trackalways | KVL Track Family Safety App',
   description:
     'Trackalways Technologies — building India\'s most trusted family safety platform since 2022. 50,000+ families protected across 30+ cities.',
   keywords: [
     'Trackalways Technologies',
-    'Gravity app about',
+    'KVL Track app about',
     'family safety company India',
   ],
   openGraph: {
-    title: 'About Trackalways | Gravity Family Safety App',
+    title: 'About Trackalways | KVL Track Family Safety App',
     description:
       'Trackalways Technologies — building India\'s most trusted family safety platform since 2022. 50,000+ families protected across 30+ cities.',
     url: 'https://gravity.trackalways.com/about',
-    siteName: 'Gravity by Trackalways',
+    siteName: 'KVL Track by Trackalways',
     images: [
       {
         url: 'https://gravity.trackalways.com/og-image.svg',
         width: 1200,
         height: 630,
-        alt: 'About Trackalways — Gravity Family Safety App',
+        alt: 'About Trackalways — KVL Track Family Safety App',
       },
     ],
     locale: 'en_IN',
@@ -28,7 +28,7 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'About Trackalways | Gravity Family Safety App',
+    title: 'About Trackalways | KVL Track Family Safety App',
     description:
       'Trackalways Technologies — building India\'s most trusted family safety platform since 2022. 50,000+ families protected across 30+ cities.',
     images: ['https://gravity.trackalways.com/og-image.svg'],

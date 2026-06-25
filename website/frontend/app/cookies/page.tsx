@@ -44,7 +44,7 @@ const cookieTypes = [
     color: 'var(--sos)',
     colorAlpha: 'rgba(var(--sos),0.08)',
     colorBorder: 'rgba(var(--sos),0.25)',
-    description: 'We use limited marketing cookies solely for attribution — understanding which marketing channel (e.g., organic search, paid ads, social media) brought you to Gravity. We do not use third-party advertising networks or build cross-site behavioral profiles. Attribution data helps us invest in the most effective channels. We do not show targeted ads inside our app. You may opt out of attribution cookies.',
+    description: 'We use limited marketing cookies solely for attribution — understanding which marketing channel (e.g., organic search, paid ads, social media) brought you to KVL Track. We do not use third-party advertising networks or build cross-site behavioral profiles. Attribution data helps us invest in the most effective channels. We do not show targeted ads inside our app. You may opt out of attribution cookies.',
     canOptOut: true,
   },
 ]
@@ -177,7 +177,7 @@ export default function CookiesPage() {
                 onMouseLeave={e => (e.currentTarget.style.color = 'var(--text-muted)')}
               >
                 <ArrowLeft size={16} />
-                Return to Gravity Home
+                Return to KVL Track Home
               </Link>
 
               <div className="flex items-center gap-4 mb-6">
@@ -341,7 +341,7 @@ export default function CookiesPage() {
                 Full Cookie Reference
               </h2>
               <p className="mb-8" style={{ color: 'var(--text-muted)' }}>
-                A complete list of all cookies currently used on trackalways.com and the Gravity web app.
+                A complete list of all cookies currently used on trackalways.com and the KVL Track web app.
               </p>
 
               <div

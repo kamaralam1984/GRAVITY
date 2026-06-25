@@ -240,7 +240,7 @@ export function withAuth<P extends object>(
           }}
         >
           <div style={{ textAlign: 'center' }}>
-            {/* Animated GRAVITY logo while loading */}
+            {/* Animated KVL TRACK logo while loading */}
             <div
               style={{
                 width: 48,

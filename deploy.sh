@@ -1,15 +1,15 @@
 #!/bin/bash
-# Gravity VPS Deployment Script
+# KVL Track VPS Deployment Script
 # Run on VPS as root: bash deploy.sh
 
 set -e
 
-REPO="https://github.com/kamaralam1984/GRAVITY.git"
+REPO="https://github.com/kamaralam1984/KVL TRACK.git"
 APP_DIR="/var/www/gravity"
-DOMAIN="gravity.kvlbusinesssolutions.com"
+DOMAIN="kvltrack.kvlbusinesssolutions.com"
 EMAIL="8rupiya@gmail.com"
 
-echo "=== Gravity Deploy ==="
+echo "=== KVL Track Deploy ==="
 
 # 1. Clone or update repo
 if [ -d "$APP_DIR/.git" ]; then
@@ -33,8 +33,8 @@ docker ps --filter "name=gravity"
 
 # 4. Setup Nginx
 echo "[4/5] Setting up Nginx..."
-cp nginx/gravity.kvlbusinesssolutions.com /etc/nginx/sites-available/gravity.kvlbusinesssolutions.com
-ln -sf /etc/nginx/sites-available/gravity.kvlbusinesssolutions.com /etc/nginx/sites-enabled/gravity.kvlbusinesssolutions.com
+cp nginx/kvltrack.kvlbusinesssolutions.com /etc/nginx/sites-available/kvltrack.kvlbusinesssolutions.com
+ln -sf /etc/nginx/sites-available/kvltrack.kvlbusinesssolutions.com /etc/nginx/sites-enabled/kvltrack.kvlbusinesssolutions.com
 nginx -t && systemctl reload nginx
 echo "Nginx configured for $DOMAIN"
 

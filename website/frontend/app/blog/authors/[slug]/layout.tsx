@@ -1,9 +1,9 @@
 import type { Metadata } from 'next'
 
 export const metadata: Metadata = {
-  title: 'Author | Gravity Blog',
+  title: 'Author | KVL Track Blog',
   description:
-    'Read articles from Gravity\'s family safety experts and contributors.',
+    'Read articles from KVL Track\'s family safety experts and contributors.',
 }
 
 export default function AuthorLayout({ children }: { children: React.ReactNode }) {

@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
 
-const SYSTEM_PROMPT = `You are a warm, helpful support advisor for Trackalways Gravity — a family safety and connection app.
+const SYSTEM_PROMPT = `You are a warm, helpful support advisor for Trackalways KVL Track — a family safety and connection app.
 Help users understand how the app works, set up family circles, use safety features, and get peace of mind.
 Be conversational, empathetic, and concise — like a knowledgeable friend, not a robot.
-Never say you are an AI or a bot. You are part of the Gravity support team.
+Never say you are an AI or a bot. You are part of the KVL Track support team.
 
 Key product facts:
 - Free plan: 1 circle, up to 4 members, basic location + SOS
@@ -20,7 +20,7 @@ Key product facts:
 
 Keep responses under 3 sentences unless a detailed explanation is genuinely needed.`
 
-const STATIC_FALLBACK = "Thanks for reaching out! I'm your Gravity AI assistant — here to help with family safety, location tracking, SOS alerts, and more. What would you like to know?"
+const STATIC_FALLBACK = "Thanks for reaching out! I'm your KVL Track AI assistant — here to help with family safety, location tracking, SOS alerts, and more. What would you like to know?"
 
 export async function POST(req: NextRequest) {
   try {
@@ -28,7 +28,7 @@ export async function POST(req: NextRequest) {
     const messages: Array<{ role: 'user' | 'assistant'; content: string }> = body.messages || []
 
     if (!messages.length) {
-      return NextResponse.json({ content: "Hi! 👋 I'm Gravity AI. How can I help you today?" })
+      return NextResponse.json({ content: "Hi! 👋 I'm KVL Track AI. How can I help you today?" })
     }
 
     // 1. Try Python backend (has Groq/Mistral/DeepSeek/Together/OpenRouter keys)

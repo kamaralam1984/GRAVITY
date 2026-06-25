@@ -45,7 +45,7 @@ const AI_CAPABILITIES = [
   {
     icon: <TrendingUp size={24} />,
     title: "Predictive Late Alerts",
-    description: "Gravity AI learns your family daily routines over time. When someone is running late before they even realize it themselves, you receive a proactive heads-up — not a post-hoc notification.",
+    description: "KVL Track AI learns your family daily routines over time. When someone is running late before they even realize it themselves, you receive a proactive heads-up — not a post-hoc notification.",
     color: "#F59E0B",
   },
   {
@@ -63,7 +63,7 @@ const AI_CAPABILITIES = [
   {
     icon: <Activity size={24} />,
     title: "Driving Risk Alerts",
-    description: "Real-time detection of unsafe driving patterns — hard braking, rapid acceleration, and high-speed behaviour. Gravity AI distinguishes one-off events from genuine risk patterns.",
+    description: "Real-time detection of unsafe driving patterns — hard braking, rapid acceleration, and high-speed behaviour. KVL Track AI distinguishes one-off events from genuine risk patterns.",
     color: "#EF4444",
   },
   {
@@ -75,7 +75,7 @@ const AI_CAPABILITIES = [
 ];
 
 /* ── Initial demo messages (seed state) ─────────────────────────────────────── */
-const WELCOME_MESSAGE = { role: 'ai' as const, text: "Hi! I'm your Gravity AI Assistant. Ask me about your family's location, safety status, recent activity, or anything else I can help with." };
+const WELCOME_MESSAGE = { role: 'ai' as const, text: "Hi! I'm your KVL Track AI Assistant. Ask me about your family's location, safety status, recent activity, or anything else I can help with." };
 
 /* ── Section wrapper ─────────────────────────────────────────────────────────── */
 function Section({ children, bg = "var(--bg)" }: { children: React.ReactNode; bg?: string }) {
@@ -234,7 +234,7 @@ export default function AIAssistant() {
                 gap: 6,
               }}
             >
-              ← Back to Gravity Home
+              ← Back to KVL Track Home
             </Link>
           </motion.div>
 
@@ -328,7 +328,7 @@ export default function AIAssistant() {
               lineHeight: 1.8,
             }}
           >
-            Gravity AI watches over your family 24 hours a day — predicting risks before they happen, answering your questions instantly, and learning the rhythms of your family to alert you when something truly matters.
+            KVL Track AI watches over your family 24 hours a day — predicting risks before they happen, answering your questions instantly, and learning the rhythms of your family to alert you when something truly matters.
           </motion.p>
 
           <motion.div
@@ -387,10 +387,10 @@ export default function AIAssistant() {
                 marginBottom: 16,
               }}
             >
-              Ask Gravity Anything About Your Family
+              Ask KVL Track Anything About Your Family
             </h2>
             <p style={{ color: "var(--text-muted)", maxWidth: 600, margin: "0 auto", lineHeight: 1.7 }}>
-              The Gravity AI assistant speaks plain language. No commands, no codes, no digging through menus. Just ask — and get a precise, caring answer in seconds.
+              The KVL Track AI assistant speaks plain language. No commands, no codes, no digging through menus. Just ask — and get a precise, caring answer in seconds.
             </p>
           </motion.div>
 
@@ -433,7 +433,7 @@ export default function AIAssistant() {
                 <Brain size={16} style={{ color: "#fff" }} />
               </motion.div>
               <div>
-                <div style={{ fontWeight: 700, color: "#fff", fontSize: "0.92rem" }}>Gravity AI</div>
+                <div style={{ fontWeight: 700, color: "#fff", fontSize: "0.92rem" }}>KVL Track AI</div>
                 <div style={{ color: "#A78BFA", fontSize: "0.76rem", display: "flex", alignItems: "center", gap: 4 }}>
                   <span style={{ width: 6, height: 6, borderRadius: "50%", background: "#10B981", display: "inline-block" }} />
                   Active — monitoring your family
@@ -545,7 +545,7 @@ export default function AIAssistant() {
                 marginBottom: 16,
               }}
             >
-              What Gravity AI Can Do for Your Family
+              What KVL Track AI Can Do for Your Family
             </h2>
             <p style={{ color: "var(--text-muted)", maxWidth: 600, margin: "0 auto", lineHeight: 1.7 }}>
               Six intelligent capabilities that go far beyond simple location sharing — the difference between being informed and being protected.
@@ -621,7 +621,7 @@ export default function AIAssistant() {
               Your Weekly Family Intelligence Report
             </h2>
             <p style={{ color: "var(--text-muted)", maxWidth: 580, margin: "0 auto", lineHeight: 1.7 }}>
-              Every Sunday morning, Gravity AI delivers a concise report card for your family. Three composite scores and an AI-written summary that takes 90 seconds to read and tells you everything that matters.
+              Every Sunday morning, KVL Track AI delivers a concise report card for your family. Three composite scores and an AI-written summary that takes 90 seconds to read and tells you everything that matters.
             </p>
           </motion.div>
 
@@ -788,7 +788,7 @@ export default function AIAssistant() {
               AI That Respects Your Privacy
             </h2>
             <p style={{ color: "var(--text-muted)", maxWidth: 620, margin: "0 auto", lineHeight: 1.75 }}>
-              Gravity AI is powerful precisely because it is built on trust. Your family data is the most personal data that exists. We take that responsibility with complete seriousness — no exceptions.
+              KVL Track AI is powerful precisely because it is built on trust. Your family data is the most personal data that exists. We take that responsibility with complete seriousness — no exceptions.
             </p>
           </motion.div>
 
@@ -810,7 +810,7 @@ export default function AIAssistant() {
               {
                 icon: <Eye size={22} />,
                 title: "No Data Selling",
-                text: "Gravity earns revenue from subscription fees — not from selling your family location data, driving patterns, or health information to advertisers or data brokers. Never.",
+                text: "KVL Track earns revenue from subscription fees — not from selling your family location data, driving patterns, or health information to advertisers or data brokers. Never.",
               },
               {
                 icon: <Lock size={22} />,
@@ -878,7 +878,7 @@ export default function AIAssistant() {
                 marginBottom: 16,
               }}
             >
-              Plans That Include Gravity AI
+              Plans That Include KVL Track AI
             </h2>
             <p style={{ color: "var(--text-muted)", maxWidth: 560, margin: "0 auto", lineHeight: 1.7 }}>
               AI capabilities are available on Family Plus and Ultimate plans. Start with the free plan to experience core features, then upgrade when you are ready for predictive intelligence.
@@ -1087,7 +1087,7 @@ export default function AIAssistant() {
                 boxShadow: "0 0 28px rgba(212,168,83,0.3)",
               }}
             >
-              Unlock Gravity AI <ChevronRight size={18} />
+              Unlock KVL Track AI <ChevronRight size={18} />
             </Link>
             <Link
               href="/"
@@ -1102,7 +1102,7 @@ export default function AIAssistant() {
                 border: "1px solid rgba(255,255,255,0.2)",
               }}
             >
-              ← Back to Gravity Home
+              ← Back to KVL Track Home
             </Link>
           </div>
         </div>

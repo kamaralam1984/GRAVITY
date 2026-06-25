@@ -290,7 +290,7 @@ export default function SmartHomePage() {
             transition={{ delay: 0.4 }}
             style={{ fontSize: 'clamp(2.4rem, 6vw, 4rem)', fontWeight: 900, color: '#FFFFFF', lineHeight: 1.1, marginBottom: 24, letterSpacing: '-0.02em' }}
           >
-            Gravity Smart Home —
+            KVL Track Smart Home —
             <br />
             <span style={{ background: 'linear-gradient(135deg, #34D399, #3B82F6)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
               Your Home. Your Family. Connected.
@@ -746,7 +746,7 @@ export default function SmartHomePage() {
             </Link>
           </div>
           <Link href="/" style={{ color: 'rgba(255,255,255,0.4)', fontSize: 14, textDecoration: 'none' }}>
-            ← Back to Gravity Home
+            ← Back to KVL Track Home
           </Link>
         </div>
       </section>

@@ -72,7 +72,7 @@ const FEATURES: Feature[] = [
   },
   {
     id: 'ai', num: '10', title: 'AI Insights',
-    description: 'Gravity learns routines and flags deviations — arriving home 2 hrs late? Family gets a nudge.',
+    description: 'KVL Track learns routines and flags deviations — arriving home 2 hrs late? Family gets a nudge.',
     icon: Brain, accent: '#8B5CF6', rgb: '139,92,246', tag: 'Smart',
   },
   {

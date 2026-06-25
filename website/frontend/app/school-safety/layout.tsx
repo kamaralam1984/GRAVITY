@@ -1,5 +1,5 @@
 export const metadata = {
-  title: 'Gravity School Safety — Smart School Monitoring & Child Protection',
+  title: 'KVL Track School Safety — Smart School Monitoring & Child Protection',
   description:
     'Real-time school attendance tracking, bus monitoring, pickup verification and parent notifications. Keep every child safe from door to door.',
   keywords: [

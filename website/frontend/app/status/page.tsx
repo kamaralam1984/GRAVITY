@@ -166,7 +166,7 @@ export default function StatusPage() {
                 onMouseLeave={e => (e.currentTarget.style.color = 'var(--text-muted)')}
               >
                 <ArrowLeft size={16} />
-                Back to Gravity Home
+                Back to KVL Track Home
               </Link>
 
               {/* Global status badge */}
@@ -197,7 +197,7 @@ export default function StatusPage() {
               </h1>
 
               <p className="text-lg mb-8" style={{ color: 'var(--text-secondary)' }}>
-                Real-time operational status for all Gravity platform services.
+                Real-time operational status for all KVL Track platform services.
                 All 8 services are currently running normally.
               </p>
 
@@ -615,7 +615,7 @@ export default function StatusPage() {
                   }}
                 >
                   <ArrowLeft size={16} />
-                  Back to Gravity Home
+                  Back to KVL Track Home
                 </Link>
               </div>
             </motion.div>

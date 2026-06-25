@@ -1,9 +1,9 @@
 import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
-  title: 'Gravity Developer API — Location, Safety & Notification APIs | Trackalways',
+  title: 'KVL Track Developer API — Location, Safety & Notification APIs | Trackalways',
   description:
-    'Gravity Developer Platform: 50+ REST + WebSocket endpoints for real-time location, SOS safety events, push notifications, and analytics. 99.9% uptime, <100ms response. First 1,000 API calls free. Build on safety.',
+    'KVL Track Developer Platform: 50+ REST + WebSocket endpoints for real-time location, SOS safety events, push notifications, and analytics. 99.9% uptime, <100ms response. First 1,000 API calls free. Build on safety.',
   keywords: [
     'family safety API',
     'location tracking API India',
@@ -22,7 +22,7 @@ export const metadata: Metadata = {
     'family safety developer',
   ],
   openGraph: {
-    title: 'Gravity Developer Platform — Build on Safety',
+    title: 'KVL Track Developer Platform — Build on Safety',
     description:
       '50+ REST + WebSocket endpoints. Location, Safety, Notifications, Analytics. 99.9% uptime, <100ms. First 1,000 calls free.',
     type: 'website',
@@ -32,13 +32,13 @@ export const metadata: Metadata = {
         url: 'https://gravity.trackalways.com/og/api-marketplace.png',
         width: 1200,
         height: 630,
-        alt: 'Gravity Developer API Platform',
+        alt: 'KVL Track Developer API Platform',
       },
     ],
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Gravity Developer Platform — Build on Safety',
+    title: 'KVL Track Developer Platform — Build on Safety',
     description:
       '50+ REST + WebSocket endpoints. 99.9% uptime, <100ms response. First 1,000 API calls free — no credit card.',
     images: ['https://gravity.trackalways.com/og/api-marketplace.png'],

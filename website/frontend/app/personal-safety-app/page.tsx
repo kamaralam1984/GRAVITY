@@ -96,23 +96,23 @@ const USE_CASES = [
 const FAQS = [
   {
     q: 'What is the best personal safety app?',
-    a: "Gravity is consistently rated the best personal safety app for 2024, particularly for women, solo travellers, students, and night shift workers. Unlike basic panic button apps, Gravity combines journey sharing with live tracking links, check-in deadline monitoring, shake-to-SOS, a fake call feature, and instant SOS that works even via SMS without internet. It is used by over 800,000 solo travellers and individual users globally.",
+    a: "KVL Track is consistently rated the best personal safety app for 2024, particularly for women, solo travellers, students, and night shift workers. Unlike basic panic button apps, KVL Track combines journey sharing with live tracking links, check-in deadline monitoring, shake-to-SOS, a fake call feature, and instant SOS that works even via SMS without internet. It is used by over 800,000 solo travellers and individual users globally.",
   },
   {
-    q: 'How does Gravity keep solo travellers safe?',
-    a: "Gravity creates a digital safety net for solo travellers. Before departure, you share a live journey link with a trusted contact — they watch your real-time progress. You set check-in reminders so someone knows if you stop responding unexpectedly. If you feel unsafe, one press triggers SOS or the fake call feature removes you from an uncomfortable situation. All of this runs on your existing smartphone with no additional hardware needed.",
+    q: 'How does KVL Track keep solo travellers safe?',
+    a: "KVL Track creates a digital safety net for solo travellers. Before departure, you share a live journey link with a trusted contact — they watch your real-time progress. You set check-in reminders so someone knows if you stop responding unexpectedly. If you feel unsafe, one press triggers SOS or the fake call feature removes you from an uncomfortable situation. All of this runs on your existing smartphone with no additional hardware needed.",
   },
   {
-    q: 'Does Gravity have a fake call feature?',
-    a: "Yes. The Gravity fake call feature creates a realistic incoming call notification that looks and sounds identical to a real phone call. You can set it to trigger immediately or after a countdown (e.g., 30 seconds — giving you time to set it up subtly). When it activates, you can 'answer' the call and use it as a natural excuse to leave a situation, change direction, or draw attention to yourself in a public place. The caller name and ringtone are fully customisable.",
+    q: 'Does KVL Track have a fake call feature?',
+    a: "Yes. The KVL Track fake call feature creates a realistic incoming call notification that looks and sounds identical to a real phone call. You can set it to trigger immediately or after a countdown (e.g., 30 seconds — giving you time to set it up subtly). When it activates, you can 'answer' the call and use it as a natural excuse to leave a situation, change direction, or draw attention to yourself in a public place. The caller name and ringtone are fully customisable.",
   },
   {
     q: 'How do I share my journey with someone?',
-    a: "To share a journey: tap the Journey Share button in the Gravity app, set your destination, and select or enter the number of a trusted contact. Gravity sends them a live tracking link via WhatsApp or SMS — they open it on any browser (no app needed) and see your real-time position on a map. When you arrive at your destination, the app detects arrival and sends your contact a notification. The tracking link automatically deactivates after arrival or after your set journey duration expires.",
+    a: "To share a journey: tap the Journey Share button in the KVL Track app, set your destination, and select or enter the number of a trusted contact. KVL Track sends them a live tracking link via WhatsApp or SMS — they open it on any browser (no app needed) and see your real-time position on a map. When you arrive at your destination, the app detects arrival and sends your contact a notification. The tracking link automatically deactivates after arrival or after your set journey duration expires.",
   },
   {
     q: 'Does it work abroad?',
-    a: "Yes. Gravity personal safety app works in 127 countries with full functionality. Journey sharing, SOS alerts, and check-in reminders all work internationally. SMS fallback ensures SOS is delivered even without mobile data. The app automatically adapts to local emergency numbers (112 in Europe, 911 in North America, 999 in UK, 100 in India) when the emergency services integration option is enabled.",
+    a: "Yes. KVL Track personal safety app works in 127 countries with full functionality. Journey sharing, SOS alerts, and check-in reminders all work internationally. SMS fallback ensures SOS is delivered even without mobile data. The app automatically adapts to local emergency numbers (112 in Europe, 911 in North America, 999 in UK, 100 in India) when the emergency services integration option is enabled.",
   },
 ]
 
@@ -238,7 +238,7 @@ export default function PersonalSafetyAppPage() {
                 Built for Every Solo Situation
               </h2>
               <p style={{ fontFamily: "'Inter', sans-serif", fontSize: 16, color: 'var(--text-secondary)', maxWidth: 540, margin: '0 auto', lineHeight: 1.7 }}>
-                Whether you are commuting late, travelling abroad, or going for an evening run — Gravity creates a safety net around you.
+                Whether you are commuting late, travelling abroad, or going for an evening run — KVL Track creates a safety net around you.
               </p>
             </motion.div>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: 18, maxWidth: 900, margin: '0 auto' }}>
@@ -261,7 +261,7 @@ export default function PersonalSafetyAppPage() {
             </motion.div>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(340px, 1fr))', gap: 24, maxWidth: 860, margin: '0 auto' }}>
               {[
-                { quote: 'I used to avoid late-night library sessions because the walk home felt unsafe. The journey share feature on Gravity means my mother watches my route live. I study as long as I need to now.', name: 'Sneha Mehta', role: 'Engineering student, Pune', avatar: 'SM', color: '#8B5CF6' },
+                { quote: 'I used to avoid late-night library sessions because the walk home felt unsafe. The journey share feature on KVL Track means my mother watches my route live. I study as long as I need to now.', name: 'Sneha Mehta', role: 'Engineering student, Pune', avatar: 'SM', color: '#8B5CF6' },
                 { quote: 'I solo-travelled through Southeast Asia for 3 months. The check-in reminder was my safety anchor — my parents knew that if they did not hear from me by the deadline, something was wrong. I never missed a check-in.', name: 'Divya Krishnaswamy', role: 'Solo traveller, Mumbai', avatar: 'DK', color: '#EC4899' },
               ].map(t => (
                 <motion.div key={t.name} variants={fadeUp} style={{ background: 'var(--bg)', border: '1px solid var(--border)', borderRadius: 20, padding: '28px 24px' }}>

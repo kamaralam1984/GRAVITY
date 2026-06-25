@@ -1,4 +1,4 @@
-"""Universal AI failover provider for Gravity backend.
+"""Universal AI failover provider for KVL Track backend.
 
 Priority order (fastest/cheapest first):
   1. Groq        — llama-3.3-70b-versatile   (ultra-fast, generous free tier)
@@ -48,7 +48,7 @@ _PROVIDERS = [
         "model": "meta-llama/llama-3.1-70b-instruct:free",
         "extra_headers": {
             "HTTP-Referer": "https://trackalways.com",
-            "X-Title": "Trackalways Gravity",
+            "X-Title": "Trackalways KVL Track",
         },
     },
 ]

@@ -31,7 +31,7 @@ export default function PWAInstallBanner() {
     }}>
       <div style={{ fontSize: 28, flexShrink: 0 }}>📲</div>
       <div style={{ flex: 1 }}>
-        <div style={{ fontSize: 13, fontWeight: 700, color: '#fff' }}>Install Gravity App</div>
+        <div style={{ fontSize: 13, fontWeight: 700, color: '#fff' }}>Install KVL Track App</div>
         <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.55)', marginTop: 2 }}>
           Home screen pe add karo — background mein bhi chalta rahega
         </div>

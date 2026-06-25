@@ -1,6 +1,6 @@
 {
-  "name": "Gravity — Family Safety",
-  "short_name": "Gravity",
+  "name": "KVL Track — Family Safety",
+  "short_name": "KVL Track",
   "description": "Family safety platform with real-time location sharing and SOS alerts",
   "start_url": "/child",
   "scope": "/",

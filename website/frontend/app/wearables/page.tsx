@@ -90,7 +90,7 @@ const HEALTH_METRICS = [
 
 /* ── Setup steps ──────────────────────────────────────────────────────────── */
 const SETUP_STEPS = [
-  { num: 1, label: 'Download Gravity App' },
+  { num: 1, label: 'Download KVL Track App' },
   { num: 2, label: 'Open Wearables → Connect Device' },
   { num: 3, label: 'Authorize health data access' },
   { num: 4, label: 'Set emergency contacts' },
@@ -185,7 +185,7 @@ export default function WearablesPage() {
               color: 'rgba(255,255,255,0.5)', textDecoration: 'none',
               fontSize: '0.9rem', display: 'inline-flex', alignItems: 'center', gap: 6,
             }}>
-              ← Back to Gravity Home
+              ← Back to KVL Track Home
             </Link>
           </motion.div>
 
@@ -239,7 +239,7 @@ export default function WearablesPage() {
               maxWidth: 620, margin: '0 auto 44px', lineHeight: 1.75,
             }}
           >
-            Connect every wearable device to Gravity's safety ecosystem for 360° family protection. From Apple Watch to Garmin — one app, every wrist.
+            Connect every wearable device to KVL Track's safety ecosystem for 360° family protection. From Apple Watch to Garmin — one app, every wrist.
           </motion.p>
 
           <motion.div
@@ -300,7 +300,7 @@ export default function WearablesPage() {
               Works With Every Major Wearable
             </h2>
             <p style={{ color: 'var(--text-muted)', maxWidth: 580, margin: '0 auto', lineHeight: 1.75 }}>
-              Whatever device your family wears, Gravity connects to it. One unified safety platform — five device ecosystems, all speaking the same language.
+              Whatever device your family wears, KVL Track connects to it. One unified safety platform — five device ecosystems, all speaking the same language.
             </p>
           </motion.div>
 
@@ -402,7 +402,7 @@ export default function WearablesPage() {
                 Fall Detection &amp; Auto-SOS
               </h3>
               <p style={{ color: 'var(--text-muted)', lineHeight: 1.75, marginBottom: 20 }}>
-                If your elderly parent falls and doesn't respond within 30 seconds, Gravity automatically contacts emergency services with their exact location. No buttons to press. No panic. Just immediate help.
+                If your elderly parent falls and doesn't respond within 30 seconds, KVL Track automatically contacts emergency services with their exact location. No buttons to press. No panic. Just immediate help.
               </p>
               <div style={{
                 background: 'var(--bg-surface)', border: '1px solid var(--border)',
@@ -606,7 +606,7 @@ export default function WearablesPage() {
                 Wrist SOS
               </h3>
               <p style={{ color: 'var(--text-muted)', lineHeight: 1.75, marginBottom: 16 }}>
-                Press and hold the SOS button on your wrist for 3 seconds — Gravity instantly alerts all family members and emergency services with your exact GPS location and a live tracking link.
+                Press and hold the SOS button on your wrist for 3 seconds — KVL Track instantly alerts all family members and emergency services with your exact GPS location and a live tracking link.
               </p>
               <p style={{ color: 'var(--text-muted)', lineHeight: 1.75 }}>
                 Designed for elderly parents, lone workers, or anyone in an unfamiliar situation. Help is one press away — no fumbling with a phone, no unlocking screens.
@@ -679,7 +679,7 @@ export default function WearablesPage() {
               Connect in 5 Minutes
             </h2>
             <p style={{ color: 'var(--text-muted)', maxWidth: 480, margin: '0 auto', lineHeight: 1.7 }}>
-              Simple setup, powerful protection. Your family's wearables will be linked to Gravity's safety network in minutes.
+              Simple setup, powerful protection. Your family's wearables will be linked to KVL Track's safety network in minutes.
             </p>
           </motion.div>
 
@@ -732,7 +732,7 @@ export default function WearablesPage() {
               Perfect for Aging Parents Who Live Alone
             </h2>
             <p style={{ color: 'var(--text-muted)', maxWidth: 600, margin: '0 auto 32px', lineHeight: 1.75 }}>
-              Give your parents independence without worry. Gravity's wearable integrations provide gentle, unobtrusive monitoring that respects their dignity while keeping the whole family informed.
+              Give your parents independence without worry. KVL Track's wearable integrations provide gentle, unobtrusive monitoring that respects their dignity while keeping the whole family informed.
             </p>
             <div style={{
               display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
@@ -812,7 +812,7 @@ export default function WearablesPage() {
             </Link>
           </div>
           <Link href="/" style={{ color: 'rgba(255,255,255,0.45)', fontSize: '0.88rem', textDecoration: 'none' }}>
-            ← Back to Gravity Home
+            ← Back to KVL Track Home
           </Link>
         </div>
       </section>

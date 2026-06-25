@@ -44,7 +44,7 @@ const POSTS = [
     title: 'Geofencing 101: How Virtual Boundaries Keep Your Kids Safer',
     category: 'Safety' as Category,
     excerpt:
-      `Geofencing transforms an invisible digital perimeter into a powerful parenting tool. When your child steps beyond a set boundary — school gates, the neighbourhood park, a friend\'s building — you receive an instant notification. No constant checking, no frantic calls. This guide walks through how to configure smart zones inside Gravity, understand the difference between entry and exit alerts, and avoid alert fatigue by nesting zones intelligently. Real-world examples from Indian urban and suburban families show exactly how this one feature can replace hours of daily anxiety.`,
+      `Geofencing transforms an invisible digital perimeter into a powerful parenting tool. When your child steps beyond a set boundary — school gates, the neighbourhood park, a friend\'s building — you receive an instant notification. No constant checking, no frantic calls. This guide walks through how to configure smart zones inside KVL Track, understand the difference between entry and exit alerts, and avoid alert fatigue by nesting zones intelligently. Real-world examples from Indian urban and suburban families show exactly how this one feature can replace hours of daily anxiety.`,
     author: 'Priya Sharma',
     date: 'June 2, 2025',
     readTime: '5 min read',
@@ -55,7 +55,7 @@ const POSTS = [
     title: 'The Psychology of Family Safety: Why Anxiety Goes Down When Everyone Is Trackable',
     category: 'Parenting' as Category,
     excerpt:
-      'Counter-intuitively, knowing where your loved ones are does not create helicopter parenting — it enables healthy independence. A 2024 study from the University of Delhi found parents who used real-time family location apps reported 34% lower anxiety scores on the State-Trait Anxiety Inventory compared to non-users. When the mental load of uncertainty is lifted, parents grant children more freedom, not less. This article unpacks the neuroscience behind the safety paradox and offers practical tips for using Gravity without crossing into surveillance territory.',
+      'Counter-intuitively, knowing where your loved ones are does not create helicopter parenting — it enables healthy independence. A 2024 study from the University of Delhi found parents who used real-time family location apps reported 34% lower anxiety scores on the State-Trait Anxiety Inventory compared to non-users. When the mental load of uncertainty is lifted, parents grant children more freedom, not less. This article unpacks the neuroscience behind the safety paradox and offers practical tips for using KVL Track without crossing into surveillance territory.',
     author: 'Dr. Ananya Mehta',
     date: 'May 28, 2025',
     readTime: '8 min read',
@@ -66,7 +66,7 @@ const POSTS = [
     title: 'GPS vs Cell Tower Tracking: What Every Parent Should Know',
     category: 'Technology' as Category,
     excerpt:
-      `Not all location data is created equal. GPS delivers sub-5-metre accuracy but drains battery and struggles indoors. Cell tower triangulation is battery-friendly and works inside malls and metro stations, but accuracy can vary between 50 and 300 metres. Wi-Fi positioning bridges the gap in dense urban environments. Gravity\'s hybrid engine fuses all three signals to always deliver the best available fix — switching seamlessly as your family members move through different environments. Learn exactly how each technology works and why the hybrid approach matters for Indian cities.`,
+      `Not all location data is created equal. GPS delivers sub-5-metre accuracy but drains battery and struggles indoors. Cell tower triangulation is battery-friendly and works inside malls and metro stations, but accuracy can vary between 50 and 300 metres. Wi-Fi positioning bridges the gap in dense urban environments. KVL Track\'s hybrid engine fuses all three signals to always deliver the best available fix — switching seamlessly as your family members move through different environments. Learn exactly how each technology works and why the hybrid approach matters for Indian cities.`,
     author: 'Rohan Iyer',
     date: 'May 20, 2025',
     readTime: '6 min read',
@@ -77,7 +77,7 @@ const POSTS = [
     title: 'Setting Up Emergency SOS: A Complete Guide for Indian Families',
     category: 'Safety' as Category,
     excerpt:
-      'India saw over 3.7 lakh road accidents in 2023 alone. When seconds matter, a single SOS press in Gravity broadcasts your exact GPS coordinates, device battery level, and a live location link to every member of your family circle simultaneously. This step-by-step guide covers adding emergency contacts, customising alert sounds, enabling auto-SOS on crash detection, and the best practices for ensuring elderly parents know how to trigger help even under extreme stress. Screenshots included for every configuration screen.',
+      'India saw over 3.7 lakh road accidents in 2023 alone. When seconds matter, a single SOS press in KVL Track broadcasts your exact GPS coordinates, device battery level, and a live location link to every member of your family circle simultaneously. This step-by-step guide covers adding emergency contacts, customising alert sounds, enabling auto-SOS on crash detection, and the best practices for ensuring elderly parents know how to trigger help even under extreme stress. Screenshots included for every configuration screen.',
     author: 'Priya Sharma',
     date: 'May 14, 2025',
     readTime: '4 min read',
@@ -85,10 +85,10 @@ const POSTS = [
   },
   {
     id: 5,
-    title: 'How Gravity Protects Your Privacy While Keeping Families Safe',
+    title: 'How KVL Track Protects Your Privacy While Keeping Families Safe',
     category: 'Company' as Category,
     excerpt:
-      'Privacy and safety are not opposites — they are partners. Gravity is built on a consent-first model: nobody is tracked without explicit opt-in, every circle member sees exactly who can view their location, and location history is encrypted at rest and in transit using AES-256. We never sell your data to advertisers, and our servers are hosted in ISO 27001-certified data centres in India to comply with the DPDP Act 2023. This deep dive into our architecture explains how we balance meaningful family visibility with world-class personal privacy protection.',
+      'Privacy and safety are not opposites — they are partners. KVL Track is built on a consent-first model: nobody is tracked without explicit opt-in, every circle member sees exactly who can view their location, and location history is encrypted at rest and in transit using AES-256. We never sell your data to advertisers, and our servers are hosted in ISO 27001-certified data centres in India to comply with the DPDP Act 2023. This deep dive into our architecture explains how we balance meaningful family visibility with world-class personal privacy protection.',
     author: 'Vikram Nair',
     date: 'May 7, 2025',
     readTime: '5 min read',
@@ -99,7 +99,7 @@ const POSTS = [
     title: 'Senior Care at a Distance: How Tech Is Helping Adult Children Stay Connected',
     category: 'Health' as Category,
     excerpt:
-      `Forty per cent of India\'s elderly population lives apart from their adult children, and that number is climbing as urban migration accelerates. Gravity\'s Elder Circle feature gives ageing parents a dignified way to share their location, receive wellness check-ins, and summon help in a medical emergency — all without the stigma of being "monitored." Adult children in Bangalore can see that their parent in Varanasi completed their morning walk, all from a glance at a single screen. This article explores how families across India are using Gravity to bridge the distance without eroding independence.`,
+      `Forty per cent of India\'s elderly population lives apart from their adult children, and that number is climbing as urban migration accelerates. KVL Track\'s Elder Circle feature gives ageing parents a dignified way to share their location, receive wellness check-ins, and summon help in a medical emergency — all without the stigma of being "monitored." Adult children in Bangalore can see that their parent in Varanasi completed their morning walk, all from a glance at a single screen. This article explores how families across India are using KVL Track to bridge the distance without eroding independence.`,
     author: 'Dr. Ananya Mehta',
     date: 'April 30, 2025',
     readTime: '7 min read',
@@ -175,7 +175,7 @@ export default function BlogPage() {
               }
             >
               <ArrowLeft size={14} />
-              Return to Gravity Home
+              Return to KVL Track Home
             </Link>
           </div>
         </div>
@@ -226,7 +226,7 @@ export default function BlogPage() {
               }}
             >
               The{' '}
-              <span className="gradient-text-gold">Gravity Journal</span>
+              <span className="gradient-text-gold">KVL Track Journal</span>
             </h1>
 
             <p
@@ -395,7 +395,7 @@ export default function BlogPage() {
                     }}
                   >
                     Real-time location sharing reframes the equation. Instead of 12 check-in calls, a
-                    parent gets one glance at Gravity`s live map and knows their teenager arrived safely`,
+                    parent gets one glance at KVL Track`s live map and knows their teenager arrived safely`,
                     at coaching class. Studies from Stanford`s Human-Computer Interaction Group found`,
                     that passive location awareness reduces the urge to make check-in calls by over 60%,
                     while simultaneously increasing the child`s sense of autonomy. The data is clear:`,
@@ -436,7 +436,7 @@ export default function BlogPage() {
                       <p
                         style={{ fontSize: 12, color: 'var(--text-muted)', margin: 0 }}
                       >
-                        Head of Research, Gravity
+                        Head of Research, KVL Track
                       </p>
                     </div>
                     <Link
@@ -725,9 +725,9 @@ export default function BlogPage() {
                   fontSize: '0.97rem',
                 }}
               >
-                Get the latest family safety tips, Gravity product updates, and expert parenting
+                Get the latest family safety tips, KVL Track product updates, and expert parenting
                 insights delivered to your inbox every two weeks. Join 28,000+ families who read
-                the Gravity Journal.
+                the KVL Track Journal.
               </p>
 
               <form
@@ -807,7 +807,7 @@ export default function BlogPage() {
                 marginBottom: 14,
               }}
             >
-              Put Gravity to Work for Your Family
+              Put KVL Track to Work for Your Family
             </h2>
             <p
               style={{
@@ -818,7 +818,7 @@ export default function BlogPage() {
               }}
             >
               Everything you have read here — geofencing, live tracking, SOS, elder care — is
-              available in the Gravity app, free to download today.
+              available in the KVL Track app, free to download today.
             </p>
             <Link
               href="/"
@@ -835,7 +835,7 @@ export default function BlogPage() {
                 textDecoration: 'none',
               }}
             >
-              Download Gravity <ArrowRight size={16} />
+              Download KVL Track <ArrowRight size={16} />
             </Link>
           </FadeIn>
         </section>

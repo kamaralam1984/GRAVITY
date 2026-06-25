@@ -129,7 +129,7 @@ export default function MarketingPage() {
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 24, maxWidth: 1300 }}>
       <Link href="/" style={{ color: "var(--text-muted)", fontSize: 13, textDecoration: "none", display: "inline-flex", alignItems: "center", gap: 6 }}>
-        ← Back to Gravity Home
+        ← Back to KVL Track Home
       </Link>
 
       {/* Header */}

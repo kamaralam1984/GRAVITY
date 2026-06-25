@@ -7,9 +7,9 @@ import JsonLd from '@/components/seo/JsonLd'
 // ─── Metadata ─────────────────────────────────────────────────────────────────
 
 export const metadata: Metadata = {
-  title: 'Family Safety App in India | Cities We Serve — Gravity',
+  title: 'Family Safety App in India | Cities We Serve — KVL Track',
   description:
-    'Gravity family safety app is trusted by families in 30+ Indian cities. Find your city for local GPS tracking, SOS alerts, and smart geofencing.',
+    'KVL Track family safety app is trusted by families in 30+ Indian cities. Find your city for local GPS tracking, SOS alerts, and smart geofencing.',
   keywords: [
     'family safety app india',
     'GPS tracker india',
@@ -18,17 +18,17 @@ export const metadata: Metadata = {
     'best family safety app india',
   ],
   openGraph: {
-    title: 'Family Safety App in India | Cities We Serve — Gravity',
+    title: 'Family Safety App in India | Cities We Serve — KVL Track',
     description:
-      'Gravity family safety app is trusted by families in 30+ Indian cities. Find your city for local GPS tracking, SOS alerts, and smart geofencing.',
+      'KVL Track family safety app is trusted by families in 30+ Indian cities. Find your city for local GPS tracking, SOS alerts, and smart geofencing.',
     url: 'https://gravity.trackalways.com/locations',
-    siteName: 'Gravity by Trackalways',
+    siteName: 'KVL Track by Trackalways',
     images: [
       {
         url: 'https://gravity.trackalways.com/og-image.svg',
         width: 1200,
         height: 630,
-        alt: 'Gravity Family Safety App — Cities in India',
+        alt: 'KVL Track Family Safety App — Cities in India',
       },
     ],
     locale: 'en_IN',
@@ -36,7 +36,7 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Family Safety App in India | Cities We Serve — Gravity',
+    title: 'Family Safety App in India | Cities We Serve — KVL Track',
     description:
       'Real-time GPS tracking, SOS alerts & geofencing for families in 30+ Indian cities.',
     images: ['https://gravity.trackalways.com/og-image.svg'],
@@ -180,9 +180,9 @@ const breadcrumbSchema = {
 const itemListSchema = {
   '@context': 'https://schema.org',
   '@type': 'ItemList',
-  name: 'Gravity Family Safety App — Indian Cities',
+  name: 'KVL Track Family Safety App — Indian Cities',
   description:
-    'Cities in India where Gravity family safety app provides GPS tracking, SOS alerts, and geofencing.',
+    'Cities in India where KVL Track family safety app provides GPS tracking, SOS alerts, and geofencing.',
   numberOfItems: CITIES.length,
   itemListElement: CITIES.map((city, i) => ({
     '@type': 'ListItem',
@@ -239,12 +239,12 @@ export default function LocationsIndexPage() {
           </h1>
 
           <p className="text-lg sm:text-xl text-gray-300 max-w-2xl mx-auto mb-6 leading-relaxed">
-            Gravity is India&apos;s family safety platform — real-time GPS
+            KVL Track is India&apos;s family safety platform — real-time GPS
             tracking, one-tap SOS, and smart geofencing trusted by 50,000+
             families across the country.
           </p>
           <p className="text-base text-gray-400 max-w-xl mx-auto mb-10">
-            Select your city below to see how Gravity works in your local area,
+            Select your city below to see how KVL Track works in your local area,
             with features and context built specifically for your city.
           </p>
 
@@ -295,11 +295,11 @@ export default function LocationsIndexPage() {
         <div className="max-w-6xl mx-auto">
           <div className="text-center mb-12">
             <h2 className="text-3xl sm:text-4xl font-extrabold text-white mb-4">
-              Find Gravity in Your City
+              Find KVL Track in Your City
             </h2>
             <p className="text-gray-400 max-w-xl mx-auto text-base">
               Each city page includes local context, city-specific features, and
-              tips for getting the most out of Gravity where you live.
+              tips for getting the most out of KVL Track where you live.
             </p>
           </div>
 
@@ -347,10 +347,10 @@ export default function LocationsIndexPage() {
               One App, Every Indian City
             </h2>
             <p className="text-gray-400 max-w-2xl mx-auto text-base leading-relaxed">
-              Gravity is built from the ground up for Indian conditions — variable
+              KVL Track is built from the ground up for Indian conditions — variable
               network quality, mixed device types, multigenerational households,
               and the unique commute patterns of Indian cities. Whether
-              you&apos;re in a Tier-1 metro or a fast-growing Tier-2 city, Gravity
+              you&apos;re in a Tier-1 metro or a fast-growing Tier-2 city, KVL Track
               works reliably.
             </p>
           </div>
@@ -360,7 +360,7 @@ export default function LocationsIndexPage() {
               {
                 icon: '📶',
                 title: 'Works on 2G, 3G & 4G',
-                body: 'Gravity adapts its data usage to your network conditions — no dropped tracking in low-signal areas.',
+                body: 'KVL Track adapts its data usage to your network conditions — no dropped tracking in low-signal areas.',
               },
               {
                 icon: '🔋',

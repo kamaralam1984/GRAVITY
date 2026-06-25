@@ -37,7 +37,7 @@ const METRICS: MetricCard[] = [
     percentage: 67,
     sign: '-',
     label: 'Emergency Response Time',
-    description: 'SOS alerts reach emergency contacts 3x faster with Gravity AI routing.',
+    description: 'SOS alerts reach emergency contacts 3x faster with KVL Track AI routing.',
     barColor: '#EF4444',
     gradientFrom: '#EF4444',
     gradientTo: '#10B981',
@@ -184,7 +184,7 @@ function MetricCardItem({ metric, index, inView, isDark }: { metric: MetricCard;
             fontFamily: "'Inter', sans-serif",
           }}
         >
-          vs. families without Gravity
+          vs. families without KVL Track
         </span>
       </div>
     </motion.div>
@@ -322,7 +322,7 @@ export default function ROISection() {
               className="text-lg font-medium italic leading-relaxed"
               style={{ color: 'var(--text-primary)', fontFamily: "'Plus Jakarta Sans', sans-serif" }}
             >
-              Families using Gravity respond to emergencies{' '}
+              Families using KVL Track respond to emergencies{' '}
               <span className="gradient-text-gold font-bold not-italic">3x faster</span>
               {' '}and report 94% higher confidence in their family's safety.
             </p>
@@ -331,7 +331,7 @@ export default function ROISection() {
               className="mt-4 text-sm font-semibold"
               style={{ color: 'var(--text-muted)', fontFamily: "'Inter', sans-serif" }}
             >
-              — Gravity Research, 2024 · Study of 50,000+ families across 127 countries
+              — KVL Track Research, 2024 · Study of 50,000+ families across 127 countries
             </p>
           </div>
         </motion.div>

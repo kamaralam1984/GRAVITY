@@ -1,7 +1,7 @@
 import { ImageResponse } from 'next/og'
 
 export const runtime = 'edge'
-export const alt = 'Gravity — What Pulls You Together'
+export const alt = 'KVL Track — What Pulls You Together'
 export const size = { width: 1200, height: 630 }
 export const contentType = 'image/png'
 
@@ -46,7 +46,7 @@ export default async function Image() {
             marginBottom: 16,
           }}
         >
-          GRAVITY
+          KVL TRACK
         </div>
         <div style={{ fontSize: 24, color: '#D4A853', marginBottom: 12 }}>
           What Pulls You Together

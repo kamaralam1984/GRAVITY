@@ -137,7 +137,7 @@ const FAMILY_SCENARIOS: FamilyScenario[] = [
     emoji: "👩‍💼",
     title: "Working Parents",
     subtitle: "Both parents at the office",
-    description: "Get a notification the moment your child reaches home from school. No more anxious calls during back-to-back meetings — Gravity handles the update for you.",
+    description: "Get a notification the moment your child reaches home from school. No more anxious calls during back-to-back meetings — KVL Track handles the update for you.",
   },
   {
     emoji: "👴",
@@ -168,11 +168,11 @@ const FAMILY_SCENARIOS: FamilyScenario[] = [
 const FAQ_ITEMS: FAQItem[] = [
   {
     question: "How accurate are the geofence zones?",
-    answer: "Gravity uses a combination of GPS, Wi-Fi triangulation, and cell tower data to deliver zone accuracy within 50 to 100 metres in most urban areas. In open outdoor spaces accuracy is typically within 10 to 30 metres. The minimum zone radius you can set is 100 metres to account for natural GPS drift.",
+    answer: "KVL Track uses a combination of GPS, Wi-Fi triangulation, and cell tower data to deliver zone accuracy within 50 to 100 metres in most urban areas. In open outdoor spaces accuracy is typically within 10 to 30 metres. The minimum zone radius you can set is 100 metres to account for natural GPS drift.",
   },
   {
     question: "How much battery does geofencing use?",
-    answer: "Gravity is engineered for minimal battery impact. The geofencing engine uses low-power location APIs built into iOS and Android, which draw significantly less power than continuous GPS tracking. Most users report less than 3 to 5 percent additional daily battery usage with geofencing active.",
+    answer: "KVL Track is engineered for minimal battery impact. The geofencing engine uses low-power location APIs built into iOS and Android, which draw significantly less power than continuous GPS tracking. Most users report less than 3 to 5 percent additional daily battery usage with geofencing active.",
   },
   {
     question: "Can I receive alerts for multiple family members at once?",
@@ -180,7 +180,7 @@ const FAQ_ITEMS: FAQItem[] = [
   },
   {
     question: "What happens if the internet connection is lost?",
-    answer: "The Gravity app caches zone data on the device. Location events are recorded locally and synced the moment connectivity is restored. You will receive the alert with the correct timestamp even if there was a brief outage. For critical safety scenarios we recommend ensuring a stable data connection where possible.",
+    answer: "The KVL Track app caches zone data on the device. Location events are recorded locally and synced the moment connectivity is restored. You will receive the alert with the correct timestamp even if there was a brief outage. For critical safety scenarios we recommend ensuring a stable data connection where possible.",
   },
   {
     question: "Can I set active hours for a geofence zone?",
@@ -192,7 +192,7 @@ const STEPS: Step[] = [
   {
     number: "01",
     title: "Open the Zones tab",
-    description: "Launch Gravity and tap the Zones icon in the bottom navigation. You will see a map view with any existing zones overlaid as coloured circles.",
+    description: "Launch KVL Track and tap the Zones icon in the bottom navigation. You will see a map view with any existing zones overlaid as coloured circles.",
   },
   {
     number: "02",
@@ -882,8 +882,8 @@ export default function GeofencingPage() {
                 margin: "0 0 20px",
               }}
             >
-              With Gravity, setting up a geofence takes under a minute.
-              There is no complicated hardware to install. The Gravity app
+              With KVL Track, setting up a geofence takes under a minute.
+              There is no complicated hardware to install. The KVL Track app
               on your family member's phone does all the work in the
               background, silently monitoring their position relative to the
               zones you have created and pinging you the instant something
@@ -931,7 +931,7 @@ export default function GeofencingPage() {
                 lineHeight: 1.7,
               }}
             >
-              Gravity gives you purpose-built zones for everyday family life,
+              KVL Track gives you purpose-built zones for everyday family life,
               plus the freedom to create anything custom.
             </p>
           </div>
@@ -1133,7 +1133,7 @@ export default function GeofencingPage() {
                 margin: "0 auto",
               }}
             >
-              Gravity geofencing fits into the everyday rhythms of Indian
+              KVL Track geofencing fits into the everyday rhythms of Indian
               families across every life stage.
             </p>
           </div>
@@ -1255,7 +1255,7 @@ export default function GeofencingPage() {
           >
             Set up your first zone in under a minute. No credit card needed.
             Works across Android and iOS. Join thousands of Indian families
-            who use Gravity to stay connected with the people they love.
+            who use KVL Track to stay connected with the people they love.
           </p>
 
           <div

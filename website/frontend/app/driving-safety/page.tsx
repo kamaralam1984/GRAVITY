@@ -463,7 +463,7 @@ function YourDrivingReport() {
             borderRadius: 18, color: 'rgba(255,255,255,0.35)', fontSize: 14,
           }}>
             <Users size={28} style={{ margin: '0 auto 12px', opacity: 0.4 }} />
-            No driving data yet. Start tracking your journeys in the Gravity app.
+            No driving data yet. Start tracking your journeys in the KVL Track app.
           </div>
         )}
       </div>
@@ -563,7 +563,7 @@ export default function DrivingSafetyPage() {
             transition={{ delay: 0.3 }}
             style={{ fontSize: 'clamp(2.4rem, 6vw, 4rem)', fontWeight: 900, lineHeight: 1.1, letterSpacing: '-0.03em', marginBottom: 20 }}
           >
-            Gravity Driving Safety —{' '}
+            KVL Track Driving Safety —{' '}
             <span style={{ background: 'linear-gradient(135deg, #3B82F6, #06B6D4)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
               AI-Powered Road Protection
             </span>
@@ -659,7 +659,7 @@ export default function DrivingSafetyPage() {
               <span style={{ color: '#10B981', fontWeight: 700, fontSize: 15 }}>SAFE DRIVER</span>
             </div>
             <p style={{ color: 'rgba(255,255,255,0.5)', fontSize: 14, lineHeight: 1.6 }}>
-              Your driving is in the <strong style={{ color: '#10B981' }}>top 15%</strong> of all Gravity users
+              Your driving is in the <strong style={{ color: '#10B981' }}>top 15%</strong> of all KVL Track users
             </p>
           </motion.div>
 
@@ -1084,7 +1084,7 @@ export default function DrivingSafetyPage() {
                 </div>
                 <div>
                   <p style={{ fontSize: 16, fontWeight: 700, color: '#10B981' }}>Zero Accidents</p>
-                  <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.45)' }}>Since joining Gravity</p>
+                  <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.45)' }}>Since joining KVL Track</p>
                 </div>
                 <Shield size={20} style={{ color: '#10B981', marginLeft: 'auto' }} />
               </div>

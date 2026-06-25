@@ -66,13 +66,13 @@ const FEATURES = [
   {
     icon: <Phone size={24} />,
     title: '112/911 Integration',
-    description: 'With one additional confirmation tap, Gravity can automatically dial emergency services (112 in India, 999 in UK, 911 in USA) and share your GPS coordinates with the call.',
+    description: 'With one additional confirmation tap, KVL Track can automatically dial emergency services (112 in India, 999 in UK, 911 in USA) and share your GPS coordinates with the call.',
     color: '#8B5CF6',
   },
   {
     icon: <Mic size={24} />,
     title: 'Audio Recording',
-    description: 'When SOS is activated, Gravity silently begins recording ambient audio from your microphone. The recording is securely stored and shared with emergency contacts for situational awareness.',
+    description: 'When SOS is activated, KVL Track silently begins recording ambient audio from your microphone. The recording is securely stored and shared with emergency contacts for situational awareness.',
     color: '#F59E0B',
   },
   {
@@ -85,24 +85,24 @@ const FEATURES = [
 
 const FAQS = [
   {
-    q: 'How does Gravity SOS work?',
-    a: 'Gravity SOS is triggered by pressing and holding the red SOS button for 2 seconds — accessible from a lock screen widget, the app home screen, or a dedicated hardware button shortcut. The trigger captures your GPS coordinates, starts audio recording, and simultaneously sends push notifications, SMS messages, and in-app alerts to all your designated emergency contacts. Each contact receives a live tracking link that shows your real-time location.',
+    q: 'How does KVL Track SOS work?',
+    a: 'KVL Track SOS is triggered by pressing and holding the red SOS button for 2 seconds — accessible from a lock screen widget, the app home screen, or a dedicated hardware button shortcut. The trigger captures your GPS coordinates, starts audio recording, and simultaneously sends push notifications, SMS messages, and in-app alerts to all your designated emergency contacts. Each contact receives a live tracking link that shows your real-time location.',
   },
   {
     q: 'What happens when I press SOS?',
-    a: "Within 3 seconds of triggering SOS: (1) GPS location is captured and shared. (2) All emergency contacts receive push notifications and SMS. (3) A live tracking link is activated. (4) Audio recording begins. (5) An SOS alert log is created with timestamp and location. If no contact responds within 5 minutes, Gravity can auto-escalate to emergency services if you have enabled that option in settings.",
+    a: "Within 3 seconds of triggering SOS: (1) GPS location is captured and shared. (2) All emergency contacts receive push notifications and SMS. (3) A live tracking link is activated. (4) Audio recording begins. (5) An SOS alert log is created with timestamp and location. If no contact responds within 5 minutes, KVL Track can auto-escalate to emergency services if you have enabled that option in settings.",
   },
   {
     q: 'Can I test the SOS without alerting contacts?',
-    a: 'Yes. Gravity has a dedicated Practice Mode in settings. In Practice Mode, triggering SOS goes through the full UI sequence — countdown, confirmation screen, alert screen — but no actual alerts are sent to contacts or emergency services. We encourage all users to practice at least once so the sequence feels familiar in a real emergency.',
+    a: 'Yes. KVL Track has a dedicated Practice Mode in settings. In Practice Mode, triggering SOS goes through the full UI sequence — countdown, confirmation screen, alert screen — but no actual alerts are sent to contacts or emergency services. We encourage all users to practice at least once so the sequence feels familiar in a real emergency.',
   },
   {
     q: 'Does SOS work without internet?',
-    a: 'If mobile data is unavailable, Gravity automatically falls back to SMS for emergency contact alerts. The SMS includes your last known GPS coordinates and a plain-text message. While the live tracking link will not update without data, your contacts still receive your location at the time of the SOS trigger. For areas with no signal at all, we recommend pairing Gravity with a Trackalways Titan wearable which has its own emergency satellite connectivity.',
+    a: 'If mobile data is unavailable, KVL Track automatically falls back to SMS for emergency contact alerts. The SMS includes your last known GPS coordinates and a plain-text message. While the live tracking link will not update without data, your contacts still receive your location at the time of the SOS trigger. For areas with no signal at all, we recommend pairing KVL Track with a Trackalways Titan wearable which has its own emergency satellite connectivity.',
   },
   {
     q: 'How many contacts can receive SOS alerts?',
-    a: 'Gravity free plan supports up to 3 emergency contacts. The Family plan supports up to 10 contacts. The Family Plus plan supports unlimited contacts with custom escalation sequences — for example, first alert to spouse, then parents, then friends, then a security service — with acknowledgment-based escalation.',
+    a: 'KVL Track free plan supports up to 3 emergency contacts. The Family plan supports up to 10 contacts. The Family Plus plan supports unlimited contacts with custom escalation sequences — for example, first alert to spouse, then parents, then friends, then a security service — with acknowledgment-based escalation.',
   },
 ]
 
@@ -211,15 +211,15 @@ export default function SOSEmergencyAppPage() {
           </div>
         </Section>
 
-        {/* Why Gravity */}
+        {/* Why KVL Track */}
         <Section bg="var(--bg)">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <motion.div variants={fadeUp} style={{ textAlign: 'center', marginBottom: 48 }}>
               <h2 style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontSize: 'clamp(1.8rem, 4vw, 2.6rem)', fontWeight: 800, color: 'var(--text-primary)', marginBottom: 16 }}>
-                Why Gravity Beats Every Other Emergency App
+                Why KVL Track Beats Every Other Emergency App
               </h2>
               <p style={{ fontFamily: "'Inter', sans-serif", fontSize: 16, color: 'var(--text-secondary)', maxWidth: 580, margin: '0 auto', lineHeight: 1.7 }}>
-                Most SOS apps only send a text message. Gravity activates a full emergency response system.
+                Most SOS apps only send a text message. KVL Track activates a full emergency response system.
               </p>
             </motion.div>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: 20, maxWidth: 1000, margin: '0 auto' }}>
@@ -254,7 +254,7 @@ export default function SOSEmergencyAppPage() {
                   name: 'Meera Subramaniam', role: 'Marketing professional, Chennai', avatar: 'MS', color: '#EF4444',
                 },
                 {
-                  quote: 'My 70-year-old mother fell in the bathroom. The fall detection on Gravity triggered SOS automatically before she could even reach her phone. The response was immediate.',
+                  quote: 'My 70-year-old mother fell in the bathroom. The fall detection on KVL Track triggered SOS automatically before she could even reach her phone. The response was immediate.',
                   name: 'Karthik Nair', role: 'Doctor, Kochi', avatar: 'KN', color: '#4B80F0',
                 },
               ].map(t => (

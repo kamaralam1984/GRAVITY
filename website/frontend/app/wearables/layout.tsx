@@ -1,7 +1,7 @@
 export const metadata = {
-  title: 'Gravity Wearable Ecosystem — Apple Watch, Fitbit, Samsung Integration',
+  title: 'KVL Track Wearable Ecosystem — Apple Watch, Fitbit, Samsung Integration',
   description:
-    'Connect all your family wearables to Gravity. Health monitoring, fall detection, SOS from your wrist — always protected.',
+    'Connect all your family wearables to KVL Track. Health monitoring, fall detection, SOS from your wrist — always protected.',
   keywords: [
     'family safety wearable',
     'Apple Watch safety',

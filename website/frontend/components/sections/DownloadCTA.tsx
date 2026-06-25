@@ -375,7 +375,7 @@ export default function DownloadCTA() {
           className="mt-6 text-lg max-w-lg mx-auto leading-relaxed"
           style={{ color: 'rgba(255,255,255,0.65)' }}
         >
-          Join 50,000+ families already protected by Gravity.
+          Join 50,000+ families already protected by KVL Track.
         </motion.p>
 
         {/* Store buttons */}

@@ -702,7 +702,7 @@ export default function SignupPage() {
         key: orderData.key_id,
         amount: orderData.amount,
         currency: orderData.currency || 'INR',
-        name: 'GRAVITY Family Safety',
+        name: 'KVL TRACK Family Safety',
         description: `${plan.name} Plan — Monthly`,
         order_id: orderData.order_id,
         prefill: { name, email, contact: phone ? `+91${phone}` : '' },
@@ -819,7 +819,7 @@ export default function SignupPage() {
           fontFamily: 'Plus Jakarta Sans, sans-serif', fontWeight: 800, fontSize: 20,
           background: 'linear-gradient(135deg,#D4A853,#F5C842)', WebkitBackgroundClip: 'text',
           WebkitTextFillColor: 'transparent',
-        }}>GRAVITY</span>
+        }}>KVL TRACK</span>
       </motion.div>
 
       {/* Main card */}
@@ -891,7 +891,7 @@ export default function SignupPage() {
                   </div>
                   <div style={{ flex: 1 }}>
                     <div style={{ fontSize: 15, fontWeight: 700, color: '#fff', marginBottom: 3 }}>I&apos;m a Child / Teen</div>
-                    <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.4)', lineHeight: 1.4 }}>Join your family&apos;s Gravity circle</div>
+                    <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.4)', lineHeight: 1.4 }}>Join your family&apos;s KVL Track circle</div>
                   </div>
                   <ChevronRight size={18} color="rgba(139,92,246,0.6)" />
                 </motion.button>
@@ -1295,7 +1295,7 @@ export default function SignupPage() {
                   </motion.button>
 
                   <p style={{ textAlign: 'center', fontSize: 12, color: 'rgba(255,255,255,0.25)', margin: 0 }}>
-                    Get the invite code from your parent&apos;s Gravity app
+                    Get the invite code from your parent&apos;s KVL Track app
                   </p>
                 </div>
               ) : (
@@ -1577,7 +1577,7 @@ export default function SignupPage() {
                   fontFamily: 'Plus Jakarta Sans, sans-serif', fontWeight: 800,
                 }}
               >
-                Welcome to GRAVITY!
+                Welcome to KVL TRACK!
               </motion.h2>
 
               <motion.p

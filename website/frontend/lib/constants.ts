@@ -1,5 +1,5 @@
 /* ─────────────────────────────────────────────────────────────
-   Trackalways Gravity — Shared Constants
+   Trackalways KVL Track — Shared Constants
    ───────────────────────────────────────────────────────────── */
 
 /* ── Nav Links ──────────────────────────────────────────────── */
@@ -386,7 +386,7 @@ export const TESTIMONIALS: Testimonial[] = [
     initials: 'AO',
     rating: 5,
     quote:
-      'Gravity changed everything. My kids walk home from school and I can see every step. The geofence alerts me the second they arrive — I no longer hold my breath until I get a text. It\'s the kind of peace of mind I didn\'t know I needed.',
+      'KVL Track changed everything. My kids walk home from school and I can see every step. The geofence alerts me the second they arrive — I no longer hold my breath until I get a text. It\'s the kind of peace of mind I didn\'t know I needed.',
   },
   {
     name: 'Rohan Mehta',
@@ -396,7 +396,7 @@ export const TESTIMONIALS: Testimonial[] = [
     initials: 'RM',
     rating: 5,
     quote:
-      'My father lives alone in a different city. Fall detection and the routine monitoring have let him keep his independence while giving our family real assurance. He fell once — Gravity\'s SOS fired before any of us even knew. That alert may have saved his life.',
+      'My father lives alone in a different city. Fall detection and the routine monitoring have let him keep his independence while giving our family real assurance. He fell once — KVL Track\'s SOS fired before any of us even knew. That alert may have saved his life.',
   },
   {
     name: 'Sofia & James',
@@ -502,7 +502,7 @@ export const ECOSYSTEM: EcosystemProduct[] = [
   },
   {
     id: 'gravity',
-    name: 'Gravity',
+    name: 'KVL Track',
     tagline: 'The family safety super-app',
     icon: 'Globe',
     color: 'from-blue-500 to-violet-600',

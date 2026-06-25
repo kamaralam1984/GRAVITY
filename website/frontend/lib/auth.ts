@@ -1,4 +1,4 @@
-// Token/user management utilities for GRAVITY auth system
+// Token/user management utilities for KVL TRACK auth system
 
 export type UserRole = 'user' | 'moderator' | 'admin' | 'super_admin'
 

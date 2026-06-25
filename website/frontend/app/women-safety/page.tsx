@@ -39,7 +39,7 @@ const SAFETY_FEATURES = [
     title: 'Safe Walk Mode',
     subtitle: 'Auto-check-in every 5 minutes',
     description:
-      'Start Safe Walk when commuting alone. Gravity checks in automatically every 5 minutes. If you miss two check-ins, an alert is sent to your trusted contacts with your last known location.',
+      'Start Safe Walk when commuting alone. KVL Track checks in automatically every 5 minutes. If you miss two check-ins, an alert is sent to your trusted contacts with your last known location.',
     color: '#10B981',
     rgb: '16,185,129',
   },
@@ -57,7 +57,7 @@ const SAFETY_FEATURES = [
 /* ── Statistics ───────────────────────────────────────────────────────────── */
 const STATS = [
   { value: '1 in 3', label: 'women feel unsafe commuting', icon: '📊' },
-  { value: '2.4M', label: 'women protected by Gravity', icon: '🛡️' },
+  { value: '2.4M', label: 'women protected by KVL Track', icon: '🛡️' },
   { value: '<3 sec', label: 'average SOS response time', icon: '⚡' },
   { value: '99.8%', label: 'SOS alert delivery rate', icon: '✓' },
 ];
@@ -74,9 +74,9 @@ const CITIES = [
 
 /* ── How it works steps ───────────────────────────────────────────────────── */
 const HOW_STEPS = [
-  { step: '01', title: 'Download Gravity', desc: 'Free on Android and iOS. No subscription needed for core women safety features.' },
+  { step: '01', title: 'Download KVL Track', desc: 'Free on Android and iOS. No subscription needed for core women safety features.' },
   { step: '02', title: 'Add Trusted Contacts', desc: 'Add family, friends, or colleagues as your safety circle. They get a one-tap notification.' },
-  { step: '03', title: 'Activate Safe Walk', desc: 'Enable Safe Walk before your commute. Gravity watches over you silently in the background.' },
+  { step: '03', title: 'Activate Safe Walk', desc: 'Enable Safe Walk before your commute. KVL Track watches over you silently in the background.' },
   { step: '04', title: 'Shake for SOS', desc: 'In an emergency, shake your phone three times. Your location goes out instantly to all contacts.' },
 ];
 
@@ -97,7 +97,7 @@ const TESTIMONIALS = [
     color: '#8B5CF6',
   },
   {
-    quote: "My daughter uses Gravity's SOS. As a mother, it gives me peace of mind every single day.",
+    quote: "My daughter uses KVL Track's SOS. As a mother, it gives me peace of mind every single day.",
     name: 'Kavitha M.',
     city: 'Chennai',
     avatar: 'K',
@@ -413,7 +413,7 @@ export default function WomenSafetyPage() {
             className="text-4xl md:text-5xl lg:text-6xl font-extrabold leading-tight mb-6"
             style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}
           >
-            <span className="text-[#F8FAFC]">Gravity Women Safety</span>
+            <span className="text-[#F8FAFC]">KVL Track Women Safety</span>
             <br />
             <span
               style={{
@@ -790,7 +790,7 @@ export default function WomenSafetyPage() {
               </motion.a>
             </div>
             <p className="mt-6 text-xs text-[#94A3B8]" style={{ fontFamily: "'Inter', sans-serif" }}>
-              Join 2.4 million women who already use Gravity for their daily safety
+              Join 2.4 million women who already use KVL Track for their daily safety
             </p>
           </div>
         </motion.div>

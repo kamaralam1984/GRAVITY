@@ -48,7 +48,7 @@ const FEATURES = [
   {
     icon: <Activity size={24} />,
     title: 'Fall Detection',
-    description: 'Gravity detects sudden falls using the phone accelerometer and gyroscope. An SOS countdown activates — if your parent does not dismiss it in 30 seconds, all caregivers are alerted automatically.',
+    description: 'KVL Track detects sudden falls using the phone accelerometer and gyroscope. An SOS countdown activates — if your parent does not dismiss it in 30 seconds, all caregivers are alerted automatically.',
     color: '#EF4444',
   },
   {
@@ -78,7 +78,7 @@ const FEATURES = [
   {
     icon: <AlertCircle size={24} />,
     title: 'Emergency Escalation',
-    description: 'When fall detection or SOS triggers, Gravity escalates through all designated emergency contacts in order — until someone responds. No alert is ever left unacknowledged.',
+    description: 'When fall detection or SOS triggers, KVL Track escalates through all designated emergency contacts in order — until someone responds. No alert is ever left unacknowledged.',
     color: '#8B5CF6',
   },
 ]
@@ -93,23 +93,23 @@ const STATS = [
 const FAQS = [
   {
     q: 'What is the best elderly monitoring app?',
-    a: "Gravity is widely considered the most comprehensive elderly monitoring app for families in India and globally. It combines fall detection, medication reminders, wellness check-ins, caregiver dashboards, GPS location tracking, and SOS alerts — all accessible from a single app shared by multiple adult children. Unlike purpose-built senior trackers that require expensive hardware, Gravity works on any Android smartphone your parent already owns.",
+    a: "KVL Track is widely considered the most comprehensive elderly monitoring app for families in India and globally. It combines fall detection, medication reminders, wellness check-ins, caregiver dashboards, GPS location tracking, and SOS alerts — all accessible from a single app shared by multiple adult children. Unlike purpose-built senior trackers that require expensive hardware, KVL Track works on any Android smartphone your parent already owns.",
   },
   {
     q: 'How does fall detection work?',
-    a: "Gravity's fall detection uses the phone's accelerometer, gyroscope, and barometer to identify sudden impact events followed by inactivity — the signature motion pattern of a fall. When detected, a 30-second countdown notification appears on your parent's screen. If they do not dismiss it (indicating they are incapacitated), all caregivers receive an immediate SOS alert with GPS coordinates and an audio clip of the surrounding environment.",
+    a: "KVL Track's fall detection uses the phone's accelerometer, gyroscope, and barometer to identify sudden impact events followed by inactivity — the signature motion pattern of a fall. When detected, a 30-second countdown notification appears on your parent's screen. If they do not dismiss it (indicating they are incapacitated), all caregivers receive an immediate SOS alert with GPS coordinates and an audio clip of the surrounding environment.",
   },
   {
     q: 'Does my parent need a smartphone?',
-    a: "Yes, Gravity requires a smartphone — Android (any model from 2018 onwards running Android 8+) or iPhone (iPhone 8 or newer). We have intentionally designed the senior-facing app to be as simple as possible — a single large button for check-ins, clear medication reminders, and an accessible SOS button. Basic digital literacy is sufficient; no technical knowledge is needed.",
+    a: "Yes, KVL Track requires a smartphone — Android (any model from 2018 onwards running Android 8+) or iPhone (iPhone 8 or newer). We have intentionally designed the senior-facing app to be as simple as possible — a single large button for check-ins, clear medication reminders, and an accessible SOS button. Basic digital literacy is sufficient; no technical knowledge is needed.",
   },
   {
     q: 'Can multiple caregivers monitor the same person?',
-    a: "Yes. Gravity supports up to 8 designated caregivers for a single senior account. Each caregiver installs the Gravity app and is invited to the senior's monitoring circle. All caregivers share the same real-time view — location, wellness score, medication log, and recent activity. Emergency alerts are sent to all caregivers simultaneously, and the escalation system contacts them in sequence until someone acknowledges the alert.",
+    a: "Yes. KVL Track supports up to 8 designated caregivers for a single senior account. Each caregiver installs the KVL Track app and is invited to the senior's monitoring circle. All caregivers share the same real-time view — location, wellness score, medication log, and recent activity. Emergency alerts are sent to all caregivers simultaneously, and the escalation system contacts them in sequence until someone acknowledges the alert.",
   },
   {
     q: 'What happens when a fall is detected?',
-    a: "When fall detection activates: (1) A 30-second countdown notification appears on your parent's phone — they can dismiss it if they are fine. (2) If not dismissed, all registered caregivers receive an immediate push notification with GPS location. (3) Audio recording starts from the phone's microphone and is shared with caregivers via the app. (4) If no caregiver acknowledges within 5 minutes, Gravity escalates to the next contact in the sequence. (5) Depending on your plan, 112/emergency services can also be automatically contacted.",
+    a: "When fall detection activates: (1) A 30-second countdown notification appears on your parent's phone — they can dismiss it if they are fine. (2) If not dismissed, all registered caregivers receive an immediate push notification with GPS location. (3) Audio recording starts from the phone's microphone and is shared with caregivers via the app. (4) If no caregiver acknowledges within 5 minutes, KVL Track escalates to the next contact in the sequence. (5) Depending on your plan, 112/emergency services can also be automatically contacted.",
   },
 ]
 
@@ -188,16 +188,16 @@ export default function ElderlyMonitoringAppPage() {
           </div>
         </Section>
 
-        {/* Why Gravity */}
+        {/* Why KVL Track */}
         <Section bg="var(--bg)">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 64, alignItems: 'start' }}>
               <motion.div variants={fadeUp}>
                 <h2 style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontSize: 'clamp(1.8rem, 3.5vw, 2.4rem)', fontWeight: 800, color: 'var(--text-primary)', marginBottom: 20, lineHeight: 1.2 }}>
-                  Why Families Choose Gravity for Senior Care
+                  Why Families Choose KVL Track for Senior Care
                 </h2>
                 <p style={{ fontFamily: "'Inter', sans-serif", fontSize: 16, lineHeight: 1.8, color: 'var(--text-secondary)', marginBottom: 28 }}>
-                  Most elderly care devices require expensive hardware purchases. Gravity works on the Android phone your parent already has — no new device, no SIM card, no monthly hardware subscription.
+                  Most elderly care devices require expensive hardware purchases. KVL Track works on the Android phone your parent already has — no new device, no SIM card, no monthly hardware subscription.
                 </p>
                 {[
                   'Works on any Android phone your parent already owns',
@@ -220,7 +220,7 @@ export default function ElderlyMonitoringAppPage() {
                     {[1,2,3,4,5].map(i => <Star key={i} size={16} fill="#D4A853" stroke="none" />)}
                   </div>
                   <p style={{ fontFamily: "'Inter', sans-serif", fontSize: 16, lineHeight: 1.8, color: 'var(--text-secondary)', marginBottom: 24, fontStyle: 'italic' }}>
-                    &ldquo;My father lives alone in a different city. I was calling him four times a day just to confirm he was okay. Since Gravity, I can see his wellness score every morning, check that he took his blood pressure medicine, and know immediately if he falls. I call him now to chat, not out of anxiety. That change in our relationship alone is worth everything.&rdquo;
+                    &ldquo;My father lives alone in a different city. I was calling him four times a day just to confirm he was okay. Since KVL Track, I can see his wellness score every morning, check that he took his blood pressure medicine, and know immediately if he falls. I call him now to chat, not out of anxiety. That change in our relationship alone is worth everything.&rdquo;
                   </p>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
                     <div style={{ width: 48, height: 48, borderRadius: '50%', background: 'linear-gradient(135deg, #EC4899, #8B5CF6)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>

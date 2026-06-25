@@ -111,7 +111,7 @@ export default function ChildMonitorPanel({ child, famId, onClose }: Props) {
     connectTimeoutRef.current = setTimeout(() => {
       setConnecting(false)
       if (activeModeRef.current === type) {
-        setStreamError('Child did not respond — make sure Gravity app is open on child device')
+        setStreamError('Child did not respond — make sure KVL Track app is open on child device')
         activeModeRef.current = null
         setActiveMode(null)
       }
@@ -183,7 +183,7 @@ export default function ChildMonitorPanel({ child, famId, onClose }: Props) {
         {/* Connection status */}
         {!wsReady && (
           <div style={{ background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.3)', borderRadius: 12, padding: '10px 14px', marginBottom: 16, color: '#EF4444', fontSize: 13 }}>
-            ⚠️ No connection to child device — child must have Gravity app open
+            ⚠️ No connection to child device — child must have KVL Track app open
           </div>
         )}
 

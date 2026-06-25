@@ -114,9 +114,9 @@ def _send_otp_email(email: str, code: str) -> bool:
             "https://api.resend.com/emails",
             headers={"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"},
             json={
-                "from": "GRAVITY <noreply@trackalways.com>",
+                "from": "KVL TRACK <noreply@trackalways.com>",
                 "to": [email],
-                "subject": f"Your GRAVITY verification code: {code}",
+                "subject": f"Your KVL TRACK verification code: {code}",
                 "html": f"<h2>Your OTP is: <strong style='color:#D4A853;font-size:32px'>{code}</strong></h2><p>Expires in 10 minutes.</p>",
             },
             timeout=10,
@@ -421,7 +421,7 @@ def setup_2fa(current_user: models.User = Depends(get_current_user), db: Session
         raise HTTPException(status_code=400, detail="2FA already enabled")
 
     secret = pyotp.random_base32()
-    totp_uri = pyotp.totp.TOTP(secret).provisioning_uri(name=current_user.email, issuer_name="GRAVITY Safety")
+    totp_uri = pyotp.totp.TOTP(secret).provisioning_uri(name=current_user.email, issuer_name="KVL TRACK Safety")
 
     # Generate QR code as base64
     qr = qrcode.make(totp_uri)

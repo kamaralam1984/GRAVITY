@@ -49,7 +49,7 @@ const FEATURES = [
   {
     icon: <Route size={24} />,
     title: 'School Route AI',
-    description: "Gravity AI learns your child's school route and immediately alerts you if they deviate unexpectedly — a detour, an unusual stop, or a route that takes too long.",
+    description: "KVL Track AI learns your child's school route and immediately alerts you if they deviate unexpectedly — a detour, an unusual stop, or a route that takes too long.",
     color: '#4B80F0',
   },
   {
@@ -73,7 +73,7 @@ const FEATURES = [
   {
     icon: <AlertTriangle size={24} />,
     title: 'Stranger Danger Alert',
-    description: "If your child's device approaches an unrecognized vehicle or enters an unexpected area during school hours, Gravity generates an automatic alert.",
+    description: "If your child's device approaches an unrecognized vehicle or enters an unexpected area during school hours, KVL Track generates an automatic alert.",
     color: '#F59E0B',
   },
   {
@@ -95,7 +95,7 @@ const TESTIMONIALS = [
   {
     name: 'Priya Ramesh',
     role: 'Mother, Chennai',
-    quote: 'My 9-year-old started walking home from school alone this year. The school route AI on Gravity means I know the exact moment he deviates from the expected path. The peace of mind is indescribable.',
+    quote: 'My 9-year-old started walking home from school alone this year. The school route AI on KVL Track means I know the exact moment he deviates from the expected path. The peace of mind is indescribable.',
     rating: 5,
     avatar: 'PR',
     color: '#4B80F0',
@@ -113,23 +113,23 @@ const TESTIMONIALS = [
 const FAQS = [
   {
     q: 'What is the best child safety app?',
-    a: 'Gravity is rated the best child safety app for 2024 by multiple independent reviewers. It offers school route monitoring with AI anomaly detection, geofencing, SOS with a single button press, pickup verification, and stranger danger alerts — features not available together in any other child safety app. It works on iOS and Android and is trusted by over 8 million children globally.',
+    a: 'KVL Track is rated the best child safety app for 2024 by multiple independent reviewers. It offers school route monitoring with AI anomaly detection, geofencing, SOS with a single button press, pickup verification, and stranger danger alerts — features not available together in any other child safety app. It works on iOS and Android and is trusted by over 8 million children globally.',
   },
   {
     q: 'How do I track my child\'s location?',
-    a: 'Download Gravity on both your phone and your child\'s device. Create a family circle and invite your child by sending them a link via WhatsApp. Once they accept, their location appears on your family map in real time. You can see their current position, movement status, battery level, and receive automatic arrival alerts for home, school, and other saved locations.',
+    a: 'Download KVL Track on both your phone and your child\'s device. Create a family circle and invite your child by sending them a link via WhatsApp. Once they accept, their location appears on your family map in real time. You can see their current position, movement status, battery level, and receive automatic arrival alerts for home, school, and other saved locations.',
   },
   {
     q: 'Can my child use SOS without my help?',
-    a: 'Yes. The Gravity SOS button is designed to be usable by children as young as 6. A long press on the dedicated SOS button (available as a home screen widget or from the app) triggers an immediate emergency alert. The alert includes real-time GPS location, audio recording from the phone\'s microphone, and a live link sent to all emergency contacts. No internet login is required to trigger SOS.',
+    a: 'Yes. The KVL Track SOS button is designed to be usable by children as young as 6. A long press on the dedicated SOS button (available as a home screen widget or from the app) triggers an immediate emergency alert. The alert includes real-time GPS location, audio recording from the phone\'s microphone, and a live link sent to all emergency contacts. No internet login is required to trigger SOS.',
   },
   {
     q: 'Does the app work offline?',
-    a: 'Gravity requires a data connection (mobile data or Wi-Fi) to transmit location updates. However, SOS alerts are sent via SMS as a fallback when mobile data is unavailable, ensuring your child can still reach you without an internet connection. Location history is also cached locally and syncs automatically when connectivity is restored.',
+    a: 'KVL Track requires a data connection (mobile data or Wi-Fi) to transmit location updates. However, SOS alerts are sent via SMS as a fallback when mobile data is unavailable, ensuring your child can still reach you without an internet connection. Location history is also cached locally and syncs automatically when connectivity is restored.',
   },
   {
     q: 'What age is appropriate for GPS tracking?',
-    a: "GPS tracking via a child safety app becomes useful from around age 6-7 when children begin to travel independently (e.g., school bus, walking to a neighbour's house). Most families start with passive tracking (arrival/departure alerts) for younger children and introduce more comprehensive monitoring as children gain more independence. Gravity's age-appropriate settings let you configure exactly how much transparency the child has about being tracked.",
+    a: "GPS tracking via a child safety app becomes useful from around age 6-7 when children begin to travel independently (e.g., school bus, walking to a neighbour's house). Most families start with passive tracking (arrival/departure alerts) for younger children and introduce more comprehensive monitoring as children gain more independence. KVL Track's age-appropriate settings let you configure exactly how much transparency the child has about being tracked.",
   },
 ]
 
@@ -253,7 +253,7 @@ export default function ChildSafetyAppPage() {
                 Six Layers of Child Protection
               </h2>
               <p style={{ fontFamily: "'Inter', sans-serif", fontSize: 17, color: 'var(--text-secondary)', maxWidth: 560, margin: '0 auto', lineHeight: 1.7 }}>
-                From school routes to SOS, Gravity builds a protective layer around every child.
+                From school routes to SOS, KVL Track builds a protective layer around every child.
               </p>
             </motion.div>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: 24 }}>
@@ -275,7 +275,7 @@ export default function ChildSafetyAppPage() {
           </div>
         </Section>
 
-        {/* Why Gravity for children */}
+        {/* Why KVL Track for children */}
         <Section bg="var(--bg)">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 64, alignItems: 'center' }}>
@@ -284,7 +284,7 @@ export default function ChildSafetyAppPage() {
                   Built for Children. Trusted by Parents.
                 </h2>
                 <p style={{ fontFamily: "'Inter', sans-serif", fontSize: 16, lineHeight: 1.8, color: 'var(--text-secondary)', marginBottom: 28 }}>
-                  Most family trackers were built for adults and adapted for children as an afterthought. Gravity built child safety from the ground up — with school-aware AI, kid-friendly SOS interfaces, and features that reflect how children actually live and move.
+                  Most family trackers were built for adults and adapted for children as an afterthought. KVL Track built child safety from the ground up — with school-aware AI, kid-friendly SOS interfaces, and features that reflect how children actually live and move.
                 </p>
                 {[
                   'School-aware AI: knows school hours and routes automatically',

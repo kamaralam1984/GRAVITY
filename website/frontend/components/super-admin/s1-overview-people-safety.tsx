@@ -388,7 +388,7 @@ export function AICopilotSection() {
         }}>
           <div style={{ padding: '14px 20px', borderBottom: '1px solid var(--border)', display: 'flex', alignItems: 'center', gap: 8 }}>
             <div style={{ width: 8, height: 8, borderRadius: '50%', background: '#10B981' }} />
-            <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)' }}>Gravity AI Copilot</span>
+            <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)' }}>KVL Track AI Copilot</span>
             <span style={{ fontSize: 11, color: 'var(--text-muted)', marginLeft: 4 }}>GPT-4o powered</span>
           </div>
 

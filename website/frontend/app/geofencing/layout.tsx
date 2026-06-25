@@ -1,7 +1,7 @@
 import type { Metadata } from 'next'
 
 export const metadata: Metadata = {
-  title: 'Geofencing Alerts | Virtual Safety Zones — Gravity',
+  title: 'Geofencing Alerts | Virtual Safety Zones — KVL Track',
   description:
     'Create unlimited safe zones around home, school, office. Get instant alerts when family members enter or leave. Smart geofencing for Indian families.',
   keywords: [
@@ -10,17 +10,17 @@ export const metadata: Metadata = {
     'school zone alerts',
   ],
   openGraph: {
-    title: 'Geofencing Alerts | Virtual Safety Zones — Gravity',
+    title: 'Geofencing Alerts | Virtual Safety Zones — KVL Track',
     description:
       'Create unlimited safe zones around home, school, office. Get instant alerts when family members enter or leave. Smart geofencing for Indian families.',
     url: 'https://gravity.trackalways.com/geofencing',
-    siteName: 'Gravity by Trackalways',
+    siteName: 'KVL Track by Trackalways',
     images: [
       {
         url: 'https://gravity.trackalways.com/og-image.svg',
         width: 1200,
         height: 630,
-        alt: 'Gravity Geofencing Alerts',
+        alt: 'KVL Track Geofencing Alerts',
       },
     ],
     locale: 'en_IN',
@@ -28,7 +28,7 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Geofencing Alerts | Virtual Safety Zones — Gravity',
+    title: 'Geofencing Alerts | Virtual Safety Zones — KVL Track',
     description:
       'Create unlimited safe zones around home, school, office. Get instant alerts when family members enter or leave. Smart geofencing for Indian families.',
     images: ['https://gravity.trackalways.com/og-image.svg'],

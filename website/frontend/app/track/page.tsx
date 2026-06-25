@@ -489,7 +489,7 @@ function TrackInner() {
           style={{ background: 'rgba(212,168,83,0.12)', color: '#D4A853', border: '1px solid rgba(212,168,83,0.25)' }}
         >
           <Navigation className="w-3.5 h-3.5" />
-          GRAVITY Live Tracker
+          KVL TRACK Live Tracker
         </div>
         <h1 className="text-xl font-extrabold text-white mb-0.5">
           {userName ? `Hi, ${userName.split(' ')[0]}` : 'Share Location'}

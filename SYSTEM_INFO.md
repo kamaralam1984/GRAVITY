@@ -1,4 +1,4 @@
-# GRAVITY — FULL SYSTEM DOCUMENTATION
+# KVL TRACK — FULL SYSTEM DOCUMENTATION
 ### Trackalways Technologies Pvt Ltd
 **Platform:** Family Safety App | **Version:** 2.2.0 | **Last Updated:** June 2026
 
@@ -26,16 +26,16 @@
 
 ## 1. PROJECT OVERVIEW
 
-**Gravity** is a premium family safety platform by Trackalways Technologies. It allows families to stay connected through real-time location sharing, SOS emergency alerts, geofence zone management, health monitoring, driving safety, and family chat.
+**KVL Track** is a premium family safety platform by Trackalways Technologies. It allows families to stay connected through real-time location sharing, SOS emergency alerts, geofence zone management, health monitoring, driving safety, and family chat.
 
 ### Live Production URLs (VPS)
 | Service | URL |
 |---|---|
-| Website + Dashboards | https://gravity.kvlbusinessssolutions.com |
-| Parent Dashboard | https://gravity.kvlbusinessssolutions.com/parent |
-| Child Dashboard | https://gravity.kvlbusinessssolutions.com/child |
-| Super Admin Panel | https://gravity.kvlbusinessssolutions.com/super-admin |
-| Login | https://gravity.kvlbusinessssolutions.com/login |
+| Website + Dashboards | https://kvltrack.kvlbusinesssolutions.com |
+| Parent Dashboard | https://kvltrack.kvlbusinesssolutions.com/parent |
+| Child Dashboard | https://kvltrack.kvlbusinesssolutions.com/child |
+| Super Admin Panel | https://kvltrack.kvlbusinesssolutions.com/super-admin |
+| Login | https://kvltrack.kvlbusinesssolutions.com/login |
 
 ### Local Development URLs
 | Service | URL |
@@ -86,7 +86,7 @@
 ## 3. PROJECT STRUCTURE
 
 ```
-TRACKALWAYS GRAVITY 2.0/
+TRACKALWAYS KVL TRACK 2.0/
 ├── SYSTEM_INFO.md                    ← This file
 └── website/
     ├── frontend/                     ← Next.js 14 app
@@ -302,7 +302,7 @@ All dashboards share one login page (`/login`) but redirect to separate panels b
 - **Data:** 100% real API data — no dummy members
 - **Tabs:** Live Map / Children / Elderly / Driving Safety
 - **Children Tab:** Real family members from `/families/{id}/members`, expandable cards with live GPS, battery, online status
-- **Elderly Tab:** Real members + "Connect Gravity Watch" prompt (no fake HR/BP)
+- **Elderly Tab:** Real members + "Connect KVL Track Watch" prompt (no fake HR/BP)
 - **Driving Safety Tab:** Full implementation — ScoreRing, trip history, events from `/driving/member/{user_id}`
 - **Online detection:** Based on location recency (`recorded_at < 30 min`) not device table
 - **Data fetch pattern:**
@@ -1167,36 +1167,36 @@ sqlite3 gravity.db "ALTER TABLE users ADD COLUMN role VARCHAR DEFAULT 'user';"
 | Provider | Hostinger VPS |
 | OS | Ubuntu |
 | Project path | `/var/www/gravity/` |
-| Frontend port | **3100** (PM2: `gravity-frontend`) |
-| Backend port | **8001** (PM2: `gravity-backend`) |
-| Live domain | https://gravity.kvlbusinessssolutions.com |
-| Git repo | https://github.com/kamaralam1984/GRAVITY |
+| Frontend port | **3100** (PM2: `kvltrack-frontend`) |
+| Backend port | **8001** (PM2: `kvltrack-backend`) |
+| Live domain | https://kvltrack.kvlbusinesssolutions.com |
+| Git repo | https://github.com/kamaralam1984/KVL TRACK |
 
 > **IMPORTANT:** Other projects on the same VPS — DO NOT TOUCH:
 > `8rupiya`, `aapkaplot`, `kvl-*`, `restro-*`, `vidyt`
 
 ### PM2 Processes
 ```
-id 50 → gravity-backend    (port 8001)
-id 51 → gravity-frontend   (port 3100)
+id 50 → kvltrack-backend    (port 8001)
+id 51 → kvltrack-frontend   (port 3100)
 ```
 
 ### Deploy Command (run on VPS)
 ```bash
-cd /var/www/gravity && git pull origin main && cd website/frontend && npm run build && pm2 restart gravity-frontend
+cd /var/www/gravity && git pull origin main && cd website/frontend && npm run build && pm2 restart kvltrack-frontend
 ```
 
 ### Deploy with Backend Restart
 ```bash
 cd /var/www/gravity && git pull origin main
-cd website/frontend && npm run build && pm2 restart gravity-frontend
-cd ../backend && pm2 restart gravity-backend
+cd website/frontend && npm run build && pm2 restart kvltrack-frontend
+cd ../backend && pm2 restart kvltrack-backend
 ```
 
 ### VPS Environment (`frontend/.env.local` on VPS)
 ```
 INTERNAL_API_URL=http://127.0.0.1:8001
-NEXT_PUBLIC_API_URL=https://gravity.kvlbusinessssolutions.com
+NEXT_PUBLIC_API_URL=https://kvltrack.kvlbusinesssolutions.com
 ```
 
 ### next.config.js API Rewrites
@@ -1214,7 +1214,7 @@ This means frontend fetches `/families/my` and it proxies to backend automatical
 ## 15. CREDENTIALS — ALL ROLES
 
 ### Unified Login URL
-**Production:** https://gravity.kvlbusinessssolutions.com/login
+**Production:** https://kvltrack.kvlbusinesssolutions.com/login
 **Local:** http://localhost:3000/login — all roles login here, auto-redirected to their panel
 
 ### Role-Based Credentials
@@ -1234,7 +1234,7 @@ This means frontend fetches `/families/my` and it proxies to backend automatical
 | **Email** | kamaralamjdu@gmail.com |
 | **Password** | K12345678 |
 | **Role** | super_admin |
-| **Login URL (prod)** | https://gravity.kvlbusinessssolutions.com/admin/login |
+| **Login URL (prod)** | https://kvltrack.kvlbusinesssolutions.com/admin/login |
 | **Login URL (local)** | http://localhost:3000/admin/login |
 
 ### Test User Credentials (seeded in `users` table)
@@ -1286,14 +1286,14 @@ Running `seed.py` creates the following mock data:
 
 ```
 ─── PRODUCTION (VPS) ─────────────────────────────────────────────
-WEBSITE:       https://gravity.kvlbusinessssolutions.com
-PARENT:        https://gravity.kvlbusinessssolutions.com/parent
-CHILD:         https://gravity.kvlbusinessssolutions.com/child
-SUPER ADMIN:   https://gravity.kvlbusinessssolutions.com/super-admin
-LOGIN:         https://gravity.kvlbusinessssolutions.com/login
+WEBSITE:       https://kvltrack.kvlbusinesssolutions.com
+PARENT:        https://kvltrack.kvlbusinesssolutions.com/parent
+CHILD:         https://kvltrack.kvlbusinesssolutions.com/child
+SUPER ADMIN:   https://kvltrack.kvlbusinesssolutions.com/super-admin
+LOGIN:         https://kvltrack.kvlbusinesssolutions.com/login
 VPS PATH:      /var/www/gravity/
-FRONTEND PORT: 3100 (PM2: gravity-frontend, id 51)
-BACKEND PORT:  8001 (PM2: gravity-backend, id 50)
+FRONTEND PORT: 3100 (PM2: kvltrack-frontend, id 51)
+BACKEND PORT:  8001 (PM2: kvltrack-backend, id 50)
 
 ─── LOCAL DEV ────────────────────────────────────────────────────
 WEBSITE:       http://localhost:3000
@@ -1312,12 +1312,12 @@ Admin:    kamaralamjdu@gmail.com / K12345678
 
 ─── DEPLOY TO VPS ────────────────────────────────────────────────
 # Frontend only:
-cd /var/www/gravity && git pull origin main && cd website/frontend && npm run build && pm2 restart gravity-frontend
+cd /var/www/gravity && git pull origin main && cd website/frontend && npm run build && pm2 restart kvltrack-frontend
 
 # Frontend + Backend:
 cd /var/www/gravity && git pull origin main
-cd website/frontend && npm run build && pm2 restart gravity-frontend
-cd ../backend && pm2 restart gravity-backend
+cd website/frontend && npm run build && pm2 restart kvltrack-frontend
+cd ../backend && pm2 restart kvltrack-backend
 
 ─── START LOCAL ──────────────────────────────────────────────────
 # Backend (port 8000)
@@ -1363,5 +1363,5 @@ GET /admin-api/db/table/{name}     → rows with search & pagination
 
 ---
 
-*Gravity — What Pulls You Together*
+*KVL Track — What Pulls You Together*
 *© 2026 Trackalways Technologies Pvt Ltd*

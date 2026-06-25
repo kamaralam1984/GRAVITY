@@ -28,7 +28,7 @@ const CASE_STUDIES: CaseStudy[] = [
     icon: <School className="w-5 h-5" />,
     title: 'How DPS Noida Reduced Child Safety Incidents by 94%',
     description:
-      'Delhi Public School Noida deployed Gravity\'s AI-powered zone monitoring and emergency alert system across their campus. Real-time location tracking and SOS alerts transformed safety outcomes within 6 months of deployment.',
+      'Delhi Public School Noida deployed KVL Track\'s AI-powered zone monitoring and emergency alert system across their campus. Real-time location tracking and SOS alerts transformed safety outcomes within 6 months of deployment.',
     stats: [
       { value: '1,200', label: 'Students Protected' },
       { value: '94%', label: 'Incident Reduction' },
@@ -42,9 +42,9 @@ const CASE_STUDIES: CaseStudy[] = [
     categoryColor: '#10B981',
     categoryBg: 'rgba(16,185,129,0.12)',
     icon: <Heart className="w-5 h-5" />,
-    title: 'Senior Care Home Detects 47 Fall Emergencies with Gravity Elder',
+    title: 'Senior Care Home Detects 47 Fall Emergencies with KVL Track Elder',
     description:
-      'A leading senior care facility integrated Gravity Elder\'s fall detection and vitals monitoring for their residents. The AI engine flagged 47 emergencies before staff could manually detect them, saving critical response minutes.',
+      'A leading senior care facility integrated KVL Track Elder\'s fall detection and vitals monitoring for their residents. The AI engine flagged 47 emergencies before staff could manually detect them, saving critical response minutes.',
     stats: [
       { value: '340', label: 'Elderly Residents' },
       { value: '47', label: 'Emergencies Detected' },
@@ -60,7 +60,7 @@ const CASE_STUDIES: CaseStudy[] = [
     icon: <Car className="w-5 h-5" />,
     title: 'Teen Driver Risk Reduced 67% at Tata Motors Family Program',
     description:
-      'Tata Motors\' employee family wellness program rolled out Gravity\'s teen driving coach to 850 families. Harsh braking, speed alerts, and AI coaching delivered measurable risk reduction across the entire cohort.',
+      'Tata Motors\' employee family wellness program rolled out KVL Track\'s teen driving coach to 850 families. Harsh braking, speed alerts, and AI coaching delivered measurable risk reduction across the entire cohort.',
     stats: [
       { value: '850', label: 'Teen Drivers' },
       { value: '67%', label: 'Risk Reduction' },

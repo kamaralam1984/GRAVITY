@@ -219,7 +219,7 @@ export default function AIGuardianSection() {
                   animate={{ opacity: [1, 0.3, 1] }}
                   transition={{ duration: 1.4, repeat: Infinity }}
                 />
-                NEW · GRAVITY AI GUARDIAN
+                NEW · KVL TRACK AI GUARDIAN
               </span>
             </motion.div>
 
@@ -244,7 +244,7 @@ export default function AIGuardianSection() {
               className="mt-5 text-lg leading-relaxed max-w-lg"
               style={{ color: 'var(--text-secondary)', fontFamily: "'Inter', sans-serif" }}
             >
-              Gravity AI Guardian learns your family&apos;s patterns and proactively
+              KVL Track AI Guardian learns your family&apos;s patterns and proactively
               alerts you to risks{' '}
               <em className="not-italic" style={{ color: 'var(--text-primary)', fontWeight: 600 }}>
                 before they become emergencies

@@ -384,7 +384,7 @@ export default function Navbar() {
           <button
             onClick={() => scrollToSection('#hero')}
             className="flex items-center gap-2.5 group focus:outline-none shrink-0"
-            aria-label="Trackalways Gravity — scroll to top"
+            aria-label="Trackalways KVL Track — scroll to top"
           >
             <motion.div
               whileHover={{ scale: 1.08 }}
@@ -416,7 +416,7 @@ export default function Navbar() {
                     : 'var(--text-primary)',
                 }}
               >
-                GRAVITY
+                KVL TRACK
               </span>
             </div>
           </button>
@@ -657,7 +657,7 @@ export default function Navbar() {
                   </span>
                   <span className="text-[17px] font-extrabold tracking-wide"
                     style={{ color: 'var(--gold)', fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
-                    GRAVITY
+                    KVL TRACK
                   </span>
                 </div>
               </div>

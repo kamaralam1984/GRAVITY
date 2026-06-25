@@ -74,19 +74,19 @@ const DIFFERENTIATORS = [
   {
     icon: <Heart size={28} />,
     title: 'Elderly Care Built In',
-    description: 'Google Family Link was built for child screen time. Gravity includes a complete elderly care suite — medication reminders, wellness monitoring, fall detection, and caregiver dashboards.',
+    description: 'Google Family Link was built for child screen time. KVL Track includes a complete elderly care suite — medication reminders, wellness monitoring, fall detection, and caregiver dashboards.',
     color: '#EC4899',
   },
   {
     icon: <Zap size={28} />,
     title: 'AI-Powered Intelligence',
-    description: 'While Google Family Link shows you a map, Gravity tells you what matters: late arrival predictions, routine change alerts, health risk flags, and driving safety coaching.',
+    description: 'While Google Family Link shows you a map, KVL Track tells you what matters: late arrival predictions, routine change alerts, health risk flags, and driving safety coaching.',
     color: '#D4A853',
   },
   {
     icon: <Lock size={28} />,
     title: 'Privacy-First Architecture',
-    description: "Google's business model monetizes user data. Gravity is subscription-only — your family's location data is never shared with advertisers, data brokers, or analytics platforms.",
+    description: "Google's business model monetizes user data. KVL Track is subscription-only — your family's location data is never shared with advertisers, data brokers, or analytics platforms.",
     color: '#10B981',
   },
 ];
@@ -94,23 +94,23 @@ const DIFFERENTIATORS = [
 const FAQS = [
   {
     q: 'Is Google Family Link really free?',
-    a: 'Google Family Link is free, but it is primarily a parental control and screen time tool for children, not a family safety platform. It has very limited location features, no SOS system, no driving safety, and no elderly care capabilities. Gravity provides a genuinely complete safety platform at ₹199/month for the whole family.',
+    a: 'Google Family Link is free, but it is primarily a parental control and screen time tool for children, not a family safety platform. It has very limited location features, no SOS system, no driving safety, and no elderly care capabilities. KVL Track provides a genuinely complete safety platform at ₹199/month for the whole family.',
   },
   {
-    q: "Can Gravity track adult family members, not just children?",
-    a: "Yes. Gravity is designed for the whole family — adults, elderly parents, teenagers, and children. Google Family Link only works with children's devices and requires parental approval. Gravity lets all family members share location by mutual consent.",
+    q: "Can KVL Track track adult family members, not just children?",
+    a: "Yes. KVL Track is designed for the whole family — adults, elderly parents, teenagers, and children. Google Family Link only works with children's devices and requires parental approval. KVL Track lets all family members share location by mutual consent.",
   },
   {
-    q: 'Why does Gravity cost money if Google Family Link is free?',
-    a: 'When a product is free, you and your data are the product. Google uses Family Link location data as part of its advertising and profiling ecosystem. Gravity charges a subscription fee precisely so we never need to monetize your family\'s location data. Free forever on the basic plan; paid plans unlock the full safety suite.',
+    q: 'Why does KVL Track cost money if Google Family Link is free?',
+    a: 'When a product is free, you and your data are the product. Google uses Family Link location data as part of its advertising and profiling ecosystem. KVL Track charges a subscription fee precisely so we never need to monetize your family\'s location data. Free forever on the basic plan; paid plans unlock the full safety suite.',
   },
   {
-    q: 'Does Gravity work on both Android and iPhone?',
-    a: 'Yes. Gravity works on Android 8+ and iOS 15+. Unlike Google Family Link, which has very limited iOS support, Gravity provides full feature parity across both platforms — including Apple Watch integration and iOS-specific features like Live Activities.',
+    q: 'Does KVL Track work on both Android and iPhone?',
+    a: 'Yes. KVL Track works on Android 8+ and iOS 15+. Unlike Google Family Link, which has very limited iOS support, KVL Track provides full feature parity across both platforms — including Apple Watch integration and iOS-specific features like Live Activities.',
   },
   {
     q: "Will switching from Google Family Link affect my child's device controls?",
-    a: "Gravity is a location sharing and safety app, not a device management tool. If you rely on Google Family Link for app controls and screen time limits, you can use both apps simultaneously. Gravity adds safety intelligence on top of whatever parental controls you already have in place.",
+    a: "KVL Track is a location sharing and safety app, not a device management tool. If you rely on Google Family Link for app controls and screen time limits, you can use both apps simultaneously. KVL Track adds safety intelligence on top of whatever parental controls you already have in place.",
   },
 ];
 
@@ -118,7 +118,7 @@ const TESTIMONIALS = [
   {
     name: 'Meera Krishnan',
     role: 'Mother of three, Hyderabad',
-    quote: "We used Google Family Link for two years. It showed location — that was it. Gravity gave us school alerts, my mother-in-law's medication reminders, and my husband's driving report all in one place. There's genuinely no comparison.",
+    quote: "We used Google Family Link for two years. It showed location — that was it. KVL Track gave us school alerts, my mother-in-law's medication reminders, and my husband's driving report all in one place. There's genuinely no comparison.",
     rating: 5,
     avatar: 'MK',
     color: '#EC4899',
@@ -126,7 +126,7 @@ const TESTIMONIALS = [
   {
     name: 'Deepak Agarwal',
     role: 'Father, Pune',
-    quote: "Google Family Link stopped working properly when my son turned 13 and got an adult account. Gravity works for everyone — my wife, my parents, my college-age daughter. One app for the whole family.",
+    quote: "Google Family Link stopped working properly when my son turned 13 and got an adult account. KVL Track works for everyone — my wife, my parents, my college-age daughter. One app for the whole family.",
     rating: 5,
     avatar: 'DA',
     color: '#4B80F0',
@@ -134,7 +134,7 @@ const TESTIMONIALS = [
   {
     name: 'Lakshmi Iyer',
     role: 'Daughter, caring for elderly parent, Chennai',
-    quote: "Google doesn't have elderly care. Full stop. My father's medication reminders and inactivity alerts alone made Gravity worth it. It actually helps me take care of him even when I'm at work.",
+    quote: "Google doesn't have elderly care. Full stop. My father's medication reminders and inactivity alerts alone made KVL Track worth it. It actually helps me take care of him even when I'm at work.",
     rating: 5,
     avatar: 'LI',
     color: '#10B981',
@@ -174,11 +174,11 @@ export default function CompareGoogleFamilyPage() {
                 <span style={{ fontSize: 12, fontWeight: 600, color: '#D4A853', fontFamily: "'Inter', sans-serif" }}>Detailed Comparison</span>
               </div>
               <h1 style={{ fontSize: 52, fontWeight: 800, color: 'var(--text-primary)', fontFamily: "'Plus Jakarta Sans', sans-serif", marginBottom: 24, lineHeight: 1.12 }}>
-                Gravity vs{' '}
+                KVL Track vs{' '}
                 <span style={{ color: '#4285F4' }}>Google Family Link</span>
               </h1>
               <p style={{ fontSize: 20, color: 'var(--text-secondary)', maxWidth: 620, margin: '0 auto 40px', fontFamily: "'Inter', sans-serif", lineHeight: 1.7 }}>
-                Google Family Link is a free screen-time tool. Gravity is a complete Family Safety Operating System. Here is exactly how they differ.
+                Google Family Link is a free screen-time tool. KVL Track is a complete Family Safety Operating System. Here is exactly how they differ.
               </p>
               <div style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap' }}>
                 <motion.a
@@ -222,7 +222,7 @@ export default function CompareGoogleFamilyPage() {
                     fontSize: 13, fontWeight: 800, fontFamily: "'Plus Jakarta Sans', sans-serif",
                     background: 'linear-gradient(135deg, #D4A853, #B8720A)',
                     WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent',
-                  }}>GRAVITY</span>
+                  }}>KVL TRACK</span>
                 </div>
                 <div style={{ textAlign: 'center', fontSize: 13, fontWeight: 700, color: '#4285F4', fontFamily: "'Plus Jakarta Sans', sans-serif" }}>GOOGLE</div>
               </div>
@@ -265,12 +265,12 @@ export default function CompareGoogleFamilyPage() {
           </div>
         </Section>
 
-        {/* ── Why Gravity ──────────────────────────────────────────────────── */}
+        {/* ── Why KVL Track ──────────────────────────────────────────────────── */}
         <Section bg="var(--bg)">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <motion.div variants={fadeUp} style={{ textAlign: 'center', marginBottom: 56 }}>
               <h2 style={{ fontSize: 38, fontWeight: 800, color: 'var(--text-primary)', fontFamily: "'Plus Jakarta Sans', sans-serif", marginBottom: 16 }}>
-                Why Indian Families Choose Gravity Over Google Family Link
+                Why Indian Families Choose KVL Track Over Google Family Link
               </h2>
             </motion.div>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 24 }}>
@@ -368,7 +368,7 @@ export default function CompareGoogleFamilyPage() {
                   className="btn-gold"
                   style={{ padding: '16px 32px', borderRadius: 999, fontSize: 16, fontWeight: 700, display: 'inline-flex', alignItems: 'center', gap: 8, textDecoration: 'none', fontFamily: "'Inter', sans-serif" }}
                 >
-                  Download Gravity Free
+                  Download KVL Track Free
                   <ChevronRight size={18} />
                 </motion.a>
                 <Link href="/compare/life360" style={{ padding: '16px 32px', borderRadius: 999, fontSize: 16, fontWeight: 600, border: '1px solid var(--border)', color: 'var(--text-primary)', display: 'inline-flex', alignItems: 'center', gap: 8, textDecoration: 'none', background: 'var(--bg)', fontFamily: "'Inter', sans-serif" }}>

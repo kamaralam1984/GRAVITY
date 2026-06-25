@@ -49,7 +49,7 @@ const CITIES: Record<string, CityData> = {
     state: 'Tamil Nadu',
     population: '10M+',
     safetyContext:
-      'Chennai families rely on Gravity for school tracking, beach safety zones, and elderly parent monitoring.',
+      'Chennai families rely on KVL Track for school tracking, beach safety zones, and elderly parent monitoring.',
     localFeature:
       "Geofence Chennai's iconic landmarks: Marina Beach zone, school campuses, IT parks",
   },
@@ -94,7 +94,7 @@ const CITIES: Record<string, CityData> = {
     state: 'Rajasthan',
     population: '4M+',
     safetyContext:
-      "Jaipur families use Gravity to keep track of children in tourist-heavy areas and during festivals.",
+      "Jaipur families use KVL Track to keep track of children in tourist-heavy areas and during festivals.",
     localFeature:
       "Geofence around Jaipur's schools, Walled City, and new residential colonies",
   },
@@ -111,7 +111,7 @@ const CITIES: Record<string, CityData> = {
     state: 'Uttar Pradesh',
     population: '4M+',
     safetyContext:
-      "Lucknow families prioritise child safety and elderly care tracking with Gravity's India-first features.",
+      "Lucknow families prioritise child safety and elderly care tracking with KVL Track's India-first features.",
     localFeature: "Smart alerts for Lucknow's schools, Gomti Nagar, and Hazratganj area",
   },
   chandigarh: {
@@ -119,7 +119,7 @@ const CITIES: Record<string, CityData> = {
     state: 'Punjab/Haryana',
     population: '1.2M+',
     safetyContext:
-      "Chandigarh's planned sectors make Gravity's geofencing especially effective for precise zone alerts.",
+      "Chandigarh's planned sectors make KVL Track's geofencing especially effective for precise zone alerts.",
     localFeature:
       "Sector-by-sector geofencing in Chandigarh — the city built for smart safety zones",
   },
@@ -128,7 +128,7 @@ const CITIES: Record<string, CityData> = {
     state: 'Madhya Pradesh',
     population: '2.5M+',
     safetyContext:
-      "Bhopal families use Gravity to stay connected across the lake city's spread-out neighbourhoods.",
+      "Bhopal families use KVL Track to stay connected across the lake city's spread-out neighbourhoods.",
     localFeature: "Family tracking across Bhopal's two zones — old city and new Bhopal",
   },
   nagpur: {
@@ -167,8 +167,8 @@ export async function generateMetadata({
   if (!city) return { title: 'Not Found' }
 
   return {
-    title: `Family Safety App in ${city.name} | GPS Tracker — Gravity`,
-    description: `Gravity keeps ${city.name} families safe with real-time GPS tracking, SOS alerts, and smart geofencing. 50,000+ Indian families trust Gravity. Free to download.`,
+    title: `Family Safety App in ${city.name} | GPS Tracker — KVL Track`,
+    description: `KVL Track keeps ${city.name} families safe with real-time GPS tracking, SOS alerts, and smart geofencing. 50,000+ Indian families trust KVL Track. Free to download.`,
     keywords: [
       `family safety app ${city.name.toLowerCase()}`,
       `GPS tracker ${city.name.toLowerCase()}`,
@@ -176,16 +176,16 @@ export async function generateMetadata({
       `family location sharing ${city.name.toLowerCase()}`,
     ],
     openGraph: {
-      title: `Family Safety App in ${city.name} — Gravity`,
-      description: `Join families in ${city.name}, ${city.state} staying safe with Gravity's real-time GPS tracking, SOS alerts, and smart geofencing.`,
+      title: `Family Safety App in ${city.name} — KVL Track`,
+      description: `Join families in ${city.name}, ${city.state} staying safe with KVL Track's real-time GPS tracking, SOS alerts, and smart geofencing.`,
       url: `https://gravity.trackalways.com/locations/${params.city}`,
-      siteName: 'Gravity by Trackalways',
+      siteName: 'KVL Track by Trackalways',
       images: [
         {
           url: 'https://gravity.trackalways.com/og-image.svg',
           width: 1200,
           height: 630,
-          alt: `Gravity Family Safety App ${city.name}`,
+          alt: `KVL Track Family Safety App ${city.name}`,
         },
       ],
       locale: 'en_IN',
@@ -193,7 +193,7 @@ export async function generateMetadata({
     },
     twitter: {
       card: 'summary_large_image',
-      title: `Gravity Family Safety App — ${city.name}`,
+      title: `KVL Track Family Safety App — ${city.name}`,
       description: `GPS tracking & SOS alerts for ${city.name} families.`,
       images: ['https://gravity.trackalways.com/og-image.svg'],
     },
@@ -209,7 +209,7 @@ function buildLocalBusinessSchema(city: CityData, citySlug: string) {
   return {
     '@context': 'https://schema.org',
     '@type': 'LocalBusiness',
-    name: `Gravity by Trackalways — ${city.name}`,
+    name: `KVL Track by Trackalways — ${city.name}`,
     description: `Family safety app serving ${city.name}, ${city.state}. Real-time GPS tracking, SOS alerts, and smart geofencing for ${city.population} residents.`,
     url: `https://gravity.trackalways.com/locations/${citySlug}`,
     logo: 'https://gravity.trackalways.com/logo.svg',
@@ -270,7 +270,7 @@ function getFeatureCards(city: CityData) {
     {
       icon: '🆘',
       title: 'One-Tap SOS Emergency',
-      description: `When seconds matter, Gravity's SOS sends an immediate alert with live GPS coordinates to all family members and emergency contacts. Designed for ${city.name}'s fast-paced environment where help needs to arrive fast.`,
+      description: `When seconds matter, KVL Track's SOS sends an immediate alert with live GPS coordinates to all family members and emergency contacts. Designed for ${city.name}'s fast-paced environment where help needs to arrive fast.`,
     },
     {
       icon: '🔔',
@@ -280,7 +280,7 @@ function getFeatureCards(city: CityData) {
     {
       icon: '🤖',
       title: 'AI Safety Insights',
-      description: `Gravity's AI analyses movement patterns, driving behaviour, and location history to surface personalised safety insights for your family in ${city.name}, ${city.state}.`,
+      description: `KVL Track's AI analyses movement patterns, driving behaviour, and location history to surface personalised safety insights for your family in ${city.name}, ${city.state}.`,
     },
   ]
 }
@@ -290,13 +290,13 @@ function getFeatureCards(city: CityData) {
 function getTestimonials(city: CityData) {
   return [
     {
-      quote: `Since moving to ${city.name} for work, Gravity has been the one app my wife and I both agreed we can't live without. Knowing the kids are home from school without having to call — priceless.`,
+      quote: `Since moving to ${city.name} for work, KVL Track has been the one app my wife and I both agreed we can't live without. Knowing the kids are home from school without having to call — priceless.`,
       name: 'Ramesh P.',
       role: `Working parent, ${city.name}`,
       rating: 5,
     },
     {
-      quote: `My elderly mother lives alone in ${city.name}. Gravity's geofencing alerts me the moment she steps out — and the SOS button gives her independence without us worrying all day.`,
+      quote: `My elderly mother lives alone in ${city.name}. KVL Track's geofencing alerts me the moment she steps out — and the SOS button gives her independence without us worrying all day.`,
       name: 'Priya S.',
       role: `Daughter & caregiver, ${city.state}`,
       rating: 5,
@@ -322,7 +322,7 @@ export default function CityPage({ params }: { params: { city: string } }) {
         <div className="flex flex-col items-center justify-center min-h-[60vh] text-center px-4">
           <h1 className="text-4xl font-bold text-white mb-4">City Not Found</h1>
           <p className="text-gray-400 mb-8">
-            We don&apos;t have a dedicated page for this city yet, but Gravity works
+            We don&apos;t have a dedicated page for this city yet, but KVL Track works
             across India.
           </p>
           <Link
@@ -402,7 +402,7 @@ export default function CityPage({ params }: { params: { city: string } }) {
             {city.safetyContext}
           </p>
           <p className="text-base text-gray-400 max-w-2xl mx-auto mb-10">
-            Join thousands of {city.name} families using Gravity for real-time GPS
+            Join thousands of {city.name} families using KVL Track for real-time GPS
             tracking, one-tap SOS, and smart geofencing — all in one app, free to
             download.
           </p>
@@ -480,7 +480,7 @@ export default function CityPage({ params }: { params: { city: string } }) {
               Built for {city.name} Families
             </h2>
             <p className="text-gray-400 max-w-2xl mx-auto text-base leading-relaxed">
-              Every feature in Gravity is designed for Indian conditions — low
+              Every feature in KVL Track is designed for Indian conditions — low
               bandwidth, diverse commute patterns, multigenerational households, and
               the unique safety landscape of cities like {city.name}.
             </p>
@@ -513,7 +513,7 @@ export default function CityPage({ params }: { params: { city: string } }) {
                 <span>Made for {city.name}</span>
               </div>
               <h2 className="text-3xl sm:text-4xl font-extrabold text-white mb-6 leading-tight">
-                Why {city.name} Families Choose Gravity
+                Why {city.name} Families Choose KVL Track
               </h2>
               <p className="text-gray-300 text-base leading-relaxed mb-6">
                 {city.safetyContext}
@@ -521,7 +521,7 @@ export default function CityPage({ params }: { params: { city: string } }) {
               <p className="text-gray-400 text-base leading-relaxed mb-8">
                 {city.localFeature}. Whether you&apos;re tracking your child&apos;s
                 school commute, ensuring an elderly parent&apos;s daily walk, or
-                simply staying connected with your spouse on a late shift, Gravity
+                simply staying connected with your spouse on a late shift, KVL Track
                 works quietly in the background — notifying you only when it
                 matters.
               </p>
@@ -587,7 +587,7 @@ export default function CityPage({ params }: { params: { city: string } }) {
               Get Your {city.name} Family Protected in 3 Steps
             </h2>
             <p className="text-gray-400 max-w-xl mx-auto text-base">
-              No complex setup. No hardware needed. Gravity works on any Android or
+              No complex setup. No hardware needed. KVL Track works on any Android or
               iPhone already in your family&apos;s hands.
             </p>
           </div>
@@ -598,7 +598,7 @@ export default function CityPage({ params }: { params: { city: string } }) {
                 step: '01',
                 title: 'Download & Sign Up',
                 description:
-                  'Install Gravity free from Google Play or the App Store. Create a family account with your phone number — takes under 2 minutes.',
+                  'Install KVL Track free from Google Play or the App Store. Create a family account with your phone number — takes under 2 minutes.',
               },
               {
                 step: '02',
@@ -609,7 +609,7 @@ export default function CityPage({ params }: { params: { city: string } }) {
               {
                 step: '03',
                 title: 'Set Your Safe Zones',
-                description: `Draw geofences around your home, your children's school, or any important location in ${city.name}. Gravity handles the rest.`,
+                description: `Draw geofences around your home, your children's school, or any important location in ${city.name}. KVL Track handles the rest.`,
               },
             ].map((item) => (
               <div key={item.step} className="relative bg-[#111420] border border-white/5 rounded-2xl p-8">
@@ -629,11 +629,11 @@ export default function CityPage({ params }: { params: { city: string } }) {
         <div className="max-w-6xl mx-auto">
           <div className="text-center mb-14">
             <h2 className="text-3xl sm:text-4xl font-extrabold text-white mb-4">
-              {city.name} Families Love Gravity
+              {city.name} Families Love KVL Track
             </h2>
             <p className="text-gray-400 max-w-2xl mx-auto text-base">
               Join thousands of families in {city.name}, {city.state} who sleep
-              better knowing Gravity is watching over the people they love.
+              better knowing KVL Track is watching over the people they love.
             </p>
           </div>
 
@@ -668,10 +668,10 @@ export default function CityPage({ params }: { params: { city: string } }) {
         <div className="max-w-4xl mx-auto">
           <div className="text-center mb-12">
             <h2 className="text-3xl sm:text-4xl font-extrabold text-white mb-4">
-              Why Gravity over WhatsApp Location Sharing?
+              Why KVL Track over WhatsApp Location Sharing?
             </h2>
             <p className="text-gray-400 max-w-xl mx-auto text-base">
-              WhatsApp live location expires. Gravity doesn&apos;t — and it does
+              WhatsApp live location expires. KVL Track doesn&apos;t — and it does
               much more.
             </p>
           </div>
@@ -684,7 +684,7 @@ export default function CityPage({ params }: { params: { city: string } }) {
                     Feature
                   </th>
                   <th className="text-center text-[#D4A853] font-bold px-6 py-4">
-                    Gravity
+                    KVL Track
                   </th>
                   <th className="text-center text-gray-500 font-semibold px-6 py-4">
                     WhatsApp
@@ -727,16 +727,16 @@ export default function CityPage({ params }: { params: { city: string } }) {
           <div className="flex flex-col gap-4">
             {[
               {
-                q: `Does Gravity work across all areas of ${city.name}?`,
-                a: `Yes. Gravity works wherever there is cellular network coverage. ${city.name}'s network density means Gravity functions reliably across the city, including in areas with older 3G infrastructure.`,
+                q: `Does KVL Track work across all areas of ${city.name}?`,
+                a: `Yes. KVL Track works wherever there is cellular network coverage. ${city.name}'s network density means KVL Track functions reliably across the city, including in areas with older 3G infrastructure.`,
               },
               {
                 q: 'Is location tracking always-on? Can family members opt out?',
-                a: "Each family member has full control over their own location sharing. They can pause sharing at any time from the app. Gravity is built on consent — every member must accept an invitation and can leave a family circle at any moment.",
+                a: "Each family member has full control over their own location sharing. They can pause sharing at any time from the app. KVL Track is built on consent — every member must accept an invitation and can leave a family circle at any moment.",
               },
               {
-                q: 'How much battery does Gravity use?',
-                a: "Gravity is engineered to use less than 2% battery per day on most Android and iOS devices. Our adaptive tracking algorithm reduces GPS polling when the device is stationary, extending battery life significantly.",
+                q: 'How much battery does KVL Track use?',
+                a: "KVL Track is engineered to use less than 2% battery per day on most Android and iOS devices. Our adaptive tracking algorithm reduces GPS polling when the device is stationary, extending battery life significantly.",
               },
               {
                 q: `Is my family's location data stored securely?`,
@@ -744,7 +744,7 @@ export default function CityPage({ params }: { params: { city: string } }) {
               },
               {
                 q: 'What is the cost? Is there a free plan?',
-                a: `Gravity offers a free plan that covers core location sharing and SOS for up to 4 family members — ideal for most ${city.name} households. Premium plans unlock driving safety, unlimited history, and advanced geofencing. See our pricing page for details.`,
+                a: `KVL Track offers a free plan that covers core location sharing and SOS for up to 4 family members — ideal for most ${city.name} households. Premium plans unlock driving safety, unlimited history, and advanced geofencing. See our pricing page for details.`,
               },
             ].map((item, i) => (
               <div
@@ -774,7 +774,7 @@ export default function CityPage({ params }: { params: { city: string } }) {
             <span className="text-[#D4A853]">Safe, Always</span>
           </h2>
           <p className="text-gray-400 text-base sm:text-lg max-w-xl mx-auto mb-10 leading-relaxed">
-            Download Gravity free today. No credit card, no hardware, no complexity
+            Download KVL Track free today. No credit card, no hardware, no complexity
             — just the peace of mind every {city.name} family deserves.
           </p>
 
@@ -813,7 +813,7 @@ export default function CityPage({ params }: { params: { city: string } }) {
       <section className="py-12 px-4 sm:px-6 border-t border-white/5">
         <div className="max-w-6xl mx-auto">
           <h2 className="text-lg font-semibold text-gray-400 mb-5 text-center">
-            Gravity is available across India — explore other cities
+            KVL Track is available across India — explore other cities
           </h2>
           <div className="flex flex-wrap gap-3 justify-center">
             {Object.entries(CITIES)

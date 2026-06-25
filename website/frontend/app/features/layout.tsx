@@ -1,7 +1,7 @@
 import type { Metadata } from 'next'
 
 export const metadata: Metadata = {
-  title: 'Features | Real-Time Family Safety — Gravity',
+  title: 'Features | Real-Time Family Safety — KVL Track',
   description:
     'GPS tracking, geofencing alerts, SOS emergency button, AI-powered insights, family chat, driving safety scores. Everything your family needs to stay safe.',
   keywords: [
@@ -10,17 +10,17 @@ export const metadata: Metadata = {
     'SOS emergency app India',
   ],
   openGraph: {
-    title: 'Features | Real-Time Family Safety — Gravity',
+    title: 'Features | Real-Time Family Safety — KVL Track',
     description:
       'GPS tracking, geofencing alerts, SOS emergency button, AI-powered insights, family chat, driving safety scores. Everything your family needs to stay safe.',
     url: 'https://gravity.trackalways.com/features',
-    siteName: 'Gravity by Trackalways',
+    siteName: 'KVL Track by Trackalways',
     images: [
       {
         url: 'https://gravity.trackalways.com/og-image.svg',
         width: 1200,
         height: 630,
-        alt: 'Gravity Features',
+        alt: 'KVL Track Features',
       },
     ],
     locale: 'en_IN',
@@ -28,7 +28,7 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Features | Real-Time Family Safety — Gravity',
+    title: 'Features | Real-Time Family Safety — KVL Track',
     description:
       'GPS tracking, geofencing alerts, SOS emergency button, AI-powered insights, family chat, driving safety scores. Everything your family needs to stay safe.',
     images: ['https://gravity.trackalways.com/og-image.svg'],

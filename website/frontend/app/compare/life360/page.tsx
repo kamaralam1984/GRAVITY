@@ -51,24 +51,24 @@ const COMPARISON_ROWS = [
 /* ── FAQ data ────────────────────────────────────────────────────────────────── */
 const FAQS = [
   {
-    q: "How long does it take to switch from Life360 to Gravity?",
-    a: "Most families complete the switch in under 20 minutes. Download Gravity, create your family circle, and invite your members via a simple link. Your data from Life360 does not transfer but Gravity will start building your location history from day one.",
+    q: "How long does it take to switch from Life360 to KVL Track?",
+    a: "Most families complete the switch in under 20 minutes. Download KVL Track, create your family circle, and invite your members via a simple link. Your data from Life360 does not transfer but KVL Track will start building your location history from day one.",
   },
   {
     q: "Will my family lose location history when switching?",
-    a: "Yes — existing Life360 history stays with Life360. Gravity begins a fresh 365-day history from your first active day. For most families the clean start is a non-issue; old history is rarely checked.",
+    a: "Yes — existing Life360 history stays with Life360. KVL Track begins a fresh 365-day history from your first active day. For most families the clean start is a non-issue; old history is rarely checked.",
   },
   {
-    q: "Is Gravity cheaper than Life360 for Indian families?",
-    a: "Significantly. Life360 Plus for an average Indian family works out to over ₹800 per month when converted. Gravity Family Plan is ₹199 per month with more features included — and the free plan is genuinely usable, not a stripped-down trial.",
+    q: "Is KVL Track cheaper than Life360 for Indian families?",
+    a: "Significantly. Life360 Plus for an average Indian family works out to over ₹800 per month when converted. KVL Track Family Plan is ₹199 per month with more features included — and the free plan is genuinely usable, not a stripped-down trial.",
   },
   {
-    q: "Does Gravity have the same driving features as Life360 Driver Protect?",
-    a: "Gravity includes driving reports, trip history, speed alerts, hard braking detection, and rapid acceleration monitoring — all free on the Family plan. AI-powered driving risk analysis is available on Family Plus.",
+    q: "Does KVL Track have the same driving features as Life360 Driver Protect?",
+    a: "KVL Track includes driving reports, trip history, speed alerts, hard braking detection, and rapid acceleration monitoring — all free on the Family plan. AI-powered driving risk analysis is available on Family Plus.",
   },
   {
     q: "Does Life360 really sell user data?",
-    a: "This has been publicly documented by multiple investigative outlets including Motherboard/Vice. Life360 has acknowledged sharing location data with data brokers including for insurance and automotive purposes. Gravity does not engage in any data brokerage and earns revenue solely from subscriptions.",
+    a: "This has been publicly documented by multiple investigative outlets including Motherboard/Vice. Life360 has acknowledged sharing location data with data brokers including for insurance and automotive purposes. KVL Track does not engage in any data brokerage and earns revenue solely from subscriptions.",
   },
 ];
 
@@ -162,7 +162,7 @@ export default function CompareLife360() {
             style={{ marginBottom: 32, textAlign: "left" }}
           >
             <Link href="/" style={{ color: "var(--text-muted)", textDecoration: "none", fontSize: "0.9rem", display: "inline-flex", alignItems: "center", gap: 6 }}>
-              ← Back to Gravity Home
+              ← Back to KVL Track Home
             </Link>
           </motion.div>
 
@@ -202,7 +202,7 @@ export default function CompareLife360() {
               marginBottom: 24,
             }}
           >
-            Gravity vs Life360
+            KVL Track vs Life360
           </motion.h1>
 
           <motion.p
@@ -217,7 +217,7 @@ export default function CompareLife360() {
               lineHeight: 1.75,
             }}
           >
-            Why 50,000+ families switched to Gravity. This is an honest, feature-by-feature comparison — no spin, no cherry-picking. We believe the facts speak for themselves.
+            Why 50,000+ families switched to KVL Track. This is an honest, feature-by-feature comparison — no spin, no cherry-picking. We believe the facts speak for themselves.
           </motion.p>
 
           <motion.p
@@ -246,7 +246,7 @@ export default function CompareLife360() {
                 gap: 12,
               }}
             >
-              <div style={{ fontFamily: "var(--font-display)", fontWeight: 800, fontSize: "1.3rem", color: "var(--gold)" }}>Gravity</div>
+              <div style={{ fontFamily: "var(--font-display)", fontWeight: 800, fontSize: "1.3rem", color: "var(--gold)" }}>KVL Track</div>
               <div style={{ color: "var(--text-muted)", fontSize: "0.88rem" }}>India-built, privacy-first</div>
             </div>
             <div style={{ color: "var(--text-muted)", fontWeight: 700, fontSize: "1.1rem" }}>vs</div>
@@ -295,27 +295,27 @@ export default function CompareLife360() {
             {[
               {
                 icon: <Lock size={26} style={{ color: "#10B981" }} />,
-                winner: "Gravity Wins",
+                winner: "KVL Track Wins",
                 category: "Privacy",
-                detail: "Gravity earns revenue from subscriptions — not from selling your family location data to insurance companies and data brokers. Life360 has publicly documented data-sharing partnerships with third-party data companies.",
+                detail: "KVL Track earns revenue from subscriptions — not from selling your family location data to insurance companies and data brokers. Life360 has publicly documented data-sharing partnerships with third-party data companies.",
                 winnerColor: "#10B981",
                 bg: "rgba(16,185,129,0.05)",
                 border: "rgba(16,185,129,0.2)",
               },
               {
                 icon: <Heart size={26} style={{ color: "#3B82F6" }} />,
-                winner: "Gravity Wins",
+                winner: "KVL Track Wins",
                 category: "Value for Indian Families",
-                detail: "Gravity Family plan is ₹199/month with SOS, driving reports, and elderly care included free. Equivalent Life360 features cost ₹800+ per month after conversion — more than 4x the price for fewer India-specific features.",
+                detail: "KVL Track Family plan is ₹199/month with SOS, driving reports, and elderly care included free. Equivalent Life360 features cost ₹800+ per month after conversion — more than 4x the price for fewer India-specific features.",
                 winnerColor: "#3B82F6",
                 bg: "rgba(59,130,246,0.05)",
                 border: "rgba(59,130,246,0.2)",
               },
               {
                 icon: <Zap size={26} style={{ color: "var(--gold)" }} />,
-                winner: "Gravity Wins",
+                winner: "KVL Track Wins",
                 category: "AI Features",
-                detail: "Gravity AI provides predictive late alerts, routine change detection, battery risk forecasting, and weekly AI-written family reports. Life360 has no comparable AI intelligence layer — you get raw data, not insights.",
+                detail: "KVL Track AI provides predictive late alerts, routine change detection, battery risk forecasting, and weekly AI-written family reports. Life360 has no comparable AI intelligence layer — you get raw data, not insights.",
                 winnerColor: "var(--gold)",
                 bg: "rgba(var(--gold-rgb),0.05)",
                 border: "rgba(var(--gold-rgb),0.2)",
@@ -426,7 +426,7 @@ export default function CompareLife360() {
                       width: "28%",
                     }}
                   >
-                    Gravity
+                    KVL Track
                   </th>
                   <th
                     style={{
@@ -535,7 +535,7 @@ export default function CompareLife360() {
                 This is not a theoretical privacy risk. When a family tracking app sells your movement data, it means the routes your children walk to school, your parent daily health walks, and your own commute patterns become commercial products — without meaningful informed consent.
               </p>
               <p style={{ color: "var(--text-muted)", lineHeight: 1.75 }}>
-                Gravity charges a transparent subscription fee. That is the entire business model. Your family location data is used to provide you the service — and nothing else. It is not packaged, aggregated, anonymized-then-re-identified, or sold. Full stop.
+                KVL Track charges a transparent subscription fee. That is the entire business model. Your family location data is used to provide you the service — and nothing else. It is not packaged, aggregated, anonymized-then-re-identified, or sold. Full stop.
               </p>
             </div>
 
@@ -554,7 +554,7 @@ export default function CompareLife360() {
                   border: "rgba(239,68,68,0.15)",
                 },
                 {
-                  title: "What Gravity does with your data",
+                  title: "What KVL Track does with your data",
                   points: [
                     "Uses data exclusively to provide you the service",
                     "No partnerships with data brokers",
@@ -626,7 +626,7 @@ export default function CompareLife360() {
               Switch from Life360 in 3 Steps
             </h2>
             <p style={{ color: "var(--text-muted)", maxWidth: 540, margin: "0 auto", lineHeight: 1.7 }}>
-              Moving your family from Life360 to Gravity takes less time than a single Life360 monthly billing cycle. Here is the entire process.
+              Moving your family from Life360 to KVL Track takes less time than a single Life360 monthly billing cycle. Here is the entire process.
             </p>
           </motion.div>
 
@@ -643,8 +643,8 @@ export default function CompareLife360() {
               {
                 step: "01",
                 icon: <Globe size={22} />,
-                title: "Download Gravity",
-                description: "Get Gravity free on iOS or Android. Create your account — it takes two minutes. No credit card required for the free plan. Your family admin account is ready immediately.",
+                title: "Download KVL Track",
+                description: "Get KVL Track free on iOS or Android. Create your account — it takes two minutes. No credit card required for the free plan. Your family admin account is ready immediately.",
                 color: "var(--gold)",
               },
               {
@@ -658,7 +658,7 @@ export default function CompareLife360() {
                 step: "03",
                 icon: <Heart size={22} />,
                 title: "Invite Your Family",
-                description: "Send invitation links to each family member via WhatsApp or SMS. They tap the link, install Gravity, and join your circle. You can cancel Life360 the same day — your family is immediately covered.",
+                description: "Send invitation links to each family member via WhatsApp or SMS. They tap the link, install KVL Track, and join your circle. You can cancel Life360 the same day — your family is immediately covered.",
                 color: "#10B981",
               },
             ].map((step, i) => (
@@ -878,7 +878,7 @@ export default function CompareLife360() {
                 boxShadow: "0 0 28px rgba(var(--gold-rgb),0.3)",
               }}
             >
-              Switch to Gravity Free <ChevronRight size={18} />
+              Switch to KVL Track Free <ChevronRight size={18} />
             </Link>
             <Link
               href="/pricing"
@@ -897,7 +897,7 @@ export default function CompareLife360() {
             </Link>
           </div>
           <Link href="/" style={{ color: "rgba(255,255,255,0.4)", fontSize: "0.88rem", textDecoration: "none" }}>
-            ← Back to Gravity Home
+            ← Back to KVL Track Home
           </Link>
         </div>
       </section>

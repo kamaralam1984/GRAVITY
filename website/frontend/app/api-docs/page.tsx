@@ -229,7 +229,7 @@ export default function ApiDocsPage() {
                 <span style={{ fontSize: 12, fontWeight: 600, color: '#4B80F0', fontFamily: "'Inter', sans-serif" }}>Developer API v2.0</span>
               </div>
               <h1 style={{ fontSize: 52, fontWeight: 800, color: 'var(--text-primary)', fontFamily: "'Plus Jakarta Sans', sans-serif", marginBottom: 20, lineHeight: 1.12 }}>
-                Gravity{' '}
+                KVL Track{' '}
                 <span style={{ background: 'linear-gradient(135deg, #4B80F0 0%, #7C3AED 100%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>Developer API</span>
               </h1>
               <p style={{ fontSize: 18, color: 'var(--text-secondary)', maxWidth: 580, margin: '0 auto 36px', fontFamily: "'Inter', sans-serif", lineHeight: 1.7 }}>

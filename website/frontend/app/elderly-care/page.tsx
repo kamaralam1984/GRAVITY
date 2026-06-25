@@ -232,7 +232,7 @@ export default function ElderlyCare() {
                 gap: 6,
               }}
             >
-              <ArrowLeft size={15} /> Return to Gravity Home
+              <ArrowLeft size={15} /> Return to KVL Track Home
             </Link>
           </motion.div>
 
@@ -294,7 +294,7 @@ export default function ElderlyCare() {
                 textTransform: 'uppercase',
               }}
             >
-              Gravity Elder
+              KVL Track Elder
             </span>
           </motion.div>
 
@@ -311,7 +311,7 @@ export default function ElderlyCare() {
               marginBottom: 24,
             }}
           >
-            Gravity Elder —
+            KVL Track Elder —
             <br />
             <span
               style={{
@@ -451,7 +451,7 @@ export default function ElderlyCare() {
               AI Fall Detection — Always On
             </h2>
             <p style={{ color: 'rgba(255,255,255,0.5)', maxWidth: 560, margin: '0 auto', lineHeight: 1.75 }}>
-              Gravity Elder uses wearable data and AI motion analysis to detect falls in real time — and escalates instantly to your emergency contacts.
+              KVL Track Elder uses wearable data and AI motion analysis to detect falls in real time — and escalates instantly to your emergency contacts.
             </p>
           </motion.div>
 
@@ -1202,7 +1202,7 @@ export default function ElderlyCare() {
               Works With Your Wearable
             </h2>
             <p style={{ color: 'rgba(255,255,255,0.5)', maxWidth: 540, margin: '0 auto', lineHeight: 1.75 }}>
-              Gravity Elder integrates with all major health wearables to pull real-time biometric data and enhance fall detection accuracy.
+              KVL Track Elder integrates with all major health wearables to pull real-time biometric data and enhance fall detection accuracy.
             </p>
           </motion.div>
 
@@ -1307,7 +1307,7 @@ export default function ElderlyCare() {
               5-Step Emergency Response
             </h2>
             <p style={{ color: 'rgba(255,255,255,0.5)', maxWidth: 560, margin: '0 auto', lineHeight: 1.75 }}>
-              When a fall is detected, Gravity follows a structured escalation protocol — from instant alert to emergency services in under 2 minutes.
+              When a fall is detected, KVL Track follows a structured escalation protocol — from instant alert to emergency services in under 2 minutes.
             </p>
           </motion.div>
 
@@ -1448,7 +1448,7 @@ export default function ElderlyCare() {
             <span style={{ color: '#EF4444' }}>₹399/month</span>
           </h2>
           <p style={{ color: 'rgba(255,255,255,0.5)', maxWidth: 540, margin: '0 auto 40px', lineHeight: 1.78 }}>
-            Distance does not have to mean worry. Gravity Elder keeps your loved ones safe, monitored, and connected — every single day. First month free.
+            Distance does not have to mean worry. KVL Track Elder keeps your loved ones safe, monitored, and connected — every single day. First month free.
           </p>
           <div style={{ display: 'flex', gap: 16, justifyContent: 'center', flexWrap: 'wrap' }}>
             <Link
@@ -1487,7 +1487,7 @@ export default function ElderlyCare() {
           </div>
           <div style={{ marginTop: 32 }}>
             <Link href="/" style={{ color: 'rgba(255,255,255,0.35)', fontSize: '0.85rem', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: 6 }}>
-              <ArrowLeft size={14} /> Return to Gravity Home
+              <ArrowLeft size={14} /> Return to KVL Track Home
             </Link>
           </div>
         </motion.div>

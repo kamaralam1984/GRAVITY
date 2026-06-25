@@ -16,49 +16,49 @@ const COMPANY_FACTS = [
 const COVERAGE = [
   {
     publication: "TechCrunch India",
-    headline: "Gravity raises seed round to make family safety mainstream in India",
+    headline: "KVL Track raises seed round to make family safety mainstream in India",
     date: "January 15, 2025",
-    excerpt: "The Mumbai-based startup is betting that real-time location sharing can become a household utility across India the same way UPI payments did. With a freemium model and privacy-first architecture, Gravity is quietly building the safety layer for the next billion smartphone users.",
+    excerpt: "The Mumbai-based startup is betting that real-time location sharing can become a household utility across India the same way UPI payments did. With a freemium model and privacy-first architecture, KVL Track is quietly building the safety layer for the next billion smartphone users.",
     color: "var(--primary)",
   },
   {
     publication: "Economic Times",
     headline: "Mumbai startup redefines how Indian families stay connected through real-time location",
     date: "December 3, 2024",
-    excerpt: "As smartphone penetration deepens across tier-2 and tier-3 cities, Gravity is positioning itself at the intersection of family trust and mobile technology. The platform has grown five-fold in 2024 alone, driven entirely by word-of-mouth among parents and caregivers across the country.",
+    excerpt: "As smartphone penetration deepens across tier-2 and tier-3 cities, KVL Track is positioning itself at the intersection of family trust and mobile technology. The platform has grown five-fold in 2024 alone, driven entirely by word-of-mouth among parents and caregivers across the country.",
     color: "var(--gold)",
   },
   {
     publication: "YourStory",
     headline: "Meet the team building an Indian answer to Life360",
     date: "November 8, 2024",
-    excerpt: "Founded by a team of ex-Flipkart and Ola engineers, Gravity is designed ground-up for the Indian context — supporting low-bandwidth conditions, multiple languages, and the nuanced dynamics of multigenerational households that dominate the subcontinent.",
+    excerpt: "Founded by a team of ex-Flipkart and Ola engineers, KVL Track is designed ground-up for the Indian context — supporting low-bandwidth conditions, multiple languages, and the nuanced dynamics of multigenerational households that dominate the subcontinent.",
     color: "var(--safe)",
   },
   {
     publication: "Inc42",
-    headline: "Gravity freemium model targets 50 million Indian families",
+    headline: "KVL Track freemium model targets 50 million Indian families",
     date: "September 30, 2024",
-    excerpt: "With a zero-cost entry tier and a premium plan priced below a cup of coffee per month, Gravity is aggressively democratising family safety tech. Founders say the addressable market in India alone exceeds what most Western counterparts have tapped globally.",
+    excerpt: "With a zero-cost entry tier and a premium plan priced below a cup of coffee per month, KVL Track is aggressively democratising family safety tech. Founders say the addressable market in India alone exceeds what most Western counterparts have tapped globally.",
     color: "var(--primary)",
   },
   {
     publication: "The Ken",
     headline: "The privacy-first family tracker that avoids the surveillance trap",
     date: "August 22, 2024",
-    excerpt: "Unlike legacy location apps that operate as covert surveillance tools, Gravity builds consent and transparency into every layer. Every family member sees who can see them, can pause sharing at any time, and receives clear notifications when their location is being accessed.",
+    excerpt: "Unlike legacy location apps that operate as covert surveillance tools, KVL Track builds consent and transparency into every layer. Every family member sees who can see them, can pause sharing at any time, and receives clear notifications when their location is being accessed.",
     color: "var(--gold)",
   },
   {
     publication: "Mint",
     headline: "Family safety apps see 3x growth post-pandemic in India",
     date: "July 14, 2024",
-    excerpt: "A Mint analysis of the family safety app category shows a sustained three-times growth curve since 2022, with Gravity emerging as the fastest-growing domestic player. Analysts cite rising smartphone adoption among senior citizens and working parents as the primary growth driver.",
+    excerpt: "A Mint analysis of the family safety app category shows a sustained three-times growth curve since 2022, with KVL Track emerging as the fastest-growing domestic player. Analysts cite rising smartphone adoption among senior citizens and working parents as the primary growth driver.",
     color: "var(--safe)",
   },
 ]
 
-const BOILERPLATE = "Gravity by TRACKALWAYS is a family safety platform designed for the needs of modern Indian households. Founded in 2022 and headquartered in Mumbai, Gravity provides real-time location sharing, SOS alerts, place arrival and departure notifications, and driving behaviour monitoring through a privacy-first mobile application available on iOS and Android. The platform serves over 50,000 families across India, with a freemium model that makes core safety features accessible to everyone. Gravity is built on the belief that staying connected with loved ones should be simple, transparent, and affordable. The company is backed by seed funding and is actively expanding its feature set to cover elder care, student safety, and enterprise fleet management. For more information, visit trackalways.com."
+const BOILERPLATE = "KVL Track by TRACKALWAYS is a family safety platform designed for the needs of modern Indian households. Founded in 2022 and headquartered in Mumbai, KVL Track provides real-time location sharing, SOS alerts, place arrival and departure notifications, and driving behaviour monitoring through a privacy-first mobile application available on iOS and Android. The platform serves over 50,000 families across India, with a freemium model that makes core safety features accessible to everyone. KVL Track is built on the belief that staying connected with loved ones should be simple, transparent, and affordable. The company is backed by seed funding and is actively expanding its feature set to cover elder care, student safety, and enterprise fleet management. For more information, visit trackalways.com."
 
 const fadeUp = {
   hidden: { opacity: 0, y: 28 },
@@ -117,7 +117,7 @@ export default function PressPage() {
                 letterSpacing: "0.04em",
               }}
             >
-              Back to Gravity
+              Back to KVL Track
             </Link>
           </motion.div>
 
@@ -172,7 +172,7 @@ export default function PressPage() {
             }}
           >
             Resources for journalists, analysts, and media partners covering family safety technology.
-            Everything you need to tell the Gravity story accurately and compellingly.
+            Everything you need to tell the KVL Track story accurately and compellingly.
           </motion.p>
 
           <motion.div
@@ -454,7 +454,7 @@ export default function PressPage() {
                     textTransform: "uppercase",
                   }}
                 >
-                  GRAVITY
+                  KVL TRACK
                 </span>
               </div>
               <div style={{ padding: "16px 20px" }}>
@@ -512,7 +512,7 @@ export default function PressPage() {
                     textTransform: "uppercase",
                   }}
                 >
-                  GRAVITY
+                  KVL TRACK
                 </span>
               </div>
               <div style={{ padding: "16px 20px" }}>
@@ -886,7 +886,7 @@ export default function PressPage() {
               letterSpacing: "-0.02em",
             }}
           >
-            Covering Gravity?
+            Covering KVL Track?
           </h2>
           <p
             style={{
@@ -917,7 +917,7 @@ export default function PressPage() {
                 fontSize: "15px",
               }}
             >
-              Explore Gravity
+              Explore KVL Track
             </Link>
             <Link
               href="/contact"

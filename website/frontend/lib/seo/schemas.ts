@@ -7,7 +7,7 @@ export function buildOrganizationSchema() {
     '@type': 'Organization',
     '@id': `${BASE_URL}/#organization`,
     name: 'Trackalways Technologies Pvt Ltd',
-    alternateName: 'Gravity by Trackalways',
+    alternateName: 'KVL Track by Trackalways',
     url: BASE_URL,
     logo: {
       '@type': 'ImageObject',
@@ -17,7 +17,7 @@ export function buildOrganizationSchema() {
     },
     foundingDate: '2022',
     description:
-      "Trackalways Technologies Pvt Ltd builds Gravity — India's family safety operating system. Real-time location sharing, SOS alerts, geofencing, elderly care, and AI insights for 50,000+ families.",
+      "Trackalways Technologies Pvt Ltd builds KVL Track — India's family safety operating system. Real-time location sharing, SOS alerts, geofencing, elderly care, and AI insights for 50,000+ families.",
     slogan: 'What Pulls You Together',
     address: {
       '@type': 'PostalAddress',
@@ -56,7 +56,7 @@ export function buildWebSiteSchema() {
     '@type': 'WebSite',
     '@id': `${BASE_URL}/#website`,
     url: BASE_URL,
-    name: 'Gravity by Trackalways',
+    name: 'KVL Track by Trackalways',
     description:
       'Family safety app for India — real-time location sharing, SOS alerts, geofencing, elderly care, and AI family insights.',
     publisher: {
@@ -80,8 +80,8 @@ export function buildSoftwareApplicationSchema() {
     '@context': 'https://schema.org',
     '@type': 'SoftwareApplication',
     '@id': `${BASE_URL}/#software`,
-    name: 'Gravity',
-    alternateName: 'Gravity by Trackalways',
+    name: 'KVL Track',
+    alternateName: 'KVL Track by Trackalways',
     url: BASE_URL,
     downloadUrl: `${BASE_URL}/download`,
     applicationCategory: 'LifestyleApplication',
@@ -89,7 +89,7 @@ export function buildSoftwareApplicationSchema() {
     operatingSystem: 'Android, iOS',
     softwareVersion: '2.0',
     description:
-      "Gravity is India's family safety operating system. Track family members in real-time, set geofence safe zones, send one-tap SOS alerts, and care for elderly parents — all in one app.",
+      "KVL Track is India's family safety operating system. Track family members in real-time, set geofence safe zones, send one-tap SOS alerts, and care for elderly parents — all in one app.",
     featureList: [
       'Real-time family location sharing',
       'SOS emergency alerts',
@@ -250,11 +250,11 @@ export function buildProductSchema(plan: {
   return {
     '@context': 'https://schema.org',
     '@type': 'Product',
-    name: `Gravity ${plan.name}`,
+    name: `KVL Track ${plan.name}`,
     description: plan.description,
     brand: {
       '@type': 'Brand',
-      name: 'Gravity by Trackalways',
+      name: 'KVL Track by Trackalways',
     },
     url: `${BASE_URL}/pricing`,
     image: `${BASE_URL}/og-image.png`,

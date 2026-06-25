@@ -54,7 +54,7 @@ const FEATURES = [
   {
     icon: <Smartphone size={24} />,
     title: 'Phone Usage Detection',
-    description: 'Gravity detects when your teen\'s phone screen is unlocked during a moving trip — indicating texting or social media while driving. Instant parent alert, no app access required by the teen.',
+    description: 'KVL Track detects when your teen\'s phone screen is unlocked during a moving trip — indicating texting or social media while driving. Instant parent alert, no app access required by the teen.',
     color: '#F59E0B',
   },
   {
@@ -86,19 +86,19 @@ const FEATURES = [
 const FAQS = [
   {
     q: 'Can I see how fast my teen is driving?',
-    a: "Yes. Gravity shows your teen's real-time speed on a live map whenever they are driving. You can also set custom speed alert thresholds — for example, receive an alert if they exceed 80 km/h in urban areas or 110 km/h on highways. Speed is displayed in the parent app in real time and included in every post-trip report.",
+    a: "Yes. KVL Track shows your teen's real-time speed on a live map whenever they are driving. You can also set custom speed alert thresholds — for example, receive an alert if they exceed 80 km/h in urban areas or 110 km/h on highways. Speed is displayed in the parent app in real time and included in every post-trip report.",
   },
   {
     q: 'Does the app detect phone use while driving?',
-    a: "Yes. Gravity detects when the phone screen is unlocked during a detected driving session (speed > 20 km/h). This is a strong proxy for phone-in-hand usage including texting, scrolling social media, or changing music without using a hands-free interface. Each detected incident is flagged in the trip report with the time and location. The teen's app does not receive any notification — only the parent app is alerted.",
+    a: "Yes. KVL Track detects when the phone screen is unlocked during a detected driving session (speed > 20 km/h). This is a strong proxy for phone-in-hand usage including texting, scrolling social media, or changing music without using a hands-free interface. Each detected incident is flagged in the trip report with the time and location. The teen's app does not receive any notification — only the parent app is alerted.",
   },
   {
     q: 'What is a teen driving safety score?',
-    a: "The Gravity driving safety score (0–100) is calculated per trip using five weighted factors: (1) Speed compliance — percentage of drive within set limits. (2) Harsh braking — number and severity of sudden stops. (3) Rapid acceleration — aggressive starts. (4) Phone usage — screen unlocks while moving. (5) Night driving — driving after 10 PM adds extra risk weighting. Scores trend over weeks so you can track improvement or regression.",
+    a: "The KVL Track driving safety score (0–100) is calculated per trip using five weighted factors: (1) Speed compliance — percentage of drive within set limits. (2) Harsh braking — number and severity of sudden stops. (3) Rapid acceleration — aggressive starts. (4) Phone usage — screen unlocks while moving. (5) Night driving — driving after 10 PM adds extra risk weighting. Scores trend over weeks so you can track improvement or regression.",
   },
   {
     q: 'Can teens turn off monitoring?',
-    a: "Teens cannot disable the monitoring features from within the Gravity app — only the parent account holder can modify monitoring settings. The teen can see that monitoring is active (we believe in transparency, not secret surveillance), but cannot turn it off. If the teen's phone is powered off during a drive, a notification is sent to the parent account indicating the phone went offline during a previously detected driving session.",
+    a: "Teens cannot disable the monitoring features from within the KVL Track app — only the parent account holder can modify monitoring settings. The teen can see that monitoring is active (we believe in transparency, not secret surveillance), but cannot turn it off. If the teen's phone is powered off during a drive, a notification is sent to the parent account indicating the phone went offline during a previously detected driving session.",
   },
   {
     q: 'What age is appropriate for teen driver monitoring?',
@@ -235,7 +235,7 @@ export default function TeenDriverMonitoringPage() {
           </div>
         </Section>
 
-        {/* Why Gravity */}
+        {/* Why KVL Track */}
         <Section bg="var(--bg)">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <motion.div variants={fadeUp} style={{ textAlign: 'center', marginBottom: 48 }}>
@@ -271,7 +271,7 @@ export default function TeenDriverMonitoringPage() {
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(340px, 1fr))', gap: 24, maxWidth: 860, margin: '0 auto' }}>
               {[
                 { quote: 'My 17-year-old son was resistant at first, but when we showed him his safety score improving each week, he became competitive about it. His driving has genuinely transformed.', name: 'Suresh Patel', role: 'Father, Ahmedabad', avatar: 'SP', color: 'var(--gold)' },
-                { quote: 'Within two weeks of using Gravity teen monitoring, the speed alert app told me my daughter had driven over 100 km/h on the expressway twice. We had a conversation I am glad we had.', name: 'Lakshmi Iyer', role: 'Mother, Pune', avatar: 'LI', color: '#EF4444' },
+                { quote: 'Within two weeks of using KVL Track teen monitoring, the speed alert app told me my daughter had driven over 100 km/h on the expressway twice. We had a conversation I am glad we had.', name: 'Lakshmi Iyer', role: 'Mother, Pune', avatar: 'LI', color: '#EF4444' },
               ].map(t => (
                 <motion.div key={t.name} variants={fadeUp} style={{ background: 'var(--bg)', border: '1px solid var(--border)', borderRadius: 20, padding: '28px 24px' }}>
                   <div style={{ display: 'flex', gap: 3, marginBottom: 16 }}>

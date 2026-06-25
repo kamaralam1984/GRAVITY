@@ -1,7 +1,7 @@
 import type { Metadata } from 'next'
 
 export const metadata: Metadata = {
-  title: 'Child Safety App | School Tracking & Geofencing — Gravity',
+  title: 'Child Safety App | School Tracking & Geofencing — KVL Track',
   description:
     'Know when your child reaches school, leaves tuition, or enters unsafe zones. Real-time alerts, route history, and panic button for kids.',
   keywords: [
@@ -10,17 +10,17 @@ export const metadata: Metadata = {
     'kids GPS tracker',
   ],
   openGraph: {
-    title: 'Child Safety App | School Tracking & Geofencing — Gravity',
+    title: 'Child Safety App | School Tracking & Geofencing — KVL Track',
     description:
       'Know when your child reaches school, leaves tuition, or enters unsafe zones. Real-time alerts, route history, and panic button for kids.',
     url: 'https://gravity.trackalways.com/child-safety',
-    siteName: 'Gravity by Trackalways',
+    siteName: 'KVL Track by Trackalways',
     images: [
       {
         url: 'https://gravity.trackalways.com/og-image.svg',
         width: 1200,
         height: 630,
-        alt: 'Gravity Child Safety App',
+        alt: 'KVL Track Child Safety App',
       },
     ],
     locale: 'en_IN',
@@ -28,7 +28,7 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Child Safety App | School Tracking & Geofencing — Gravity',
+    title: 'Child Safety App | School Tracking & Geofencing — KVL Track',
     description:
       'Know when your child reaches school, leaves tuition, or enters unsafe zones. Real-time alerts, route history, and panic button for kids.',
     images: ['https://gravity.trackalways.com/og-image.svg'],

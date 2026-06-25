@@ -256,7 +256,7 @@ export default function ChildSafety() {
                 gap: 6,
               }}
             >
-              ← Back to Gravity Home
+              ← Back to KVL Track Home
             </Link>
           </motion.div>
 
@@ -301,7 +301,7 @@ export default function ChildSafety() {
                 textTransform: 'uppercase',
               }}
             >
-              Gravity Kids
+              KVL Track Kids
             </span>
           </motion.div>
 
@@ -318,7 +318,7 @@ export default function ChildSafety() {
               marginBottom: 24,
             }}
           >
-            Gravity Kids —
+            KVL Track Kids —
             <br />
             <span
               style={{
@@ -1500,7 +1500,7 @@ export default function ChildSafety() {
             <span style={{ color: '#D4A853' }}>Start Free Today</span>
           </h2>
           <p style={{ color: 'rgba(255,255,255,0.55)', maxWidth: 520, margin: '0 auto 40px', lineHeight: 1.78 }}>
-            Every school day, Gravity watches over your child silently so you don&apos;t have to. From first step out of home to safe return — every moment, verified.
+            Every school day, KVL Track watches over your child silently so you don&apos;t have to. From first step out of home to safe return — every moment, verified.
           </p>
           <div style={{ display: 'flex', gap: 16, justifyContent: 'center', flexWrap: 'wrap' }}>
             <Link
@@ -1539,7 +1539,7 @@ export default function ChildSafety() {
           </div>
           <div style={{ marginTop: 32 }}>
             <Link href="/" style={{ color: 'rgba(255,255,255,0.35)', fontSize: '0.85rem', textDecoration: 'none' }}>
-              ← Back to Gravity Home
+              ← Back to KVL Track Home
             </Link>
           </div>
         </motion.div>

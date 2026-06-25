@@ -535,7 +535,7 @@ export default function AIGuardianPage() {
               href="/"
               style={{ color: 'rgba(255,255,255,0.35)', textDecoration: 'none', fontSize: '0.88rem', display: 'inline-flex', alignItems: 'center', gap: 6 }}
             >
-              ← Back to Gravity Home
+              ← Back to KVL Track Home
             </Link>
           </motion.div>
 
@@ -562,7 +562,7 @@ export default function AIGuardianPage() {
               <motion.span animate={{ scale: [1, 1.3, 1] }} transition={{ duration: 1.4, repeat: Infinity }}>
                 <Brain size={13} />
               </motion.span>
-              Gravity 4.0 AI Guardian Intelligence
+              KVL Track 4.0 AI Guardian Intelligence
             </motion.span>
           </motion.div>
 
@@ -929,7 +929,7 @@ export default function AIGuardianPage() {
           </motion.div>
 
           <motion.p variants={fadeUp} style={{ textAlign: 'center', color: 'var(--text-muted)', fontSize: '0.9rem', marginBottom: 36, fontStyle: 'italic' }}>
-            Say: &quot;Hey Gravity, where is everyone?&quot; — tap a card to see the AI response
+            Say: &quot;Hey KVL Track, where is everyone?&quot; — tap a card to see the AI response
           </motion.p>
 
           <motion.div

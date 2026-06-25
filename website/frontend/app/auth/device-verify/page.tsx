@@ -754,7 +754,7 @@ function DeviceVerifyInner() {
               letterSpacing: '1.5px', textTransform: 'uppercase',
             }}
           >
-            GRAVITY Shield — Real-time device intelligence
+            KVL TRACK Shield — Real-time device intelligence
           </motion.p>
         </motion.div>
       </motion.div>

@@ -11,7 +11,7 @@ const ROW1 = [
     name: 'Riya Sharma',
     location: 'Mumbai, India',
     photo: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=80&auto=format&fit=crop&q=80',
-    quote: 'I was so anxious when my daughter started college in another city. Gravity changed everything — I can see she\'s safe without being intrusive.',
+    quote: 'I was so anxious when my daughter started college in another city. KVL Track changed everything — I can see she\'s safe without being intrusive.',
   },
   {
     name: 'James Chen',
@@ -41,7 +41,7 @@ const ROW2 = [
     name: 'Sarah Williams',
     location: 'London, UK',
     photo: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=80&auto=format&fit=crop&q=80',
-    quote: 'My kids are teenagers — they don\'t always answer calls. Gravity lets me check in quietly without making it awkward. Love the Ghost Mode too!',
+    quote: 'My kids are teenagers — they don\'t always answer calls. KVL Track lets me check in quietly without making it awkward. Love the Ghost Mode too!',
   },
   {
     name: 'Vikram Patel',
@@ -238,7 +238,7 @@ export default function TestimonialsSection() {
           </h2>
 
           <p className="text-lg mt-4 max-w-md mx-auto" style={{ color: 'var(--text-muted)' }}>
-            Real stories from real people whose lives changed with Gravity.
+            Real stories from real people whose lives changed with KVL Track.
           </p>
         </motion.div>
       </div>

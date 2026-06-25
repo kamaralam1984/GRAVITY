@@ -48,7 +48,7 @@ export default function VideoWalkthroughSection() {
           </div>
 
           <h2 className="text-4xl sm:text-5xl font-bold text-white mb-4 tracking-tight">
-            Watch How Gravity{' '}
+            Watch How KVL Track{' '}
             <span
               className="bg-clip-text text-transparent"
               style={{ backgroundImage: 'linear-gradient(135deg, #D4A853 0%, #F5CC78 50%, #D4A853 100%)' }}
@@ -108,7 +108,7 @@ export default function VideoWalkthroughSection() {
               className="text-7xl font-black tracking-widest opacity-[0.04] select-none"
               style={{ color: '#D4A853' }}
             >
-              GRAVITY
+              KVL TRACK
             </span>
           </div>
 
@@ -254,7 +254,7 @@ export default function VideoWalkthroughSection() {
                   className="w-full h-full"
                   allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                   allowFullScreen
-                  title="Gravity Family Safety — Product Walkthrough"
+                  title="KVL Track Family Safety — Product Walkthrough"
                 />
               </div>
             </motion.div>

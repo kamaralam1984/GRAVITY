@@ -680,14 +680,14 @@ export default function DashboardPage() {
                 borderBottom:'1px solid var(--border)',
                 boxShadow:'0 1px 0 rgba(212,168,83,0.08)'}}>
 
-        {/* Logo — Shield + Gravity */}
+        {/* Logo — Shield + KVL Track */}
         <div className="flex items-center gap-2">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" style={{color:'#D4A853',flexShrink:0}}>
             <path d="M12 2L3 7v6c0 5.25 3.75 10.15 9 11.35C17.25 23.15 21 18.25 21 13V7L12 2z"
                   fill="currentColor" opacity="0.2" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round"/>
             <path d="M9 12l2 2 4-4" stroke="#fff" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
           </svg>
-          <span className="font-bold text-sm tracking-wide" style={{color:'#D4A853',fontSize:14,fontWeight:700}}>Gravity</span>
+          <span className="font-bold text-sm tracking-wide" style={{color:'#D4A853',fontSize:14,fontWeight:700}}>KVL Track</span>
           <div className="w-px h-3.5 hidden sm:block" style={{background:'var(--border)'}} />
           <span className="text-xs font-medium hidden sm:block" style={{color:'var(--text-muted)'}}>Dashboard</span>
         </div>

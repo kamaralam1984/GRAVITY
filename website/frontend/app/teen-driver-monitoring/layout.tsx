@@ -1,9 +1,9 @@
 import type { Metadata } from 'next'
 
 export const metadata: Metadata = {
-  title: 'Teen Driver Monitoring App — Gravity | Speed & Safety Alerts for Parents',
+  title: 'Teen Driver Monitoring App — KVL Track | Speed & Safety Alerts for Parents',
   description:
-    'Monitor your teen driver with Gravity. Get real-time speed alerts, harsh braking detection, phone usage warnings, and driving safety scores.',
+    'Monitor your teen driver with KVL Track. Get real-time speed alerts, harsh braking detection, phone usage warnings, and driving safety scores.',
   keywords: [
     'teen driver monitoring',
     'teenage driver app',
@@ -11,17 +11,17 @@ export const metadata: Metadata = {
     'parent teen driver tracking',
   ],
   openGraph: {
-    title: 'Teen Driver Monitoring App — Gravity | Speed & Safety Alerts for Parents',
+    title: 'Teen Driver Monitoring App — KVL Track | Speed & Safety Alerts for Parents',
     description:
-      'Monitor your teen driver with Gravity. Get real-time speed alerts, harsh braking detection, phone usage warnings, and driving safety scores.',
+      'Monitor your teen driver with KVL Track. Get real-time speed alerts, harsh braking detection, phone usage warnings, and driving safety scores.',
     url: 'https://gravity.trackalways.com/teen-driver-monitoring',
-    siteName: 'Gravity by Trackalways',
+    siteName: 'KVL Track by Trackalways',
     images: [
       {
         url: 'https://gravity.trackalways.com/og-image.svg',
         width: 1200,
         height: 630,
-        alt: 'Teen Driver Monitoring — Gravity',
+        alt: 'Teen Driver Monitoring — KVL Track',
       },
     ],
     locale: 'en_IN',
@@ -29,9 +29,9 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Teen Driver Monitoring App — Gravity | Speed & Safety Alerts for Parents',
+    title: 'Teen Driver Monitoring App — KVL Track | Speed & Safety Alerts for Parents',
     description:
-      'Monitor your teen driver with Gravity. Get real-time speed alerts, harsh braking detection, phone usage warnings, and driving safety scores.',
+      'Monitor your teen driver with KVL Track. Get real-time speed alerts, harsh braking detection, phone usage warnings, and driving safety scores.',
     images: ['https://gravity.trackalways.com/og-image.svg'],
     creator: '@trackalways',
   },

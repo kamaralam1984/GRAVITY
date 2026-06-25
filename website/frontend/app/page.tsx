@@ -13,14 +13,14 @@ const TestimonialsSection    = dynamic(() => import('@/components/sections/Testi
 const PricingSection         = dynamic(() => import('@/components/sections/PricingSection'),         { loading: () => <div className="min-h-[600px]" /> })
 const DownloadCTA            = dynamic(() => import('@/components/sections/DownloadCTA'),            { loading: () => <div className="min-h-[300px]" /> })
 const AIAssistant            = dynamic(() => import('@/components/effects/AIAssistant'),             { ssr: false })
-// New Gravity 3.0 sections
+// New KVL Track 3.0 sections
 const SocialProofSection     = dynamic(() => import('@/components/sections/SocialProofSection'),     { loading: () => <div className="min-h-[500px]" /> })
 const InteractiveProductDemo = dynamic(() => import('@/components/sections/InteractiveProductDemo'), { loading: () => <div className="min-h-[600px]" /> })
 const AIGuardianSection      = dynamic(() => import('@/components/sections/AIGuardianSection'),      { loading: () => <div className="min-h-[600px]" /> })
 const ROISection             = dynamic(() => import('@/components/sections/ROISection'),             { loading: () => <div className="min-h-[500px]" /> })
 const EnterpriseTrustSection  = dynamic(() => import('@/components/sections/EnterpriseTrustSection'),  { loading: () => <div className="min-h-[600px]" /> })
 const ParentChildSection      = dynamic(() => import('@/components/sections/ParentChildSection'),      { loading: () => <div className="min-h-[700px]" /> })
-// Gravity 4.0 new sections
+// KVL Track 4.0 new sections
 const CustomerLogosSection    = dynamic(() => import('@/components/sections/CustomerLogosSection'),    { loading: () => <div className="min-h-[300px]" /> })
 const CaseStudiesSection      = dynamic(() => import('@/components/sections/CaseStudiesSection'),      { loading: () => <div className="min-h-[700px]" /> })
 const TrustBadgesSection      = dynamic(() => import('@/components/sections/TrustBadgesSection'),      { loading: () => <div className="min-h-[600px]" /> })

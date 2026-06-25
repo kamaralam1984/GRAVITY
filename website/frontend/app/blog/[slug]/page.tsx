@@ -95,7 +95,7 @@ const ALL_POSTS: PostMeta[] = [
     category: 'Technology',
     categorySlug: 'technology',
     excerpt:
-      "Not all location data is created equal. GPS delivers sub-5-metre accuracy but drains battery and struggles indoors. Gravity's hybrid engine fuses GPS, cell towers, and Wi-Fi to always deliver the best available fix.",
+      "Not all location data is created equal. GPS delivers sub-5-metre accuracy but drains battery and struggles indoors. KVL Track's hybrid engine fuses GPS, cell towers, and Wi-Fi to always deliver the best available fix.",
     author: 'Rahul Verma',
     authorSlug: 'rahul-verma',
     date: 'May 20, 2025',
@@ -110,7 +110,7 @@ const ALL_POSTS: PostMeta[] = [
     category: 'Safety',
     categorySlug: 'safety',
     excerpt:
-      'India saw over 3.7 lakh road accidents in 2023 alone. When seconds matter, a single SOS press in Gravity broadcasts your exact GPS coordinates and a live location link to every member of your family circle simultaneously.',
+      'India saw over 3.7 lakh road accidents in 2023 alone. When seconds matter, a single SOS press in KVL Track broadcasts your exact GPS coordinates and a live location link to every member of your family circle simultaneously.',
     author: 'Priya Sharma',
     authorSlug: 'priya-sharma',
     date: 'May 14, 2025',
@@ -121,11 +121,11 @@ const ALL_POSTS: PostMeta[] = [
   {
     id: 5,
     slug: 'how-gravity-protects-your-privacy-while-keeping-families-safe',
-    title: 'How Gravity Protects Your Privacy While Keeping Families Safe',
+    title: 'How KVL Track Protects Your Privacy While Keeping Families Safe',
     category: 'Company',
     categorySlug: 'company',
     excerpt:
-      'Privacy and safety are not opposites — they are partners. Gravity is built on a consent-first model: nobody is tracked without explicit opt-in and location history is encrypted using AES-256.',
+      'Privacy and safety are not opposites — they are partners. KVL Track is built on a consent-first model: nobody is tracked without explicit opt-in and location history is encrypted using AES-256.',
     author: 'Kavitha Krishnan',
     authorSlug: 'kavitha-krishnan',
     date: 'May 7, 2025',
@@ -140,7 +140,7 @@ const ALL_POSTS: PostMeta[] = [
     category: 'Health',
     categorySlug: 'health',
     excerpt:
-      "Forty per cent of India's elderly population lives apart from their adult children. Gravity's Elder Circle feature gives ageing parents a dignified way to share their location and summon help in a medical emergency.",
+      "Forty per cent of India's elderly population lives apart from their adult children. KVL Track's Elder Circle feature gives ageing parents a dignified way to share their location and summon help in a medical emergency.",
     author: 'Dr. Ananya Mehta',
     authorSlug: 'dr-ananya-mehta',
     date: 'April 30, 2025',
@@ -307,7 +307,7 @@ const POST_BODIES: Record<string, React.ReactNode> = {
       <ArticleH2 id="what-is-geofencing">What Exactly Is Geofencing?</ArticleH2>
       <ArticleP>
         A geofence is a virtual perimeter drawn around a real-world geographic area. Using GPS
-        coordinates, the Gravity app lets you draw a circle, polygon, or custom shape on a map and
+        coordinates, the KVL Track app lets you draw a circle, polygon, or custom shape on a map and
         assign it a name — <Bold>Home</Bold>, <Bold>Naina's School</Bold>,{' '}
         <Bold>Grandma's Apartment</Bold>. The moment a family member's device crosses that invisible
         line, you get an instant push notification. No battery-draining constant refresh on your end,
@@ -316,7 +316,7 @@ const POST_BODIES: Record<string, React.ReactNode> = {
       <ArticleP>
         Geofences work by continuously comparing a device's GPS position (or cell-tower position
         indoors) against the stored fence polygon. When the device transitions from inside the zone
-        to outside — or vice versa — an event fires within seconds. Gravity's engine is tuned for
+        to outside — or vice versa — an event fires within seconds. KVL Track's engine is tuned for
         Indian conditions, where GPS signals can be partially obstructed by dense apartment blocks
         and covered flyovers, by fusing GPS with Wi-Fi positioning to reduce missed events to under
         1% in testing.
@@ -339,7 +339,7 @@ const POST_BODIES: Record<string, React.ReactNode> = {
 
       <ArticleH3>Entry Alerts vs Exit Alerts</ArticleH3>
       <ArticleP>
-        Gravity supports both entry and exit notifications, and choosing the right one for each zone
+        KVL Track supports both entry and exit notifications, and choosing the right one for each zone
         matters. <Bold>Exit alerts</Bold> from school are the most useful — they confirm your child
         has left and started the journey home. <Bold>Entry alerts</Bold> work best for home and
         grandparents' zones, confirming safe arrival. Enabling both on every zone creates unnecessary
@@ -356,7 +356,7 @@ const POST_BODIES: Record<string, React.ReactNode> = {
       <ArticleP>
         One of the most overlooked features in geofencing is <Bold>schedule-based activation</Bold>.
         A school exit alert firing at 10:30 PM on a Saturday is not helpful — it is annoying enough
-        to make you disable the feature entirely. In Gravity, every geofence can be set to fire
+        to make you disable the feature entirely. In KVL Track, every geofence can be set to fire
         only during specific time windows on specific days. School exit alert? Monday to Saturday,
         1 PM to 5 PM. Home arrival alert? Every day, after 3 PM. This simple step can reduce
         irrelevant notifications by over 80%.
@@ -368,13 +368,13 @@ const POST_BODIES: Record<string, React.ReactNode> = {
         from <Bold>nested zones</Bold>. Think of it like rings on a target. The innermost ring is
         the school itself. The middle ring covers the auto-rickshaw pickup lane outside. The outer
         ring covers a 300-metre safe walking radius. You only want alerts when your child exits the
-        outermost ring, not when they walk from classroom to canteen. Gravity handles this natively:
+        outermost ring, not when they walk from classroom to canteen. KVL Track handles this natively:
         if a child is inside any containing zone, sub-zone transitions do not fire parent alerts.
       </ArticleP>
 
       <ArticleH2 id="privacy-and-trust">Geofencing Without Surveillance: The Trust Conversation</ArticleH2>
       <ArticleP>
-        Geofencing works best when every family member understands and consents to it. Gravity is
+        Geofencing works best when every family member understands and consents to it. KVL Track is
         built on a <Bold>consent-first model</Bold> — every circle member can see exactly who can
         view their location and what zones they are assigned to. For teenagers, this transparency
         is not just ethically important; it is also practically effective. Research from the
@@ -399,7 +399,7 @@ const POST_BODIES: Record<string, React.ReactNode> = {
 
       <ArticleH2 id="getting-started">Getting Started Today</ArticleH2>
       <ArticleP>
-        Setting up your first geofence in Gravity takes under three minutes. Open the app, tap{' '}
+        Setting up your first geofence in KVL Track takes under three minutes. Open the app, tap{' '}
         <Bold>Places</Bold>, search for the address, adjust the radius with a pinch gesture, name
         the zone, choose alert type and schedule, and save. The next time your family member enters
         or exits that boundary, you will know — silently, instantly, and without a single phone call.
@@ -454,7 +454,7 @@ const POST_BODIES: Record<string, React.ReactNode> = {
         is pure noise — cognitively expensive and emotionally exhausting.
       </ArticleP>
       <ArticleP>
-        Real-time location data interrupts this cycle. A single glance at Gravity's live map — two
+        Real-time location data interrupts this cycle. A single glance at KVL Track's live map — two
         seconds of information — provides the certainty that quiets the DMN. Stanford's
         Human-Computer Interaction Group found that passive location awareness reduces the urge to
         make check-in calls by over 60%, freeing both parent and child from a pattern of
@@ -492,7 +492,7 @@ const POST_BODIES: Record<string, React.ReactNode> = {
       <ArticleH2 id="consent-first-model">The Consent-First Model: Why It Matters</ArticleH2>
       <ArticleUL
         items={[
-          <><Bold>Mutual visibility:</Bold> In Gravity, location sharing is reciprocal by default. Parents can see children; children can see parents. This symmetry fundamentally changes the power dynamic from surveillance to mutual care.</>,
+          <><Bold>Mutual visibility:</Bold> In KVL Track, location sharing is reciprocal by default. Parents can see children; children can see parents. This symmetry fundamentally changes the power dynamic from surveillance to mutual care.</>,
           <><Bold>Transparency:</Bold> Every circle member sees exactly who can view their location and when. No hidden tracking, no background monitoring without knowledge.</>,
           <><Bold>Control:</Bold> Members can pause their location sharing for set periods — a date night, a private medical appointment — without drama or interrogation.</>,
           <><Bold>Conversation:</Bold> The act of setting up location sharing together opens a dialogue about trust, boundaries, and responsibility that many families find genuinely strengthens their relationships.</>,
@@ -515,7 +515,7 @@ const POST_BODIES: Record<string, React.ReactNode> = {
       <ArticleH2 id="conclusion">The Bottom Line</ArticleH2>
       <ArticleP>
         The psychology is clear: <Bold>informed parents are calmer parents, and calmer parents
-        raise more independent children</Bold>. The families that use Gravity not as a tracking
+        raise more independent children</Bold>. The families that use KVL Track not as a tracking
         tool but as a shared family dashboard — visible to everyone, controlled by everyone —
         report not just lower anxiety but stronger communication, more trust, and yes, more freedom
         for the kids who matter most.
@@ -526,7 +526,7 @@ const POST_BODIES: Record<string, React.ReactNode> = {
   'gps-vs-cell-tower-tracking-what-every-parent-should-know': (
     <>
       <ArticleP>
-        When you open Gravity and see your child's location pinned to a map, that blue dot has a
+        When you open KVL Track and see your child's location pinned to a map, that blue dot has a
         story behind it — a story of three competing technologies constantly negotiating to give
         you the best possible answer to the question: <Bold>Where is my family, right now?</Bold>
       </ArticleP>
@@ -584,14 +584,14 @@ const POST_BODIES: Record<string, React.ReactNode> = {
       </ArticleP>
 
       <Callout>
-        Wi-Fi positioning is why Gravity can tell you your child is in "Floor 2, Phoenix Mall,
+        Wi-Fi positioning is why KVL Track can tell you your child is in "Floor 2, Phoenix Mall,
         Bengaluru" rather than just "somewhere in Whitefield." The technology has transformed
         indoor location accuracy in dense urban environments.
       </Callout>
 
-      <ArticleH2 id="gravity-hybrid">How Gravity's Hybrid Engine Works</ArticleH2>
+      <ArticleH2 id="gravity-hybrid">How KVL Track's Hybrid Engine Works</ArticleH2>
       <ArticleP>
-        Gravity uses a <Bold>sensor fusion algorithm</Bold> that continuously evaluates all
+        KVL Track uses a <Bold>sensor fusion algorithm</Bold> that continuously evaluates all
         available location signals and selects the optimal combination based on context:
       </ArticleP>
       <ArticleUL
@@ -619,7 +619,7 @@ const POST_BODIES: Record<string, React.ReactNode> = {
 
       <ArticleH2 id="future-improvements">What Is Coming Next</ArticleH2>
       <ArticleP>
-        Gravity's engineering team is currently implementing <Bold>Bluetooth Low Energy (BLE)
+        KVL Track's engineering team is currently implementing <Bold>Bluetooth Low Energy (BLE)
         beacons</Bold> support for schools and residential complexes that partner with us. A BLE
         beacon installed at a school gate can provide centimetre-level accuracy confirmation of
         entry and exit — completely independent of GPS, Wi-Fi, or cell coverage. For 2025, we are
@@ -634,18 +634,18 @@ const POST_BODIES: Record<string, React.ReactNode> = {
       <ArticleP>
         On the afternoon of March 14th, 2024, a sixty-seven-year-old retired schoolteacher named
         Krishnamurthy suffered a cardiac event while walking back from a temple in Mysuru. His
-        daughter, working in a Bengaluru IT park 165 kilometres away, received a Gravity SOS
+        daughter, working in a Bengaluru IT park 165 kilometres away, received a KVL Track SOS
         alert within eight seconds. The alert included his exact GPS coordinates, his current heart
         rate from a connected wearable, and his device battery level. She called an ambulance from
         her desk. He received care within eleven minutes of collapse. He survived.
       </ArticleP>
       <ArticleP>
-        That story is why Emergency SOS is not just a feature in Gravity — it is the feature.
+        That story is why Emergency SOS is not just a feature in KVL Track — it is the feature.
         This guide walks through every step of setting it up correctly so that if the moment
         ever comes for your family, the system works exactly as intended.
       </ArticleP>
 
-      <ArticleH2 id="what-sos-sends">What a Gravity SOS Alert Contains</ArticleH2>
+      <ArticleH2 id="what-sos-sends">What a KVL Track SOS Alert Contains</ArticleH2>
       <ArticleP>
         When a family member triggers an SOS — by pressing the in-app button, the hardware side
         button three times, or through automatic crash detection — every designated emergency
@@ -663,7 +663,7 @@ const POST_BODIES: Record<string, React.ReactNode> = {
 
       <ArticleH2 id="adding-emergency-contacts">Step 1: Adding Emergency Contacts</ArticleH2>
       <ArticleP>
-        Open Gravity → tap your profile icon → select <Bold>Emergency Contacts</Bold>. You can add
+        Open KVL Track → tap your profile icon → select <Bold>Emergency Contacts</Bold>. You can add
         up to six contacts. For each contact, set:
       </ArticleP>
       <ArticleUL
@@ -690,14 +690,14 @@ const POST_BODIES: Record<string, React.ReactNode> = {
       <ArticleH2 id="crash-detection">Step 3: Enabling Auto-SOS and Crash Detection</ArticleH2>
       <ArticleP>
         India recorded <Bold>3,71,228 road accidents in 2023</Bold> according to the Ministry of
-        Road Transport. Gravity's crash detection algorithm uses the phone's accelerometer,
+        Road Transport. KVL Track's crash detection algorithm uses the phone's accelerometer,
         gyroscope, and barometer to detect sudden deceleration events consistent with a collision.
       </ArticleP>
       <ArticleP>
         When a potential crash is detected, the app displays a <Bold>30-second countdown with
         a prominent "I'm Okay" button</Bold>. If the button is not pressed — because the user is
         unconscious, incapacitated, or in shock — the SOS fires automatically. In testing across
-        1,200 simulated events, Gravity's crash detection achieved a <Bold>94.7% true positive
+        1,200 simulated events, KVL Track's crash detection achieved a <Bold>94.7% true positive
         rate</Bold> with a false positive rate below 2%.
       </ArticleP>
 
@@ -713,9 +713,9 @@ const POST_BODIES: Record<string, React.ReactNode> = {
       </ArticleP>
       <ArticleUL
         items={[
-          <><Bold>Hardware shortcut first:</Bold> Pressing the phone's power button five times triggers SOS in Gravity without opening the app. Practise this with your parent until it is automatic.</>,
-          <><Bold>Widget on home screen:</Bold> Add the Gravity SOS widget to the home screen — a large red button requiring only one tap.</>,
-          <><Bold>Monthly test drill:</Bold> Once a month, trigger a test SOS (Gravity has a "Test Mode" that alerts contacts with "[TEST]" prepended). This keeps everyone familiar with the system and catches notification permission issues before a real emergency.</>,
+          <><Bold>Hardware shortcut first:</Bold> Pressing the phone's power button five times triggers SOS in KVL Track without opening the app. Practise this with your parent until it is automatic.</>,
+          <><Bold>Widget on home screen:</Bold> Add the KVL Track SOS widget to the home screen — a large red button requiring only one tap.</>,
+          <><Bold>Monthly test drill:</Bold> Once a month, trigger a test SOS (KVL Track has a "Test Mode" that alerts contacts with "[TEST]" prepended). This keeps everyone familiar with the system and catches notification permission issues before a real emergency.</>,
           <><Bold>Simplified home screen:</Bold> Remove clutter from the parent's phone home screen so the SOS widget is immediately visible.</>,
         ]}
       />
@@ -724,15 +724,15 @@ const POST_BODIES: Record<string, React.ReactNode> = {
       <ArticleUL
         items={[
           <>Review and test emergency contacts every three months — numbers change.</>,
-          <>Ensure Gravity has battery optimisation disabled in Android settings — aggressive battery management can prevent SOS alerts from firing reliably.</>,
-          <>Enable location permissions as "Always Allow" for Gravity, not just "While Using." Background location access is essential for automatic crash detection.</>,
+          <>Ensure KVL Track has battery optimisation disabled in Android settings — aggressive battery management can prevent SOS alerts from firing reliably.</>,
+          <>Enable location permissions as "Always Allow" for KVL Track, not just "While Using." Background location access is essential for automatic crash detection.</>,
           <>Share the live location URL format with your elderly parent's neighbours — in a true emergency, handing a neighbour a URL is often faster than waiting for a family member to arrive.</>,
         ]}
       />
 
       <ArticleP>
         Setting up SOS correctly takes fifteen minutes. The peace of mind it delivers — for you
-        and for every family member who carries Gravity — is permanent.
+        and for every family member who carries KVL Track — is permanent.
       </ArticleP>
     </>
   ),
@@ -741,14 +741,14 @@ const POST_BODIES: Record<string, React.ReactNode> = {
     <>
       <ArticleP>
         Every conversation about family safety technology eventually arrives at the same question:
-        <Bold> Who else can see this data?</Bold> It is the right question to ask, and at Gravity,
+        <Bold> Who else can see this data?</Bold> It is the right question to ask, and at KVL Track,
         we believe you deserve a complete, technical, and honest answer — not a marketing paragraph
         about how much we care about privacy.
       </ArticleP>
 
       <ArticleH2 id="consent-first-architecture">The Consent-First Architecture</ArticleH2>
       <ArticleP>
-        Gravity was built from day one on a <Bold>consent-first model</Bold>. This is not a
+        KVL Track was built from day one on a <Bold>consent-first model</Bold>. This is not a
         marketing phrase — it is a technical constraint built into the data model itself:
       </ArticleP>
       <ArticleUL
@@ -762,14 +762,14 @@ const POST_BODIES: Record<string, React.ReactNode> = {
 
       <ArticleH2 id="encryption">Encryption: What AES-256 Actually Means</ArticleH2>
       <ArticleP>
-        Location data stored in Gravity's databases is encrypted at rest using{' '}
+        Location data stored in KVL Track's databases is encrypted at rest using{' '}
         <Bold>AES-256-GCM</Bold> — the same encryption standard used by national intelligence
         agencies and financial institutions worldwide. AES-256 has a theoretical brute-force
         cracking time measured in longer than the current age of the universe. In practice,
         the keys used to encrypt your data are never stored alongside the data they protect.
       </ArticleP>
       <ArticleP>
-        In transit, all data between your device and Gravity's servers is encrypted using{' '}
+        In transit, all data between your device and KVL Track's servers is encrypted using{' '}
         <Bold>TLS 1.3</Bold> with Perfect Forward Secrecy (PFS). PFS means that even if a
         server's private key were somehow compromised in the future, past communication sessions
         could not be decrypted retroactively — each session generates its own ephemeral key.
@@ -778,19 +778,19 @@ const POST_BODIES: Record<string, React.ReactNode> = {
       <ArticleH2 id="dpdp-compliance">DPDP Act 2023 Compliance</ArticleH2>
       <ArticleP>
         India's <Bold>Digital Personal Data Protection Act 2023</Bold> is one of the most
-        comprehensive personal data frameworks in the world. Gravity's compliance includes:
+        comprehensive personal data frameworks in the world. KVL Track's compliance includes:
       </ArticleP>
       <ArticleUL
         items={[
           <><Bold>Data localisation:</Bold> All location data from Indian users is stored exclusively on servers located within India, in ISO 27001:2022-certified data centres in Mumbai and Chennai.</>,
           <><Bold>Purpose limitation:</Bold> Location data collected for family safety features is used exclusively for those features. It is never used for advertising, profiling, or third-party analytics.</>,
-          <><Bold>Data minimisation:</Bold> We collect only what is necessary. Gravity does not access your contacts, messages, photos, or any sensor data beyond location and (optionally) crash-detection accelerometer readings.</>,
+          <><Bold>Data minimisation:</Bold> We collect only what is necessary. KVL Track does not access your contacts, messages, photos, or any sensor data beyond location and (optionally) crash-detection accelerometer readings.</>,
           <><Bold>Right to erasure:</Bold> Users can export or delete all their data from within the app in under 60 seconds, with no barriers or multi-day waiting periods.</>,
         ]}
       />
 
       <Callout>
-        "We reviewed Gravity's privacy architecture as part of our vendor assessment. Their
+        "We reviewed KVL Track's privacy architecture as part of our vendor assessment. Their
         data model genuinely enforces consent at the technical level, not just the policy level.
         That is rare." — Cybersecurity consultant, name withheld for client confidentiality
       </Callout>
@@ -798,21 +798,21 @@ const POST_BODIES: Record<string, React.ReactNode> = {
       <ArticleH2 id="no-data-selling">We Do Not Sell Your Data — Here Is the Proof</ArticleH2>
       <ArticleP>
         Many apps include "we do not sell your personal data" in their privacy policy and then
-        sell "aggregate anonymised data" or share data with "trusted partners." Gravity's
+        sell "aggregate anonymised data" or share data with "trusted partners." KVL Track's
         revenue model makes data selling economically unnecessary and contractually prohibited:
       </ArticleP>
       <ArticleUL
         items={[
-          <>Gravity's only revenue source is subscription fees from paying families. We have zero advertising revenue.</>,
-          <>Our Terms of Service explicitly prohibit the use of user location data for any commercial purpose other than operating the Gravity service.</>,
-          <>Our contracts with all third-party service providers (cloud infrastructure, payment processing) include explicit data sub-processing agreements that prohibit them from using Gravity user data for any purpose.</>,
+          <>KVL Track's only revenue source is subscription fees from paying families. We have zero advertising revenue.</>,
+          <>Our Terms of Service explicitly prohibit the use of user location data for any commercial purpose other than operating the KVL Track service.</>,
+          <>Our contracts with all third-party service providers (cloud infrastructure, payment processing) include explicit data sub-processing agreements that prohibit them from using KVL Track user data for any purpose.</>,
         ]}
       />
 
-      <ArticleH2 id="what-gravity-employees-can-see">What Gravity Employees Can See</ArticleH2>
+      <ArticleH2 id="what-gravity-employees-can-see">What KVL Track Employees Can See</ArticleH2>
       <ArticleP>
-        This question is asked less often but is equally important. Gravity operates on a{' '}
-        <Bold>zero-knowledge principle</Bold> for location data: no Gravity employee can read
+        This question is asked less often but is equally important. KVL Track operates on a{' '}
+        <Bold>zero-knowledge principle</Bold> for location data: no KVL Track employee can read
         the contents of a user's location history in plaintext. Our internal tooling for
         debugging and support shows only encrypted identifiers — never raw coordinates. Access
         to production data requires a two-person approval process logged in an immutable audit
@@ -821,14 +821,14 @@ const POST_BODIES: Record<string, React.ReactNode> = {
 
       <ArticleH2 id="what-you-can-do">What You Can Do Right Now</ArticleH2>
       <ArticleP>
-        Privacy is a partnership. Here is how to maximise your own privacy within Gravity:
+        Privacy is a partnership. Here is how to maximise your own privacy within KVL Track:
       </ArticleP>
       <ArticleUL
         items={[
           <>Regularly review your Circle members. Remove people you no longer want tracking your location — former domestic help, ex-family members.</>,
           <>Use the "Pause Location" feature rather than disabling the app entirely when you need privacy. Pausing is visible to circle members; disabling can cause SOS features to stop working.</>,
-          <>Enable two-factor authentication on your Gravity account to prevent unauthorised access.</>,
-          <>Review which app permissions Gravity has on your device annually. We only need Location (Always), Notification, and optionally Motion (for crash detection).</>,
+          <>Enable two-factor authentication on your KVL Track account to prevent unauthorised access.</>,
+          <>Review which app permissions KVL Track has on your device annually. We only need Location (Always), Notification, and optionally Motion (for crash detection).</>,
         ]}
       />
     </>
@@ -844,7 +844,7 @@ const POST_BODIES: Record<string, React.ReactNode> = {
         taken his blood pressure medication, whether he had eaten breakfast, whether he was okay.
       </ArticleP>
       <ArticleP>
-        Today she wakes up, opens Gravity, and sees the three things that matter: <Bold>her father
+        Today she wakes up, opens KVL Track, and sees the three things that matter: <Bold>her father
         has left for his morning walk</Bold>, <Bold>his phone battery is at 72%</Bold>, and{' '}
         <Bold>he completed his usual route in 34 minutes</Bold>. She puts on the kettle and starts
         her day. The worry has not disappeared entirely — she is a loving daughter — but it is no
@@ -868,18 +868,18 @@ const POST_BODIES: Record<string, React.ReactNode> = {
         clinically significant.
       </ArticleP>
 
-      <ArticleH2 id="elder-circle-features">Gravity's Elder Circle: Designed for Dignity</ArticleH2>
+      <ArticleH2 id="elder-circle-features">KVL Track's Elder Circle: Designed for Dignity</ArticleH2>
       <ArticleP>
-        The Elder Circle in Gravity was designed with a specific goal: to give ageing parents
+        The Elder Circle in KVL Track was designed with a specific goal: to give ageing parents
         visibility into their wellbeing <Bold>without making them feel monitored</Bold>. The
         feature set reflects this philosophy:
       </ArticleP>
       <ArticleUL
         items={[
           <><Bold>Wellness Check-ins:</Bold> A gentle daily prompt asks the parent "How are you feeling today?" with three simple options. The response is visible to family members but never feels clinical or alarming.</>,
-          <><Bold>Activity Confirmation:</Bold> When a parent completes their regular morning walk route, Gravity sends an automatic "Papa completed his morning walk" notification — no manual check-in required from either party.</>,
+          <><Bold>Activity Confirmation:</Bold> When a parent completes their regular morning walk route, KVL Track sends an automatic "Papa completed his morning walk" notification — no manual check-in required from either party.</>,
           <><Bold>Missed Activity Alert:</Bold> If a parent typically walks at 7 AM and has not moved from home by 8:30 AM, family members receive a gentle alert — not an alarm, just a nudge to call and check in.</>,
-          <><Bold>Medical Appointment Reminders:</Bold> Link calendar appointments and Gravity will remind both parent and designated family member 30 minutes before and confirm attendance afterwards via location.</>,
+          <><Bold>Medical Appointment Reminders:</Bold> Link calendar appointments and KVL Track will remind both parent and designated family member 30 minutes before and confirm attendance afterwards via location.</>,
           <><Bold>One-Touch Emergency Call:</Bold> A prominent home-screen widget that calls the family's designated responder with a single tap — no navigating menus under stress.</>,
         ]}
       />
@@ -899,7 +899,7 @@ const POST_BODIES: Record<string, React.ReactNode> = {
         were alone when it happened and were not discovered for over two hours</Bold>.
       </ArticleP>
       <ArticleP>
-        Gravity's motion-anomaly detection addresses this gap. The algorithm establishes a baseline
+        KVL Track's motion-anomaly detection addresses this gap. The algorithm establishes a baseline
         of normal movement patterns over 14 days. When the pattern deviates significantly — no
         movement for an extended period after an active period, sudden cessation of movement
         without reaching a usual destination — an alert fires. This is not a replacement for
@@ -916,15 +916,15 @@ const POST_BODIES: Record<string, React.ReactNode> = {
       <ArticleUL
         items={[
           <><Bold>Frame it as mutual:</Bold> "I want you to be able to see where I am too" lands much better than "I need to track you."</>,
-          <><Bold>Start with SOS only:</Bold> Install Gravity and initially only explain the emergency button. Once the parent is comfortable with the app, introduce location sharing as a natural next step.</>,
-          <><Bold>Involve a trusted local person:</Bold> Ask the parent's most trusted neighbour or local friend to be an emergency contact in Gravity. Parents are more accepting of technology when it connects them to their existing support network.</>,
+          <><Bold>Start with SOS only:</Bold> Install KVL Track and initially only explain the emergency button. Once the parent is comfortable with the app, introduce location sharing as a natural next step.</>,
+          <><Bold>Involve a trusted local person:</Bold> Ask the parent's most trusted neighbour or local friend to be an emergency contact in KVL Track. Parents are more accepting of technology when it connects them to their existing support network.</>,
           <><Bold>Address the "spy" concern directly:</Bold> Walk through the app settings together, showing exactly what data is shared and with whom. Transparency dissolves resistance.</>,
         ]}
       />
 
       <ArticleH2 id="the-future">Looking Forward: Technology and Elder Care in India</ArticleH2>
       <ArticleP>
-        Gravity's roadmap for 2025-2026 includes partnerships with India's leading pharmacy chains
+        KVL Track's roadmap for 2025-2026 includes partnerships with India's leading pharmacy chains
         for <Bold>medication adherence tracking</Bold> (opt-in), integration with AIIMS and Apollo
         Hospitals' patient portals for post-discharge monitoring, and a dedicated{' '}
         <Bold>Simplified Elder Mode</Bold> — a version of the app with 72-point fonts, one-tap
@@ -962,7 +962,7 @@ const TOC_MAP: Record<string, { id: string; label: string }[]> = {
     { id: 'how-gps-works', label: 'GPS: The Gold Standard' },
     { id: 'cell-tower-tracking', label: 'Cell Tower Triangulation' },
     { id: 'wifi-positioning', label: 'Wi-Fi Positioning' },
-    { id: 'gravity-hybrid', label: "Gravity's Hybrid Engine" },
+    { id: 'gravity-hybrid', label: "KVL Track's Hybrid Engine" },
     { id: 'what-parents-should-know', label: 'What This Means for Families' },
     { id: 'future-improvements', label: 'What Is Coming Next' },
   ],
@@ -1042,7 +1042,7 @@ const AUTHOR_BIOS: Record<
     role: 'Elder Care Advocate',
     initials: 'SA',
     color: 'linear-gradient(135deg, #14B8A6, #22D3EE)',
-    bio: 'Sunita Agarwal is an elder care advocate and social worker who has worked with ageing populations across India for fifteen years. After managing her own parents\' care from a distance for five years, she became a passionate advocate for technology solutions that preserve elderly dignity while giving families peace of mind. She consults with Gravity on elder-focused product development.',
+    bio: 'Sunita Agarwal is an elder care advocate and social worker who has worked with ageing populations across India for fifteen years. After managing her own parents\' care from a distance for five years, she became a passionate advocate for technology solutions that preserve elderly dignity while giving families peace of mind. She consults with KVL Track on elder-focused product development.',
   },
 };
 
@@ -1614,7 +1614,7 @@ export default function BlogPostPage({ params }: { params: { slug: string } }) {
                       marginBottom: 8,
                     }}
                   >
-                    Gravity Journal
+                    KVL Track Journal
                   </p>
                   <p style={{ fontSize: 12, color: 'var(--text-muted)', marginBottom: 14, lineHeight: 1.6 }}>
                     Family safety tips delivered every two weeks. Join 28,000+ families.

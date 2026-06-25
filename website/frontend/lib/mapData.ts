@@ -1,4 +1,4 @@
-/* lib/mapData.ts — Gravity map data & types */
+/* lib/mapData.ts — KVL Track map data & types */
 
 export type VehicleType = 'car' | 'bus' | 'walk' | 'bike' | 'auto' | 'tempo' | 'train' | 'metro'
 export type Gender = 'male' | 'female'

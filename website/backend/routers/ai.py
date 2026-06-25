@@ -11,7 +11,7 @@ from routers.ai_provider import call_ai, call_ai_required, provider_status
 
 router = APIRouter()
 
-SYSTEM_PROMPT = """You are a warm, empathetic family safety assistant for Trackalways Gravity.
+SYSTEM_PROMPT = """You are a warm, empathetic family safety assistant for Trackalways KVL Track.
 Help families stay connected and safe. Respond in a caring, human tone — not robotic.
 Keep responses concise (under 3 sentences unless detail is needed)."""
 

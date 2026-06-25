@@ -147,7 +147,7 @@ export default function SOSEmergencyPage() {
             family_id: currentFamilyId,
             lat: finalCoords?.lat ?? null,
             lng: finalCoords?.lng ?? null,
-            message: 'Emergency SOS triggered via Gravity app',
+            message: 'Emergency SOS triggered via KVL Track app',
           }),
         });
 

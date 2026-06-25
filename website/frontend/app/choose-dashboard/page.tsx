@@ -156,7 +156,7 @@ function InviteModal({
                 Enter Invite Code
               </div>
               <div style={{ fontSize: 13, color: 'rgba(255,255,255,0.45)', lineHeight: 1.5 }}>
-                Ask your parent for the Gravity family invite code
+                Ask your parent for the KVL Track family invite code
               </div>
             </div>
 
@@ -405,7 +405,7 @@ export default function ChooseDashboardPage() {
               background: 'linear-gradient(135deg, #D4A853, #F5C842)',
               WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent',
             }}>
-              GRAVITY
+              KVL TRACK
             </span>
           </motion.div>
 

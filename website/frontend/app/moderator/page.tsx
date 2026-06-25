@@ -175,7 +175,7 @@ function Sidebar({ active, setActive, moderatorName, logout }: {
             fontSize: 14, fontWeight: 700, color: 'var(--text-primary)',
             fontFamily: 'Plus Jakarta Sans, sans-serif',
           }}>
-            Gravity
+            KVL Track
           </span>
           <span style={{
             fontSize: 10, fontWeight: 700, color: 'var(--gold)',

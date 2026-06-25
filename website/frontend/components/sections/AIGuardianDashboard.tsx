@@ -337,7 +337,7 @@ export default function AIGuardianDashboard() {
           </motion.div>
           <div>
             <h3 style={{ fontFamily: 'var(--font-display)', fontWeight: 800, color: '#fff', fontSize: '1.1rem', margin: 0 }}>
-              Gravity AI Guardian
+              KVL Track AI Guardian
             </h3>
             <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 2 }}>
               <motion.span

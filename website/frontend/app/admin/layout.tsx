@@ -299,7 +299,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                 lineHeight: 1,
               }}
             >
-              Gravity
+              KVL Track
             </span>
             <sup
               style={{

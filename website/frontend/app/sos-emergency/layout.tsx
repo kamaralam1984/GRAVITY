@@ -1,7 +1,7 @@
 import type { Metadata } from 'next'
 
 export const metadata: Metadata = {
-  title: 'SOS Emergency Button | One-Press Family Alert — Gravity',
+  title: 'SOS Emergency Button | One-Press Family Alert — KVL Track',
   description:
     'In an emergency, one press sends GPS location to your entire family circle. Works offline, on 2G, anywhere in India. Life-saving SOS for the whole family.',
   keywords: [
@@ -10,17 +10,17 @@ export const metadata: Metadata = {
     'emergency alert family',
   ],
   openGraph: {
-    title: 'SOS Emergency Button | One-Press Family Alert — Gravity',
+    title: 'SOS Emergency Button | One-Press Family Alert — KVL Track',
     description:
       'In an emergency, one press sends GPS location to your entire family circle. Works offline, on 2G, anywhere in India. Life-saving SOS for the whole family.',
     url: 'https://gravity.trackalways.com/sos-emergency',
-    siteName: 'Gravity by Trackalways',
+    siteName: 'KVL Track by Trackalways',
     images: [
       {
         url: 'https://gravity.trackalways.com/og-image.svg',
         width: 1200,
         height: 630,
-        alt: 'Gravity SOS Emergency Button',
+        alt: 'KVL Track SOS Emergency Button',
       },
     ],
     locale: 'en_IN',
@@ -28,7 +28,7 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'SOS Emergency Button | One-Press Family Alert — Gravity',
+    title: 'SOS Emergency Button | One-Press Family Alert — KVL Track',
     description:
       'In an emergency, one press sends GPS location to your entire family circle. Works offline, on 2G, anywhere in India. Life-saving SOS for the whole family.',
     images: ['https://gravity.trackalways.com/og-image.svg'],

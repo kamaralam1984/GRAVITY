@@ -30,7 +30,7 @@ const CASE_STUDIES: CaseStudy[] = [
     title: "How Delhi Parents Use School Zones to Eliminate Morning Anxiety",
     category: "Child Safety",
     readTime: "5 min read",
-    summary: "A group of 200+ Delhi parents discovered how Gravity geofences around school entrances turned chaotic drop-off mornings into calm, confident routines.",
+    summary: "A group of 200+ Delhi parents discovered how KVL Track geofences around school entrances turned chaotic drop-off mornings into calm, confident routines.",
     icon: Shield,
     accent: "#6366F1",
     rgb: "99,102,241",
@@ -52,7 +52,7 @@ const CASE_STUDIES: CaseStudy[] = [
     title: "How Grandma Iyer Medication Reminders Are Managed from Bangalore",
     category: "Elderly Care",
     readTime: "6 min read",
-    summary: "Ranjit Iyer manages his 78-year-old mother remotely from Bangalore while she lives alone in Chennai. Gravity medication reminders and daily check-ins gave both of them a new sense of security.",
+    summary: "Ranjit Iyer manages his 78-year-old mother remotely from Bangalore while she lives alone in Chennai. KVL Track medication reminders and daily check-ins gave both of them a new sense of security.",
     icon: Heart,
     accent: "#10B981",
     rgb: "16,185,129",
@@ -63,7 +63,7 @@ const CASE_STUDIES: CaseStudy[] = [
     title: "Driving Score Feature Helped Rahul Reduce Speeding by 80%",
     category: "Driving Safety",
     readTime: "5 min read",
-    summary: "After his parents noticed recurring harsh braking alerts on Gravity, 22-year-old Rahul from Pune transformed his driving habits in just six weeks — and passed his next inspection with a perfect score.",
+    summary: "After his parents noticed recurring harsh braking alerts on KVL Track, 22-year-old Rahul from Pune transformed his driving habits in just six weeks — and passed his next inspection with a perfect score.",
     icon: TrendingUp,
     accent: "#D4A853",
     rgb: "212,168,83",
@@ -71,10 +71,10 @@ const CASE_STUDIES: CaseStudy[] = [
   },
   {
     id: "singh-three-cities",
-    title: "The Singh Family Three-City Circle and How Gravity Keeps Them Connected",
+    title: "The Singh Family Three-City Circle and How KVL Track Keeps Them Connected",
     category: "Family Circle",
     readTime: "7 min read",
-    summary: "Spread across Delhi, Chandigarh, and Ludhiana, the Singh family uses Gravity as the invisible thread that pulls them together — check-ins at meals, SOS drills on weekends, and a shared family map that feels like everyone is in the same room.",
+    summary: "Spread across Delhi, Chandigarh, and Ludhiana, the Singh family uses KVL Track as the invisible thread that pulls them together — check-ins at meals, SOS drills on weekends, and a shared family map that feels like everyone is in the same room.",
     icon: Users,
     accent: "#8B5CF6",
     rgb: "139,92,246",
@@ -82,10 +82,10 @@ const CASE_STUDIES: CaseStudy[] = [
   },
   {
     id: "pune-school-enterprise",
-    title: "How a Pune School Integrated Gravity for Campus Safety",
+    title: "How a Pune School Integrated KVL Track for Campus Safety",
     category: "Enterprise",
     readTime: "8 min read",
-    summary: "Sunrise International School in Pune piloted Gravity for their 1,200-student campus. Within three months, parent satisfaction scores rose 40% and the school recorded zero unreported late arrivals.",
+    summary: "Sunrise International School in Pune piloted KVL Track for their 1,200-student campus. Within three months, parent satisfaction scores rose 40% and the school recorded zero unreported late arrivals.",
     icon: BookOpen,
     accent: "#EF4444",
     rgb: "239,68,68",
@@ -214,20 +214,20 @@ function FeaturedStory() {
               maxWidth: "800px",
             }}
           >
-            How the Sharma Family in Mumbai Survived an Emergency Because of Gravity SOS
+            How the Sharma Family in Mumbai Survived an Emergency Because of KVL Track SOS
           </h2>
 
           {/* Story content */}
           <div className="max-w-3xl space-y-5" style={{ color: "var(--text-secondary)", lineHeight: "1.8" }}>
             <p>
               It was a Tuesday afternoon in October when Priya Sharma received an alert on her phone that changed everything.
-              Her father, 71-year-old Ramesh Sharma, had not completed his scheduled 2:00 PM check-in on Gravity. The app
+              Her father, 71-year-old Ramesh Sharma, had not completed his scheduled 2:00 PM check-in on KVL Track. The app
               had sent a gentle reminder to Ramesh at 2:05 PM — and when no response came by 2:12 PM, it automatically escalated
               the alert to the entire family circle.
             </p>
             <p>
               Priya, working from her office in Andheri, saw the notification first. She immediately called her father. No answer.
-              She could see on the Gravity family map that he was at home — his last known location was the apartment on Linking Road,
+              She could see on the KVL Track family map that he was at home — his last known location was the apartment on Linking Road,
               Bandra, where he lived alone since her mother passed two years ago. His phone had not moved in over 40 minutes.
             </p>
             <p>
@@ -238,7 +238,7 @@ function FeaturedStory() {
             <p>
               When the security guard entered with a spare key, they found Ramesh on the kitchen floor. He had suffered a cardiac event
               while preparing lunch. He was conscious but unable to reach his phone. Emergency services were called and arrived
-              within six minutes. The Gravity location data — showing the exact building address and apartment number — was shared
+              within six minutes. The KVL Track location data — showing the exact building address and apartment number — was shared
               directly with the ambulance dispatcher, cutting precious time from the response.
             </p>
             <p>
@@ -247,7 +247,7 @@ function FeaturedStory() {
               before I could ask."
             </p>
             <p>
-              Today, Ramesh has Gravity on his phone and on a dedicated tablet in his living room. His children have set up wellness
+              Today, Ramesh has KVL Track on his phone and on a dedicated tablet in his living room. His children have set up wellness
               check-ins three times a day. The caregiver dashboard is monitored by both siblings and by a part-time home aide. He
               still lives independently — and that is exactly the point.
             </p>
@@ -432,10 +432,10 @@ function SubmitStoryForm() {
               color: "var(--text-primary)",
             }}
           >
-            Has Gravity Made a Difference?
+            Has KVL Track Made a Difference?
           </h2>
           <p className="mt-3 text-base" style={{ color: "var(--text-secondary)" }}>
-            We want to hear how Gravity has helped your family. Real stories inspire real change.
+            We want to hear how KVL Track has helped your family. Real stories inspire real change.
           </p>
         </motion.div>
 
@@ -521,7 +521,7 @@ function SubmitStoryForm() {
                   className="block text-xs font-semibold mb-1.5"
                   style={{ color: "var(--text-secondary)" }}
                 >
-                  How Has Gravity Helped You?
+                  How Has KVL Track Helped You?
                 </label>
                 <textarea
                   name="story"
@@ -597,7 +597,7 @@ function CTASection() {
           className="text-lg mb-10 max-w-xl mx-auto"
           style={{ color: "var(--text-secondary)" }}
         >
-          Join 50,000 families across India who use Gravity to stay safe, connected, and at peace.
+          Join 50,000 families across India who use KVL Track to stay safe, connected, and at peace.
         </p>
 
         <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-10">
@@ -639,7 +639,7 @@ function CTASection() {
           className="inline-flex items-center gap-2 text-sm transition-colors duration-200"
           style={{ color: "var(--text-muted)" }}
         >
-          ← Back to Gravity Home
+          ← Back to KVL Track Home
         </Link>
       </motion.div>
     </section>
@@ -725,7 +725,7 @@ export default function CaseStudiesPage() {
             className="text-xl max-w-2xl mx-auto mb-10"
             style={{ color: "var(--text-secondary)" }}
           >
-            See how Gravity has protected and connected thousands of families across India.
+            See how KVL Track has protected and connected thousands of families across India.
             Every notification, every check-in, every SOS — these are the stories behind the alerts.
           </motion.p>
 
@@ -736,7 +736,7 @@ export default function CaseStudiesPage() {
             className="flex flex-wrap items-center justify-center gap-6 text-sm"
             style={{ color: "var(--text-muted)" }}
           >
-            {["50,000+ families across India", "7 cities, 1 safety platform", "94% would recommend Gravity"].map((item) => (
+            {["50,000+ families across India", "7 cities, 1 safety platform", "94% would recommend KVL Track"].map((item) => (
               <span key={item} className="flex items-center gap-2">
                 <span
                   className="w-1.5 h-1.5 rounded-full"
@@ -784,7 +784,7 @@ export default function CaseStudiesPage() {
             Stories from Every Part of India
           </h2>
           <p className="mt-3 text-base max-w-xl" style={{ color: "var(--text-secondary)" }}>
-            From daily school runs to cross-country road trips, Gravity is part of the fabric of family life.
+            From daily school runs to cross-country road trips, KVL Track is part of the fabric of family life.
           </p>
         </motion.div>
 

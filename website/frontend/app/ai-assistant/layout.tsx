@@ -1,7 +1,7 @@
 import type { Metadata } from 'next'
 
 export const metadata: Metadata = {
-  title: 'Cosmo AI Safety Assistant | Gravity Family App',
+  title: 'Cosmo AI Safety Assistant | KVL Track Family App',
   description:
     "India's first AI-powered family safety assistant. Proactive danger predictions, anomaly detection, intelligent check-ins, and personalised safety insights.",
   keywords: [
@@ -10,17 +10,17 @@ export const metadata: Metadata = {
     'AI location insights',
   ],
   openGraph: {
-    title: 'Cosmo AI Safety Assistant | Gravity Family App',
+    title: 'Cosmo AI Safety Assistant | KVL Track Family App',
     description:
       "India's first AI-powered family safety assistant. Proactive danger predictions, anomaly detection, intelligent check-ins, and personalised safety insights.",
     url: 'https://gravity.trackalways.com/ai-assistant',
-    siteName: 'Gravity by Trackalways',
+    siteName: 'KVL Track by Trackalways',
     images: [
       {
         url: 'https://gravity.trackalways.com/og-image.svg',
         width: 1200,
         height: 630,
-        alt: 'Gravity Cosmo AI Safety Assistant',
+        alt: 'KVL Track Cosmo AI Safety Assistant',
       },
     ],
     locale: 'en_IN',
@@ -28,7 +28,7 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Cosmo AI Safety Assistant | Gravity Family App',
+    title: 'Cosmo AI Safety Assistant | KVL Track Family App',
     description:
       "India's first AI-powered family safety assistant. Proactive danger predictions, anomaly detection, intelligent check-ins, and personalised safety insights.",
     images: ['https://gravity.trackalways.com/og-image.svg'],

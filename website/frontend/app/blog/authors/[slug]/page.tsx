@@ -73,7 +73,7 @@ const ALL_POSTS: PostMeta[] = [
     category: 'Technology',
     categorySlug: 'technology',
     excerpt:
-      "Not all location data is created equal. GPS delivers sub-5-metre accuracy but drains battery and struggles indoors. Gravity's hybrid engine fuses GPS, cell towers, and Wi-Fi to always deliver the best available fix.",
+      "Not all location data is created equal. GPS delivers sub-5-metre accuracy but drains battery and struggles indoors. KVL Track's hybrid engine fuses GPS, cell towers, and Wi-Fi to always deliver the best available fix.",
     author: 'Rahul Verma',
     authorSlug: 'rahul-verma',
     date: 'May 20, 2025',
@@ -87,7 +87,7 @@ const ALL_POSTS: PostMeta[] = [
     category: 'Safety',
     categorySlug: 'safety',
     excerpt:
-      'India saw over 3.7 lakh road accidents in 2023 alone. When seconds matter, a single SOS press in Gravity broadcasts your exact GPS coordinates and a live location link to every member of your family circle simultaneously.',
+      'India saw over 3.7 lakh road accidents in 2023 alone. When seconds matter, a single SOS press in KVL Track broadcasts your exact GPS coordinates and a live location link to every member of your family circle simultaneously.',
     author: 'Priya Sharma',
     authorSlug: 'priya-sharma',
     date: 'May 14, 2025',
@@ -97,11 +97,11 @@ const ALL_POSTS: PostMeta[] = [
   {
     id: 5,
     slug: 'how-gravity-protects-your-privacy-while-keeping-families-safe',
-    title: 'How Gravity Protects Your Privacy While Keeping Families Safe',
+    title: 'How KVL Track Protects Your Privacy While Keeping Families Safe',
     category: 'Company',
     categorySlug: 'company',
     excerpt:
-      'Privacy and safety are not opposites — they are partners. Gravity is built on a consent-first model: nobody is tracked without explicit opt-in and location history is encrypted using AES-256.',
+      'Privacy and safety are not opposites — they are partners. KVL Track is built on a consent-first model: nobody is tracked without explicit opt-in and location history is encrypted using AES-256.',
     author: 'Kavitha Krishnan',
     authorSlug: 'kavitha-krishnan',
     date: 'May 7, 2025',
@@ -115,7 +115,7 @@ const ALL_POSTS: PostMeta[] = [
     category: 'Health',
     categorySlug: 'health',
     excerpt:
-      "Forty per cent of India's elderly population lives apart from their adult children. Gravity's Elder Circle feature gives ageing parents a dignified way to share their location and summon help in a medical emergency.",
+      "Forty per cent of India's elderly population lives apart from their adult children. KVL Track's Elder Circle feature gives ageing parents a dignified way to share their location and summon help in a medical emergency.",
     author: 'Dr. Ananya Mehta',
     authorSlug: 'dr-ananya-mehta',
     date: 'April 30, 2025',
@@ -169,7 +169,7 @@ const AUTHORS: Author[] = [
     shortBio:
       'Dr. Ananya Mehta is a clinical child psychologist with a PhD from NIMHANS Bengaluru and over a decade of practice working with children and families across urban India.',
     longBio:
-      "Dr. Ananya Mehta completed her PhD in Clinical Psychology from the National Institute of Mental Health and Neurosciences (NIMHANS), Bengaluru, where her doctoral thesis examined the relationship between parental anxiety and adolescent autonomy development in Indian urban families. She subsequently completed a fellowship in Child and Adolescent Psychiatry at AIIMS New Delhi.\n\nIn her clinical practice, Dr. Mehta sees families across a wide spectrum of socioeconomic backgrounds, and has observed first-hand how the anxiety of not knowing where children are manifests in family dynamics, marital stress, and children's own sense of security. This observation led her to research how location-sharing technology, when implemented with psychological principles in mind, can become a therapeutic tool rather than a surveillance device.\n\nShe serves on the advisory board of the Indian Association of Child and Adolescent Mental Health and is a consultant to several EdTech and family safety startups on the psychological dimensions of their products. She writes for the Gravity Journal to bridge the gap between clinical research and practical parenting guidance.",
+      "Dr. Ananya Mehta completed her PhD in Clinical Psychology from the National Institute of Mental Health and Neurosciences (NIMHANS), Bengaluru, where her doctoral thesis examined the relationship between parental anxiety and adolescent autonomy development in Indian urban families. She subsequently completed a fellowship in Child and Adolescent Psychiatry at AIIMS New Delhi.\n\nIn her clinical practice, Dr. Mehta sees families across a wide spectrum of socioeconomic backgrounds, and has observed first-hand how the anxiety of not knowing where children are manifests in family dynamics, marital stress, and children's own sense of security. This observation led her to research how location-sharing technology, when implemented with psychological principles in mind, can become a therapeutic tool rather than a surveillance device.\n\nShe serves on the advisory board of the Indian Association of Child and Adolescent Mental Health and is a consultant to several EdTech and family safety startups on the psychological dimensions of their products. She writes for the KVL Track Journal to bridge the gap between clinical research and practical parenting guidance.",
     expertise: ['Child Psychology', 'Adolescent Development', 'Parental Anxiety', 'Elder Cognition', 'Family Dynamics'],
     twitter: 'https://twitter.com/trackalways',
     linkedin: 'https://linkedin.com/company/trackalways',
@@ -186,7 +186,7 @@ const AUTHORS: Author[] = [
     shortBio:
       'Rahul Verma is a technology journalist who has spent a decade demystifying complex consumer technology for everyday Indian audiences, with a focus on safety technology.',
     longBio:
-      "Rahul Verma spent ten years as a technology journalist, including five years as a senior editor at India's leading consumer technology publication, before pivoting to focus exclusively on the intersection of technology and family safety. During his journalism career, he covered everything from smartphone launches to enterprise cybersecurity, but found his most meaningful work in explaining complex technical concepts to non-technical audiences.\n\nHis interest in location technology began with a personal experience: his elderly father was diagnosed with early-stage dementia, and Rahul spent months researching the technical landscape of tracking solutions before settling on one that balanced accuracy, battery life, and dignity. That experience made him realise how poorly the technical realities of location technology are understood by the people who need it most.\n\nRahul holds a degree in Computer Science from BITS Pilani and a Post-Graduate Diploma in Journalism from the Asian College of Journalism, Chennai. He lives in Bengaluru with his wife and their young son, and he brings both his technical background and his role as a parent to every article he writes for the Gravity Journal.",
+      "Rahul Verma spent ten years as a technology journalist, including five years as a senior editor at India's leading consumer technology publication, before pivoting to focus exclusively on the intersection of technology and family safety. During his journalism career, he covered everything from smartphone launches to enterprise cybersecurity, but found his most meaningful work in explaining complex technical concepts to non-technical audiences.\n\nHis interest in location technology began with a personal experience: his elderly father was diagnosed with early-stage dementia, and Rahul spent months researching the technical landscape of tracking solutions before settling on one that balanced accuracy, battery life, and dignity. That experience made him realise how poorly the technical realities of location technology are understood by the people who need it most.\n\nRahul holds a degree in Computer Science from BITS Pilani and a Post-Graduate Diploma in Journalism from the Asian College of Journalism, Chennai. He lives in Bengaluru with his wife and their young son, and he brings both his technical background and his role as a parent to every article he writes for the KVL Track Journal.",
     expertise: ['GPS Technology', 'Sensor Fusion', 'Battery Optimisation', 'Consumer Tech', 'Privacy Engineering'],
     twitter: 'https://twitter.com/trackalways',
     linkedin: 'https://linkedin.com/company/trackalways',
@@ -220,7 +220,7 @@ const AUTHORS: Author[] = [
     shortBio:
       "Arjun Patel is a road safety researcher and policy analyst based in New Delhi, with experience at the National Road Safety Council and several road safety NGOs.",
     longBio:
-      "Arjun Patel has dedicated his career to understanding and reducing the human cost of road accidents in India — a country that accounts for over 11% of global road accident deaths despite having only 1% of the world's vehicles. He worked for four years as a researcher at the National Road Safety Council, contributing to the National Road Safety Policy and India's implementation of the Decade of Action for Road Safety.\n\nHe subsequently joined iRAP (the International Road Assessment Programme) as a country analyst for India and Sri Lanka, conducting safety assessments of highway corridors and working with state governments on infrastructure intervention prioritisation. In parallel, he has worked with several NGOs on driver behaviour programmes, particularly focusing on distracted driving, fatigue detection, and the role of mobile phones in accident causation.\n\nArjun became interested in family safety technology after observing that crash detection and automatic emergency notification systems — standard in premium European vehicles — were virtually unavailable to the vast majority of Indian road users. He writes for the Gravity Journal to help Indian families understand how smartphone-based crash detection can partially bridge this safety gap while India's vehicle safety standards continue to evolve.",
+      "Arjun Patel has dedicated his career to understanding and reducing the human cost of road accidents in India — a country that accounts for over 11% of global road accident deaths despite having only 1% of the world's vehicles. He worked for four years as a researcher at the National Road Safety Council, contributing to the National Road Safety Policy and India's implementation of the Decade of Action for Road Safety.\n\nHe subsequently joined iRAP (the International Road Assessment Programme) as a country analyst for India and Sri Lanka, conducting safety assessments of highway corridors and working with state governments on infrastructure intervention prioritisation. In parallel, he has worked with several NGOs on driver behaviour programmes, particularly focusing on distracted driving, fatigue detection, and the role of mobile phones in accident causation.\n\nArjun became interested in family safety technology after observing that crash detection and automatic emergency notification systems — standard in premium European vehicles — were virtually unavailable to the vast majority of Indian road users. He writes for the KVL Track Journal to help Indian families understand how smartphone-based crash detection can partially bridge this safety gap while India's vehicle safety standards continue to evolve.",
     expertise: ['Road Safety', 'Crash Detection', 'Accident Statistics', 'Emergency Response', 'Driver Behaviour'],
     twitter: 'https://twitter.com/trackalways',
     linkedin: 'https://linkedin.com/company/trackalways',
@@ -237,7 +237,7 @@ const AUTHORS: Author[] = [
     shortBio:
       "Sunita Agarwal is an elder care advocate and social worker who has worked with ageing populations across India for fifteen years, with a personal and professional focus on technology-assisted independent living.",
     longBio:
-      "Sunita Agarwal's journey into elder care advocacy began not in a classroom but in a moment of crisis: her own mother, living alone in Jaipur while Sunita worked in Mumbai, fell at home and was not found for over three hours. The experience was transformative. Sunita left her corporate human resources career to complete a Master's degree in Social Work with a specialisation in Gerontology at the Tata Institute of Social Sciences.\n\nOver the following fifteen years, she built a career at the intersection of social work, policy advocacy, and technology. She has consulted for state governments on elder care programme design, worked with HelpAge India on their digital literacy initiatives for seniors, and served as a resource person for the Ministry of Social Justice and Empowerment's National Policy for Senior Citizens review process.\n\nSunita is a fierce advocate for elder dignity in technology design. She consults with technology companies — including Gravity — to ensure that products designed for elderly users are genuinely usable by elderly users, not just by their adult children. Her central argument: technology that infantilises elders creates resistance and non-adoption; technology that respects their agency creates partnership. She lives in Delhi with her husband and their teenage son, and speaks regularly at gerontology conferences across South Asia.",
+      "Sunita Agarwal's journey into elder care advocacy began not in a classroom but in a moment of crisis: her own mother, living alone in Jaipur while Sunita worked in Mumbai, fell at home and was not found for over three hours. The experience was transformative. Sunita left her corporate human resources career to complete a Master's degree in Social Work with a specialisation in Gerontology at the Tata Institute of Social Sciences.\n\nOver the following fifteen years, she built a career at the intersection of social work, policy advocacy, and technology. She has consulted for state governments on elder care programme design, worked with HelpAge India on their digital literacy initiatives for seniors, and served as a resource person for the Ministry of Social Justice and Empowerment's National Policy for Senior Citizens review process.\n\nSunita is a fierce advocate for elder dignity in technology design. She consults with technology companies — including KVL Track — to ensure that products designed for elderly users are genuinely usable by elderly users, not just by their adult children. Her central argument: technology that infantilises elders creates resistance and non-adoption; technology that respects their agency creates partnership. She lives in Delhi with her husband and their teenage son, and speaks regularly at gerontology conferences across South Asia.",
     expertise: ['Elder Care', 'Gerontology', 'Dignity-First Design', 'Fall Detection', 'Independent Living'],
     twitter: 'https://twitter.com/trackalways',
     linkedin: 'https://linkedin.com/company/trackalways',
@@ -1221,7 +1221,7 @@ export default function AuthorPage({ params }: { params: { slug: string } }) {
                 marginBottom: 12,
               }}
             >
-              The Gravity Journal
+              The KVL Track Journal
             </p>
             <h2
               style={{

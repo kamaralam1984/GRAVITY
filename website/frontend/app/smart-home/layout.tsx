@@ -1,7 +1,7 @@
 export const metadata = {
-  title: 'Gravity Smart Home Integration — Alexa, Google Home, Smart Cameras',
+  title: 'KVL Track Smart Home Integration — Alexa, Google Home, Smart Cameras',
   description:
-    'Connect Gravity to your smart home ecosystem. Automatic alerts when family arrives home, smart lock control, and home security in one app.',
+    'Connect KVL Track to your smart home ecosystem. Automatic alerts when family arrives home, smart lock control, and home security in one app.',
   keywords: [
     'smart home family safety',
     'Alexa family tracking',

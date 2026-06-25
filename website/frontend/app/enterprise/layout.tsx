@@ -1,5 +1,5 @@
 export const metadata = {
-  title: 'Gravity Enterprise — Family Safety Platform for Organizations',
+  title: 'KVL Track Enterprise — Family Safety Platform for Organizations',
   description:
     'White-label family safety platform for schools, hospitals, NGOs, corporations, and security agencies. SOC 2, GDPR compliant. Enterprise SLA.',
   keywords: [

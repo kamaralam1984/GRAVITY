@@ -1,7 +1,7 @@
-# GRAVITY Super Admin Panel — Complete Tab Guide
+# KVL TRACK Super Admin Panel — Complete Tab Guide
 
-Super Admin Panel URL: https://gravity.kvlbusinesssolutions.com/super-admin
-Login URL: https://gravity.kvlbusinesssolutions.com/super-admin/login
+Super Admin Panel URL: https://kvltrack.kvlbusinesssolutions.com/super-admin
+Login URL: https://kvltrack.kvlbusinesssolutions.com/super-admin/login
 
 ---
 
@@ -311,7 +311,7 @@ Login URL: https://gravity.kvlbusinesssolutions.com/super-admin/login
 **Kaise use karein:** Account health score dekho. Contract renewal dates track karo. Account manager assign karo.
 
 ### White Label
-**Kya kaam karta hai:** White-label clients jo apne branding se GRAVITY use karte hain.
+**Kya kaam karta hai:** White-label clients jo apne branding se KVL TRACK use karte hain.
 **Kaise use karein:** Client ka custom domain, logo, colors manage karo. Feature toggles set karo.
 
 ### Schools (Enterprise)
@@ -559,5 +559,5 @@ Login URL: https://gravity.kvlbusinesssolutions.com/super-admin/login
 
 ---
 
-*Gravity Super Admin Panel — Version 2.0*
+*KVL Track Super Admin Panel — Version 2.0*
 *Prepared for: Kamar Alam (Super Admin)*

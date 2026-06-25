@@ -9,7 +9,7 @@ services:
     build:
       context: ./website/backend
       dockerfile: Dockerfile
-    container_name: gravity-backend
+    container_name: kvltrack-backend
     restart: unless-stopped
     environment:
       DATABASE_URL: sqlite:////app/data/gravity.db
@@ -75,7 +75,7 @@ services:
       args:
         # Browser-side API URL — must be reachable from user's browser
         NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:8000}
-    container_name: gravity-frontend
+    container_name: kvltrack-frontend
     restart: unless-stopped
     environment:
       NODE_ENV: production
@@ -93,12 +93,12 @@ services:
 # ─────────────────────────────────────────────
 volumes:
   gravity_db:
-    name: gravity_sqlite_data
+    name: kvltrack_sqlite_data
 
 # ─────────────────────────────────────────────
 # Internal network
 # ─────────────────────────────────────────────
 networks:
   gravity-net:
-    name: gravity-network
+    name: kvltrack-network
     driver: bridge

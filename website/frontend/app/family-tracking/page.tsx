@@ -63,7 +63,7 @@ const FAMILY_FEATURES = [
   {
     icon: <Navigation size={24} />,
     title: 'Activity Status Detection',
-    description: 'Gravity automatically detects whether each member is Driving, Walking, Running, or Stationary — without requiring anyone to manually check in. Intelligence happens in the background.',
+    description: 'KVL Track automatically detects whether each member is Driving, Walking, Running, or Stationary — without requiring anyone to manually check in. Intelligence happens in the background.',
     color: '#10B981',
   },
   {
@@ -120,7 +120,7 @@ const PRIVACY_FEATURES = [
   {
     icon: <Clock size={22} />,
     title: 'Temporary Sharing',
-    description: 'Share location for exactly 1 hour, 4 hours, or 24 hours with anyone — even people not in Gravity. Link expires automatically.',
+    description: 'Share location for exactly 1 hour, 4 hours, or 24 hours with anyone — even people not in KVL Track. Link expires automatically.',
     color: '#10B981',
   },
   {
@@ -150,7 +150,7 @@ const TESTIMONIALS = [
   {
     name: 'Rajesh Kumar',
     role: 'Father, Chennai',
-    quote: 'The ETA prediction is genuinely magical. My wife used to worry when I was stuck in traffic. Now Gravity tells her I\'m 20 minutes away before I even text.',
+    quote: 'The ETA prediction is genuinely magical. My wife used to worry when I was stuck in traffic. Now KVL Track tells her I\'m 20 minutes away before I even text.',
     rating: 5,
     avatar: 'RK',
     color: '#10B981',
@@ -388,7 +388,7 @@ export default function FamilyTrackingPage() {
                   <span style={{ color: '#D4A853' }}>365 Days</span>
                 </h2>
                 <p style={{ fontSize: 16, lineHeight: 1.8, color: 'var(--text-secondary)', marginBottom: 32, fontFamily: "'Inter', sans-serif" }}>
-                  Gravity stores a full year of location history for every family member. Review daily routines, verify arrivals, understand travel patterns, and replay any journey in detail.
+                  KVL Track stores a full year of location history for every family member. Review daily routines, verify arrivals, understand travel patterns, and replay any journey in detail.
                 </p>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
                   {HISTORY_OPTIONS.map(opt => (
@@ -535,7 +535,7 @@ export default function FamilyTrackingPage() {
                   className="btn-gold"
                   style={{ padding: '16px 32px', borderRadius: 999, fontSize: 16, fontWeight: 700, display: 'inline-flex', alignItems: 'center', gap: 8, textDecoration: 'none', fontFamily: "'Inter', sans-serif" }}
                 >
-                  Download Gravity Free
+                  Download KVL Track Free
                   <ChevronRight size={18} />
                 </motion.a>
                 <Link href="/pricing" style={{

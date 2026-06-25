@@ -294,7 +294,7 @@ export default function ParentPage() {
           <div style={{ width: 32, height: 32, borderRadius: 10, background: T.accentBg, border: `1px solid ${T.accentBorder}`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
             <Shield size={18} style={{ color: T.accent }} strokeWidth={2.5} />
           </div>
-          <span style={{ color: T.accent, fontWeight: 800, fontSize: 16, letterSpacing: '-0.3px' }}>Gravity</span>
+          <span style={{ color: T.accent, fontWeight: 800, fontSize: 16, letterSpacing: '-0.3px' }}>KVL Track</span>
           <div style={{ background: T.accentBg, border: `1px solid ${T.accentBorder}`, color: T.accent, fontSize: 9, fontWeight: 700, padding: '2px 7px', borderRadius: 20, letterSpacing: '0.5px', textTransform: 'uppercase' as const }}>Parent</div>
         </div>
 

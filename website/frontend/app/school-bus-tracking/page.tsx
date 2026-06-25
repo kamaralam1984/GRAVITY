@@ -85,23 +85,23 @@ const FEATURES = [
 const FAQS = [
   {
     q: 'How does school bus tracking work?',
-    a: 'Gravity school bus tracking works through a GPS device installed in the bus (provided and managed by the school or transport operator). This device transmits the bus location every 10 seconds to Gravity servers. Parents with a Gravity account linked to the school see the live bus position on a map in their app. No action is required from the bus driver or your child — the tracking is automatic.',
+    a: 'KVL Track school bus tracking works through a GPS device installed in the bus (provided and managed by the school or transport operator). This device transmits the bus location every 10 seconds to KVL Track servers. Parents with a KVL Track account linked to the school see the live bus position on a map in their app. No action is required from the bus driver or your child — the tracking is automatic.',
   },
   {
     q: 'Do I need to install anything on the bus?',
-    a: 'Your school or bus operator needs to install a Gravity-compatible GPS tracker in the bus. Gravity provides the hardware (Trackalways Titan GPS unit) to schools at a subsidised rate through our school partnership programme. If your school is not yet part of the programme, contact us — we can onboard new schools within 5 business days. Parents do not install anything on the bus.',
+    a: 'Your school or bus operator needs to install a KVL Track-compatible GPS tracker in the bus. KVL Track provides the hardware (Trackalways Titan GPS unit) to schools at a subsidised rate through our school partnership programme. If your school is not yet part of the programme, contact us — we can onboard new schools within 5 business days. Parents do not install anything on the bus.',
   },
   {
     q: 'Can I see the bus route on a map?',
-    a: "Yes. The Gravity app shows the full planned route for your child's bus — all stops in sequence with estimated arrival times at each stop. You can see where the bus is on that route in real time, and the app highlights your child's specific stop and shows the live ETA. You can also replay the previous day's route to verify the bus followed the expected path.",
+    a: "Yes. The KVL Track app shows the full planned route for your child's bus — all stops in sequence with estimated arrival times at each stop. You can see where the bus is on that route in real time, and the app highlights your child's specific stop and shows the live ETA. You can also replay the previous day's route to verify the bus followed the expected path.",
   },
   {
     q: 'What if the bus is late?',
-    a: 'When the bus is running more than 5 minutes behind its scheduled arrival at your stop, Gravity automatically sends a delay alert with the updated ETA. If the delay exceeds 15 minutes, a second alert is sent. If the bus GPS signal is lost (bus powered off, GPS jamming, tunnel), parents are also notified that tracking is unavailable so they know to contact the school directly.',
+    a: 'When the bus is running more than 5 minutes behind its scheduled arrival at your stop, KVL Track automatically sends a delay alert with the updated ETA. If the delay exceeds 15 minutes, a second alert is sent. If the bus GPS signal is lost (bus powered off, GPS jamming, tunnel), parents are also notified that tracking is unavailable so they know to contact the school directly.',
   },
   {
     q: 'Is it accurate in real-time?',
-    a: "Gravity school bus tracking updates GPS position every 10 seconds with accuracy within 3-5 meters in open areas. Bus ETA predictions are accurate within 2 minutes on 94% of trips. In areas with poor GPS reception (dense urban canyons, underground car parks), the system supplements GPS with cell tower data maintaining accuracy within 30-50 meters.",
+    a: "KVL Track school bus tracking updates GPS position every 10 seconds with accuracy within 3-5 meters in open areas. Bus ETA predictions are accurate within 2 minutes on 94% of trips. In areas with poor GPS reception (dense urban canyons, underground car parks), the system supplements GPS with cell tower data maintaining accuracy within 30-50 meters.",
   },
 ]
 
@@ -194,7 +194,7 @@ export default function SchoolBusTrackingPage() {
                   From First Stop to Your Door — Fully Tracked
                 </h2>
                 <p style={{ fontFamily: "'Inter', sans-serif", fontSize: 16, lineHeight: 1.8, color: 'var(--text-secondary)', marginBottom: 28 }}>
-                  Gravity school bus tracking eliminates the anxiety of waiting at the gate. Know the bus is on its way, how far it is, and exactly when it will arrive at your stop.
+                  KVL Track school bus tracking eliminates the anxiety of waiting at the gate. Know the bus is on its way, how far it is, and exactly when it will arrive at your stop.
                 </p>
                 {[
                   'Works on any parent smartphone — iOS or Android',
@@ -251,12 +251,12 @@ export default function SchoolBusTrackingPage() {
         <Section bg="var(--bg-surface)">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <motion.div variants={fadeUp} style={{ textAlign: 'center', marginBottom: 48 }}>
-              <h2 style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontSize: 'clamp(1.8rem, 4vw, 2.4rem)', fontWeight: 800, color: 'var(--text-primary)', marginBottom: 16 }}>Schools and Parents Who Use Gravity</h2>
+              <h2 style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontSize: 'clamp(1.8rem, 4vw, 2.4rem)', fontWeight: 800, color: 'var(--text-primary)', marginBottom: 16 }}>Schools and Parents Who Use KVL Track</h2>
             </motion.div>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(340px, 1fr))', gap: 24, maxWidth: 860, margin: '0 auto' }}>
               {[
-                { quote: 'Before Gravity, I was standing at the gate for 20-30 minutes every afternoon not knowing when the bus would arrive. Now I get a 5-minute alert and walk out exactly on time.', name: 'Nandini Rao', role: 'Parent, Bengaluru', avatar: 'NR', color: '#10B981' },
-                { quote: "Our school has 22 buses and 1,800 students. Parent complaints about bus delays dropped by 70% in the first term after we deployed Gravity. The transparency changes everything.", name: 'Principal D. Krishnan', role: 'School Principal, Chennai', avatar: 'DK', color: '#4B80F0' },
+                { quote: 'Before KVL Track, I was standing at the gate for 20-30 minutes every afternoon not knowing when the bus would arrive. Now I get a 5-minute alert and walk out exactly on time.', name: 'Nandini Rao', role: 'Parent, Bengaluru', avatar: 'NR', color: '#10B981' },
+                { quote: "Our school has 22 buses and 1,800 students. Parent complaints about bus delays dropped by 70% in the first term after we deployed KVL Track. The transparency changes everything.", name: 'Principal D. Krishnan', role: 'School Principal, Chennai', avatar: 'DK', color: '#4B80F0' },
               ].map(t => (
                 <motion.div key={t.name} variants={fadeUp} style={{ background: 'var(--bg)', border: '1px solid var(--border)', borderRadius: 20, padding: '28px 24px' }}>
                   <div style={{ display: 'flex', gap: 3, marginBottom: 16 }}>
@@ -307,10 +307,10 @@ export default function SchoolBusTrackingPage() {
           <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%,-50%)', width: 600, height: 600, borderRadius: '50%', background: 'radial-gradient(circle, rgba(16,185,129,0.07) 0%, transparent 65%)', pointerEvents: 'none' }} />
           <div style={{ maxWidth: 660, margin: '0 auto', position: 'relative', zIndex: 1 }}>
             <h2 style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontSize: 'clamp(1.8rem, 4vw, 2.8rem)', fontWeight: 800, color: '#FFFFFF', marginBottom: 16 }}>
-              Is Your School on Gravity?
+              Is Your School on KVL Track?
             </h2>
             <p style={{ fontFamily: "'Inter', sans-serif", color: 'rgba(255,255,255,0.6)', maxWidth: 520, margin: '0 auto 40px', lineHeight: 1.75 }}>
-              If your school already uses Gravity, download the parent app and link your account free. If not, invite your school to join 2,400+ schools on the Gravity network.
+              If your school already uses KVL Track, download the parent app and link your account free. If not, invite your school to join 2,400+ schools on the KVL Track network.
             </p>
             <div style={{ display: 'flex', gap: 16, justifyContent: 'center', flexWrap: 'wrap' }}>
               <Link href="/pricing" style={{ background: '#10B981', color: '#fff', padding: '15px 36px', borderRadius: 12, textDecoration: 'none', fontWeight: 700, fontSize: '1.05rem', display: 'inline-flex', alignItems: 'center', gap: 8, boxShadow: '0 0 28px rgba(16,185,129,0.3)', fontFamily: "'Inter', sans-serif" }}>

@@ -79,7 +79,7 @@ const ALL_POSTS: PostMeta[] = [
     category: 'Technology',
     categorySlug: 'technology',
     excerpt:
-      "Not all location data is created equal. GPS delivers sub-5-metre accuracy but drains battery and struggles indoors. Gravity's hybrid engine fuses GPS, cell towers, and Wi-Fi to always deliver the best available fix.",
+      "Not all location data is created equal. GPS delivers sub-5-metre accuracy but drains battery and struggles indoors. KVL Track's hybrid engine fuses GPS, cell towers, and Wi-Fi to always deliver the best available fix.",
     author: 'Rahul Verma',
     authorSlug: 'rahul-verma',
     date: 'May 20, 2025',
@@ -94,7 +94,7 @@ const ALL_POSTS: PostMeta[] = [
     category: 'Safety',
     categorySlug: 'safety',
     excerpt:
-      'India saw over 3.7 lakh road accidents in 2023 alone. When seconds matter, a single SOS press in Gravity broadcasts your exact GPS coordinates and a live location link to every member of your family circle simultaneously.',
+      'India saw over 3.7 lakh road accidents in 2023 alone. When seconds matter, a single SOS press in KVL Track broadcasts your exact GPS coordinates and a live location link to every member of your family circle simultaneously.',
     author: 'Priya Sharma',
     authorSlug: 'priya-sharma',
     date: 'May 14, 2025',
@@ -105,11 +105,11 @@ const ALL_POSTS: PostMeta[] = [
   {
     id: 5,
     slug: 'how-gravity-protects-your-privacy-while-keeping-families-safe',
-    title: 'How Gravity Protects Your Privacy While Keeping Families Safe',
+    title: 'How KVL Track Protects Your Privacy While Keeping Families Safe',
     category: 'Company',
     categorySlug: 'company',
     excerpt:
-      'Privacy and safety are not opposites — they are partners. Gravity is built on a consent-first model: nobody is tracked without explicit opt-in and location history is encrypted using AES-256.',
+      'Privacy and safety are not opposites — they are partners. KVL Track is built on a consent-first model: nobody is tracked without explicit opt-in and location history is encrypted using AES-256.',
     author: 'Kavitha Krishnan',
     authorSlug: 'kavitha-krishnan',
     date: 'May 7, 2025',
@@ -124,7 +124,7 @@ const ALL_POSTS: PostMeta[] = [
     category: 'Health',
     categorySlug: 'health',
     excerpt:
-      "Forty per cent of India's elderly population lives apart from their adult children. Gravity's Elder Circle feature gives ageing parents a dignified way to share their location and summon help in a medical emergency.",
+      "Forty per cent of India's elderly population lives apart from their adult children. KVL Track's Elder Circle feature gives ageing parents a dignified way to share their location and summon help in a medical emergency.",
     author: 'Dr. Ananya Mehta',
     authorSlug: 'dr-ananya-mehta',
     date: 'April 30, 2025',
@@ -170,7 +170,7 @@ const CATEGORIES: CategoryConfig[] = [
     slug: 'technology',
     display: 'Technology',
     description:
-      'Deep dives into GPS, cell towers, Wi-Fi positioning, encryption, and all the technology that powers Gravity under the hood.',
+      'Deep dives into GPS, cell towers, Wi-Fi positioning, encryption, and all the technology that powers KVL Track under the hood.',
     icon: <Cpu size={14} />,
     iconLarge: <Cpu size={40} />,
     color: 'from-green-500 to-emerald-400',
@@ -190,7 +190,7 @@ const CATEGORIES: CategoryConfig[] = [
     slug: 'company',
     display: 'Company',
     description:
-      'Updates from the Gravity team — product announcements, privacy commitments, engineering deep dives, and our vision for the future.',
+      'Updates from the KVL Track team — product announcements, privacy commitments, engineering deep dives, and our vision for the future.',
     icon: <Building2 size={14} />,
     iconLarge: <Building2 size={40} />,
     color: 'from-yellow-500 to-amber-400',
@@ -810,7 +810,7 @@ export default function CategoryPage({ params }: { params: { slug: string } }) {
                 marginBottom: 12,
               }}
             >
-              The Gravity Journal
+              The KVL Track Journal
             </h2>
             <p
               style={{

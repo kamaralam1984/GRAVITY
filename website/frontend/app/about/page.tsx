@@ -47,7 +47,7 @@ const PRINCIPLES = [
     icon: <Heart size={28} className="text-pink-400" />,
     title: 'Connection Over Control',
     description:
-      'Gravity is not a surveillance tool — it is a closeness tool. We design every feature to strengthen family bonds, not enable control. Privacy hours, consent flows, and member autonomy are built into the core product.',
+      'KVL Track is not a surveillance tool — it is a closeness tool. We design every feature to strengthen family bonds, not enable control. Privacy hours, consent flows, and member autonomy are built into the core product.',
   },
 ];
 
@@ -65,7 +65,7 @@ const TEAM = [
   {
     name: 'Kelsey',
     role: 'Head of Design',
-    bio: 'Kelsey leads product design and brand across all Trackalways products. With a background in human-centred design and a deep belief that safety tools should be beautiful and intuitive, she is the reason Gravity feels different from every other family app on the market.',
+    bio: 'Kelsey leads product design and brand across all Trackalways products. With a background in human-centred design and a deep belief that safety tools should be beautiful and intuitive, she is the reason KVL Track feels different from every other family app on the market.',
     initials: 'KL',
     avatarColor: 'from-pink-500 to-rose-600',
     location: 'London, UK',
@@ -74,7 +74,7 @@ const TEAM = [
   {
     name: 'Dev Team',
     role: 'Engineering & Backend',
-    bio: 'A distributed team of engineers across Kenya, India, and Europe — building the real-time infrastructure, AI systems, and mobile apps that power Gravity. Small team. Big impact.',
+    bio: 'A distributed team of engineers across Kenya, India, and Europe — building the real-time infrastructure, AI systems, and mobile apps that power KVL Track. Small team. Big impact.',
     initials: 'DT',
     avatarColor: 'from-emerald-500 to-teal-600',
     location: 'Distributed · 3 continents',
@@ -125,7 +125,7 @@ function MissionSection() {
             >
               Trackalways was built for the billions of families on earth who need real safety tools
               — not expensive hardware, not invasive surveillance, not apps designed for a narrow
-              slice of the world. Gravity is our promise: powerful safety, honest design, and a price
+              slice of the world. KVL Track is our promise: powerful safety, honest design, and a price
               every family can afford.
             </p>
 
@@ -343,7 +343,7 @@ function EcosystemSection() {
           className="text-[#94A3B8] mt-4 max-w-2xl mx-auto"
           style={{ fontFamily: "'Inter', sans-serif" }}
         >
-          Gravity is one part of the Trackalways universe. Every product is designed to
+          KVL Track is one part of the Trackalways universe. Every product is designed to
           work together, giving families a complete safety ecosystem across hardware and software.
         </p>
       </motion.div>
@@ -537,7 +537,7 @@ function AboutCTA() {
           Join 50,000+ families
           <br />
           <span className="bg-gradient-to-r from-blue-400 to-violet-400 bg-clip-text text-transparent">
-            already using Gravity
+            already using KVL Track
           </span>
         </h2>
 

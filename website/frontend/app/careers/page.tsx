@@ -52,7 +52,7 @@ const VALUES = [
     icon: <Zap size={28} />,
     title: 'Meaningful Impact',
     description:
-      'Gravity is used by over two million families across India today. When we ship, we move the needle for real people — not just vanity metrics. Your work ships fast, gets measured rigorously, and shapes a product families depend on.',
+      'KVL Track is used by over two million families across India today. When we ship, we move the needle for real people — not just vanity metrics. Your work ships fast, gets measured rigorously, and shapes a product families depend on.',
     color: 'var(--safe)',
   },
 ];
@@ -72,7 +72,7 @@ const JOBS = [
     location: 'Remote',
     type: 'Full-time',
     responsibilities: [
-      `Lead architecture decisions for Gravity's iOS app (Swift/SwiftUI), owning the real-time location pipeline from CoreLocation to our WebSocket layer.`,
+      `Lead architecture decisions for KVL Track's iOS app (Swift/SwiftUI), owning the real-time location pipeline from CoreLocation to our WebSocket layer.`,
       'Mentor two mid-level iOS engineers through design reviews, pair sessions, and structured 1:1 feedback cycles.',
       'Collaborate with Product and Design to ship battery-efficient background tracking features that pass App Store review on the first submission.',
     ],
@@ -86,7 +86,7 @@ const JOBS = [
     location: 'Remote / Bangalore',
     type: 'Full-time',
     responsibilities: [
-      `Own end-to-end UX for Gravity's mobile and web surfaces — from user research and journey mapping through to high-fidelity Figma prototypes and usability testing.`,
+      `Own end-to-end UX for KVL Track's mobile and web surfaces — from user research and journey mapping through to high-fidelity Figma prototypes and usability testing.`,
       'Establish and maintain a cohesive design system used by both iOS and Android squads, ensuring pixel-perfect implementation.',
       'Run moderated user interviews with Indian families across metro and Tier-2 cities to surface unmet needs and validate design hypotheses before engineering begins.',
     ],
@@ -128,7 +128,7 @@ const JOBS = [
     location: 'Bangalore',
     type: 'Full-time',
     responsibilities: [
-      `Own the post-onboarding experience for Gravity's 8,000+ B2B school and enterprise clients — drive 90-day activation rates and reduce involuntary churn through proactive health-score monitoring.`,
+      `Own the post-onboarding experience for KVL Track's 8,000+ B2B school and enterprise clients — drive 90-day activation rates and reduce involuntary churn through proactive health-score monitoring.`,
       'Build and manage a team of four Customer Success Associates, establishing playbooks, escalation paths, and quarterly business review templates.',
       'Act as the voice of the customer internally: synthesise support tickets, NPS verbatims, and renewal feedback into a monthly product insight report presented directly to the CPO.',
     ],
@@ -265,7 +265,7 @@ export default function CareersPage() {
               }
             >
               <ArrowLeft size={14} />
-              Return to Gravity Home
+              Return to KVL Track Home
             </Link>
           </div>
         </div>
@@ -363,7 +363,7 @@ export default function CareersPage() {
                   margin: '0 auto 36px',
                 }}
               >
-                At Gravity, we believe that knowing your loved ones are safe should be effortless.
+                At KVL Track, we believe that knowing your loved ones are safe should be effortless.
                 We are building the infrastructure of family peace of mind — and we need exceptional
                 people to help us do it. Join a team that ships fast, cares deeply, and measures
                 success by the anxiety it removes from families across India and beyond.
@@ -505,7 +505,7 @@ export default function CareersPage() {
           </div>
         </section>
 
-        {/* ── Why Gravity ────────────────────────────────────────────────────── */}
+        {/* ── Why KVL Track ────────────────────────────────────────────────────── */}
         <section
           style={{
             background: 'var(--bg-surface)',
@@ -538,7 +538,7 @@ export default function CareersPage() {
                     marginBottom: 14,
                   }}
                 >
-                  Why Gravity
+                  Why KVL Track
                 </h2>
                 <p
                   style={{
@@ -823,7 +823,7 @@ export default function CareersPage() {
                 </h2>
                 <p style={{ color: 'var(--text-secondary)', maxWidth: 480, margin: '0 auto', lineHeight: 1.75 }}>
                   When your team is protected and well-resourced, they do their best work. Here is
-                  how Gravity invests in the people who build it.
+                  how KVL Track invests in the people who build it.
                 </p>
               </div>
             </FadeIn>
@@ -1043,7 +1043,7 @@ export default function CareersPage() {
                 }}
               >
                 "The best place I have worked. Leadership is transparent, the mission is real, and
-                you can see the impact of your work every week." — Senior Engineer, Gravity (2025)
+                you can see the impact of your work every week." — Senior Engineer, KVL Track (2025)
               </p>
               <p style={{ fontSize: 12, color: 'var(--text-muted)' }}>
                 Based on 38 verified employee reviews on Glassdoor.
@@ -1072,7 +1072,7 @@ export default function CareersPage() {
                 marginBottom: 14,
               }}
             >
-              Gravity Careers · Trackalways Jobs
+              KVL Track Careers · Trackalways Jobs
             </p>
             <h2
               style={{
@@ -1094,7 +1094,7 @@ export default function CareersPage() {
               }}
             >
               We hire for talent and attitude as much as specific skills. If you believe in our
-              mission and think you can make Gravity better, we want to hear from you.
+              mission and think you can make KVL Track better, we want to hear from you.
             </p>
             <div
               style={{
@@ -1139,7 +1139,7 @@ export default function CareersPage() {
                 }}
               >
                 <ArrowLeft size={15} />
-                Back to Gravity Home
+                Back to KVL Track Home
               </Link>
             </div>
             <p style={{ marginTop: 16, fontSize: 13, color: 'var(--text-muted)' }}>

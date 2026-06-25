@@ -785,7 +785,7 @@ export default function ChildHome({
                   <Smartphone size={16} color="#8B5CF6" />
                 </div>
                 <div style={{ fontSize: 15, fontWeight: 800, color: '#fff', marginBottom: 4 }}>
-                  Gravity App
+                  KVL Track App
                 </div>
                 <div style={{ display: 'inline-flex', alignItems: 'center', gap: 4, padding: '2px 8px', borderRadius: 50, background: '#10B98120', border: '1px solid #10B98140' }}>
                   <div style={{ width: 5, height: 5, borderRadius: '50%', background: '#10B981' }} />

@@ -186,7 +186,7 @@ export default function FeaturesPage() {
               className="mt-6 text-lg text-[#94A3B8] leading-relaxed"
               style={{ fontFamily: "'Inter', sans-serif" }}
             >
-              From a one-tap SOS to AI-powered fall detection, every feature in Gravity
+              From a one-tap SOS to AI-powered fall detection, every feature in KVL Track
               was designed around one question: what do families actually need to feel safe?
             </p>
 
@@ -281,7 +281,7 @@ export default function FeaturesPage() {
               className="text-[#94A3B8] max-w-2xl mb-8 leading-relaxed"
               style={{ fontFamily: "'Inter', sans-serif" }}
             >
-              Gravity&apos;s Care plan combines fall detection, routine monitoring, wellness check-ins,
+              KVL Track&apos;s Care plan combines fall detection, routine monitoring, wellness check-ins,
               medication reminders, and a dedicated caregiver dashboard into one seamless experience.
               Designed to preserve independence while giving families real assurance.
             </p>
@@ -313,7 +313,7 @@ export default function FeaturesPage() {
             className="text-[#94A3B8] mb-8 max-w-md mx-auto"
             style={{ fontFamily: "'Inter', sans-serif" }}
           >
-            All core features are free. Upgrade to unlock the full power of Gravity.
+            All core features are free. Upgrade to unlock the full power of KVL Track.
           </p>
           <div className="flex flex-wrap justify-center gap-4">
             <a

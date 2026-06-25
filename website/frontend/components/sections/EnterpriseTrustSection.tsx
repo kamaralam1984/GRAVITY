@@ -125,7 +125,7 @@ export default function EnterpriseTrustSection() {
             style={{ color: 'var(--text-secondary)', fontFamily: "'Inter', sans-serif" }}
           >
             From government agencies to schools and hospitals — the world's most
-            safety-conscious organizations rely on Gravity.
+            safety-conscious organizations rely on KVL Track.
           </motion.p>
         </div>
 

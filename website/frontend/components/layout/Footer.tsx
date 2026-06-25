@@ -26,8 +26,8 @@ const FOOTER_LINKS = {
     { label: 'System Status',    href: '/status'          },
   ],
   Compare: [
-    { label: 'Gravity vs Life360',        href: '/compare/life360'        },
-    { label: 'Gravity vs Google Family',  href: '/compare/google-family'  },
+    { label: 'KVL Track vs Life360',        href: '/compare/life360'        },
+    { label: 'KVL Track vs Google Family',  href: '/compare/google-family'  },
   ],
   Company: [
     { label: 'About Us',         href: '/about'    },
@@ -295,7 +295,7 @@ export default function Footer() {
                     fontFamily: 'var(--font-display, "Plus Jakarta Sans", sans-serif)',
                   }}
                 >
-                  GRAVITY
+                  KVL TRACK
                 </span>
               </div>
             </div>

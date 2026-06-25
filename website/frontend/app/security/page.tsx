@@ -539,13 +539,13 @@ function EncryptionSection() {
             {
               icon: '🗝️',
               title: 'Your Keys, Not Ours',
-              desc: 'Zero-knowledge key management. Location data is encrypted with a key derived from your credentials. Even Gravity employees cannot read your location data.',
+              desc: 'Zero-knowledge key management. Location data is encrypted with a key derived from your credentials. Even KVL Track employees cannot read your location data.',
               color: '#D4A853',
               rgb: '212,168,83',
             },
             {
               icon: '🚫',
-              title: 'Even Gravity Cannot See',
+              title: 'Even KVL Track Cannot See',
               desc: 'Your location history, family circle, and personal safety data are mathematically inaccessible to us. We process but never read your private data.',
               color: '#10B981',
               rgb: '16,185,129',
@@ -752,7 +752,7 @@ function SecOpsSection() {
             className="mt-4 max-w-xl mx-auto text-base"
             style={{ color: 'var(--text-secondary)', fontFamily: "'Inter', sans-serif" }}
           >
-            A dedicated Security Operations Center monitors Gravity infrastructure 24 hours a day, 7 days a week.
+            A dedicated Security Operations Center monitors KVL Track infrastructure 24 hours a day, 7 days a week.
           </p>
         </motion.div>
 

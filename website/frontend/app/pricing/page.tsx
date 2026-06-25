@@ -20,7 +20,7 @@ const FAQ_EXTENDED = [
   {
     question: 'Is the Free plan truly free forever?',
     answer:
-      'Yes — no credit card, no expiry, no hidden fees. The Free plan includes live location for up to 3 members, SOS alerts, basic geofencing, and the check-in system for as long as you use Gravity.',
+      'Yes — no credit card, no expiry, no hidden fees. The Free plan includes live location for up to 3 members, SOS alerts, basic geofencing, and the check-in system for as long as you use KVL Track.',
   },
   {
     question: 'Do you offer refunds?',
@@ -40,7 +40,7 @@ const FAQ_EXTENDED = [
   {
     question: 'Do you support family accounts across different countries?',
     answer:
-      'Absolutely. Gravity works in 50+ countries. Circle members can be in different countries and still appear on the shared family map in real time. Payments can be made in local currency in Kenya, India, UAE, and more.',
+      'Absolutely. KVL Track works in 50+ countries. Circle members can be in different countries and still appear on the shared family map in real time. Payments can be made in local currency in Kenya, India, UAE, and more.',
   },
   {
     question: 'Is there a student or non-profit discount?',
@@ -55,7 +55,7 @@ const FAQ_EXTENDED = [
   {
     question: 'Do you offer white label?',
     answer:
-      'Yes — Gravity offers full white-label customization. Your brand, your domain, your app. We handle infrastructure, compliance, and updates while you focus on your customers. Contact our enterprise team for a tailored quote and onboarding plan.',
+      'Yes — KVL Track offers full white-label customization. Your brand, your domain, your app. We handle infrastructure, compliance, and updates while you focus on your customers. Contact our enterprise team for a tailored quote and onboarding plan.',
   },
   {
     question: 'What is the Enterprise SLA?',
@@ -65,7 +65,7 @@ const FAQ_EXTENDED = [
   {
     question: 'Is there an API?',
     answer:
-      'Yes — Gravity offers a full REST + WebSocket API with 50+ endpoints covering location, safety events, notifications, analytics, and more. Available on Enterprise and White Label plans. Visit our API Marketplace for documentation and SDKs.',
+      'Yes — KVL Track offers a full REST + WebSocket API with 50+ endpoints covering location, safety events, notifications, analytics, and more. Available on Enterprise and White Label plans. Visit our API Marketplace for documentation and SDKs.',
   },
   {
     question: 'Can white label use a custom domain?',
@@ -138,7 +138,7 @@ function CompetitorTable() {
   const inView = useInView(ref, { once: true, margin: '-60px' });
 
   const COLS = [
-    { key: 'gravity',  label: 'Gravity',           gold: true  },
+    { key: 'gravity',  label: 'KVL Track',           gold: true  },
     { key: 'life360',  label: 'Life360',            gold: false },
     { key: 'googleFL', label: 'Google Family Link', gold: false },
     { key: 'findMy',   label: 'Find My',            gold: false },
@@ -405,7 +405,7 @@ function MoneyBackBanner() {
             fontFamily: "'Plus Jakarta Sans', sans-serif",
           }}
         >
-          Try Gravity Risk-Free →
+          Try KVL Track Risk-Free →
         </a>
       </motion.div>
     </div>
@@ -467,13 +467,13 @@ function EnterpriseSection() {
               className="text-3xl md:text-4xl font-extrabold text-[#F8FAFC] mb-4"
               style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}
             >
-              Gravity for{' '}
+              KVL Track for{' '}
               <span className="bg-gradient-to-r from-violet-400 to-blue-400 bg-clip-text text-transparent">
                 Organizations
               </span>
             </h2>
             <p className="text-[#94A3B8] mb-8 leading-relaxed" style={{ fontFamily: "'Inter', sans-serif" }}>
-              Schools, hospitals, logistics companies, and NGOs use Gravity to keep their people safe.
+              Schools, hospitals, logistics companies, and NGOs use KVL Track to keep their people safe.
               Custom pricing, dedicated support, and flexible deployment for teams of any size.
             </p>
             <ul className="grid grid-cols-2 gap-2.5">
@@ -588,19 +588,19 @@ export default function PricingPage() {
             style={{ color: '#D4A853', fontFamily: "'Inter', sans-serif" }}
           >
             <span>⚡</span>
-            How Gravity compares
+            How KVL Track compares
           </span>
           <h2
             className="text-3xl md:text-4xl font-extrabold text-[#F8FAFC]"
             style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}
           >
-            Gravity vs. The Competition
+            KVL Track vs. The Competition
           </h2>
           <p
             className="text-[#94A3B8] mt-3 max-w-2xl"
             style={{ fontFamily: "'Inter', sans-serif" }}
           >
-            See how Gravity stacks up against Life360, Google Family Link, and Find My — across every feature that matters.
+            See how KVL Track stacks up against Life360, Google Family Link, and Find My — across every feature that matters.
           </p>
         </motion.div>
 
@@ -635,7 +635,7 @@ export default function PricingPage() {
             Regional Pricing
           </h2>
           <p className="text-[#94A3B8] mt-3 max-w-2xl" style={{ fontFamily: "'Inter', sans-serif" }}>
-            We price Gravity in local currencies so that every family around the world can afford safety. All annual plans save ~30%.
+            We price KVL Track in local currencies so that every family around the world can afford safety. All annual plans save ~30%.
           </p>
         </motion.div>
 

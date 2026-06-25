@@ -495,7 +495,7 @@ export default function ChildPage() {
                 letterSpacing: '-0.3px',
               }}
             >
-              Gravity
+              KVL Track
             </span>
           </div>
 

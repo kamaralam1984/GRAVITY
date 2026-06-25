@@ -24,7 +24,7 @@ const steps = [
     id: 1,
     num: '01',
     title: 'Download & Sign Up',
-    description: 'Get Gravity free from App Store or Play Store. No credit card needed.',
+    description: 'Get KVL Track free from App Store or Play Store. No credit card needed.',
     screen: 'download',
   },
   {
@@ -73,7 +73,7 @@ function DownloadScreen() {
 
       <div className="text-center">
         <p className="text-white font-extrabold text-xl tracking-tight" style={{ fontFamily: 'var(--font-display)' }}>
-          GRAVITY
+          KVL TRACK
         </p>
         <p className="text-xs mt-1" style={{ color: 'rgba(255,255,255,0.5)' }}>Family Safety & Location</p>
         <div className="flex items-center justify-center gap-1 mt-1.5">

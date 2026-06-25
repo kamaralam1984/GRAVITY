@@ -457,7 +457,7 @@ export default function InteractiveProductDemo() {
             style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", color: 'var(--text-primary)' }}
           >
             Experience{' '}
-            <span className="gradient-text-gold">Gravity 3.0</span>
+            <span className="gradient-text-gold">KVL Track 3.0</span>
             {' '}in real-time
           </motion.h2>
 
@@ -583,7 +583,7 @@ export default function InteractiveProductDemo() {
                   <FeatureDesc
                     icon="🧠"
                     title="AI Risk Intelligence"
-                    desc="Gravity AI learns your family's normal patterns and flags anomalies before they become emergencies. Proactive safety, not just reactive alerts."
+                    desc="KVL Track AI learns your family's normal patterns and flags anomalies before they become emergencies. Proactive safety, not just reactive alerts."
                     features={['Route risk scoring', 'Behavior pattern analysis', 'Predictive alerts', 'Real-time risk dashboard']}
                     isDark={isDark}
                   />

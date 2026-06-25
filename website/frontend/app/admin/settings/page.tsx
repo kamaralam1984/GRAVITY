@@ -199,7 +199,7 @@ function SectionTitle({ children }: { children: React.ReactNode }) {
 
 /* ─────────────────────────── tab: General ─────────────────────────── */
 function GeneralTab() {
-  const [appName, setAppName] = useState("Gravity Family Safety")
+  const [appName, setAppName] = useState("KVL Track Family Safety")
   const [company, setCompany] = useState("Trackalways Technologies Pvt Ltd")
   const [email, setEmail] = useState("support@trackalways.com")
   const [timezone, setTimezone] = useState("Asia/Kolkata (IST)")
@@ -941,7 +941,7 @@ export default function SettingsPage() {
       <div className="px-6 pt-8 pb-2">
         <motion.div initial={{ opacity: 0, y: -12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3 }}>
           <h1 className="text-2xl font-bold" style={{ color: "var(--text-primary)" }}>Settings</h1>
-          <p className="text-sm mt-1" style={{ color: "var(--text-muted)" }}>Manage your Gravity admin panel configuration</p>
+          <p className="text-sm mt-1" style={{ color: "var(--text-muted)" }}>Manage your KVL Track admin panel configuration</p>
         </motion.div>
       </div>
 

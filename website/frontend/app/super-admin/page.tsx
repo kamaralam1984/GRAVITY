@@ -826,7 +826,7 @@ export default function SuperAdminPage() {
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10 }}>
           <Crown size={18} color="var(--gold)" strokeWidth={2} style={{ flexShrink: 0 }} />
           <span style={{ fontSize: 15, fontWeight: 700, color: 'var(--text-primary)', lineHeight: 1 }}>
-            Gravity
+            KVL Track
           </span>
           <sup
             style={{
@@ -4093,7 +4093,7 @@ export default function SuperAdminPage() {
                     {sectionLabel}
                   </h1>
                   <div style={{ fontSize: 13, color: 'var(--text-muted)', marginTop: 4 }}>
-                    GRAVITY Super Admin Control Center
+                    KVL TRACK Super Admin Control Center
                   </div>
                   <div style={{ width: 32, height: 2, background: 'var(--gold)', borderRadius: 2, marginTop: 10 }} />
                 </div>

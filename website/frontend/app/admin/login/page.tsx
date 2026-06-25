@@ -146,7 +146,7 @@ export default function AdminLoginPage() {
             Admin Portal
           </h1>
           <p style={{ color: "var(--text-muted)", fontSize: 13.5, margin: 0, lineHeight: 1.5 }}>
-            Secure access to the Gravity command center
+            Secure access to the KVL Track command center
           </p>
         </div>
 

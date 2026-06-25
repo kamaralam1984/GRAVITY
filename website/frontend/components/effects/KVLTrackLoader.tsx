@@ -46,7 +46,7 @@ const MSGS = [
 
 interface Props { isVisible: boolean }
 
-export default function GravityLoader({ isVisible }: Props) {
+export default function KVLTrackLoader({ isVisible }: Props) {
   const [progress, setProgress] = useState(0)
   const [msg, setMsg]           = useState(0)
 

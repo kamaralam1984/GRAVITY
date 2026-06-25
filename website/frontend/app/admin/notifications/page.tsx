@@ -402,7 +402,7 @@ export default function NotificationsPage() {
                         <div style={{ width: 24, height: 24, borderRadius: 6, background: "linear-gradient(135deg, #C9913A, #D4A853)", display: "flex", alignItems: "center", justifyContent: "center" }}>
                           <Bell size={12} color="#fff" />
                         </div>
-                        <span style={{ fontSize: 11, fontWeight: 700, color: "var(--text-primary)" }}>GRAVITY</span>
+                        <span style={{ fontSize: 11, fontWeight: 700, color: "var(--text-primary)" }}>KVL TRACK</span>
                         <span style={{ fontSize: 10, color: "var(--text-muted)", marginLeft: "auto" }}>now</span>
                       </div>
                       <p style={{ fontSize: 12, fontWeight: 600, color: "var(--text-primary)", margin: "0 0 4px", lineHeight: 1.3 }}>

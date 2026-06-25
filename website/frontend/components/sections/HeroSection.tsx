@@ -8,7 +8,7 @@ import Image from 'next/image';
 const HERO_SLIDES = [
   {
     src: 'https://images.unsplash.com/photo-1511895426328-dc8714191011?w=1920&auto=format&fit=crop&q=85',
-    label: 'Family connected through Gravity',
+    label: 'Family connected through KVL Track',
   },
   {
     src: 'https://images.unsplash.com/photo-1529156069898-49953e39b3ac?w=1920&auto=format&fit=crop&q=85',
@@ -488,7 +488,7 @@ export default function HeroSection() {
                 className="text-sm"
                 style={{ color: 'var(--text-muted)', fontFamily: "'Inter', sans-serif" }}
               >
-                <strong style={{ color: 'var(--text-secondary)' }}>50,000+</strong> families trust Gravity
+                <strong style={{ color: 'var(--text-secondary)' }}>50,000+</strong> families trust KVL Track
               </span>
             </motion.div>
 
@@ -539,7 +539,7 @@ export default function HeroSection() {
               animate={{ opacity: 1, scale: 1, y: 0 }}
               transition={{ duration: 0.9, ease: [0.22, 1, 0.36, 1], delay: 0.3 }}
               className="relative"
-              aria-label="Gravity app phone preview"
+              aria-label="KVL Track app phone preview"
             >
               {/* ── Floating notification badges ─────────────────────────── */}
               {BADGES.map((badge, i) => (

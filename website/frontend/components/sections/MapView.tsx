@@ -491,7 +491,7 @@ export default function MapView({
         const onlineCnt = MEMBERS.filter(m => m.status !== 'offline').length
         d.innerHTML = `
           <div class="gv-live-dot"></div>
-          <span style="font-size:11px;font-weight:700;color:#F0EDE8;font-family:Inter,sans-serif;letter-spacing:0.04em;">GRAVITY LIVE</span>
+          <span style="font-size:11px;font-weight:700;color:#F0EDE8;font-family:Inter,sans-serif;letter-spacing:0.04em;">KVL TRACK LIVE</span>
           <span style="font-size:10px;color:rgba(255,255,255,0.4);margin-left:4px;">${onlineCnt}/${MEMBERS.length} online</span>
         `
         L.DomEvent.disableClickPropagation(d)

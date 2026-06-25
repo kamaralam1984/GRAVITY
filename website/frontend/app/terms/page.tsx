@@ -11,28 +11,28 @@ const SECTIONS = [
     id: "acceptance",
     title: "1. Acceptance of Terms",
     icon: CheckCircle,
-    content: "By downloading, installing, or using the Gravity application, you agree to be bound by these Terms of Service. If you do not agree with any part of these terms, do not use the service. You must be at least 13 years old to create an account and use Gravity. Users between the ages of 13 and 18 must have verifiable parental or guardian consent before registering. Your continued use of the service following any updates to these terms constitutes acceptance of the revised terms. We recommend reviewing this page periodically to stay informed of any changes that may affect your rights.",
+    content: "By downloading, installing, or using the KVL Track application, you agree to be bound by these Terms of Service. If you do not agree with any part of these terms, do not use the service. You must be at least 13 years old to create an account and use KVL Track. Users between the ages of 13 and 18 must have verifiable parental or guardian consent before registering. Your continued use of the service following any updates to these terms constitutes acceptance of the revised terms. We recommend reviewing this page periodically to stay informed of any changes that may affect your rights.",
     bullets: [] as string[],
   },
   {
     id: "description",
     title: "2. Description of Service",
     icon: Shield,
-    content: "Gravity is a family safety and location sharing platform developed and operated by Trackalways Technologies Private Limited. The service enables consenting family members and trusted individuals to share real-time location data, set geofencing alerts for places like home and school, send emergency SOS signals to the family circle, and access wellness and check-in features. Gravity is intended for personal, non-commercial use only. We reserve the right to modify, suspend, or discontinue any feature of the service at any time with reasonable notice to users.",
+    content: "KVL Track is a family safety and location sharing platform developed and operated by Trackalways Technologies Private Limited. The service enables consenting family members and trusted individuals to share real-time location data, set geofencing alerts for places like home and school, send emergency SOS signals to the family circle, and access wellness and check-in features. KVL Track is intended for personal, non-commercial use only. We reserve the right to modify, suspend, or discontinue any feature of the service at any time with reasonable notice to users.",
     bullets: [] as string[],
   },
   {
     id: "registration",
     title: "3. Account Registration",
     icon: Users,
-    content: "To access the full features of Gravity, you must register for an account. You agree to provide accurate, current, and complete information during registration and to keep this information up to date. Each individual may maintain only one active account. Sharing accounts between multiple individuals is not permitted. You are solely responsible for maintaining the confidentiality of your login credentials and for all activity that occurs under your account. If you suspect unauthorized access to your account, you must notify us immediately at support@trackalways.com. We are not liable for any loss arising from unauthorized account use.",
+    content: "To access the full features of KVL Track, you must register for an account. You agree to provide accurate, current, and complete information during registration and to keep this information up to date. Each individual may maintain only one active account. Sharing accounts between multiple individuals is not permitted. You are solely responsible for maintaining the confidentiality of your login credentials and for all activity that occurs under your account. If you suspect unauthorized access to your account, you must notify us immediately at support@trackalways.com. We are not liable for any loss arising from unauthorized account use.",
     bullets: [] as string[],
   },
   {
     id: "acceptable-use",
     title: "4. Acceptable Use",
     icon: AlertTriangle,
-    content: "You agree to use Gravity only for lawful purposes and in accordance with these terms. The following activities are strictly prohibited on the platform.",
+    content: "You agree to use KVL Track only for lawful purposes and in accordance with these terms. The following activities are strictly prohibited on the platform.",
     bullets: [
       "Tracking any individual without their explicit knowledge and consent",
       "Reselling, sublicensing, or commercially redistributing access to the service",
@@ -47,56 +47,56 @@ const SECTIONS = [
     id: "location-consent",
     title: "5. Location Sharing and Consent",
     icon: Shield,
-    content: "All location tracking within Gravity is consensual and transparent. Location sharing is activated only after the user explicitly grants location permission through the operating system permission dialog. Every member of a family circle can see who has access to their location at all times. Users may pause location sharing at any time directly from the app without requiring action from any other circle member. Gravity does not engage in hidden, covert, or background tracking of any kind. Location data is visible only to members of the approved family circle and is never shared with advertisers, data brokers, or other external parties.",
+    content: "All location tracking within KVL Track is consensual and transparent. Location sharing is activated only after the user explicitly grants location permission through the operating system permission dialog. Every member of a family circle can see who has access to their location at all times. Users may pause location sharing at any time directly from the app without requiring action from any other circle member. KVL Track does not engage in hidden, covert, or background tracking of any kind. Location data is visible only to members of the approved family circle and is never shared with advertisers, data brokers, or other external parties.",
     bullets: [] as string[],
   },
   {
     id: "privacy",
     title: "6. Privacy",
     icon: Shield,
-    content: "Your use of Gravity is also governed by our Privacy Policy, which is incorporated into these Terms of Service by reference. The Privacy Policy describes in detail how we collect, use, store, and protect your personal information, including location data. By agreeing to these Terms of Service, you also agree to the practices described in the Privacy Policy. We encourage you to read the Privacy Policy carefully before using the service. If you have any privacy-related questions or concerns, you may contact our privacy team at privacy@trackalways.com at any time.",
+    content: "Your use of KVL Track is also governed by our Privacy Policy, which is incorporated into these Terms of Service by reference. The Privacy Policy describes in detail how we collect, use, store, and protect your personal information, including location data. By agreeing to these Terms of Service, you also agree to the practices described in the Privacy Policy. We encourage you to read the Privacy Policy carefully before using the service. If you have any privacy-related questions or concerns, you may contact our privacy team at privacy@trackalways.com at any time.",
     bullets: [] as string[],
   },
   {
     id: "billing",
     title: "7. Subscription and Billing",
     icon: CreditCard,
-    content: "Gravity offers a free tier with core features available at no charge. Premium features are available through paid subscription plans billed on a monthly or annual basis. All prices are listed in Indian Rupees (INR) and are inclusive of applicable taxes where required by law. Subscriptions are set to auto-renew at the end of each billing period unless cancelled in advance. You authorize Gravity to charge your designated payment method at the applicable rate. We reserve the right to change subscription pricing with at least 30 days prior notice. Continued use of the paid service after a price change constitutes acceptance of the new pricing.",
+    content: "KVL Track offers a free tier with core features available at no charge. Premium features are available through paid subscription plans billed on a monthly or annual basis. All prices are listed in Indian Rupees (INR) and are inclusive of applicable taxes where required by law. Subscriptions are set to auto-renew at the end of each billing period unless cancelled in advance. You authorize KVL Track to charge your designated payment method at the applicable rate. We reserve the right to change subscription pricing with at least 30 days prior notice. Continued use of the paid service after a price change constitutes acceptance of the new pricing.",
     bullets: [] as string[],
   },
   {
     id: "cancellation",
     title: "8. Cancellation and Refunds",
     icon: FileText,
-    content: "You may cancel your Gravity subscription at any time directly from the account settings within the app or web dashboard. Cancellation takes effect at the end of the current billing period, after which your account will revert to the free tier. Monthly subscriptions are non-refundable for any partial month remaining after cancellation. Annual subscriptions that are cancelled within the first 7 days of a new billing cycle may be eligible for a prorated refund for the unused portion of the year, at our discretion. Refund requests should be submitted to billing@trackalways.com with your account details and reason for cancellation.",
+    content: "You may cancel your KVL Track subscription at any time directly from the account settings within the app or web dashboard. Cancellation takes effect at the end of the current billing period, after which your account will revert to the free tier. Monthly subscriptions are non-refundable for any partial month remaining after cancellation. Annual subscriptions that are cancelled within the first 7 days of a new billing cycle may be eligible for a prorated refund for the unused portion of the year, at our discretion. Refund requests should be submitted to billing@trackalways.com with your account details and reason for cancellation.",
     bullets: [] as string[],
   },
   {
     id: "intellectual-property",
     title: "9. Intellectual Property",
     icon: Scale,
-    content: "The Gravity application, including its design, branding, software code, algorithms, user interface, and all related documentation, is the exclusive intellectual property of Trackalways Technologies Private Limited and is protected under applicable copyright, trademark, and intellectual property laws. You are granted a limited, non-exclusive, non-transferable, revocable license to use the application for its intended personal purpose. All rights not expressly granted to you are reserved by Gravity. You retain full ownership of the personal data you generate and upload to the service. Gravity claims no ownership rights over your personal content.",
+    content: "The KVL Track application, including its design, branding, software code, algorithms, user interface, and all related documentation, is the exclusive intellectual property of Trackalways Technologies Private Limited and is protected under applicable copyright, trademark, and intellectual property laws. You are granted a limited, non-exclusive, non-transferable, revocable license to use the application for its intended personal purpose. All rights not expressly granted to you are reserved by KVL Track. You retain full ownership of the personal data you generate and upload to the service. KVL Track claims no ownership rights over your personal content.",
     bullets: [] as string[],
   },
   {
     id: "disclaimers",
     title: "10. Disclaimers",
     icon: AlertTriangle,
-    content: "The Gravity service is provided on an as-is and as-available basis without warranties of any kind, either express or implied. We do not warrant that the service will be uninterrupted, error-free, or completely secure at all times. Location accuracy depends on device hardware, GPS signal strength, and network availability and may not be sufficient for emergency response purposes. You should not rely solely on Gravity for emergency services. In an emergency situation, always contact local emergency services directly. We disclaim all implied warranties of merchantability, fitness for a particular purpose, and non-infringement to the fullest extent permitted by applicable law.",
+    content: "The KVL Track service is provided on an as-is and as-available basis without warranties of any kind, either express or implied. We do not warrant that the service will be uninterrupted, error-free, or completely secure at all times. Location accuracy depends on device hardware, GPS signal strength, and network availability and may not be sufficient for emergency response purposes. You should not rely solely on KVL Track for emergency services. In an emergency situation, always contact local emergency services directly. We disclaim all implied warranties of merchantability, fitness for a particular purpose, and non-infringement to the fullest extent permitted by applicable law.",
     bullets: [] as string[],
   },
   {
     id: "liability",
     title: "11. Limitation of Liability",
     icon: Scale,
-    content: "To the fullest extent permitted by applicable law, Trackalways Technologies Private Limited and its officers, directors, employees, and affiliates shall not be liable for any indirect, incidental, special, consequential, or punitive damages arising out of or related to your use of the Gravity service. This includes, without limitation, loss of data, loss of profits, personal injury, or property damage. In all cases, the aggregate liability of Gravity to you for any claims arising from your use of the service shall not exceed the total amount you paid to Gravity in the twelve months immediately preceding the event giving rise to the claim.",
+    content: "To the fullest extent permitted by applicable law, Trackalways Technologies Private Limited and its officers, directors, employees, and affiliates shall not be liable for any indirect, incidental, special, consequential, or punitive damages arising out of or related to your use of the KVL Track service. This includes, without limitation, loss of data, loss of profits, personal injury, or property damage. In all cases, the aggregate liability of KVL Track to you for any claims arising from your use of the service shall not exceed the total amount you paid to KVL Track in the twelve months immediately preceding the event giving rise to the claim.",
     bullets: [] as string[],
   },
   {
     id: "governing-law",
     title: "12. Governing Law",
     icon: Scale,
-    content: "These Terms of Service shall be governed by and construed in accordance with the laws of India, without regard to conflict-of-law principles. Any dispute, claim, or controversy arising out of or relating to these terms or your use of the Gravity service shall be subject to the exclusive jurisdiction of the competent courts located in Mumbai, Maharashtra, India. By using the service, you consent to the personal jurisdiction of such courts. If any provision of these terms is found to be unenforceable, the remaining provisions shall remain in full force and effect. These terms constitute the entire agreement between you and Gravity with respect to the subject matter herein.",
+    content: "These Terms of Service shall be governed by and construed in accordance with the laws of India, without regard to conflict-of-law principles. Any dispute, claim, or controversy arising out of or relating to these terms or your use of the KVL Track service shall be subject to the exclusive jurisdiction of the competent courts located in Mumbai, Maharashtra, India. By using the service, you consent to the personal jurisdiction of such courts. If any provision of these terms is found to be unenforceable, the remaining provisions shall remain in full force and effect. These terms constitute the entire agreement between you and KVL Track with respect to the subject matter herein.",
     bullets: [] as string[],
   },
 ]
@@ -184,7 +184,7 @@ export default function TermsPage() {
               Terms of Service
             </h1>
             <p className="text-slate-300 text-lg leading-relaxed max-w-2xl mx-auto">
-              Please read these terms carefully before using Gravity. They govern your access
+              Please read these terms carefully before using KVL Track. They govern your access
               to and use of our family safety platform.
             </p>
             <div className="mt-6 flex flex-wrap items-center justify-center gap-6 text-sm text-slate-400">
@@ -267,7 +267,7 @@ export default function TermsPage() {
             </h2>
             <p className="text-slate-400 mb-8 leading-relaxed">
               If anything is unclear or you have concerns about the terms governing your use
-              of Gravity, our team is ready to help.
+              of KVL Track, our team is ready to help.
             </p>
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
               <Link
@@ -282,7 +282,7 @@ export default function TermsPage() {
                 href="/"
                 className="inline-flex items-center gap-2 border border-slate-600 hover:border-slate-400 text-slate-300 hover:text-white font-semibold px-6 py-3 rounded-xl transition-colors duration-200"
               >
-                Return to Gravity Home
+                Return to KVL Track Home
               </Link>
             </div>
             <p className="mt-6 text-slate-500 text-sm">

@@ -317,7 +317,7 @@ function PhoneFrame({ children, title, accent }: { children: React.ReactNode; ti
           <div className="flex items-center gap-1.5">
             <div className="w-5 h-5 rounded-lg flex items-center justify-center text-[10px]"
                  style={{ background: `${accent}25`, border: `1px solid ${accent}40` }}>⚡</div>
-            <span className="text-[9px] font-bold tracking-widest uppercase" style={{ color: accent }}>GRAVITY</span>
+            <span className="text-[9px] font-bold tracking-widest uppercase" style={{ color: accent }}>KVL TRACK</span>
           </div>
           <span className="text-[9px] font-semibold" style={{ color: 'rgba(255,255,255,0.4)' }}>{title}</span>
           <div className="flex items-center gap-1">

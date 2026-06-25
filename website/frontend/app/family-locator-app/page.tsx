@@ -54,7 +54,7 @@ const FEATURES = [
   {
     icon: <Zap size={24} />,
     title: '3-Metre GPS Accuracy',
-    description: 'Gravity uses multi-constellation GPS (GPS, GLONASS, Galileo) for industry-leading accuracy within 3 metres outdoors. In cities, Wi-Fi triangulation supplements GPS for indoor precision.',
+    description: 'KVL Track uses multi-constellation GPS (GPS, GLONASS, Galileo) for industry-leading accuracy within 3 metres outdoors. In cities, Wi-Fi triangulation supplements GPS for indoor precision.',
     color: '#10B981',
   },
   {
@@ -78,7 +78,7 @@ const FEATURES = [
   {
     icon: <Clock size={24} />,
     title: 'Last Seen Time',
-    description: "If a family member's phone goes offline, Gravity shows their last known location with timestamp — so you always have some information, even when tracking is unavailable.",
+    description: "If a family member's phone goes offline, KVL Track shows their last known location with timestamp — so you always have some information, even when tracking is unavailable.",
     color: '#06B6D4',
   },
 ]
@@ -92,16 +92,16 @@ const FAMILY_PINS = [
 
 const FAQS = [
   {
-    q: 'How accurate is Gravity family locator?',
-    a: 'Gravity achieves GPS accuracy within 3 metres in open outdoor conditions. This is among the best accuracy available in any consumer GPS app. In dense urban environments or indoors, the system supplements GPS with Wi-Fi network triangulation, typically achieving 10-30 metres accuracy. Location updates every 5-15 seconds depending on movement speed — faster when moving, slower when stationary to conserve battery.',
+    q: 'How accurate is KVL Track family locator?',
+    a: 'KVL Track achieves GPS accuracy within 3 metres in open outdoor conditions. This is among the best accuracy available in any consumer GPS app. In dense urban environments or indoors, the system supplements GPS with Wi-Fi network triangulation, typically achieving 10-30 metres accuracy. Location updates every 5-15 seconds depending on movement speed — faster when moving, slower when stationary to conserve battery.',
   },
   {
     q: 'Can I see location without them knowing?',
-    a: "Gravity does not support secret or covert tracking. Every family member can see who in the circle can view their location and can verify the app is running. This is by design — we believe family safety should be built on transparency and trust, not surveillance. Family members can activate Privacy Hours or Ghost Mode to temporarily pause sharing when they need personal time.",
+    a: "KVL Track does not support secret or covert tracking. Every family member can see who in the circle can view their location and can verify the app is running. This is by design — we believe family safety should be built on transparency and trust, not surveillance. Family members can activate Privacy Hours or Ghost Mode to temporarily pause sharing when they need personal time.",
   },
   {
     q: 'Does it work internationally?',
-    a: 'Yes. Gravity family locator works in 127 countries with no additional setup. GPS works globally, and the app automatically uses local Wi-Fi and cell networks for supplemental accuracy. International roaming data usage is optimised to minimise costs — Gravity uses compressed location packets designed to work within typical roaming data allowances.',
+    a: 'Yes. KVL Track family locator works in 127 countries with no additional setup. GPS works globally, and the app automatically uses local Wi-Fi and cell networks for supplemental accuracy. International roaming data usage is optimised to minimise costs — KVL Track uses compressed location packets designed to work within typical roaming data allowances.',
   },
   {
     q: 'How often is location updated?',
@@ -109,7 +109,7 @@ const FAQS = [
   },
   {
     q: "What if someone turns off their phone?",
-    a: "When a family member's phone is powered off, Gravity shows their last known location with a timestamp indicating when tracking was last active. You receive a notification that their device has gone offline. If you have set battery alerts, you receive advance warning when their battery drops below 20% so you can check in before they go dark.",
+    a: "When a family member's phone is powered off, KVL Track shows their last known location with a timestamp indicating when tracking was last active. You receive a notification that their device has gone offline. If you have set battery alerts, you receive advance warning when their battery drops below 20% so you can check in before they go dark.",
   },
 ]
 
@@ -241,7 +241,7 @@ export default function FamilyLocatorAppPage() {
             </motion.div>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(340px, 1fr))', gap: 24, maxWidth: 860, margin: '0 auto' }}>
               {[
-                { quote: "We have four kids in three different schools and my husband works across the city. The family map in Gravity means I can see in one glance that everyone is where they should be. It changed everything.", name: 'Asha Krishnan', role: 'Mother of four, Mumbai', avatar: 'AK', color: '#4B80F0' },
+                { quote: "We have four kids in three different schools and my husband works across the city. The family map in KVL Track means I can see in one glance that everyone is where they should be. It changed everything.", name: 'Asha Krishnan', role: 'Mother of four, Mumbai', avatar: 'AK', color: '#4B80F0' },
                 { quote: 'My wife and I travel frequently for work. Knowing we can see each other on the map — and that the kids can see where we are — has made our family feel more connected despite the distance.', name: 'Nikhil Joshi', role: 'Consultant, Delhi', avatar: 'NJ', color: '#10B981' },
               ].map(t => (
                 <motion.div key={t.name} variants={fadeUp} style={{ background: 'var(--bg-surface)', border: '1px solid var(--border)', borderRadius: 20, padding: '28px 24px' }}>

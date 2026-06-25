@@ -31,7 +31,7 @@ from auth import get_current_admin
 import cache
 
 app = FastAPI(
-    title="Trackalways Gravity API",
+    title="Trackalways KVL Track API",
     description="Family safety platform - full backend",
     version="2.0.0",
 )
@@ -97,7 +97,7 @@ async def startup():
 
 @app.get("/")
 async def root():
-    return {"service": "Trackalways Gravity API", "version": "2.0.0", "status": "running"}
+    return {"service": "Trackalways KVL Track API", "version": "2.0.0", "status": "running"}
 
 @app.get("/health-check")
 async def health_check():

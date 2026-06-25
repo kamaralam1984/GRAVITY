@@ -503,7 +503,7 @@ def list_children(
             "family_name": family.name,
             "parent_name": owner_names.get(family.id, "—"),
             "device_count": device_count,
-            "device": "GravityWatch" if device_count > 0 else "No Device",
+            "device": "KVL TrackWatch" if device_count > 0 else "No Device",
             "status": "Safe" if user.is_active else "Offline",
             "is_active": user.is_active,
             "joined_at": user.created_at.isoformat() if user.created_at else None,
@@ -578,7 +578,7 @@ def list_elderly(
             "heart_rate": hr,
             "steps": record.steps or 0,
             "last_checkin": record.created_at.isoformat() if record.created_at else None,
-            "device": "GravityWatch" if device_count > 0 else "No Device",
+            "device": "KVL TrackWatch" if device_count > 0 else "No Device",
             "is_active": user.is_active,
         })
     if health_filter != "All":
