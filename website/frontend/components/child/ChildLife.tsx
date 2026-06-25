@@ -743,7 +743,7 @@ export function HealthSection({ userId }: { userId?: number }) {
     if (!pedometerActive) return;
     const ref = pedometerRef.current;
     function handleMotion(e: DeviceMotionEvent) {
-      const acc = e.accelerationIncludingKVL Track;
+      const acc = e.accelerationIncludingGravity;
       if (!acc) return;
       const mag = Math.sqrt((acc.x || 0) ** 2 + (acc.y || 0) ** 2 + (acc.z || 0) ** 2);
       const delta = Math.abs(mag - ref.lastMag);
