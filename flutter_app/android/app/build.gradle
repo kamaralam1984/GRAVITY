@@ -1,32 +1,22 @@
 plugins {
     id "com.android.application"
-    id "org.jetbrains.kotlin.android"
     id "dev.flutter.flutter-gradle-plugin"
 }
 
 android {
     namespace "com.kvl.track"
-    ndkVersion = "28.2.13676358"
     compileSdk flutter.compileSdkVersion
+    ndkVersion flutter.ndkVersion
 
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_1_8
         targetCompatibility JavaVersion.VERSION_1_8
-        coreLibraryDesugaringEnabled true
-    }
-
-    kotlinOptions {
-        jvmTarget = "1.8"
-    }
-
-    sourceSets {
-        main.java.srcDirs += "src/main/kotlin"
     }
 
     defaultConfig {
         applicationId "com.kvl.track"
-        minSdkVersion 24
-        targetSdkVersion 34
+        minSdk flutter.minSdkVersion
+        targetSdk flutter.targetSdkVersion
         versionCode flutter.versionCode
         versionName flutter.versionName
         multiDexEnabled true
@@ -37,23 +27,7 @@ android {
             signingConfig signingConfigs.debug
             minifyEnabled false
             shrinkResources false
-            proguardFiles getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro"
         }
-        debug {
-            minifyEnabled false
-            debuggable true
-        }
-    }
-
-    packagingOptions {
-        pickFirst "META-INF/DEPENDENCIES"
-        pickFirst "META-INF/LICENSE"
-        pickFirst "META-INF/NOTICE"
-    }
-
-    lint {
-        checkReleaseBuilds false
-        abortOnError false
     }
 }
 
@@ -62,6 +36,5 @@ flutter {
 }
 
 dependencies {
-    coreLibraryDesugaring "com.android.tools:desugar_jdk_libs:2.0.4"
     implementation "androidx.multidex:multidex:2.0.1"
 }
