@@ -1,0 +1,18 @@
+version: "3.9"
+
+# Production overrides — run as:
+# docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d --build
+
+services:
+  backend:
+    environment:
+      ALLOWED_ORIGINS: https://gravity.kvlbusinesssolutions.com,http://gravity.kvlbusinesssolutions.com
+    ports:
+      - "127.0.0.1:8000:8000"
+
+  frontend:
+    build:
+      args:
+        NEXT_PUBLIC_API_URL: https://gravity.kvlbusinesssolutions.com/api
+    ports:
+      - "127.0.0.1:3020:3020"
