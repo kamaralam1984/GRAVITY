@@ -4,7 +4,7 @@
 
 set -e
 
-REPO="https://github.com/kamaralam1984/KVL TRACK.git"
+REPO="https://github.com/kamaralam1984/GRAVITY.git"
 APP_DIR="/var/www/gravity"
 DOMAIN="kvltrack.kvlbusinesssolutions.com"
 EMAIL="8rupiya@gmail.com"
@@ -29,7 +29,7 @@ docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d --build
 # 3. Wait for containers
 echo "[3/5] Waiting for containers to be healthy..."
 sleep 10
-docker ps --filter "name=gravity"
+docker ps --filter "name=kvltrack"
 
 # 4. Setup Nginx
 echo "[4/5] Setting up Nginx..."
