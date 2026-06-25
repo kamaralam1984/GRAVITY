@@ -1,6 +1,6 @@
 server {
     listen 80;
-    server_name gravity.kvlbusinesssolutions.com;
+    server_name kvltrack.kvlbusinesssolutions.com;
 
     # Frontend (Next.js)
     location / {
