@@ -27,17 +27,17 @@ jobs:
           distribution: temurin
           java-version: 17
 
-      - name: Set up Flutter
+      - name: Set up Flutter 3.27.4
         uses: subosito/flutter-action@v2
         with:
-          channel: stable
+          flutter-version: '3.27.4'
           cache: true
 
       - name: Install dependencies
         run: flutter pub get
 
       - name: Build release APK
-        run: flutter build apk --release --no-tree-shake-icons --android-skip-build-dependency-validation
+        run: flutter build apk --release --no-tree-shake-icons
 
       - name: Upload release APK
         uses: actions/upload-artifact@v4
