@@ -1,7 +1,8 @@
 'use client'
 
 import { useEffect, useRef, useCallback } from 'react'
-import { MAP_TILES, MapMember, MapStyle } from '@/lib/mapData'
+import { MapMember, MapStyle } from '@/lib/mapData'
+import { TILE_CHAINS, createFallbackTileLayer } from '@/lib/tileProvider'
 
 /* ── Status colors ────────────────────────────────────────────── */
 const STATUS_COLOR: Record<string, string> = {
@@ -387,11 +388,8 @@ export default function MapView({
       });
       (window as any).L = L
 
-      /* ── Dark tile layer (default) ───────────────────────────── */
-      tileLayerRef.current = L.tileLayer(MAP_TILES.dark.url, {
-        subdomains: 'abcd',
-        maxZoom: 20,
-      }).addTo(map)
+      /* ── Dark tile layer (default) — paid-first fallback chain ─ */
+      tileLayerRef.current = createFallbackTileLayer(L, map, TILE_CHAINS.dark)
 
       /* ── Home + geofences removed (show real data only) ─────── */
 
@@ -529,11 +527,9 @@ export default function MapView({
         })
 
         const changeStyle = (style: MapStyle) => {
-          if (tileLayerRef.current) map.removeLayer(tileLayerRef.current)
-          tileLayerRef.current = L.tileLayer(MAP_TILES[style].url, {
-            subdomains: 'abcd',
-            maxZoom: 20,
-          }).addTo(map)
+          if (tileLayerRef.current) tileLayerRef.current.remove()
+          const chainKey = style === 'satellite' ? 'satellite' : style === 'voyager' ? 'voyager' : 'dark'
+          tileLayerRef.current = createFallbackTileLayer(L, map, TILE_CHAINS[chainKey])
           styleRef.current = style
           injectStyles(style === 'dark')
           ;[sd, sl, ss].forEach(b => b?.classList.remove('active'))

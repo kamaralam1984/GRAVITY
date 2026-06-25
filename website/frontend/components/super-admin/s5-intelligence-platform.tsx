@@ -1195,7 +1195,7 @@ export function PushConfigSection() {
 
 export function MapsAPISection() {
   const [googleMapsKey, setGoogleMapsKey] = useState('')
-  const [mapboxToken, setMapboxToken] = useState('')
+  const [opencageKey, setOpencageKey] = useState('')
   const [saved, setSaved] = useState(false)
   const [saving, setSaving] = useState(false)
 
@@ -1208,7 +1208,7 @@ export function MapsAPISection() {
       .then(data => {
         if (data && typeof data === 'object') {
           setGoogleMapsKey(data.google_maps_key || '')
-          setMapboxToken(data.mapbox_token || '')
+          setOpencageKey(data.opencage_key || '')
         }
       })
       .catch(() => {})
@@ -1220,7 +1220,7 @@ export function MapsAPISection() {
     fetch('/admin-api/settings-config', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) },
-      body: JSON.stringify({ google_maps_key: googleMapsKey, mapbox_token: mapboxToken }),
+      body: JSON.stringify({ google_maps_key: googleMapsKey, opencage_key: opencageKey }),
     })
       .then(() => { setSaved(true); setTimeout(() => setSaved(false), 3000) })
       .catch(() => {})
@@ -1235,40 +1235,51 @@ export function MapsAPISection() {
 
   return (
     <div>
-      <SectionHeader icon={MapPin} title="Maps API Config" subtitle="Google Maps and location service configuration" />
+      <SectionHeader icon={MapPin} title="Maps Config" subtitle="OpenStreetMap + Leaflet (100% free) — no paid API keys required" />
       <StatGrid items={[
-        { label: 'Maps API Calls Today', value: '42.1M', color: '#3B82F6' },
-        { label: 'API Quota Used', value: '42%', color: '#10B981' },
-        { label: 'Avg Geocode Time', value: '84ms', color: '#8B5CF6' },
-        { label: 'Monthly Cost', value: '₹1.84L', color: '#F59E0B' },
+        { label: 'Map Tile Requests Today', value: '42.1M', color: '#3B82F6' },
+        { label: 'Geocoding Calls', value: '18.4K', color: '#10B981' },
+        { label: 'Avg Tile Load Time', value: '84ms', color: '#8B5CF6' },
+        { label: 'Monthly Cost', value: '₹0', color: '#F59E0B' },
       ]} />
       <GlassCard style={{ padding: 24, marginBottom: 16 }}>
-        <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--text-primary)', marginBottom: 16 }}>Maps API Keys</div>
+        <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--text-primary)', marginBottom: 8 }}>Map Provider</div>
+        <div style={{ padding: '10px 14px', background: 'rgba(16,185,129,0.08)', border: '1px solid rgba(16,185,129,0.25)', borderRadius: 10, marginBottom: 16 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
+            <span style={{ fontSize: 16 }}>🗺️</span>
+            <span style={{ fontSize: 13, fontWeight: 700, color: '#10B981' }}>OpenStreetMap + Leaflet.js</span>
+            <span style={{ fontSize: 10, background: 'rgba(16,185,129,0.2)', color: '#10B981', padding: '2px 8px', borderRadius: 20, fontWeight: 700 }}>FREE · No API Key</span>
+          </div>
+          <p style={{ fontSize: 11, color: 'var(--text-muted)', margin: 0 }}>
+            Tiles: CartoDB (dark/voyager) + ESRI World Imagery (satellite) — all 100% free with OpenStreetMap data.
+          </p>
+        </div>
+        <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--text-primary)', marginBottom: 12 }}>Optional API Keys</div>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginBottom: 16 }}>
           {[
-            { label: 'Google Maps API Key', value: googleMapsKey, setter: setGoogleMapsKey, type: 'password' },
-            { label: 'Mapbox Token', value: mapboxToken, setter: setMapboxToken, type: 'password' },
+            { label: 'Google Maps API Key (optional — for Places/Directions)', value: googleMapsKey, setter: setGoogleMapsKey, type: 'password' },
+            { label: 'OpenCage Geocoding Key (optional — free 2500/day reverse geocode)', value: opencageKey, setter: setOpencageKey, type: 'password' },
           ].map((s, i) => (
             <div key={i}>
               <div style={{ fontSize: 11, color: 'var(--text-muted)', marginBottom: 4 }}>{s.label}</div>
-              <input type={(s as any).type || 'text'} value={s.value} onChange={e => s.setter(e.target.value)} style={inputStyle} />
+              <input type={(s as any).type || 'text'} value={s.value} onChange={e => s.setter(e.target.value)} style={inputStyle} placeholder="Leave empty to use free OpenStreetMap" />
             </div>
           ))}
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
           <button onClick={handleSave} disabled={saving} style={{ padding: '9px 20px', background: 'var(--gold, #D4A853)', color: '#000', border: 'none', borderRadius: 8, cursor: 'pointer', fontWeight: 700, fontSize: 13 }}>
-            {saving ? 'Saving...' : 'Save Maps Config'}
+            {saving ? 'Saving...' : 'Save Config'}
           </button>
           {saved && <span style={{ fontSize: 13, color: '#10B981', fontWeight: 600 }}>Saved!</span>}
         </div>
       </GlassCard>
       <GlassCard style={{ padding: 24 }}>
-        <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--text-primary)', marginBottom: 16 }}>Maps API Usage</div>
+        <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--text-primary)', marginBottom: 16 }}>Map Tile Usage</div>
         <BarList items={[
-          { label: 'Maps JavaScript API', value: '18.4M calls', pct: 44, color: '#3B82F6' },
-          { label: 'Geocoding API', value: '12.8M calls', pct: 30, color: '#8B5CF6' },
-          { label: 'Directions API', value: '8.4M calls', pct: 20, color: '#10B981' },
-          { label: 'Places API', value: '2.5M calls', pct: 6, color: '#F59E0B' },
+          { label: 'CartoDB Dark Tiles', value: '18.4M tiles', pct: 44, color: '#3B82F6' },
+          { label: 'CartoDB Voyager Tiles', value: '12.8M tiles', pct: 30, color: '#8B5CF6' },
+          { label: 'ESRI Satellite Tiles', value: '8.4M tiles', pct: 20, color: '#10B981' },
+          { label: 'Nominatim Geocoding', value: '2.5K req', pct: 6, color: '#F59E0B' },
         ]} />
       </GlassCard>
     </div>

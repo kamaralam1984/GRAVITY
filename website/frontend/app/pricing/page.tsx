@@ -242,101 +242,38 @@ function RegionalTable() {
   const ref = useRef<HTMLDivElement>(null);
   const inView = useInView(ref, { once: true, margin: '-60px' });
 
-  const allPlans = ['Free', 'Premium', 'Family Plus', 'Elder Care'];
-
-  const TABLE_DATA: Record<
-    string,
-    { free: string; premium: string; familyPlus: string; elderCare: string; gateway: string; flag: string }
-  > = {
-    India: {
-      flag: '🇮🇳',
-      free: 'Free',
-      premium: '₹299/mo',
-      familyPlus: '₹499/mo',
-      elderCare: '₹399/mo',
-      gateway: 'UPI · Razorpay',
-    },
-    'Kenya / East Africa': {
-      flag: '🇰🇪',
-      free: 'Free',
-      premium: 'KES 550/mo',
-      familyPlus: 'KES 950/mo',
-      elderCare: 'KES 750/mo',
-      gateway: 'M-Pesa · Airtel Money',
-    },
-    'UAE / MENA': {
-      flag: '🇦🇪',
-      free: 'Free',
-      premium: 'AED 14/mo',
-      familyPlus: 'AED 25/mo',
-      elderCare: 'AED 20/mo',
-      gateway: 'Stripe · PayTabs',
-    },
-    'UK / Europe': {
-      flag: '🇬🇧',
-      free: 'Free',
-      premium: '£3.49/mo',
-      familyPlus: '£5.99/mo',
-      elderCare: '£4.99/mo',
-      gateway: 'Stripe · PayPal',
-    },
-    'USA / Canada': {
-      flag: '🇺🇸',
-      free: 'Free',
-      premium: '$3.99/mo',
-      familyPlus: '$6.99/mo',
-      elderCare: '$5.49/mo',
-      gateway: 'Stripe · Apple Pay',
-    },
-    'Rest of Africa': {
-      flag: '🌍',
-      free: 'Free',
-      premium: '$1.99/mo',
-      familyPlus: '$3.99/mo',
-      elderCare: '$2.99/mo',
-      gateway: 'Flutterwave · Paystack',
-    },
+  const TABLE_DATA: Record<string, { free: string; paid: string; paidAnnual: string; gateway: string; flag: string }> = {
+    India:               { flag: '🇮🇳', free: 'Free', paid: '₹299/mo',    paidAnnual: '₹2,499/yr',  gateway: 'UPI · Razorpay' },
+    'Kenya / East Africa': { flag: '🇰🇪', free: 'Free', paid: 'KES 550/mo', paidAnnual: 'KES 4,599/yr', gateway: 'M-Pesa · Airtel Money' },
+    'UAE / MENA':        { flag: '🇦🇪', free: 'Free', paid: 'AED 14/mo',   paidAnnual: 'AED 115/yr',  gateway: 'Stripe · PayTabs' },
+    'UK / Europe':       { flag: '🇬🇧', free: 'Free', paid: '£3.49/mo',    paidAnnual: '£28.99/yr',   gateway: 'Stripe · PayPal' },
+    'USA / Canada':      { flag: '🇺🇸', free: 'Free', paid: '$3.99/mo',    paidAnnual: '$32.99/yr',   gateway: 'Stripe · Apple Pay' },
+    'Rest of Africa':    { flag: '🌍', free: 'Free', paid: '$1.99/mo',    paidAnnual: '$16.99/yr',   gateway: 'Flutterwave · Paystack' },
   };
 
   return (
     <div ref={ref} className="overflow-x-auto">
-      <motion.div
-        initial={{ opacity: 0, y: 24 }}
-        animate={inView ? { opacity: 1, y: 0 } : {}}
-        transition={{ duration: 0.6 }}
-      >
-        <table className="w-full min-w-[680px] text-sm">
+      <motion.div initial={{ opacity: 0, y: 24 }} animate={inView ? { opacity: 1, y: 0 } : {}} transition={{ duration: 0.6 }}>
+        <table className="w-full text-sm">
           <thead>
             <tr className="border-b border-white/[0.08]">
               <th className="text-left py-4 px-4 text-[#94A3B8] font-semibold" style={{ fontFamily: "'Inter', sans-serif" }}>Region</th>
-              {allPlans.map((p) => (
-                <th
-                  key={p}
-                  className={`text-center py-4 px-4 font-semibold ${p === 'Family Plus' ? 'text-[#D4A853]' : 'text-[#94A3B8]'}`}
-                  style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}
-                >
-                  {p}
-                </th>
-              ))}
+              <th className="text-center py-4 px-4 font-semibold text-[#94A3B8]" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}>Free</th>
+              <th className="text-center py-4 px-4 font-semibold text-[#D4A853]" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}>Paid (Monthly)</th>
+              <th className="text-center py-4 px-4 font-semibold text-[#10B981]" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}>Paid (Annual)</th>
               <th className="text-left py-4 px-4 text-[#94A3B8] font-semibold" style={{ fontFamily: "'Inter', sans-serif" }}>Payment</th>
             </tr>
           </thead>
           <tbody>
             {Object.entries(TABLE_DATA).map(([region, data], i) => (
-              <motion.tr
-                key={region}
-                initial={{ opacity: 0, x: -16 }}
-                animate={inView ? { opacity: 1, x: 0 } : {}}
-                transition={{ duration: 0.45, delay: i * 0.07 }}
-                className="border-b border-white/[0.05] hover:bg-white/[0.02] transition-colors"
-              >
+              <motion.tr key={region} initial={{ opacity: 0, x: -16 }} animate={inView ? { opacity: 1, x: 0 } : {}} transition={{ duration: 0.45, delay: i * 0.07 }}
+                className="border-b border-white/[0.05] hover:bg-white/[0.02] transition-colors">
                 <td className="py-4 px-4 text-[#F8FAFC] font-medium" style={{ fontFamily: "'Inter', sans-serif" }}>
                   <span className="mr-2">{data.flag}</span>{region}
                 </td>
                 <td className="py-4 px-4 text-center text-[#94A3B8]" style={{ fontFamily: "'Inter', sans-serif" }}>{data.free}</td>
-                <td className="py-4 px-4 text-center text-blue-300 font-semibold" style={{ fontFamily: "'Inter', sans-serif" }}>{data.premium}</td>
-                <td className="py-4 px-4 text-center text-[#D4A853] font-semibold" style={{ fontFamily: "'Inter', sans-serif" }}>{data.familyPlus}</td>
-                <td className="py-4 px-4 text-center text-emerald-300 font-semibold" style={{ fontFamily: "'Inter', sans-serif" }}>{data.elderCare}</td>
+                <td className="py-4 px-4 text-center text-[#D4A853] font-semibold" style={{ fontFamily: "'Inter', sans-serif" }}>{data.paid}</td>
+                <td className="py-4 px-4 text-center text-[#10B981] font-semibold" style={{ fontFamily: "'Inter', sans-serif" }}>{data.paidAnnual}</td>
                 <td className="py-4 px-4 text-[#94A3B8] text-xs" style={{ fontFamily: "'Inter', sans-serif" }}>{data.gateway}</td>
               </motion.tr>
             ))}

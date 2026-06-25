@@ -4,6 +4,7 @@ import { useEffect, useRef, useState, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { MapPin, RefreshCw, Navigation, Users, Wifi, WifiOff, ChevronDown, ChevronUp, Plus, Minus, LayoutGrid, Moon, Globe, Navigation2 } from 'lucide-react'
 import { getToken } from '@/lib/auth'
+import { TILE_CHAINS, createFallbackTileLayer } from '@/lib/tileProvider'
 
 const API_BASE = ''  // relative URLs go through Next.js proxy → port 8001
 
@@ -118,7 +119,7 @@ export default function UberFamilyMap({
   const [refreshing, setRefreshing] = useState(false)
   const [lastUpdate, setLastUpdate] = useState<Date | null>(null)
   const [mapStyle, setMapStyle]     = useState<'dark' | 'satellite' | 'street'>('dark')
-  const [satProvider, setSatProvider] = useState<'esri' | 'google-earth' | 'google-sat' | 'google-hybrid'>('esri')
+  const [satProvider, setSatProvider] = useState<'esri' | 'esri-sat' | 'osm-topo' | 'osm-standard' | 'google-earth' | 'google-sat' | 'google-hybrid'>('esri')
   const [satPickerOpen, setSatPickerOpen] = useState(false)
 
   /* ── Load Leaflet & init map ── */
@@ -138,10 +139,8 @@ export default function UberFamilyMap({
         preferCanvas: true,
       })
 
-      const tileLayer = L.tileLayer(
-        'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',
-        { maxZoom: 22, subdomains: 'abcd' }
-      ).addTo(map)
+      /* Dark tile — paid-first, auto-falls back to CartoDB → OSM */
+      const tileLayer = createFallbackTileLayer(L, map, TILE_CHAINS.dark)
 
       leafletRef.current = { L, map, tileLayer, labelLayer: null }
 
@@ -287,12 +286,12 @@ export default function UberFamilyMap({
     {
       id: 'esri',
       label: 'ESRI Hybrid',
-      desc: 'Satellite + labels',
+      desc: 'Satellite + labels (free)',
       color: '#34D399',
       base: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
-      baseOpts: { maxZoom: 22 },
+      baseOpts: { maxZoom: 19 },
       overlay: 'https://services.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}',
-      overlayOpts: { maxZoom: 22, opacity: 1 },
+      overlayOpts: { maxZoom: 19, opacity: 1 },
     },
     {
       id: 'google-earth',
@@ -334,25 +333,29 @@ export default function UberFamilyMap({
     setMapStyle(style)
     let tileLayer: any
     let labelLayer: any = null
+
     if (style === 'satellite') {
       const pid = provider ?? satProvider
       const prov = SAT_PROVIDERS.find((p) => p.id === pid) ?? SAT_PROVIDERS[0]
-      setSatProvider(pid as typeof satProvider)
-      tileLayer = ctx.L.tileLayer(prov.base, prov.baseOpts).addTo(ctx.map)
+      setSatProvider(pid as 'esri' | 'esri-sat' | 'osm-topo' | 'osm-standard' | 'google-earth' | 'google-sat' | 'google-hybrid')
+
+      /* Satellite base — falls back to ESRI, then OSM if selected provider fails */
+      const satChain = [
+        { id: pid, label: prov.label, url: prov.base, opts: prov.baseOpts, isPaid: false },
+        { id: 'esri-fallback', label: 'ESRI Satellite (free fallback)', url: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', opts: { maxZoom: 19 }, isPaid: false },
+        { id: 'osm-fallback', label: 'OpenStreetMap (always-on)', url: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', opts: { maxZoom: 19, subdomains: 'abc' }, isPaid: false },
+      ].filter((s, i, arr) => i === 0 || s.url !== arr[0].url) // dedupe if prov is already ESRI
+      tileLayer = createFallbackTileLayer(ctx.L, ctx.map, satChain)
+
       if (prov.overlay) {
         labelLayer = ctx.L.tileLayer(prov.overlay, prov.overlayOpts).addTo(ctx.map)
       }
     } else if (style === 'street') {
-      tileLayer = ctx.L.tileLayer(
-        'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',
-        { maxZoom: 22, subdomains: 'abcd' }
-      ).addTo(ctx.map)
+      tileLayer = createFallbackTileLayer(ctx.L, ctx.map, TILE_CHAINS.voyager)
     } else {
-      tileLayer = ctx.L.tileLayer(
-        'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',
-        { maxZoom: 22, subdomains: 'abcd' }
-      ).addTo(ctx.map)
+      tileLayer = createFallbackTileLayer(ctx.L, ctx.map, TILE_CHAINS.dark)
     }
+
     leafletRef.current = { ...ctx, tileLayer, labelLayer }
   }
 
