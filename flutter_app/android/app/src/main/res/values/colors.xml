@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Primary color used for notification icons -->
+    <color name="notification_color">#FF1A56DB</color>
+    <!-- Background color for the splash launch screen -->
+    <color name="splash_background">#FF0B0D13</color>
+</resources>

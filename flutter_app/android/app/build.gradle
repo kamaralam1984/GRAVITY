@@ -1,0 +1,82 @@
+plugins {
+    id "com.android.application"
+    id "kotlin-android"
+    id "dev.flutter.flutter-gradle-plugin"
+    id "com.google.gms.google-services"
+}
+
+android {
+    namespace "com.kvl.track"
+    compileSdk flutter.compileSdkVersion
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
+        coreLibraryDesugaringEnabled true
+    }
+
+    kotlinOptions {
+        jvmTarget = "1.8"
+    }
+
+    sourceSets {
+        main.java.srcDirs += "src/main/kotlin"
+    }
+
+    defaultConfig {
+        applicationId "com.kvl.track"
+        minSdkVersion 24
+        targetSdkVersion 34
+        versionCode flutterVersionCode.toInteger()
+        versionName flutterVersionName
+        multiDexEnabled true
+
+        // Large heap for map tiles and image cache
+        largeHeap = true
+    }
+
+    buildTypes {
+        release {
+            signingConfig signingConfigs.debug
+            minifyEnabled false
+            shrinkResources false
+            proguardFiles getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro"
+        }
+        debug {
+            minifyEnabled false
+            debuggable true
+        }
+    }
+
+    packagingOptions {
+        // Resolve duplicate files from firebase / play-services
+        pickFirst "META-INF/DEPENDENCIES"
+        pickFirst "META-INF/LICENSE"
+        pickFirst "META-INF/NOTICE"
+    }
+
+    lint {
+        checkReleaseBuilds false
+        abortOnError false
+    }
+}
+
+flutter {
+    source "../.."
+}
+
+dependencies {
+    // Core library desugaring for java.time support on API < 26
+    coreLibraryDesugaring "com.android.tools.build:desugaring:2.0.4"
+
+    // Firebase BoM
+    implementation platform("com.google.firebase:firebase-bom:33.4.0")
+    implementation "com.google.firebase:firebase-messaging-ktx"
+    implementation "com.google.firebase:firebase-analytics-ktx"
+
+    // MultiDex support
+    implementation "androidx.multidex:multidex:2.0.1"
+
+    // Kotlin
+    implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"
+}

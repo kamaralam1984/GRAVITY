@@ -1,0 +1,117 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<!-- ── App Display ──────────────────────────────────────────────────── -->
+	<key>CFBundleDisplayName</key>
+	<string>KVL Track</string>
+
+	<key>CFBundleIdentifier</key>
+	<string>com.kvl.track</string>
+
+	<key>CFBundleName</key>
+	<string>kvl_track</string>
+
+	<key>CFBundlePackageType</key>
+	<string>APPL</string>
+
+	<key>CFBundleShortVersionString</key>
+	<string>$(FLUTTER_BUILD_NAME)</string>
+
+	<key>CFBundleSignature</key>
+	<string>????</string>
+
+	<key>CFBundleVersion</key>
+	<string>$(FLUTTER_BUILD_NUMBER)</string>
+
+	<!-- ── Executable ────────────────────────────────────────────────────── -->
+	<key>CFBundleExecutable</key>
+	<string>$(EXECUTABLE_NAME)</string>
+
+	<!-- ── Privacy Usage Descriptions ───────────────────────────────────── -->
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>KVL Track needs location to show you on the family map.</string>
+
+	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
+	<string>KVL Track needs background location to keep your family safe even when the app is not open.</string>
+
+	<key>NSLocationAlwaysUsageDescription</key>
+	<string>KVL Track needs background location to keep your family safe even when the app is not open.</string>
+
+	<key>NSCameraUsageDescription</key>
+	<string>Share photos with your family in the chat.</string>
+
+	<key>NSMicrophoneUsageDescription</key>
+	<string>Record voice notes for family chat messages.</string>
+
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>Share photos from your library with your family.</string>
+
+	<key>NSPhotoLibraryAddUsageDescription</key>
+	<string>Save shared family photos to your photo library.</string>
+
+	<key>NSFaceIDUsageDescription</key>
+	<string>Use Face ID to unlock KVL Track quickly and securely.</string>
+
+	<key>NSMotionUsageDescription</key>
+	<string>KVL Track uses motion sensors to detect your activity type and trigger SOS alerts.</string>
+
+	<!-- ── Background Modes ───────────────────────────────────────────────── -->
+	<key>UIBackgroundModes</key>
+	<array>
+		<string>location</string>
+		<string>background-fetch</string>
+		<string>remote-notification</string>
+		<string>fetch</string>
+		<string>processing</string>
+	</array>
+
+	<!-- ── Background Task Scheduler ─────────────────────────────────────── -->
+	<key>BGTaskSchedulerPermittedIdentifiers</key>
+	<array>
+		<string>com.kvl.track.location-sync</string>
+		<string>com.kvl.track.health-sync</string>
+	</array>
+
+	<!-- ── App Transport Security (disable only for dev; remove for prod) ── -->
+	<key>NSAppTransportSecurity</key>
+	<dict>
+		<key>NSAllowsArbitraryLoads</key>
+		<true/>
+	</dict>
+
+	<!-- ── UI ────────────────────────────────────────────────────────────── -->
+	<key>UILaunchStoryboardName</key>
+	<string>LaunchScreen</string>
+
+	<key>UIMainStoryboardFile</key>
+	<string>Main</string>
+
+	<key>UIStatusBarStyle</key>
+	<string>UIStatusBarStyleLightContent</string>
+
+	<key>UISupportedInterfaceOrientations</key>
+	<array>
+		<string>UIInterfaceOrientationPortrait</string>
+	</array>
+
+	<key>UISupportedInterfaceOrientations~ipad</key>
+	<array>
+		<string>UIInterfaceOrientationPortrait</string>
+		<string>UIInterfaceOrientationPortraitUpsideDown</string>
+		<string>UIInterfaceOrientationLandscapeLeft</string>
+		<string>UIInterfaceOrientationLandscapeRight</string>
+	</array>
+
+	<!-- ── Flutter ────────────────────────────────────────────────────────── -->
+	<key>CADisableMinimumFrameDurationOnPhone</key>
+	<true/>
+
+	<key>UIApplicationSupportsIndirectInputEvents</key>
+	<true/>
+
+	<!-- ── Minimum OS ─────────────────────────────────────────────────────── -->
+	<key>MinimumOSVersion</key>
+	<string>14.0</string>
+</dict>
+</plist>

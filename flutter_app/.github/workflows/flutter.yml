@@ -1,0 +1,98 @@
+name: Flutter CI/CD
+
+on:
+  push:
+    branches: [main, develop, feat/flutter-mobile-app]
+  pull_request:
+    branches: [main]
+
+jobs:
+  analyze:
+    name: Analyze & Format
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: flutter_app
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.x'
+          channel: 'stable'
+          cache: true
+      - name: Install dependencies
+        run: flutter pub get
+      - name: Verify formatting
+        run: dart format --output=none --set-exit-if-changed lib/
+      - name: Analyze project
+        run: flutter analyze --no-fatal-infos
+
+  test:
+    name: Unit & Widget Tests
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: flutter_app
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.x'
+          channel: 'stable'
+          cache: true
+      - name: Install dependencies
+        run: flutter pub get
+      - name: Run tests
+        run: flutter test --coverage
+      - name: Upload coverage
+        uses: codecov/codecov-action@v4
+        with:
+          file: flutter_app/coverage/lcov.info
+
+  build-android:
+    name: Build Android APK
+    needs: [analyze, test]
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: flutter_app
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.x'
+          channel: 'stable'
+          cache: true
+      - name: Install dependencies
+        run: flutter pub get
+      - name: Build APK
+        run: flutter build apk --release --no-tree-shake-icons
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: kvl-track-release-apk
+          path: flutter_app/build/app/outputs/flutter-apk/app-release.apk
+          retention-days: 30
+
+  build-ios:
+    name: Build iOS IPA
+    needs: [analyze, test]
+    runs-on: macos-latest
+    defaults:
+      run:
+        working-directory: flutter_app
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.x'
+          channel: 'stable'
+          cache: true
+      - name: Install dependencies
+        run: flutter pub get
+      - name: Build iOS (no codesign)
+        run: flutter build ios --release --no-codesign
