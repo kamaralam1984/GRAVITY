@@ -13,12 +13,14 @@ DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./gravity.db")
 if DATABASE_URL.startswith("sqlite"):
     engine = create_engine(DATABASE_URL, connect_args={"check_same_thread": False})
 else:
+    # Neon / PostgreSQL — serverless needs lower pool size
     engine = create_engine(
         DATABASE_URL,
-        pool_size=10,
-        max_overflow=20,
+        pool_size=5,
+        max_overflow=10,
         pool_pre_ping=True,
-        pool_recycle=3600,
+        pool_recycle=300,
+        connect_args={"sslmode": "require", "connect_timeout": 10},
     )
 
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
