@@ -238,7 +238,7 @@ export default function CategoryPage({ params }: { params: { slug: string } }) {
 
   return (
     <>
-      <JsonLd data={buildBreadcrumbSchema([{name:'Home',url:'https://gravity.trackalways.com'},{name:'Blog',url:'https://gravity.trackalways.com/blog'},{name:category.display,url:'https://gravity.trackalways.com/blog/category/'+params.slug}])} />
+      <JsonLd data={buildBreadcrumbSchema([{name:'Home',url:'https://gravity.kvlbusinesssolutions.com'},{name:'Blog',url:'https://gravity.kvlbusinesssolutions.com/blog'},{name:category.display,url:'https://gravity.kvlbusinesssolutions.com/blog/category/'+params.slug}])} />
       <Navbar />
 
       <main style={{ background: 'var(--bg)', minHeight: '100vh' }}>

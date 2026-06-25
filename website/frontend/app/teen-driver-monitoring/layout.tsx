@@ -14,11 +14,11 @@ export const metadata: Metadata = {
     title: 'Teen Driver Monitoring App — KVL Track | Speed & Safety Alerts for Parents',
     description:
       'Monitor your teen driver with KVL Track. Get real-time speed alerts, harsh braking detection, phone usage warnings, and driving safety scores.',
-    url: 'https://gravity.trackalways.com/teen-driver-monitoring',
-    siteName: 'KVL Track by Trackalways',
+    url: 'https://gravity.kvlbusinesssolutions.com/teen-driver-monitoring',
+    siteName: 'KVL Track by KVL Business Solutions',
     images: [
       {
-        url: 'https://gravity.trackalways.com/og-image.svg',
+        url: 'https://gravity.kvlbusinesssolutions.com/og-image.svg',
         width: 1200,
         height: 630,
         alt: 'Teen Driver Monitoring — KVL Track',
@@ -32,10 +32,10 @@ export const metadata: Metadata = {
     title: 'Teen Driver Monitoring App — KVL Track | Speed & Safety Alerts for Parents',
     description:
       'Monitor your teen driver with KVL Track. Get real-time speed alerts, harsh braking detection, phone usage warnings, and driving safety scores.',
-    images: ['https://gravity.trackalways.com/og-image.svg'],
-    creator: '@trackalways',
+    images: ['https://gravity.kvlbusinesssolutions.com/og-image.svg'],
+    creator: '@kvlbusinesssolutions',
   },
-  alternates: { canonical: 'https://gravity.trackalways.com/teen-driver-monitoring' },
+  alternates: { canonical: 'https://gravity.kvlbusinesssolutions.com/teen-driver-monitoring' },
 }
 
 export default function Layout({ children }: { children: React.ReactNode }) {

@@ -56,7 +56,7 @@ const TEAM = [
   {
     name: 'Prateek Jain',
     role: 'Co-Founder & Director',
-    bio: 'Prateek has spent over a decade building consumer technology that reaches underserved markets across Africa and Asia. He founded Trackalways with the conviction that family safety tools should be affordable, private, and designed for the realities of families everywhere — not just in Silicon Valley.',
+    bio: 'Prateek has spent over a decade building consumer technology that reaches underserved markets across Africa and Asia. He founded KVL Business Solutions with the conviction that family safety tools should be affordable, private, and designed for the realities of families everywhere — not just in Silicon Valley.',
     initials: 'PJ',
     avatarColor: 'from-blue-500 to-violet-600',
     location: 'Nairobi, Kenya',
@@ -65,7 +65,7 @@ const TEAM = [
   {
     name: 'Kelsey',
     role: 'Head of Design',
-    bio: 'Kelsey leads product design and brand across all Trackalways products. With a background in human-centred design and a deep belief that safety tools should be beautiful and intuitive, she is the reason KVL Track feels different from every other family app on the market.',
+    bio: 'Kelsey leads product design and brand across all KVL Business Solutions products. With a background in human-centred design and a deep belief that safety tools should be beautiful and intuitive, she is the reason KVL Track feels different from every other family app on the market.',
     initials: 'KL',
     avatarColor: 'from-pink-500 to-rose-600',
     location: 'London, UK',
@@ -123,7 +123,7 @@ function MissionSection() {
               className="mt-8 text-xl text-[#94A3B8] leading-relaxed max-w-3xl mx-auto"
               style={{ fontFamily: "'Inter', sans-serif" }}
             >
-              Trackalways was built for the billions of families on earth who need real safety tools
+              KVL Business Solutions was built for the billions of families on earth who need real safety tools
               — not expensive hardware, not invasive surveillance, not apps designed for a narrow
               slice of the world. KVL Track is our promise: powerful safety, honest design, and a price
               every family can afford.
@@ -331,7 +331,7 @@ function EcosystemSection() {
           style={{ fontFamily: "'Inter', sans-serif" }}
         >
           <Sparkles size={14} />
-          The Trackalways Universe
+          The KVL Business Solutions Universe
         </span>
         <h2
           className="text-4xl md:text-5xl font-extrabold text-[#F8FAFC]"
@@ -343,7 +343,7 @@ function EcosystemSection() {
           className="text-[#94A3B8] mt-4 max-w-2xl mx-auto"
           style={{ fontFamily: "'Inter', sans-serif" }}
         >
-          KVL Track is one part of the Trackalways universe. Every product is designed to
+          KVL Track is one part of the KVL Business Solutions universe. Every product is designed to
           work together, giving families a complete safety ecosystem across hardware and software.
         </p>
       </motion.div>

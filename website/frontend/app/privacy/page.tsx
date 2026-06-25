@@ -11,7 +11,7 @@ const SECTIONS = [
     id: "introduction",
     title: "1. Introduction",
     icon: Shield,
-    content: "Trackalways Technologies Private Limited operates the KVL Track family safety application. This Privacy Policy explains how we collect, use, and protect information about you when you use our service. We are committed to handling your personal information with transparency, care, and respect. This policy applies to all users of the KVL Track mobile application, web dashboard, and related services. By using KVL Track, you agree to the practices described in this policy. If you do not agree with any part of this policy, please discontinue use of the service. We encourage you to read this document carefully and contact us with any questions.",
+    content: "KVL Business Solutions Technologies Private Limited operates the KVL Track family safety application. This Privacy Policy explains how we collect, use, and protect information about you when you use our service. We are committed to handling your personal information with transparency, care, and respect. This policy applies to all users of the KVL Track mobile application, web dashboard, and related services. By using KVL Track, you agree to the practices described in this policy. If you do not agree with any part of this policy, please discontinue use of the service. We encourage you to read this document carefully and contact us with any questions.",
     bullets: [] as string[],
   },
   {
@@ -77,7 +77,7 @@ const SECTIONS = [
     id: "rights",
     title: "7. Your Rights",
     icon: Lock,
-    content: "You have meaningful rights over your personal information. We are committed to honoring these rights promptly and without discrimination. To exercise any of the rights below, contact us at privacy@trackalways.com.",
+    content: "You have meaningful rights over your personal information. We are committed to honoring these rights promptly and without discrimination. To exercise any of the rights below, contact us at privacy@kvlbusinesssolutions.com.",
     bullets: [
       "Access: request a copy of the personal data we hold about you",
       "Deletion: request permanent deletion of your account and associated personal data",
@@ -90,7 +90,7 @@ const SECTIONS = [
     id: "children",
     title: "8. Children and Minors",
     icon: Shield,
-    content: "The KVL Track service is designed for users aged 13 and older. We do not knowingly collect personal information from children under 13 without verifiable parental consent. If a parent or guardian believes their child under 13 has provided personal information without consent, they should contact us immediately at privacy@trackalways.com and we will promptly delete that information. For users between 13 and 18, we encourage parental involvement in setting up and reviewing account settings. Parental consent features are available within the app to allow guardians to review and approve the family circle configuration for minor members.",
+    content: "The KVL Track service is designed for users aged 13 and older. We do not knowingly collect personal information from children under 13 without verifiable parental consent. If a parent or guardian believes their child under 13 has provided personal information without consent, they should contact us immediately at privacy@kvlbusinesssolutions.com and we will promptly delete that information. For users between 13 and 18, we encourage parental involvement in setting up and reviewing account settings. Parental consent features are available within the app to allow guardians to review and approve the family circle configuration for minor members.",
     bullets: [] as string[],
   },
   {
@@ -131,10 +131,10 @@ const SECTIONS = [
     icon: Mail,
     content: "If you have questions, concerns, or requests related to this Privacy Policy or your personal information, please contact our Privacy team. We aim to respond to all privacy inquiries within 72 hours.",
     bullets: [
-      "Email: privacy@trackalways.com",
+      "Email: privacy@kvlbusinesssolutions.com",
       "Subject Line: please include the word Privacy in your subject line for faster routing",
       "Response Time: we aim to respond to all privacy requests within 72 hours",
-      "Mailing Address: Trackalways Technologies Private Limited, India",
+      "Mailing Address: KVL Business Solutions Technologies Private Limited, India",
     ],
   },
 ]
@@ -309,10 +309,10 @@ export default function PrivacyPage() {
             <p className="mt-6 text-slate-500 text-sm">
               Or email us directly at{" "}
               <a
-                href="mailto:privacy@trackalways.com"
+                href="mailto:privacy@kvlbusinesssolutions.com"
                 className="text-blue-400 hover:text-blue-300 underline"
               >
-                privacy@trackalways.com
+                privacy@kvlbusinesssolutions.com
               </a>
             </p>
           </motion.div>

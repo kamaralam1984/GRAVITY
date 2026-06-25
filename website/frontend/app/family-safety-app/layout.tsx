@@ -14,11 +14,11 @@ export const metadata: Metadata = {
     title: 'Best Family Safety App 2024 — KVL Track | GPS, SOS & AI Protection',
     description:
       'Download the #1 family safety app. Real-time GPS tracking, instant SOS alerts, geofencing, AI Guardian protection. Trusted by 2.5M+ families worldwide.',
-    url: 'https://gravity.trackalways.com/family-safety-app',
-    siteName: 'KVL Track by Trackalways',
+    url: 'https://gravity.kvlbusinesssolutions.com/family-safety-app',
+    siteName: 'KVL Track by KVL Business Solutions',
     images: [
       {
-        url: 'https://gravity.trackalways.com/og-image.svg',
+        url: 'https://gravity.kvlbusinesssolutions.com/og-image.svg',
         width: 1200,
         height: 630,
         alt: 'Best Family Safety App — KVL Track',
@@ -32,10 +32,10 @@ export const metadata: Metadata = {
     title: 'Best Family Safety App 2024 — KVL Track | GPS, SOS & AI Protection',
     description:
       'Download the #1 family safety app. Real-time GPS tracking, instant SOS alerts, geofencing, AI Guardian protection. Trusted by 2.5M+ families worldwide.',
-    images: ['https://gravity.trackalways.com/og-image.svg'],
-    creator: '@trackalways',
+    images: ['https://gravity.kvlbusinesssolutions.com/og-image.svg'],
+    creator: '@kvlbusinesssolutions',
   },
-  alternates: { canonical: 'https://gravity.trackalways.com/family-safety-app' },
+  alternates: { canonical: 'https://gravity.kvlbusinesssolutions.com/family-safety-app' },
 }
 
 export default function Layout({ children }: { children: React.ReactNode }) {

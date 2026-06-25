@@ -26,10 +26,10 @@ export const metadata: Metadata = {
     description:
       'Panic SOS, Safe Walk, live location sharing, fake call — free women safety app for India. Available on Android & iOS.',
     type: 'website',
-    url: 'https://gravity.trackalways.com/women-safety',
+    url: 'https://gravity.kvlbusinesssolutions.com/women-safety',
     images: [
       {
-        url: 'https://gravity.trackalways.com/og/women-safety.png',
+        url: 'https://gravity.kvlbusinesssolutions.com/og/women-safety.png',
         width: 1200,
         height: 630,
         alt: 'KVL Track Women Safety App',
@@ -41,10 +41,10 @@ export const metadata: Metadata = {
     title: 'KVL Track Women Safety — Because Every Woman Deserves to Feel Safe',
     description:
       'Panic SOS, Safe Walk, live location sharing, fake call — free women safety app. Download free on Android & iOS.',
-    images: ['https://gravity.trackalways.com/og/women-safety.png'],
+    images: ['https://gravity.kvlbusinesssolutions.com/og/women-safety.png'],
   },
   alternates: {
-    canonical: 'https://gravity.trackalways.com/women-safety',
+    canonical: 'https://gravity.kvlbusinesssolutions.com/women-safety',
   },
   robots: {
     index: true,

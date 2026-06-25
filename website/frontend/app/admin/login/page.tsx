@@ -359,7 +359,7 @@ export default function AdminLoginPage() {
           zIndex: 10,
         }}
       >
-        © 2025 Trackalways Technologies. Admin access only.
+        © 2025 KVL Business Solutions Technologies. Admin access only.
       </motion.p>
     </div>
   )

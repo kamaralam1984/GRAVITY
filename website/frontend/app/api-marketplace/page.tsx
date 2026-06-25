@@ -84,7 +84,7 @@ const API_CATEGORIES = [
 /* ── Code examples ────────────────────────────────────────────────────────── */
 const CODE_EXAMPLES = {
   location: `const response = await fetch(
-  'https://api.gravity.trackalways.com/v1/location/family',
+  'https://api.gravity.kvlbusinesssolutions.com/v1/location/family',
   {
     headers: {
       'Authorization': 'Bearer YOUR_API_KEY',
@@ -99,7 +99,7 @@ console.log(data.members);`,
 
   safety: `// Subscribe to SOS events via WebSocket
 const ws = new WebSocket(
-  'wss://api.gravity.trackalways.com/v1/safety/stream',
+  'wss://api.gravity.kvlbusinesssolutions.com/v1/safety/stream',
   ['Bearer YOUR_API_KEY']
 );
 
@@ -112,7 +112,7 @@ ws.onmessage = (event) => {
 
   notifications: `// Register a webhook
 await fetch(
-  'https://api.gravity.trackalways.com/v1/webhooks/register',
+  'https://api.gravity.kvlbusinesssolutions.com/v1/webhooks/register',
   {
     method: 'POST',
     headers: { 'Authorization': 'Bearer YOUR_API_KEY' },
@@ -125,7 +125,7 @@ await fetch(
 
   analytics: `// Get safety report for date range
 const report = await fetch(
-  'https://api.gravity.trackalways.com/v1/analytics/safety-report' +
+  'https://api.gravity.kvlbusinesssolutions.com/v1/analytics/safety-report' +
   '?from=2026-06-01&to=2026-06-13&format=json',
   {
     headers: { 'Authorization': 'Bearer YOUR_API_KEY' }

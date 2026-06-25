@@ -14,11 +14,11 @@ export const metadata: Metadata = {
     title: 'School Bus Tracking App — KVL Track | Real-Time Bus GPS for Parents',
     description:
       "Track your child's school bus in real-time with KVL Track. Live GPS, arrival notifications, route monitoring, driver verification. Download free.",
-    url: 'https://gravity.trackalways.com/school-bus-tracking',
-    siteName: 'KVL Track by Trackalways',
+    url: 'https://gravity.kvlbusinesssolutions.com/school-bus-tracking',
+    siteName: 'KVL Track by KVL Business Solutions',
     images: [
       {
-        url: 'https://gravity.trackalways.com/og-image.svg',
+        url: 'https://gravity.kvlbusinesssolutions.com/og-image.svg',
         width: 1200,
         height: 630,
         alt: 'School Bus Tracking — KVL Track',
@@ -32,10 +32,10 @@ export const metadata: Metadata = {
     title: 'School Bus Tracking App — KVL Track | Real-Time Bus GPS for Parents',
     description:
       "Track your child's school bus in real-time with KVL Track. Live GPS, arrival notifications, route monitoring, driver verification. Download free.",
-    images: ['https://gravity.trackalways.com/og-image.svg'],
-    creator: '@trackalways',
+    images: ['https://gravity.kvlbusinesssolutions.com/og-image.svg'],
+    creator: '@kvlbusinesssolutions',
   },
-  alternates: { canonical: 'https://gravity.trackalways.com/school-bus-tracking' },
+  alternates: { canonical: 'https://gravity.kvlbusinesssolutions.com/school-bus-tracking' },
 }
 
 export default function Layout({ children }: { children: React.ReactNode }) {

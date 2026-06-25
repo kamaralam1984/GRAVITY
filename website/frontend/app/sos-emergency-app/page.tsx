@@ -98,7 +98,7 @@ const FAQS = [
   },
   {
     q: 'Does SOS work without internet?',
-    a: 'If mobile data is unavailable, KVL Track automatically falls back to SMS for emergency contact alerts. The SMS includes your last known GPS coordinates and a plain-text message. While the live tracking link will not update without data, your contacts still receive your location at the time of the SOS trigger. For areas with no signal at all, we recommend pairing KVL Track with a Trackalways Titan wearable which has its own emergency satellite connectivity.',
+    a: 'If mobile data is unavailable, KVL Track automatically falls back to SMS for emergency contact alerts. The SMS includes your last known GPS coordinates and a plain-text message. While the live tracking link will not update without data, your contacts still receive your location at the time of the SOS trigger. For areas with no signal at all, we recommend pairing KVL Track with a KVL Business Solutions Titan wearable which has its own emergency satellite connectivity.',
   },
   {
     q: 'How many contacts can receive SOS alerts?',

@@ -270,7 +270,7 @@ export default function KVLTrackLoader({ isVisible }: Props) {
             transition={{ duration: 0.55, delay: 0.25 }}
             className="relative z-10 mt-9 flex flex-col items-center gap-1"
           >
-            {/* GRAVITY shimmer text */}
+            {/* KVL TRACK shimmer text */}
             <div
               className="text-2xl font-extrabold tracking-[0.28em] uppercase"
               style={{
@@ -284,12 +284,12 @@ export default function KVLTrackLoader({ isVisible }: Props) {
                 fontFamily: "'Plus Jakarta Sans', sans-serif",
               }}
             >
-              GRAVITY
+              KVL TRACK
             </div>
 
             {/* Subtitle */}
             <div className="text-[10px] tracking-[0.22em] uppercase mb-5" style={{ color: '#6B7280' }}>
-              by Trackalways
+              by KVL Business Solutions
             </div>
 
             {/* Cycling message */}

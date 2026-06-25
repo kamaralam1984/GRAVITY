@@ -1,7 +1,7 @@
 import { MetadataRoute } from 'next'
 
 export default function sitemap(): MetadataRoute.Sitemap {
-  const baseUrl = 'https://gravity.trackalways.com'
+  const baseUrl = 'https://gravity.kvlbusinesssolutions.com'
   const now = new Date()
 
   /* ── Static pages ───────────────────────────────────────────────────────── */

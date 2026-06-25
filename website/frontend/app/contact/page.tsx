@@ -439,22 +439,22 @@ export default function ContactPage() {
             <ContactCard
               icon={<Mail size={22} />}
               title="Customer Support"
-              detail="support@trackalways.com"
-              href="mailto:support@trackalways.com"
+              detail="support@kvlbusinesssolutions.com"
+              href="mailto:support@kvlbusinesssolutions.com"
               note="For app issues, account help, billing questions, and general inquiries. We typically reply within 24 to 48 hours on business days."
             />
             <ContactCard
               icon={<MessageSquare size={22} />}
               title="Partnerships"
-              detail="partners@trackalways.com"
-              href="mailto:partners@trackalways.com"
+              detail="partners@kvlbusinesssolutions.com"
+              href="mailto:partners@kvlbusinesssolutions.com"
               note="Interested in integrating KVL Track into your platform, exploring co-marketing, or reselling to enterprise clients? We'd love to explore this together."
             />
             <ContactCard
               icon={<Phone size={22} />}
               title="Press & Media"
-              detail="press@trackalways.com"
-              href="mailto:press@trackalways.com"
+              detail="press@kvlbusinesssolutions.com"
+              href="mailto:press@kvlbusinesssolutions.com"
               note="For journalists, bloggers, and media partners. Interview requests, brand assets, and official statements are all handled here. Response within one business day."
             />
           </motion.div>
@@ -1238,7 +1238,7 @@ export default function ContactPage() {
               }}
             >
               <a
-                href="mailto:support@trackalways.com"
+                href="mailto:support@kvlbusinesssolutions.com"
                 style={{
                   display: 'inline-flex',
                   alignItems: 'center',

@@ -638,7 +638,7 @@ export default function HelpPage() {
                   Contact Support
                 </Link>
                 <a
-                  href="mailto:support@trackalways.com"
+                  href="mailto:support@kvlbusinesssolutions.com"
                   style={{
                     display: 'inline-flex',
                     alignItems: 'center',
@@ -653,7 +653,7 @@ export default function HelpPage() {
                     textDecoration: 'none',
                   }}
                 >
-                  support@trackalways.com
+                  support@kvlbusinesssolutions.com
                 </a>
               </div>
               <div style={{ marginTop: 36 }}>

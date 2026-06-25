@@ -244,7 +244,7 @@ export default function CookiesPage() {
                   </h2>
                   <div className="h-px w-12 mb-4" style={{ background: 'rgba(var(--gold-rgb), 0.4)' }} />
                   <p className="text-base leading-relaxed" style={{ color: 'var(--text-secondary)', lineHeight: '1.85' }}>
-                    Cookies are small text files that websites and web applications store on your device (computer, tablet, or mobile phone) when you visit them. They are widely used to make websites work efficiently, to personalize your experience, and to provide information to website owners. Cookies are not programs — they cannot execute code or carry viruses. They contain data that is sent to and from a web server, allowing the server to recognize your device on subsequent visits. Similar technologies include local storage (data stored in your browser), session storage (temporary browser-based storage), and pixel tags (tiny invisible images used for tracking). When we refer to "cookies" in this policy, we mean all such similar technologies unless otherwise specified. Our website uses a combination of first-party cookies (set by trackalways.com directly) and third-party cookies (set by our service providers).
+                    Cookies are small text files that websites and web applications store on your device (computer, tablet, or mobile phone) when you visit them. They are widely used to make websites work efficiently, to personalize your experience, and to provide information to website owners. Cookies are not programs — they cannot execute code or carry viruses. They contain data that is sent to and from a web server, allowing the server to recognize your device on subsequent visits. Similar technologies include local storage (data stored in your browser), session storage (temporary browser-based storage), and pixel tags (tiny invisible images used for tracking). When we refer to "cookies" in this policy, we mean all such similar technologies unless otherwise specified. Our website uses a combination of first-party cookies (set by kvlbusinesssolutions.com directly) and third-party cookies (set by our service providers).
                   </p>
                 </div>
               </div>
@@ -341,7 +341,7 @@ export default function CookiesPage() {
                 Full Cookie Reference
               </h2>
               <p className="mb-8" style={{ color: 'var(--text-muted)' }}>
-                A complete list of all cookies currently used on trackalways.com and the KVL Track web app.
+                A complete list of all cookies currently used on kvlbusinesssolutions.com and the KVL Track web app.
               </p>
 
               <div
@@ -436,7 +436,7 @@ export default function CookiesPage() {
                     Our Cookie Consent Manager
                   </h3>
                   <p className="text-sm leading-relaxed mb-4" style={{ color: 'var(--text-secondary)' }}>
-                    When you first visit trackalways.com, you will see a cookie consent banner allowing you to accept all cookies, reject non-essential cookies, or customize your preferences by category. You can update your preferences at any time by clicking the cookie icon in the bottom corner of our website. Your choices are saved in the cookie_consent cookie for 1 year.
+                    When you first visit kvlbusinesssolutions.com, you will see a cookie consent banner allowing you to accept all cookies, reject non-essential cookies, or customize your preferences by category. You can update your preferences at any time by clicking the cookie icon in the bottom corner of our website. Your choices are saved in the cookie_consent cookie for 1 year.
                   </p>
                   <button
                     className="text-sm font-semibold px-4 py-2 rounded-xl transition-all"

@@ -21,11 +21,11 @@ export const metadata: Metadata = {
     title: 'Family Safety App in India | Cities We Serve — KVL Track',
     description:
       'KVL Track family safety app is trusted by families in 30+ Indian cities. Find your city for local GPS tracking, SOS alerts, and smart geofencing.',
-    url: 'https://gravity.trackalways.com/locations',
-    siteName: 'KVL Track by Trackalways',
+    url: 'https://gravity.kvlbusinesssolutions.com/locations',
+    siteName: 'KVL Track by KVL Business Solutions',
     images: [
       {
-        url: 'https://gravity.trackalways.com/og-image.svg',
+        url: 'https://gravity.kvlbusinesssolutions.com/og-image.svg',
         width: 1200,
         height: 630,
         alt: 'KVL Track Family Safety App — Cities in India',
@@ -39,10 +39,10 @@ export const metadata: Metadata = {
     title: 'Family Safety App in India | Cities We Serve — KVL Track',
     description:
       'Real-time GPS tracking, SOS alerts & geofencing for families in 30+ Indian cities.',
-    images: ['https://gravity.trackalways.com/og-image.svg'],
+    images: ['https://gravity.kvlbusinesssolutions.com/og-image.svg'],
   },
   alternates: {
-    canonical: 'https://gravity.trackalways.com/locations',
+    canonical: 'https://gravity.kvlbusinesssolutions.com/locations',
   },
 }
 
@@ -166,13 +166,13 @@ const breadcrumbSchema = {
       '@type': 'ListItem',
       position: 1,
       name: 'Home',
-      item: 'https://gravity.trackalways.com',
+      item: 'https://gravity.kvlbusinesssolutions.com',
     },
     {
       '@type': 'ListItem',
       position: 2,
       name: 'Locations',
-      item: 'https://gravity.trackalways.com/locations',
+      item: 'https://gravity.kvlbusinesssolutions.com/locations',
     },
   ],
 }
@@ -188,7 +188,7 @@ const itemListSchema = {
     '@type': 'ListItem',
     position: i + 1,
     name: `Family Safety App in ${city.name}`,
-    url: `https://gravity.trackalways.com/locations/${city.slug}`,
+    url: `https://gravity.kvlbusinesssolutions.com/locations/${city.slug}`,
   })),
 }
 

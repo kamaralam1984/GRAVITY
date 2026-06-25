@@ -13,11 +13,11 @@ export const metadata: Metadata = {
     title: 'KVL Track vs Google Family Link — Which is Better for Indian Families?',
     description:
       'Compare KVL Track and Google Family Link. KVL Track offers SOS alerts, elderly care, geofencing, and more — features Google Family Link lacks.',
-    url: 'https://gravity.trackalways.com/compare/google-family',
-    siteName: 'KVL Track by Trackalways',
+    url: 'https://gravity.kvlbusinesssolutions.com/compare/google-family',
+    siteName: 'KVL Track by KVL Business Solutions',
     images: [
       {
-        url: 'https://gravity.trackalways.com/og-image.svg',
+        url: 'https://gravity.kvlbusinesssolutions.com/og-image.svg',
         width: 1200,
         height: 630,
         alt: 'KVL Track vs Google Family Link Comparison',
@@ -31,10 +31,10 @@ export const metadata: Metadata = {
     title: 'KVL Track vs Google Family Link — Which is Better for Indian Families?',
     description:
       'Compare KVL Track and Google Family Link. KVL Track offers SOS alerts, elderly care, geofencing, and more — features Google Family Link lacks.',
-    images: ['https://gravity.trackalways.com/og-image.svg'],
-    creator: '@trackalways',
+    images: ['https://gravity.kvlbusinesssolutions.com/og-image.svg'],
+    creator: '@kvlbusinesssolutions',
   },
-  alternates: { canonical: 'https://gravity.trackalways.com/compare/google-family' },
+  alternates: { canonical: 'https://gravity.kvlbusinesssolutions.com/compare/google-family' },
 }
 
 export default function Layout({ children }: { children: React.ReactNode }) {

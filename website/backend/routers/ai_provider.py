@@ -47,8 +47,8 @@ _PROVIDERS = [
         "url": "https://openrouter.ai/api/v1/chat/completions",
         "model": "meta-llama/llama-3.1-70b-instruct:free",
         "extra_headers": {
-            "HTTP-Referer": "https://trackalways.com",
-            "X-Title": "Trackalways KVL Track",
+            "HTTP-Referer": "https://kvlbusinesssolutions.com",
+            "X-Title": "KVL Track",
         },
     },
 ]

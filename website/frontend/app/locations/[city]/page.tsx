@@ -178,11 +178,11 @@ export async function generateMetadata({
     openGraph: {
       title: `Family Safety App in ${city.name} — KVL Track`,
       description: `Join families in ${city.name}, ${city.state} staying safe with KVL Track's real-time GPS tracking, SOS alerts, and smart geofencing.`,
-      url: `https://gravity.trackalways.com/locations/${params.city}`,
-      siteName: 'KVL Track by Trackalways',
+      url: `https://gravity.kvlbusinesssolutions.com/locations/${params.city}`,
+      siteName: 'KVL Track by KVL Business Solutions',
       images: [
         {
-          url: 'https://gravity.trackalways.com/og-image.svg',
+          url: 'https://gravity.kvlbusinesssolutions.com/og-image.svg',
           width: 1200,
           height: 630,
           alt: `KVL Track Family Safety App ${city.name}`,
@@ -195,10 +195,10 @@ export async function generateMetadata({
       card: 'summary_large_image',
       title: `KVL Track Family Safety App — ${city.name}`,
       description: `GPS tracking & SOS alerts for ${city.name} families.`,
-      images: ['https://gravity.trackalways.com/og-image.svg'],
+      images: ['https://gravity.kvlbusinesssolutions.com/og-image.svg'],
     },
     alternates: {
-      canonical: `https://gravity.trackalways.com/locations/${params.city}`,
+      canonical: `https://gravity.kvlbusinesssolutions.com/locations/${params.city}`,
     },
   }
 }
@@ -209,11 +209,11 @@ function buildLocalBusinessSchema(city: CityData, citySlug: string) {
   return {
     '@context': 'https://schema.org',
     '@type': 'LocalBusiness',
-    name: `KVL Track by Trackalways — ${city.name}`,
+    name: `KVL Track by KVL Business Solutions — ${city.name}`,
     description: `Family safety app serving ${city.name}, ${city.state}. Real-time GPS tracking, SOS alerts, and smart geofencing for ${city.population} residents.`,
-    url: `https://gravity.trackalways.com/locations/${citySlug}`,
-    logo: 'https://gravity.trackalways.com/logo.svg',
-    image: 'https://gravity.trackalways.com/og-image.svg',
+    url: `https://gravity.kvlbusinesssolutions.com/locations/${citySlug}`,
+    logo: 'https://gravity.kvlbusinesssolutions.com/logo.svg',
+    image: 'https://gravity.kvlbusinesssolutions.com/og-image.svg',
     areaServed: {
       '@type': 'City',
       name: city.name,
@@ -225,8 +225,8 @@ function buildLocalBusinessSchema(city: CityData, citySlug: string) {
     },
     parentOrganization: {
       '@type': 'Organization',
-      name: 'Trackalways Technologies Pvt Ltd',
-      url: 'https://gravity.trackalways.com',
+      name: 'KVL Business Solutions Technologies Pvt Ltd',
+      url: 'https://gravity.kvlbusinesssolutions.com',
     },
   }
 }
@@ -240,19 +240,19 @@ function buildBreadcrumbSchema(city: CityData, citySlug: string) {
         '@type': 'ListItem',
         position: 1,
         name: 'Home',
-        item: 'https://gravity.trackalways.com',
+        item: 'https://gravity.kvlbusinesssolutions.com',
       },
       {
         '@type': 'ListItem',
         position: 2,
         name: 'Locations',
-        item: 'https://gravity.trackalways.com/locations',
+        item: 'https://gravity.kvlbusinesssolutions.com/locations',
       },
       {
         '@type': 'ListItem',
         position: 3,
         name: city.name,
-        item: `https://gravity.trackalways.com/locations/${citySlug}`,
+        item: `https://gravity.kvlbusinesssolutions.com/locations/${citySlug}`,
       },
     ],
   }

@@ -312,7 +312,7 @@ export default function VenusPage() {
                 fontSize: "0.78rem", fontWeight: 700, letterSpacing: "0.12em",
                 textTransform: "uppercase", display: "inline-flex", alignItems: "center", gap: 6,
               }}>
-                <Car size={11} /> Trackalways Vehicle Tracking
+                <Car size={11} /> KVL Business Solutions Vehicle Tracking
               </span>
             </motion.div>
 

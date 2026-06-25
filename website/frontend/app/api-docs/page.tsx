@@ -169,7 +169,7 @@ const API_CATEGORIES = [
   },
 ];
 
-const AUTH_EXAMPLE = `curl -X POST https://api.gravity.trackalways.com/auth/login \\
+const AUTH_EXAMPLE = `curl -X POST https://api.gravity.kvlbusinesssolutions.com/auth/login \\
   -H "Content-Type: application/json" \\
   -d '{"email": "user@example.com", "password": "your_password"}'`;
 
@@ -184,7 +184,7 @@ const AUTH_RESPONSE = `{
   }
 }`;
 
-const LOCATION_EXAMPLE = `curl -X POST https://api.gravity.trackalways.com/location/update \\
+const LOCATION_EXAMPLE = `curl -X POST https://api.gravity.kvlbusinesssolutions.com/location/update \\
   -H "Authorization: Bearer YOUR_JWT_TOKEN" \\
   -H "Content-Type: application/json" \\
   -d '{
@@ -204,8 +204,8 @@ const RATE_LIMITS = [
 
 const SDKS = [
   { name: 'Python', icon: '🐍', install: 'pip install gravity-sdk', color: '#3776AB' },
-  { name: 'Node.js', icon: '⬢', install: 'npm install @trackalways/gravity', color: '#68A063' },
-  { name: 'React Native', icon: '⚛', install: 'npm install @trackalways/gravity-rn', color: '#61DAFB' },
+  { name: 'Node.js', icon: '⬢', install: 'npm install @kvlbusinesssolutions/gravity', color: '#68A063' },
+  { name: 'React Native', icon: '⚛', install: 'npm install @kvlbusinesssolutions/gravity-rn', color: '#61DAFB' },
   { name: 'Flutter', icon: '🎯', install: 'flutter pub add gravity_sdk', color: '#54C5F8' },
 ];
 
@@ -281,7 +281,7 @@ export default function ApiDocsPage() {
             <motion.div variants={fadeUp} style={{ marginBottom: 40 }}>
               <h2 style={{ fontSize: 32, fontWeight: 800, color: 'var(--text-primary)', fontFamily: "'Plus Jakarta Sans', sans-serif", marginBottom: 8 }}>API Reference</h2>
               <p style={{ fontSize: 15, color: 'var(--text-secondary)', fontFamily: "'Inter', sans-serif" }}>
-                Base URL: <code style={{ background: 'var(--bg-surface)', padding: '2px 8px', borderRadius: 6, fontSize: 13, fontFamily: "'JetBrains Mono', monospace", color: '#4B80F0' }}>https://api.gravity.trackalways.com</code>
+                Base URL: <code style={{ background: 'var(--bg-surface)', padding: '2px 8px', borderRadius: 6, fontSize: 13, fontFamily: "'JetBrains Mono', monospace", color: '#4B80F0' }}>https://api.gravity.kvlbusinesssolutions.com</code>
               </p>
             </motion.div>
             <div style={{ display: 'grid', gridTemplateColumns: '220px 1fr', gap: 32 }}>
@@ -397,7 +397,7 @@ export default function ApiDocsPage() {
                 Questions about the API? Our developer team responds within 24 hours on business days.
               </p>
               <div style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap' }}>
-                <a href="mailto:developers@trackalways.com" className="btn-gold"
+                <a href="mailto:developers@kvlbusinesssolutions.com" className="btn-gold"
                   style={{ padding: '14px 28px', borderRadius: 999, fontSize: 15, fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: 8, textDecoration: 'none', fontFamily: "'Inter', sans-serif' " }}>
                   Email Developer Support
                 </a>

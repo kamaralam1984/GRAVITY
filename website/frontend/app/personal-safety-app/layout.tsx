@@ -14,11 +14,11 @@ export const metadata: Metadata = {
     title: 'Personal Safety App — KVL Track | Solo Travel & Emergency Protection',
     description:
       'Stay safe alone with KVL Track. Journey sharing, SOS alerts, check-in reminders, fake call feature. The #1 personal safety app for solo travelers.',
-    url: 'https://gravity.trackalways.com/personal-safety-app',
-    siteName: 'KVL Track by Trackalways',
+    url: 'https://gravity.kvlbusinesssolutions.com/personal-safety-app',
+    siteName: 'KVL Track by KVL Business Solutions',
     images: [
       {
-        url: 'https://gravity.trackalways.com/og-image.svg',
+        url: 'https://gravity.kvlbusinesssolutions.com/og-image.svg',
         width: 1200,
         height: 630,
         alt: 'Personal Safety App — KVL Track',
@@ -32,10 +32,10 @@ export const metadata: Metadata = {
     title: 'Personal Safety App — KVL Track | Solo Travel & Emergency Protection',
     description:
       'Stay safe alone with KVL Track. Journey sharing, SOS alerts, check-in reminders, fake call feature. The #1 personal safety app for solo travelers.',
-    images: ['https://gravity.trackalways.com/og-image.svg'],
-    creator: '@trackalways',
+    images: ['https://gravity.kvlbusinesssolutions.com/og-image.svg'],
+    creator: '@kvlbusinesssolutions',
   },
-  alternates: { canonical: 'https://gravity.trackalways.com/personal-safety-app' },
+  alternates: { canonical: 'https://gravity.kvlbusinesssolutions.com/personal-safety-app' },
 }
 
 export default function Layout({ children }: { children: React.ReactNode }) {

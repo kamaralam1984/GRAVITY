@@ -52,7 +52,7 @@ export default async function Image() {
           What Pulls You Together
         </div>
         <div style={{ fontSize: 18, color: '#6B7280' }}>
-          Family Safety Platform by Trackalways
+          Family Safety Platform by KVL Business Solutions
         </div>
       </div>
     ),

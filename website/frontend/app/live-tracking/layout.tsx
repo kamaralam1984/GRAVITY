@@ -13,11 +13,11 @@ export const metadata: Metadata = {
     title: 'Live Location Tracking | Real-Time Family GPS — KVL Track',
     description:
       "See your family's live location on a map updated every 30 seconds. Works on Android & iOS without draining battery. India's most accurate family tracker.",
-    url: 'https://gravity.trackalways.com/live-tracking',
-    siteName: 'KVL Track by Trackalways',
+    url: 'https://gravity.kvlbusinesssolutions.com/live-tracking',
+    siteName: 'KVL Track by KVL Business Solutions',
     images: [
       {
-        url: 'https://gravity.trackalways.com/og-image.svg',
+        url: 'https://gravity.kvlbusinesssolutions.com/og-image.svg',
         width: 1200,
         height: 630,
         alt: 'KVL Track Live Location Tracking',
@@ -31,10 +31,10 @@ export const metadata: Metadata = {
     title: 'Live Location Tracking | Real-Time Family GPS — KVL Track',
     description:
       "See your family's live location on a map updated every 30 seconds. Works on Android & iOS without draining battery. India's most accurate family tracker.",
-    images: ['https://gravity.trackalways.com/og-image.svg'],
-    creator: '@trackalways',
+    images: ['https://gravity.kvlbusinesssolutions.com/og-image.svg'],
+    creator: '@kvlbusinesssolutions',
   },
-  alternates: { canonical: 'https://gravity.trackalways.com/live-tracking' },
+  alternates: { canonical: 'https://gravity.kvlbusinesssolutions.com/live-tracking' },
 }
 
 export default function Layout({ children }: { children: React.ReactNode }) {

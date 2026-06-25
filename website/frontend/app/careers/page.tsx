@@ -388,7 +388,7 @@ export default function CareersPage() {
                   See Open Roles <ArrowRight size={16} />
                 </a>
                 <a
-                  href="mailto:careers@trackalways.com"
+                  href="mailto:careers@kvlbusinesssolutions.com"
                   style={{
                     display: 'inline-flex',
                     alignItems: 'center',
@@ -633,7 +633,7 @@ export default function CareersPage() {
                     marginBottom: 12,
                   }}
                 >
-                  Trackalways Jobs · Family Safety Startup India
+                  KVL Business Solutions Jobs · Family Safety Startup India
                 </p>
                 <h2
                   style={{
@@ -737,7 +737,7 @@ export default function CareersPage() {
                         </div>
 
                         <a
-                          href="mailto:careers@trackalways.com"
+                          href="mailto:careers@kvlbusinesssolutions.com"
                           style={{
                             display: 'inline-flex',
                             alignItems: 'center',
@@ -1072,7 +1072,7 @@ export default function CareersPage() {
                 marginBottom: 14,
               }}
             >
-              KVL Track Careers · Trackalways Jobs
+              KVL Track Careers · KVL Business Solutions Jobs
             </p>
             <h2
               style={{
@@ -1105,7 +1105,7 @@ export default function CareersPage() {
               }}
             >
               <a
-                href="mailto:careers@trackalways.com"
+                href="mailto:careers@kvlbusinesssolutions.com"
                 style={{
                   display: 'inline-flex',
                   alignItems: 'center',
@@ -1143,7 +1143,7 @@ export default function CareersPage() {
               </Link>
             </div>
             <p style={{ marginTop: 16, fontSize: 13, color: 'var(--text-muted)' }}>
-              careers@trackalways.com — we respond to every application within 5 business days.
+              careers@kvlbusinesssolutions.com — we respond to every application within 5 business days.
             </p>
           </FadeIn>
         </section>

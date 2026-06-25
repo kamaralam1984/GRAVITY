@@ -14,11 +14,11 @@ export const metadata: Metadata = {
     title: 'SOS Emergency App — KVL Track | One-Tap Emergency Alert with GPS',
     description:
       'Instant SOS emergency alerts with GPS location. One tap sends your location to family + emergency services. Download the fastest SOS app.',
-    url: 'https://gravity.trackalways.com/sos-emergency-app',
-    siteName: 'KVL Track by Trackalways',
+    url: 'https://gravity.kvlbusinesssolutions.com/sos-emergency-app',
+    siteName: 'KVL Track by KVL Business Solutions',
     images: [
       {
-        url: 'https://gravity.trackalways.com/og-image.svg',
+        url: 'https://gravity.kvlbusinesssolutions.com/og-image.svg',
         width: 1200,
         height: 630,
         alt: 'SOS Emergency App — KVL Track',
@@ -32,10 +32,10 @@ export const metadata: Metadata = {
     title: 'SOS Emergency App — KVL Track | One-Tap Emergency Alert with GPS',
     description:
       'Instant SOS emergency alerts with GPS location. One tap sends your location to family + emergency services. Download the fastest SOS app.',
-    images: ['https://gravity.trackalways.com/og-image.svg'],
-    creator: '@trackalways',
+    images: ['https://gravity.kvlbusinesssolutions.com/og-image.svg'],
+    creator: '@kvlbusinesssolutions',
   },
-  alternates: { canonical: 'https://gravity.trackalways.com/sos-emergency-app' },
+  alternates: { canonical: 'https://gravity.kvlbusinesssolutions.com/sos-emergency-app' },
 }
 
 export default function Layout({ children }: { children: React.ReactNode }) {

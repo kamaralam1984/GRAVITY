@@ -154,8 +154,8 @@ const AUTHORS: Author[] = [
     longBio:
       "Priya Sharma brings both professional expertise and lived experience to every article she writes. After seven years as a child welfare officer with the Maharashtra Department of Women and Child Development, she transitioned into technology journalism with a singular focus: helping Indian families use digital tools to create safer, less anxious homes.\n\nShe holds a Master's degree in Child Development from SNDT Women's University Mumbai, and her research has been cited in Maharashtra state policy documents on child safety. As a mother of two school-age children in Pune, she tests every feature she writes about in her own family's daily life.\n\nPriya is a sought-after speaker at parenting conferences across India and contributes regularly to national publications on the intersection of technology, safety, and child psychology. Her philosophy is simple: the best safety technology is the kind that becomes invisible — so reliable and non-intrusive that families stop thinking about it as technology and start thinking of it as trust.",
     expertise: ['Child Safety', 'Geofencing', 'SOS Alerts', 'Family Consent Models', 'Urban Parenting'],
-    twitter: 'https://twitter.com/trackalways',
-    linkedin: 'https://linkedin.com/company/trackalways',
+    twitter: 'https://twitter.com/kvlbusinesssolutions',
+    linkedin: 'https://linkedin.com/company/kvlbusinesssolutions',
     totalReads: '24K',
     avgReadTime: '4.5 min',
   },
@@ -171,8 +171,8 @@ const AUTHORS: Author[] = [
     longBio:
       "Dr. Ananya Mehta completed her PhD in Clinical Psychology from the National Institute of Mental Health and Neurosciences (NIMHANS), Bengaluru, where her doctoral thesis examined the relationship between parental anxiety and adolescent autonomy development in Indian urban families. She subsequently completed a fellowship in Child and Adolescent Psychiatry at AIIMS New Delhi.\n\nIn her clinical practice, Dr. Mehta sees families across a wide spectrum of socioeconomic backgrounds, and has observed first-hand how the anxiety of not knowing where children are manifests in family dynamics, marital stress, and children's own sense of security. This observation led her to research how location-sharing technology, when implemented with psychological principles in mind, can become a therapeutic tool rather than a surveillance device.\n\nShe serves on the advisory board of the Indian Association of Child and Adolescent Mental Health and is a consultant to several EdTech and family safety startups on the psychological dimensions of their products. She writes for the KVL Track Journal to bridge the gap between clinical research and practical parenting guidance.",
     expertise: ['Child Psychology', 'Adolescent Development', 'Parental Anxiety', 'Elder Cognition', 'Family Dynamics'],
-    twitter: 'https://twitter.com/trackalways',
-    linkedin: 'https://linkedin.com/company/trackalways',
+    twitter: 'https://twitter.com/kvlbusinesssolutions',
+    linkedin: 'https://linkedin.com/company/kvlbusinesssolutions',
     totalReads: '41K',
     avgReadTime: '7.5 min',
   },
@@ -188,8 +188,8 @@ const AUTHORS: Author[] = [
     longBio:
       "Rahul Verma spent ten years as a technology journalist, including five years as a senior editor at India's leading consumer technology publication, before pivoting to focus exclusively on the intersection of technology and family safety. During his journalism career, he covered everything from smartphone launches to enterprise cybersecurity, but found his most meaningful work in explaining complex technical concepts to non-technical audiences.\n\nHis interest in location technology began with a personal experience: his elderly father was diagnosed with early-stage dementia, and Rahul spent months researching the technical landscape of tracking solutions before settling on one that balanced accuracy, battery life, and dignity. That experience made him realise how poorly the technical realities of location technology are understood by the people who need it most.\n\nRahul holds a degree in Computer Science from BITS Pilani and a Post-Graduate Diploma in Journalism from the Asian College of Journalism, Chennai. He lives in Bengaluru with his wife and their young son, and he brings both his technical background and his role as a parent to every article he writes for the KVL Track Journal.",
     expertise: ['GPS Technology', 'Sensor Fusion', 'Battery Optimisation', 'Consumer Tech', 'Privacy Engineering'],
-    twitter: 'https://twitter.com/trackalways',
-    linkedin: 'https://linkedin.com/company/trackalways',
+    twitter: 'https://twitter.com/kvlbusinesssolutions',
+    linkedin: 'https://linkedin.com/company/kvlbusinesssolutions',
     totalReads: '18K',
     avgReadTime: '6 min',
   },
@@ -205,8 +205,8 @@ const AUTHORS: Author[] = [
     longBio:
       "Kavitha Krishnan began her career as a public health policy analyst at the National Health Systems Resource Centre in New Delhi, where she worked on maternal and child health programme evaluation across five states. This grounding in evidence-based public health gave her a rigorous, data-first approach that distinguishes her writing from the wellness content landscape.\n\nAfter transitioning to journalism, she spent five years covering digital health for a pan-Asian publication, reporting on telemedicine rollouts, health app regulation, and the growing intersection of consumer technology and clinical outcomes. She is particularly interested in how digital tools can serve populations that traditional healthcare systems have historically underserved — rural elderly, migrant workers, and families separated by urban migration.\n\nKavitha's approach to privacy and data governance is informed by her policy background. She was one of the first Indian health journalists to report in depth on the implications of the DPDP Act 2023 for health and safety applications, and she serves as an informal advisor to several startups on navigating the regulatory landscape. She holds a Master of Public Health from the Public Health Foundation of India.",
     expertise: ['Digital Health', 'DPDP Compliance', 'Privacy Policy', 'Health Data', 'Public Health'],
-    twitter: 'https://twitter.com/trackalways',
-    linkedin: 'https://linkedin.com/company/trackalways',
+    twitter: 'https://twitter.com/kvlbusinesssolutions',
+    linkedin: 'https://linkedin.com/company/kvlbusinesssolutions',
     totalReads: '12K',
     avgReadTime: '5 min',
   },
@@ -222,8 +222,8 @@ const AUTHORS: Author[] = [
     longBio:
       "Arjun Patel has dedicated his career to understanding and reducing the human cost of road accidents in India — a country that accounts for over 11% of global road accident deaths despite having only 1% of the world's vehicles. He worked for four years as a researcher at the National Road Safety Council, contributing to the National Road Safety Policy and India's implementation of the Decade of Action for Road Safety.\n\nHe subsequently joined iRAP (the International Road Assessment Programme) as a country analyst for India and Sri Lanka, conducting safety assessments of highway corridors and working with state governments on infrastructure intervention prioritisation. In parallel, he has worked with several NGOs on driver behaviour programmes, particularly focusing on distracted driving, fatigue detection, and the role of mobile phones in accident causation.\n\nArjun became interested in family safety technology after observing that crash detection and automatic emergency notification systems — standard in premium European vehicles — were virtually unavailable to the vast majority of Indian road users. He writes for the KVL Track Journal to help Indian families understand how smartphone-based crash detection can partially bridge this safety gap while India's vehicle safety standards continue to evolve.",
     expertise: ['Road Safety', 'Crash Detection', 'Accident Statistics', 'Emergency Response', 'Driver Behaviour'],
-    twitter: 'https://twitter.com/trackalways',
-    linkedin: 'https://linkedin.com/company/trackalways',
+    twitter: 'https://twitter.com/kvlbusinesssolutions',
+    linkedin: 'https://linkedin.com/company/kvlbusinesssolutions',
     totalReads: '9K',
     avgReadTime: '5.5 min',
   },
@@ -239,8 +239,8 @@ const AUTHORS: Author[] = [
     longBio:
       "Sunita Agarwal's journey into elder care advocacy began not in a classroom but in a moment of crisis: her own mother, living alone in Jaipur while Sunita worked in Mumbai, fell at home and was not found for over three hours. The experience was transformative. Sunita left her corporate human resources career to complete a Master's degree in Social Work with a specialisation in Gerontology at the Tata Institute of Social Sciences.\n\nOver the following fifteen years, she built a career at the intersection of social work, policy advocacy, and technology. She has consulted for state governments on elder care programme design, worked with HelpAge India on their digital literacy initiatives for seniors, and served as a resource person for the Ministry of Social Justice and Empowerment's National Policy for Senior Citizens review process.\n\nSunita is a fierce advocate for elder dignity in technology design. She consults with technology companies — including KVL Track — to ensure that products designed for elderly users are genuinely usable by elderly users, not just by their adult children. Her central argument: technology that infantilises elders creates resistance and non-adoption; technology that respects their agency creates partnership. She lives in Delhi with her husband and their teenage son, and speaks regularly at gerontology conferences across South Asia.",
     expertise: ['Elder Care', 'Gerontology', 'Dignity-First Design', 'Fall Detection', 'Independent Living'],
-    twitter: 'https://twitter.com/trackalways',
-    linkedin: 'https://linkedin.com/company/trackalways',
+    twitter: 'https://twitter.com/kvlbusinesssolutions',
+    linkedin: 'https://linkedin.com/company/kvlbusinesssolutions',
     totalReads: '15K',
     avgReadTime: '6.5 min',
   },
@@ -293,7 +293,7 @@ export default function AuthorPage({ params }: { params: { slug: string } }) {
   return (
     <>
       <JsonLd data={buildPersonSchema({ name: author.name, slug: author.slug, bio: author.shortBio, role: author.role })} />
-      <JsonLd data={buildBreadcrumbSchema([{name:'Home',url:'https://gravity.trackalways.com'},{name:'Blog',url:'https://gravity.trackalways.com/blog'},{name:author.name,url:'https://gravity.trackalways.com/blog/authors/'+author.slug}])} />
+      <JsonLd data={buildBreadcrumbSchema([{name:'Home',url:'https://gravity.kvlbusinesssolutions.com'},{name:'Blog',url:'https://gravity.kvlbusinesssolutions.com/blog'},{name:author.name,url:'https://gravity.kvlbusinesssolutions.com/blog/authors/'+author.slug}])} />
       <Navbar />
 
       <main style={{ background: 'var(--bg)', minHeight: '100vh' }}>

@@ -1619,7 +1619,7 @@ export default function SignupPage() {
           textAlign: 'center', position: 'relative', zIndex: 10,
         }}
       >
-        © 2025 Trackalways Technologies — protecting families everywhere
+        © 2025 KVL Business Solutions Technologies — protecting families everywhere
       </motion.p>
 
       {/* Keyframe for spin */}

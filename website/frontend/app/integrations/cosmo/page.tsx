@@ -304,7 +304,7 @@ export default function CosmoPage() {
                 fontSize: "0.78rem", fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase",
                 display: "inline-flex", alignItems: "center", gap: 6,
               }}>
-                <Camera size={11} /> Trackalways AI Dashcam
+                <Camera size={11} /> KVL Business Solutions AI Dashcam
               </span>
             </motion.div>
 

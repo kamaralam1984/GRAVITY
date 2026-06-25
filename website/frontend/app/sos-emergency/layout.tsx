@@ -13,11 +13,11 @@ export const metadata: Metadata = {
     title: 'SOS Emergency Button | One-Press Family Alert — KVL Track',
     description:
       'In an emergency, one press sends GPS location to your entire family circle. Works offline, on 2G, anywhere in India. Life-saving SOS for the whole family.',
-    url: 'https://gravity.trackalways.com/sos-emergency',
-    siteName: 'KVL Track by Trackalways',
+    url: 'https://gravity.kvlbusinesssolutions.com/sos-emergency',
+    siteName: 'KVL Track by KVL Business Solutions',
     images: [
       {
-        url: 'https://gravity.trackalways.com/og-image.svg',
+        url: 'https://gravity.kvlbusinesssolutions.com/og-image.svg',
         width: 1200,
         height: 630,
         alt: 'KVL Track SOS Emergency Button',
@@ -31,10 +31,10 @@ export const metadata: Metadata = {
     title: 'SOS Emergency Button | One-Press Family Alert — KVL Track',
     description:
       'In an emergency, one press sends GPS location to your entire family circle. Works offline, on 2G, anywhere in India. Life-saving SOS for the whole family.',
-    images: ['https://gravity.trackalways.com/og-image.svg'],
-    creator: '@trackalways',
+    images: ['https://gravity.kvlbusinesssolutions.com/og-image.svg'],
+    creator: '@kvlbusinesssolutions',
   },
-  alternates: { canonical: 'https://gravity.trackalways.com/sos-emergency' },
+  alternates: { canonical: 'https://gravity.kvlbusinesssolutions.com/sos-emergency' },
 }
 
 export default function Layout({ children }: { children: React.ReactNode }) {

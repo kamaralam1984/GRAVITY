@@ -384,7 +384,7 @@ export default function Navbar() {
           <button
             onClick={() => scrollToSection('#hero')}
             className="flex items-center gap-2.5 group focus:outline-none shrink-0"
-            aria-label="Trackalways KVL Track — scroll to top"
+            aria-label="KVL Track — scroll to top"
           >
             <motion.div
               whileHover={{ scale: 1.08 }}
@@ -405,7 +405,7 @@ export default function Navbar() {
                   color: isDark ? 'var(--text-muted)' : 'var(--text-muted)',
                 }}
               >
-                TRACKALWAYS
+                KVL BUSINESS SOLUTIONS
               </span>
               <span
                 className="text-[17px] font-extrabold tracking-wide transition-colors"
@@ -653,7 +653,7 @@ export default function Navbar() {
                 <div className="flex flex-col leading-none">
                   <span className="text-[8px] font-semibold tracking-[0.22em] uppercase"
                     style={{ color: 'var(--text-muted)', fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
-                    TRACKALWAYS
+                    KVL BUSINESS SOLUTIONS
                   </span>
                   <span className="text-[17px] font-extrabold tracking-wide"
                     style={{ color: 'var(--gold)', fontFamily: "'Plus Jakarta Sans', sans-serif" }}>

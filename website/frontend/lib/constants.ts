@@ -1,5 +1,5 @@
 /* ─────────────────────────────────────────────────────────────
-   Trackalways KVL Track — Shared Constants
+   KVL Track — Shared Constants
    ───────────────────────────────────────────────────────────── */
 
 /* ── Nav Links ──────────────────────────────────────────────── */
@@ -263,7 +263,7 @@ export const PRICING_PLANS: PricingPlan[] = [
       'Everything in Family Plus',
       'Smart home integration (Titan)',
       'Vehicle tracking (Venus)',
-      'Trackalways ecosystem',
+      'KVL Business Solutions ecosystem',
       'Priority 24/7 support',
       'API access',
     ],

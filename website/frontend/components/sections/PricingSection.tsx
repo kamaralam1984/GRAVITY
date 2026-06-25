@@ -189,7 +189,7 @@ const PLANS: PlanTier[] = [
       'Emergency broadcast mode',
     ],
     cta: 'Contact Sales',
-    ctaHref: 'mailto:schools@trackalways.com',
+    ctaHref: 'mailto:schools@kvlbusinesssolutions.com',
     accentColor: '#8B5CF6',
     accentRgb: '139,92,246',
     isFeatured: false,

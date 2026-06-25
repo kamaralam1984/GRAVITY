@@ -79,10 +79,10 @@ function YouTubeIcon() {
 }
 
 const SOCIAL_LINKS = [
-  { Icon: InstagramIcon, label: 'Instagram',  href: 'https://instagram.com/trackalways' },
-  { Icon: TwitterIcon,   label: 'Twitter / X', href: 'https://twitter.com/trackalways' },
-  { Icon: LinkedInIcon,  label: 'LinkedIn',    href: 'https://linkedin.com/company/trackalways' },
-  { Icon: YouTubeIcon,   label: 'YouTube',     href: 'https://youtube.com/@trackalways' },
+  { Icon: InstagramIcon, label: 'Instagram',  href: 'https://instagram.com/kvlbusinesssolutions' },
+  { Icon: TwitterIcon,   label: 'Twitter / X', href: 'https://twitter.com/kvlbusinesssolutions' },
+  { Icon: LinkedInIcon,  label: 'LinkedIn',    href: 'https://linkedin.com/company/kvlbusinesssolutions' },
+  { Icon: YouTubeIcon,   label: 'YouTube',     href: 'https://youtube.com/@kvlbusinesssolutions' },
 ]
 
 /* ─────────────── Motion variants ─────────────── */
@@ -286,7 +286,7 @@ export default function Footer() {
                   className="text-[10px] font-semibold tracking-[0.2em] uppercase"
                   style={{ color: 'var(--text-muted)' }}
                 >
-                  TRACKALWAYS
+                  KVL BUSINESS SOLUTIONS
                 </span>
                 <span
                   className="text-[18px] font-extrabold tracking-wide"
@@ -367,7 +367,7 @@ export default function Footer() {
         >
           {/* Copyright */}
           <span style={{ color: 'var(--text-muted)' }}>
-            © 2025 Trackalways. All rights reserved.
+            © 2025 KVL Business Solutions. All rights reserved.
           </span>
 
           {/* Made with love */}

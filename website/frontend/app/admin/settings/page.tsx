@@ -49,10 +49,10 @@ const NAV_TABS: { id: Tab; label: string; icon: React.ReactNode }[] = [
 ]
 
 const TEAM_MEMBERS: TeamMember[] = [
-  { name: "Prateek Jain",  email: "prateek@trackalways.com", role: "Super Admin", lastActive: "Now",       status: "Active" },
-  { name: "Anita Sharma",  email: "anita@trackalways.com",   role: "Admin",       lastActive: "2hr ago",   status: "Active" },
-  { name: "Rohit Kumar",   email: "rohit@trackalways.com",   role: "Moderator",   lastActive: "Yesterday", status: "Active" },
-  { name: "Sunita Patel",  email: "sunita@trackalways.com",  role: "Viewer",      lastActive: "3d ago",    status: "Active" },
+  { name: "Prateek Jain",  email: "prateek@kvlbusinesssolutions.com", role: "Super Admin", lastActive: "Now",       status: "Active" },
+  { name: "Anita Sharma",  email: "anita@kvlbusinesssolutions.com",   role: "Admin",       lastActive: "2hr ago",   status: "Active" },
+  { name: "Rohit Kumar",   email: "rohit@kvlbusinesssolutions.com",   role: "Moderator",   lastActive: "Yesterday", status: "Active" },
+  { name: "Sunita Patel",  email: "sunita@kvlbusinesssolutions.com",  role: "Viewer",      lastActive: "3d ago",    status: "Active" },
 ]
 
 const API_KEYS: ApiKey[] = [
@@ -200,8 +200,8 @@ function SectionTitle({ children }: { children: React.ReactNode }) {
 /* ─────────────────────────── tab: General ─────────────────────────── */
 function GeneralTab() {
   const [appName, setAppName] = useState("KVL Track Family Safety")
-  const [company, setCompany] = useState("Trackalways Technologies Pvt Ltd")
-  const [email, setEmail] = useState("support@trackalways.com")
+  const [company, setCompany] = useState("KVL Business Solutions Technologies Pvt Ltd")
+  const [email, setEmail] = useState("support@kvlbusinesssolutions.com")
   const [timezone, setTimezone] = useState("Asia/Kolkata (IST)")
   const [maintenance, setMaintenance] = useState(false)
 
@@ -318,7 +318,7 @@ function TeamTab() {
                 style={{ background: "var(--bg-surface2)", border: "1px solid var(--border)" }}
               >
                 <div className="flex-1">
-                  <InputField label="Email Address" value={inviteEmail} onChange={setInviteEmail} type="email" placeholder="colleague@trackalways.com" />
+                  <InputField label="Email Address" value={inviteEmail} onChange={setInviteEmail} type="email" placeholder="colleague@kvlbusinesssolutions.com" />
                 </div>
                 <div className="w-40">
                   <SelectField label="Role" value={inviteRole} options={["Super Admin", "Admin", "Moderator", "Viewer"]} onChange={setInviteRole} />

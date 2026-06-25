@@ -13,11 +13,11 @@ export const metadata: Metadata = {
     title: 'Driving Safety Score & Trip Tracking — KVL Track',
     description:
       'Monitor driving behaviour, get harsh braking alerts, track routes, and receive notifications when family members arrive safely. India road safety app.',
-    url: 'https://gravity.trackalways.com/driving-safety',
-    siteName: 'KVL Track by Trackalways',
+    url: 'https://gravity.kvlbusinesssolutions.com/driving-safety',
+    siteName: 'KVL Track by KVL Business Solutions',
     images: [
       {
-        url: 'https://gravity.trackalways.com/og-image.svg',
+        url: 'https://gravity.kvlbusinesssolutions.com/og-image.svg',
         width: 1200,
         height: 630,
         alt: 'KVL Track Driving Safety Score',
@@ -31,10 +31,10 @@ export const metadata: Metadata = {
     title: 'Driving Safety Score & Trip Tracking — KVL Track',
     description:
       'Monitor driving behaviour, get harsh braking alerts, track routes, and receive notifications when family members arrive safely. India road safety app.',
-    images: ['https://gravity.trackalways.com/og-image.svg'],
-    creator: '@trackalways',
+    images: ['https://gravity.kvlbusinesssolutions.com/og-image.svg'],
+    creator: '@kvlbusinesssolutions',
   },
-  alternates: { canonical: 'https://gravity.trackalways.com/driving-safety' },
+  alternates: { canonical: 'https://gravity.kvlbusinesssolutions.com/driving-safety' },
 }
 
 export default function Layout({ children }: { children: React.ReactNode }) {

@@ -71,7 +71,7 @@ export function openRazorpayCheckout(options: {
     key: options.keyId || process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID,
     amount: options.amount,
     currency: options.currency,
-    name: 'TRACKALWAYS KVL TRACK',
+    name: 'KVL TRACK',
     description: options.planName,
     image: '/logo.png',
     order_id: options.orderId,

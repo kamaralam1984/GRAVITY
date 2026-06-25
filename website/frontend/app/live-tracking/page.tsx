@@ -707,7 +707,7 @@ function LiveTrackingInner() {
           <h2 className="text-2xl font-bold text-white text-center mb-8">How It Works</h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
             {[
-              { step: '01', title: 'Open on your phone', desc: 'Go to gravity.trackalways.com/track on any smartphone — no app install needed.', icon: Smartphone },
+              { step: '01', title: 'Open on your phone', desc: 'Go to gravity.kvlbusinesssolutions.com/track on any smartphone — no app install needed.', icon: Smartphone },
               { step: '02', title: 'Start sharing', desc: 'Tap "Start Sharing Location". Your GPS updates are sent every 8 seconds.', icon: Navigation },
               { step: '03', title: 'Family sees you live', desc: 'Everyone in your circle sees your pin move on this map in real-time.', icon: Users },
             ].map(({ step, title, desc, icon: Icon }) => (

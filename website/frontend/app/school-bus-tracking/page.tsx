@@ -89,7 +89,7 @@ const FAQS = [
   },
   {
     q: 'Do I need to install anything on the bus?',
-    a: 'Your school or bus operator needs to install a KVL Track-compatible GPS tracker in the bus. KVL Track provides the hardware (Trackalways Titan GPS unit) to schools at a subsidised rate through our school partnership programme. If your school is not yet part of the programme, contact us — we can onboard new schools within 5 business days. Parents do not install anything on the bus.',
+    a: 'Your school or bus operator needs to install a KVL Track-compatible GPS tracker in the bus. KVL Track provides the hardware (KVL Business Solutions Titan GPS unit) to schools at a subsidised rate through our school partnership programme. If your school is not yet part of the programme, contact us — we can onboard new schools within 5 business days. Parents do not install anything on the bus.',
   },
   {
     q: 'Can I see the bus route on a map?',

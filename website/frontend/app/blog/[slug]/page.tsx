@@ -1052,7 +1052,7 @@ function ShareButtons({ title, slug }: { title: string; slug: string }) {
   const url =
     typeof window !== 'undefined'
       ? window.location.href
-      : `https://trackalways.com/blog/${slug}`;
+      : `https://kvlbusinesssolutions.com/blog/${slug}`;
 
   const shareUrl = encodeURIComponent(url);
   const shareTitle = encodeURIComponent(title);
@@ -1199,7 +1199,7 @@ export default function BlogPostPage({ params }: { params: { slug: string } }) {
   return (
     <>
       <JsonLd data={buildArticleSchema({ title: post.title, excerpt: post.excerpt, author: post.author, date: post.date, slug: post.slug, category: post.category })} />
-      <JsonLd data={buildBreadcrumbSchema([{name:'Home',url:'https://gravity.trackalways.com'},{name:'Blog',url:'https://gravity.trackalways.com/blog'},{name:post.title,url:'https://gravity.trackalways.com/blog/'+post.slug}])} />
+      <JsonLd data={buildBreadcrumbSchema([{name:'Home',url:'https://gravity.kvlbusinesssolutions.com'},{name:'Blog',url:'https://gravity.kvlbusinesssolutions.com/blog'},{name:post.title,url:'https://gravity.kvlbusinesssolutions.com/blog/'+post.slug}])} />
       <Navbar />
 
       <main style={{ background: 'var(--bg)', minHeight: '100vh' }}>

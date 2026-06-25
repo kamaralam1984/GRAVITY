@@ -43,7 +43,7 @@ const COMPARISON_ROWS = [
   { feature: "Wearable Support", gravity: "yes", life360: "no", gravityNote: "Apple Watch + Galaxy Watch", life360Note: "Very limited" },
   { feature: "Medication Reminders", gravity: "yes", life360: "no", gravityNote: "Full reminder system", life360Note: "Not available" },
   { feature: "Child Safety Suite", gravity: "yes", life360: "partial", gravityNote: "Complete feature set", life360Note: "Basic only" },
-  { feature: "Smart Home Integration", gravity: "yes", life360: "no", gravityNote: "Trackalways ecosystem", life360Note: "Not available" },
+  { feature: "Smart Home Integration", gravity: "yes", life360: "no", gravityNote: "KVL Business Solutions ecosystem", life360Note: "Not available" },
   { feature: "India-specific Features", gravity: "yes", life360: "no", gravityNote: "UPI, Indian cities", life360Note: "Limited India support" },
   { feature: "Monthly Price (family)", gravity: "yes", life360: "no", gravityNote: "From ₹199/month", life360Note: "₹800+ per month" },
 ];

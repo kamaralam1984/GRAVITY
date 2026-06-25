@@ -13,11 +13,11 @@ export const metadata: Metadata = {
     title: 'Pricing Plans | KVL Track Family Safety App',
     description:
       'Choose the perfect KVL Track plan for your family. Free forever plan + Pro at ₹499/mo + Family at ₹999/mo + Enterprise. 30-day money-back guarantee.',
-    url: 'https://gravity.trackalways.com/pricing',
-    siteName: 'KVL Track by Trackalways',
+    url: 'https://gravity.kvlbusinesssolutions.com/pricing',
+    siteName: 'KVL Track by KVL Business Solutions',
     images: [
       {
-        url: 'https://gravity.trackalways.com/og-image.svg',
+        url: 'https://gravity.kvlbusinesssolutions.com/og-image.svg',
         width: 1200,
         height: 630,
         alt: 'KVL Track Pricing Plans',
@@ -31,10 +31,10 @@ export const metadata: Metadata = {
     title: 'Pricing Plans | KVL Track Family Safety App',
     description:
       'Choose the perfect KVL Track plan for your family. Free forever plan + Pro at ₹499/mo + Family at ₹999/mo + Enterprise. 30-day money-back guarantee.',
-    images: ['https://gravity.trackalways.com/og-image.svg'],
-    creator: '@trackalways',
+    images: ['https://gravity.kvlbusinesssolutions.com/og-image.svg'],
+    creator: '@kvlbusinesssolutions',
   },
-  alternates: { canonical: 'https://gravity.trackalways.com/pricing' },
+  alternates: { canonical: 'https://gravity.kvlbusinesssolutions.com/pricing' },
 }
 
 export default function Layout({ children }: { children: React.ReactNode }) {

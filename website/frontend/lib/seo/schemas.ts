@@ -1,4 +1,4 @@
-const BASE_URL = 'https://gravity.trackalways.com'
+const BASE_URL = 'https://gravity.kvlbusinesssolutions.com'
 
 /* ── Organization ─────────────────────────────────────────────────────────── */
 export function buildOrganizationSchema() {
@@ -6,8 +6,8 @@ export function buildOrganizationSchema() {
     '@context': 'https://schema.org',
     '@type': 'Organization',
     '@id': `${BASE_URL}/#organization`,
-    name: 'Trackalways Technologies Pvt Ltd',
-    alternateName: 'KVL Track by Trackalways',
+    name: 'KVL Business Solutions Technologies Pvt Ltd',
+    alternateName: 'KVL Track by KVL Business Solutions',
     url: BASE_URL,
     logo: {
       '@type': 'ImageObject',
@@ -17,7 +17,7 @@ export function buildOrganizationSchema() {
     },
     foundingDate: '2022',
     description:
-      "Trackalways Technologies Pvt Ltd builds KVL Track — India's family safety operating system. Real-time location sharing, SOS alerts, geofencing, elderly care, and AI insights for 50,000+ families.",
+      "KVL Business Solutions Technologies Pvt Ltd builds KVL Track — India's family safety operating system. Real-time location sharing, SOS alerts, geofencing, elderly care, and AI insights for 50,000+ families.",
     slogan: 'What Pulls You Together',
     address: {
       '@type': 'PostalAddress',
@@ -29,17 +29,17 @@ export function buildOrganizationSchema() {
       {
         '@type': 'ContactPoint',
         contactType: 'customer support',
-        email: 'support@trackalways.com',
+        email: 'support@kvlbusinesssolutions.com',
         availableLanguage: ['English', 'Hindi'],
         areaServed: 'IN',
       },
     ],
     sameAs: [
-      'https://www.instagram.com/trackalways',
-      'https://www.linkedin.com/company/trackalways',
-      'https://twitter.com/trackalways',
-      'https://www.facebook.com/trackalways',
-      'https://www.youtube.com/@trackalways',
+      'https://www.instagram.com/kvlbusinesssolutions',
+      'https://www.linkedin.com/company/kvlbusinesssolutions',
+      'https://twitter.com/kvlbusinesssolutions',
+      'https://www.facebook.com/kvlbusinesssolutions',
+      'https://www.youtube.com/@kvlbusinesssolutions',
     ],
     numberOfEmployees: {
       '@type': 'QuantitativeValue',
@@ -56,7 +56,7 @@ export function buildWebSiteSchema() {
     '@type': 'WebSite',
     '@id': `${BASE_URL}/#website`,
     url: BASE_URL,
-    name: 'KVL Track by Trackalways',
+    name: 'KVL Track by KVL Business Solutions',
     description:
       'Family safety app for India — real-time location sharing, SOS alerts, geofencing, elderly care, and AI family insights.',
     publisher: {
@@ -81,7 +81,7 @@ export function buildSoftwareApplicationSchema() {
     '@type': 'SoftwareApplication',
     '@id': `${BASE_URL}/#software`,
     name: 'KVL Track',
-    alternateName: 'KVL Track by Trackalways',
+    alternateName: 'KVL Track by KVL Business Solutions',
     url: BASE_URL,
     downloadUrl: `${BASE_URL}/download`,
     applicationCategory: 'LifestyleApplication',
@@ -254,7 +254,7 @@ export function buildProductSchema(plan: {
     description: plan.description,
     brand: {
       '@type': 'Brand',
-      name: 'KVL Track by Trackalways',
+      name: 'KVL Track by KVL Business Solutions',
     },
     url: `${BASE_URL}/pricing`,
     image: `${BASE_URL}/og-image.png`,

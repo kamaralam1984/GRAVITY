@@ -14,11 +14,11 @@ export const metadata: Metadata = {
     title: 'Family Locator App — KVL Track | Find Any Family Member Instantly',
     description:
       "Find any family member's real-time location instantly with KVL Track Family Locator. GPS accuracy within 3 meters. Works in 127 countries.",
-    url: 'https://gravity.trackalways.com/family-locator-app',
-    siteName: 'KVL Track by Trackalways',
+    url: 'https://gravity.kvlbusinesssolutions.com/family-locator-app',
+    siteName: 'KVL Track by KVL Business Solutions',
     images: [
       {
-        url: 'https://gravity.trackalways.com/og-image.svg',
+        url: 'https://gravity.kvlbusinesssolutions.com/og-image.svg',
         width: 1200,
         height: 630,
         alt: 'Family Locator App — KVL Track',
@@ -32,10 +32,10 @@ export const metadata: Metadata = {
     title: 'Family Locator App — KVL Track | Find Any Family Member Instantly',
     description:
       "Find any family member's real-time location instantly with KVL Track Family Locator. GPS accuracy within 3 meters. Works in 127 countries.",
-    images: ['https://gravity.trackalways.com/og-image.svg'],
-    creator: '@trackalways',
+    images: ['https://gravity.kvlbusinesssolutions.com/og-image.svg'],
+    creator: '@kvlbusinesssolutions',
   },
-  alternates: { canonical: 'https://gravity.trackalways.com/family-locator-app' },
+  alternates: { canonical: 'https://gravity.kvlbusinesssolutions.com/family-locator-app' },
 }
 
 export default function Layout({ children }: { children: React.ReactNode }) {

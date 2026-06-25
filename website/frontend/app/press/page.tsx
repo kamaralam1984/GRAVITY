@@ -58,7 +58,7 @@ const COVERAGE = [
   },
 ]
 
-const BOILERPLATE = "KVL Track by TRACKALWAYS is a family safety platform designed for the needs of modern Indian households. Founded in 2022 and headquartered in Mumbai, KVL Track provides real-time location sharing, SOS alerts, place arrival and departure notifications, and driving behaviour monitoring through a privacy-first mobile application available on iOS and Android. The platform serves over 50,000 families across India, with a freemium model that makes core safety features accessible to everyone. KVL Track is built on the belief that staying connected with loved ones should be simple, transparent, and affordable. The company is backed by seed funding and is actively expanding its feature set to cover elder care, student safety, and enterprise fleet management. For more information, visit trackalways.com."
+const BOILERPLATE = "KVL Track by KVL BUSINESS SOLUTIONS is a family safety platform designed for the needs of modern Indian households. Founded in 2022 and headquartered in Mumbai, KVL Track provides real-time location sharing, SOS alerts, place arrival and departure notifications, and driving behaviour monitoring through a privacy-first mobile application available on iOS and Android. The platform serves over 50,000 families across India, with a freemium model that makes core safety features accessible to everyone. KVL Track is built on the belief that staying connected with loved ones should be simple, transparent, and affordable. The company is backed by seed funding and is actively expanding its feature set to cover elder care, student safety, and enterprise fleet management. For more information, visit kvlbusinesssolutions.com."
 
 const fadeUp = {
   hidden: { opacity: 0, y: 28 },
@@ -180,7 +180,7 @@ export default function PressPage() {
             style={{ display: "flex", gap: "12px", justifyContent: "center", flexWrap: "wrap" }}
           >
             <a
-              href="mailto:media@trackalways.com"
+              href="mailto:media@kvlbusinesssolutions.com"
               style={{
                 display: "inline-flex",
                 alignItems: "center",
@@ -811,10 +811,10 @@ export default function PressPage() {
                 For press releases, interview requests, product briefings, and editorial queries
               </div>
               <a
-                href="mailto:media@trackalways.com"
+                href="mailto:media@kvlbusinesssolutions.com"
                 style={{ color: "var(--primary)", fontWeight: 700, fontSize: "15px", textDecoration: "none" }}
               >
-                media@trackalways.com
+                media@kvlbusinesssolutions.com
               </a>
             </motion.div>
 
@@ -846,10 +846,10 @@ export default function PressPage() {
                 For co-marketing opportunities, analyst relations, and strategic partnership inquiries
               </div>
               <a
-                href="mailto:partnerships@trackalways.com"
+                href="mailto:partnerships@kvlbusinesssolutions.com"
                 style={{ color: "var(--gold)", fontWeight: 700, fontSize: "15px", textDecoration: "none" }}
               >
-                partnerships@trackalways.com
+                partnerships@kvlbusinesssolutions.com
               </a>
             </motion.div>
           </motion.div>

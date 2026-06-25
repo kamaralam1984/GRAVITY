@@ -86,7 +86,7 @@ const PRIMARY_INTEGRATIONS = [
 
 /* ── Other integrations ─────────────────────────────────────────────────────── */
 const OTHER_INTEGRATIONS = [
-  { icon: <Tag size={22} />, name: "Trackalways Tags", category: "Asset Tracking", color: "#EC4899", status: "active", desc: "BT tracking tags for bags, pets, and valuables" },
+  { icon: <Tag size={22} />, name: "KVL Business Solutions Tags", category: "Asset Tracking", color: "#EC4899", status: "active", desc: "BT tracking tags for bags, pets, and valuables" },
   { icon: <Watch size={22} />, name: "Apple Watch", category: "Wearable", color: "#6B7280", status: "active", desc: "SOS, heart rate, and wrist-based location" },
   { icon: <Watch size={22} />, name: "Samsung Galaxy Watch", category: "Wearable", color: "#1428A0", status: "active", desc: "Health monitoring and emergency SOS alerts" },
   { icon: <Globe size={22} />, name: "Google Home", category: "Smart Home", color: "#4285F4", status: "active", desc: "Voice-query family status via Nest speakers" },
@@ -521,7 +521,7 @@ export default function IntegrationsHub() {
               fontSize: "0.78rem", fontWeight: 700, textTransform: "uppercase",
               letterSpacing: "0.1em", marginBottom: 20,
             }}>
-              <Cpu size={13} /> Trackalways Hardware
+              <Cpu size={13} /> KVL Business Solutions Hardware
             </div>
             <h2 style={{
               fontFamily: "var(--font-display)",
@@ -531,7 +531,7 @@ export default function IntegrationsHub() {
               Built-For-KVL Track Hardware
             </h2>
             <p style={{ color: "rgba(255,255,255,0.45)", maxWidth: 600, margin: "0 auto", lineHeight: 1.7 }}>
-              Every Trackalways device is engineered from the ground up to integrate seamlessly with the KVL Track platform — one dashboard, total visibility.
+              Every KVL Business Solutions device is engineered from the ground up to integrate seamlessly with the KVL Track platform — one dashboard, total visibility.
             </p>
           </motion.div>
 
@@ -567,7 +567,7 @@ export default function IntegrationsHub() {
               Connect Everything Else
             </h2>
             <p style={{ color: "rgba(255,255,255,0.4)", maxWidth: 560, margin: "0 auto", lineHeight: 1.7 }}>
-              Wearables, smart speakers, asset trackers — the KVL Track ecosystem extends beyond Trackalways hardware to your entire world.
+              Wearables, smart speakers, asset trackers — the KVL Track ecosystem extends beyond KVL Business Solutions hardware to your entire world.
             </p>
           </motion.div>
 
@@ -826,7 +826,7 @@ export default function IntegrationsHub() {
             Start with KVL Track, Expand Everything
           </h2>
           <p style={{ color: "rgba(255,255,255,0.45)", maxWidth: 520, margin: "0 auto 40px", lineHeight: 1.75 }}>
-            Begin free, then connect Trackalways hardware, wearables, and smart home devices as your family's needs grow.
+            Begin free, then connect KVL Business Solutions hardware, wearables, and smart home devices as your family's needs grow.
           </p>
           <div style={{ display: "flex", gap: 16, justifyContent: "center", flexWrap: "wrap", marginBottom: 24 }}>
             <Link href="/" style={{

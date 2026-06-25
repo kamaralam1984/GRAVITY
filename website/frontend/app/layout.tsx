@@ -7,20 +7,20 @@ const inter = { variable: '--font-inter' }
 const plusJakartaSans = { variable: '--font-display' }
 
 export const metadata = {
-  metadataBase: new URL('https://gravity.trackalways.com'),
+  metadataBase: new URL('https://gravity.kvlbusinesssolutions.com'),
   title: {
     default: "KVL Track — What Pulls You Together | Family Safety App",
-    template: "%s | KVL Track by Trackalways",
+    template: "%s | KVL Track by KVL Business Solutions",
   },
   description: "KVL Track is the family safety platform that keeps your loved ones connected with real-time location sharing, SOS alerts, geofence zones, and AI-powered insights. Stay safe, stay together.",
-  keywords: ["family safety", "GPS tracking", "location sharing", "SOS alert", "geofence", "elderly care", "Trackalways", "KVL Track app"],
-  authors: [{ name: "Trackalways Technologies" }],
-  creator: "Trackalways Technologies Pvt Ltd",
+  keywords: ["family safety", "GPS tracking", "location sharing", "SOS alert", "geofence", "elderly care", "KVL Business Solutions", "KVL Track app"],
+  authors: [{ name: "KVL Business Solutions Technologies" }],
+  creator: "KVL Business Solutions Technologies Pvt Ltd",
   openGraph: {
     type: "website",
     locale: "en_IN",
-    url: "https://gravity.trackalways.com",
-    siteName: "KVL Track by Trackalways",
+    url: "https://gravity.kvlbusinesssolutions.com",
+    siteName: "KVL Track by KVL Business Solutions",
     title: "KVL Track — What Pulls You Together",
     description: "Real-time family location sharing, SOS alerts, and smart geofencing. Know your family is safe, always.",
     images: [{ url: "/og-image.svg", width: 1200, height: 630, alt: "KVL Track Family Safety" }],
@@ -30,7 +30,7 @@ export const metadata = {
     title: "KVL Track — Family Safety App",
     description: "Real-time family location sharing, SOS alerts, and smart geofencing.",
     images: ["/og-image.svg"],
-    creator: "@trackalways",
+    creator: "@kvlbusinesssolutions",
   },
   icons: {
     icon: "/favicon.svg",

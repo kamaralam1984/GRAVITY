@@ -114,7 +114,7 @@ def _send_otp_email(email: str, code: str) -> bool:
             "https://api.resend.com/emails",
             headers={"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"},
             json={
-                "from": "KVL TRACK <noreply@trackalways.com>",
+                "from": "KVL TRACK <noreply@kvlbusinesssolutions.com>",
                 "to": [email],
                 "subject": f"Your KVL TRACK verification code: {code}",
                 "html": f"<h2>Your OTP is: <strong style='color:#D4A853;font-size:32px'>{code}</strong></h2><p>Expires in 10 minutes.</p>",

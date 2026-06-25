@@ -13,11 +13,11 @@ export const metadata: Metadata = {
     title: 'Geofencing Alerts | Virtual Safety Zones — KVL Track',
     description:
       'Create unlimited safe zones around home, school, office. Get instant alerts when family members enter or leave. Smart geofencing for Indian families.',
-    url: 'https://gravity.trackalways.com/geofencing',
-    siteName: 'KVL Track by Trackalways',
+    url: 'https://gravity.kvlbusinesssolutions.com/geofencing',
+    siteName: 'KVL Track by KVL Business Solutions',
     images: [
       {
-        url: 'https://gravity.trackalways.com/og-image.svg',
+        url: 'https://gravity.kvlbusinesssolutions.com/og-image.svg',
         width: 1200,
         height: 630,
         alt: 'KVL Track Geofencing Alerts',
@@ -31,10 +31,10 @@ export const metadata: Metadata = {
     title: 'Geofencing Alerts | Virtual Safety Zones — KVL Track',
     description:
       'Create unlimited safe zones around home, school, office. Get instant alerts when family members enter or leave. Smart geofencing for Indian families.',
-    images: ['https://gravity.trackalways.com/og-image.svg'],
-    creator: '@trackalways',
+    images: ['https://gravity.kvlbusinesssolutions.com/og-image.svg'],
+    creator: '@kvlbusinesssolutions',
   },
-  alternates: { canonical: 'https://gravity.trackalways.com/geofencing' },
+  alternates: { canonical: 'https://gravity.kvlbusinesssolutions.com/geofencing' },
 }
 
 export default function Layout({ children }: { children: React.ReactNode }) {

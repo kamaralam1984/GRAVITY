@@ -13,11 +13,11 @@ export const metadata: Metadata = {
     title: 'Child Safety App | School Tracking & Geofencing — KVL Track',
     description:
       'Know when your child reaches school, leaves tuition, or enters unsafe zones. Real-time alerts, route history, and panic button for kids.',
-    url: 'https://gravity.trackalways.com/child-safety',
-    siteName: 'KVL Track by Trackalways',
+    url: 'https://gravity.kvlbusinesssolutions.com/child-safety',
+    siteName: 'KVL Track by KVL Business Solutions',
     images: [
       {
-        url: 'https://gravity.trackalways.com/og-image.svg',
+        url: 'https://gravity.kvlbusinesssolutions.com/og-image.svg',
         width: 1200,
         height: 630,
         alt: 'KVL Track Child Safety App',
@@ -31,10 +31,10 @@ export const metadata: Metadata = {
     title: 'Child Safety App | School Tracking & Geofencing — KVL Track',
     description:
       'Know when your child reaches school, leaves tuition, or enters unsafe zones. Real-time alerts, route history, and panic button for kids.',
-    images: ['https://gravity.trackalways.com/og-image.svg'],
-    creator: '@trackalways',
+    images: ['https://gravity.kvlbusinesssolutions.com/og-image.svg'],
+    creator: '@kvlbusinesssolutions',
   },
-  alternates: { canonical: 'https://gravity.trackalways.com/child-safety' },
+  alternates: { canonical: 'https://gravity.kvlbusinesssolutions.com/child-safety' },
 }
 
 export default function Layout({ children }: { children: React.ReactNode }) {

@@ -14,7 +14,7 @@ export default function robots(): MetadataRoute.Robots {
         disallow: ['/admin'],
       },
     ],
-    sitemap: 'https://gravity.trackalways.com/sitemap.xml',
-    host: 'https://gravity.trackalways.com',
+    sitemap: 'https://gravity.kvlbusinesssolutions.com/sitemap.xml',
+    host: 'https://gravity.kvlbusinesssolutions.com',
   }
 }

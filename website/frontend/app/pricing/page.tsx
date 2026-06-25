@@ -45,7 +45,7 @@ const FAQ_EXTENDED = [
   {
     question: 'Is there a student or non-profit discount?',
     answer:
-      'Yes. We offer 50% discounts for verified educational institutions and registered non-profits. Contact our team at billing@trackalways.com with your verification documents.',
+      'Yes. We offer 50% discounts for verified educational institutions and registered non-profits. Contact our team at billing@kvlbusinesssolutions.com with your verification documents.',
   },
   {
     question: 'What payment methods do you accept?',

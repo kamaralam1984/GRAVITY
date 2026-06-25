@@ -6,7 +6,7 @@ export const metadata: Metadata = {
     default: 'Family Safety Blog | Tips, Guides & News — KVL Track',
   },
   description:
-    'Expert guides on family safety, GPS tracking, child protection, elderly care, and smart parenting. Written by safety experts at Trackalways.',
+    'Expert guides on family safety, GPS tracking, child protection, elderly care, and smart parenting. Written by safety experts at KVL Business Solutions.',
   keywords: [
     'family safety blog',
     'GPS tracking tips',

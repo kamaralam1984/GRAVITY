@@ -18,14 +18,14 @@ const SECTIONS = [
     id: "description",
     title: "2. Description of Service",
     icon: Shield,
-    content: "KVL Track is a family safety and location sharing platform developed and operated by Trackalways Technologies Private Limited. The service enables consenting family members and trusted individuals to share real-time location data, set geofencing alerts for places like home and school, send emergency SOS signals to the family circle, and access wellness and check-in features. KVL Track is intended for personal, non-commercial use only. We reserve the right to modify, suspend, or discontinue any feature of the service at any time with reasonable notice to users.",
+    content: "KVL Track is a family safety and location sharing platform developed and operated by KVL Business Solutions Technologies Private Limited. The service enables consenting family members and trusted individuals to share real-time location data, set geofencing alerts for places like home and school, send emergency SOS signals to the family circle, and access wellness and check-in features. KVL Track is intended for personal, non-commercial use only. We reserve the right to modify, suspend, or discontinue any feature of the service at any time with reasonable notice to users.",
     bullets: [] as string[],
   },
   {
     id: "registration",
     title: "3. Account Registration",
     icon: Users,
-    content: "To access the full features of KVL Track, you must register for an account. You agree to provide accurate, current, and complete information during registration and to keep this information up to date. Each individual may maintain only one active account. Sharing accounts between multiple individuals is not permitted. You are solely responsible for maintaining the confidentiality of your login credentials and for all activity that occurs under your account. If you suspect unauthorized access to your account, you must notify us immediately at support@trackalways.com. We are not liable for any loss arising from unauthorized account use.",
+    content: "To access the full features of KVL Track, you must register for an account. You agree to provide accurate, current, and complete information during registration and to keep this information up to date. Each individual may maintain only one active account. Sharing accounts between multiple individuals is not permitted. You are solely responsible for maintaining the confidentiality of your login credentials and for all activity that occurs under your account. If you suspect unauthorized access to your account, you must notify us immediately at support@kvlbusinesssolutions.com. We are not liable for any loss arising from unauthorized account use.",
     bullets: [] as string[],
   },
   {
@@ -54,7 +54,7 @@ const SECTIONS = [
     id: "privacy",
     title: "6. Privacy",
     icon: Shield,
-    content: "Your use of KVL Track is also governed by our Privacy Policy, which is incorporated into these Terms of Service by reference. The Privacy Policy describes in detail how we collect, use, store, and protect your personal information, including location data. By agreeing to these Terms of Service, you also agree to the practices described in the Privacy Policy. We encourage you to read the Privacy Policy carefully before using the service. If you have any privacy-related questions or concerns, you may contact our privacy team at privacy@trackalways.com at any time.",
+    content: "Your use of KVL Track is also governed by our Privacy Policy, which is incorporated into these Terms of Service by reference. The Privacy Policy describes in detail how we collect, use, store, and protect your personal information, including location data. By agreeing to these Terms of Service, you also agree to the practices described in the Privacy Policy. We encourage you to read the Privacy Policy carefully before using the service. If you have any privacy-related questions or concerns, you may contact our privacy team at privacy@kvlbusinesssolutions.com at any time.",
     bullets: [] as string[],
   },
   {
@@ -68,14 +68,14 @@ const SECTIONS = [
     id: "cancellation",
     title: "8. Cancellation and Refunds",
     icon: FileText,
-    content: "You may cancel your KVL Track subscription at any time directly from the account settings within the app or web dashboard. Cancellation takes effect at the end of the current billing period, after which your account will revert to the free tier. Monthly subscriptions are non-refundable for any partial month remaining after cancellation. Annual subscriptions that are cancelled within the first 7 days of a new billing cycle may be eligible for a prorated refund for the unused portion of the year, at our discretion. Refund requests should be submitted to billing@trackalways.com with your account details and reason for cancellation.",
+    content: "You may cancel your KVL Track subscription at any time directly from the account settings within the app or web dashboard. Cancellation takes effect at the end of the current billing period, after which your account will revert to the free tier. Monthly subscriptions are non-refundable for any partial month remaining after cancellation. Annual subscriptions that are cancelled within the first 7 days of a new billing cycle may be eligible for a prorated refund for the unused portion of the year, at our discretion. Refund requests should be submitted to billing@kvlbusinesssolutions.com with your account details and reason for cancellation.",
     bullets: [] as string[],
   },
   {
     id: "intellectual-property",
     title: "9. Intellectual Property",
     icon: Scale,
-    content: "The KVL Track application, including its design, branding, software code, algorithms, user interface, and all related documentation, is the exclusive intellectual property of Trackalways Technologies Private Limited and is protected under applicable copyright, trademark, and intellectual property laws. You are granted a limited, non-exclusive, non-transferable, revocable license to use the application for its intended personal purpose. All rights not expressly granted to you are reserved by KVL Track. You retain full ownership of the personal data you generate and upload to the service. KVL Track claims no ownership rights over your personal content.",
+    content: "The KVL Track application, including its design, branding, software code, algorithms, user interface, and all related documentation, is the exclusive intellectual property of KVL Business Solutions Technologies Private Limited and is protected under applicable copyright, trademark, and intellectual property laws. You are granted a limited, non-exclusive, non-transferable, revocable license to use the application for its intended personal purpose. All rights not expressly granted to you are reserved by KVL Track. You retain full ownership of the personal data you generate and upload to the service. KVL Track claims no ownership rights over your personal content.",
     bullets: [] as string[],
   },
   {
@@ -89,7 +89,7 @@ const SECTIONS = [
     id: "liability",
     title: "11. Limitation of Liability",
     icon: Scale,
-    content: "To the fullest extent permitted by applicable law, Trackalways Technologies Private Limited and its officers, directors, employees, and affiliates shall not be liable for any indirect, incidental, special, consequential, or punitive damages arising out of or related to your use of the KVL Track service. This includes, without limitation, loss of data, loss of profits, personal injury, or property damage. In all cases, the aggregate liability of KVL Track to you for any claims arising from your use of the service shall not exceed the total amount you paid to KVL Track in the twelve months immediately preceding the event giving rise to the claim.",
+    content: "To the fullest extent permitted by applicable law, KVL Business Solutions Technologies Private Limited and its officers, directors, employees, and affiliates shall not be liable for any indirect, incidental, special, consequential, or punitive damages arising out of or related to your use of the KVL Track service. This includes, without limitation, loss of data, loss of profits, personal injury, or property damage. In all cases, the aggregate liability of KVL Track to you for any claims arising from your use of the service shall not exceed the total amount you paid to KVL Track in the twelve months immediately preceding the event giving rise to the claim.",
     bullets: [] as string[],
   },
   {

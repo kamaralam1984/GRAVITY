@@ -561,7 +561,7 @@ export default function StatusPage() {
 
               <p className="text-xs" style={{ color: 'var(--text-muted)' }}>
                 You can unsubscribe at any time. We also post updates on{' '}
-                <a href="https://twitter.com/trackalways" target="_blank" rel="noopener noreferrer" style={{ color: 'var(--primary)' }}>
+                <a href="https://twitter.com/kvlbusinesssolutions" target="_blank" rel="noopener noreferrer" style={{ color: 'var(--primary)' }}>
                   Twitter / X
                 </a>.
               </p>

@@ -91,7 +91,7 @@ export default function SuperAdminLoginPage() {
             Super Admin
           </h1>
           <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: 13, margin: 0 }}>
-            Trackalways Command Center
+            KVL Business Solutions Command Center
           </p>
         </div>
 
@@ -179,7 +179,7 @@ export default function SuperAdminLoginPage() {
       </div>
 
       <p style={{ marginTop: 24, fontSize: 12, color: 'rgba(255,255,255,0.2)', textAlign: 'center', position: 'relative', zIndex: 10 }}>
-        © 2025 Trackalways Technologies. Unauthorized access is prohibited.
+        © 2025 KVL Business Solutions Technologies. Unauthorized access is prohibited.
       </p>
     </div>
   )
