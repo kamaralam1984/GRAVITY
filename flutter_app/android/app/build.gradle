@@ -1,6 +1,6 @@
 plugins {
     id "com.android.application"
-    id "kotlin-android"
+    id "org.jetbrains.kotlin.android"
     id "dev.flutter.flutter-gradle-plugin"
     id "com.google.gms.google-services"
 }
@@ -67,7 +67,7 @@ flutter {
 
 dependencies {
     // Core library desugaring for java.time support on API < 26
-    coreLibraryDesugaring "com.android.tools.build:desugaring:2.0.4"
+    coreLibraryDesugaring "com.android.tools:desugar_jdk_libs:2.0.4"
 
     // Firebase BoM
     implementation platform("com.google.firebase:firebase-bom:33.4.0")
