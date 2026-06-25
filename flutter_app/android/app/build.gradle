@@ -2,7 +2,6 @@ plugins {
     id "com.android.application"
     id "org.jetbrains.kotlin.android"
     id "dev.flutter.flutter-gradle-plugin"
-    id "com.google.gms.google-services"
 }
 
 android {
@@ -47,7 +46,6 @@ android {
     }
 
     packagingOptions {
-        // Resolve duplicate files from firebase / play-services
         pickFirst "META-INF/DEPENDENCIES"
         pickFirst "META-INF/LICENSE"
         pickFirst "META-INF/NOTICE"
@@ -64,15 +62,6 @@ flutter {
 }
 
 dependencies {
-    // Core library desugaring for java.time support on API < 26
     coreLibraryDesugaring "com.android.tools:desugar_jdk_libs:2.0.4"
-
-    // Firebase BoM
-    implementation platform("com.google.firebase:firebase-bom:33.4.0")
-    implementation "com.google.firebase:firebase-messaging-ktx"
-    implementation "com.google.firebase:firebase-analytics-ktx"
-
-    // MultiDex support
     implementation "androidx.multidex:multidex:2.0.1"
-
 }
