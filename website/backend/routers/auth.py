@@ -103,21 +103,60 @@ def _send_otp_fast2sms(phone: str, code: str) -> bool:
     except Exception:
         return False
 
+def _email_configured() -> bool:
+    """True if any real email transport (SMTP or Resend) is configured."""
+    smtp = os.getenv("SMTP_HOST") and os.getenv("SMTP_USER") and os.getenv("SMTP_PASS")
+    return bool(smtp) or bool(os.getenv("RESEND_API_KEY"))
+
 def _send_otp_email(email: str, code: str) -> bool:
-    """Send OTP via Resend API."""
-    import httpx
+    """Send OTP email via SMTP (preferred, e.g. Gmail) or Resend API."""
+    subject = f"Your KVL TRACK verification code: {code}"
+    html = (
+        f"<div style='font-family:Arial,sans-serif'>"
+        f"<h2>KVL TRACK verification</h2>"
+        f"<p>Your OTP is:</p>"
+        f"<p><strong style='color:#D4A853;font-size:32px;letter-spacing:4px'>{code}</strong></p>"
+        f"<p>Expires in 10 minutes. If you didn't request this, ignore this email.</p></div>"
+    )
+
+    # 1) SMTP (Gmail etc.) — used when SMTP_* env vars are set
+    smtp_host = os.getenv("SMTP_HOST", "")
+    smtp_user = os.getenv("SMTP_USER", "")
+    smtp_pass = os.getenv("SMTP_PASS", "")
+    if smtp_host and smtp_user and smtp_pass:
+        import smtplib
+        from email.mime.text import MIMEText
+        from email.mime.multipart import MIMEMultipart
+        try:
+            sender = os.getenv("SMTP_FROM", smtp_user)
+            msg = MIMEMultipart("alternative")
+            msg["Subject"] = subject
+            msg["From"] = f"KVL TRACK <{sender}>"
+            msg["To"] = email
+            msg.attach(MIMEText(html, "html"))
+            with smtplib.SMTP(smtp_host, int(os.getenv("SMTP_PORT", "587")), timeout=15) as s:
+                s.starttls()
+                s.login(smtp_user, smtp_pass)
+                s.sendmail(sender, [email], msg.as_string())
+            return True
+        except Exception as e:
+            print(f"[SMTP] OTP send failed: {e}")
+            # fall through to Resend if available
+
+    # 2) Resend API fallback
     api_key = os.getenv("RESEND_API_KEY", "")
     if not api_key:
-        return True  # dev mode
+        return True  # dev mode — no transport configured
     try:
+        import httpx
         resp = httpx.post(
             "https://api.resend.com/emails",
             headers={"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"},
             json={
                 "from": "KVL TRACK <noreply@kvlbusinesssolutions.com>",
                 "to": [email],
-                "subject": f"Your KVL TRACK verification code: {code}",
-                "html": f"<h2>Your OTP is: <strong style='color:#D4A853;font-size:32px'>{code}</strong></h2><p>Expires in 10 minutes.</p>",
+                "subject": subject,
+                "html": html,
             },
             timeout=10,
         )
@@ -168,7 +207,7 @@ def register(request: Request, data: UserRegister, db: Session = Depends(get_db)
     _send_otp_email(data.email, code)
 
     token = create_access_token({"sub": user.id})
-    dev_mode = not os.getenv("RESEND_API_KEY")
+    dev_mode = not _email_configured()
     return {"access_token": token, "token_type": "bearer", "user": user, **({"dev_code": code} if dev_mode else {})}
 
 @router.post("/login", response_model=TokenResponse)
@@ -357,7 +396,7 @@ def send_otp(data: OTPRequest, db: Session = Depends(get_db)):
         _send_otp_fast2sms(data.identifier, code)
 
     # In dev mode (no API keys), return code in response for testing
-    dev_mode = not os.getenv("FAST2SMS_API_KEY") and not os.getenv("RESEND_API_KEY")
+    dev_mode = not _email_configured() and not os.getenv("FAST2SMS_API_KEY")
     return {
         "message": "OTP sent successfully",
         "expires_in": 600,
