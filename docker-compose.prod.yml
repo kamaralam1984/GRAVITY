@@ -15,4 +15,4 @@ services:
       args:
         NEXT_PUBLIC_API_URL: https://gravity.kvlbusinesssolutions.com/api
     ports:
-      - "127.0.0.1:3020:3020"
+      - "127.0.0.1:3021:3020"
