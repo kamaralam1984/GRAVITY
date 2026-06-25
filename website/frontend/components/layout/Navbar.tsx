@@ -89,7 +89,7 @@ function LogoMark({ scrolled }: { scrolled: boolean }) {
       <text x="14" y="18.5" textAnchor="middle" fontSize="13" fontWeight="800"
         fill={scrolled ? 'white' : '#1A56DB'}
         style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
-        G
+        K
       </text>
     </svg>
   );

@@ -5,7 +5,7 @@
 set -e
 
 REPO="https://github.com/kamaralam1984/GRAVITY.git"
-APP_DIR="/var/www/gravity"
+APP_DIR="/var/www/kvltrack"
 DOMAIN="kvltrack.kvlbusinesssolutions.com"
 EMAIL="8rupiya@gmail.com"
 

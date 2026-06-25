@@ -257,7 +257,7 @@ export default function KVLTrackLoader({ isVisible }: Props) {
                   filter="url(#lgGlow)"
                   style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}
                 >
-                  G
+                  K
                 </text>
               </svg>
             </motion.div>
