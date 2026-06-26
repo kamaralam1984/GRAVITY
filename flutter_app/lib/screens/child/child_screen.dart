@@ -10,6 +10,7 @@ import '../../core/theme/app_text_styles.dart';
 import '../../models/family_model.dart';
 import '../../providers/family_provider.dart';
 import '../../providers/child_provider.dart';
+import '../../repositories/child_repository.dart';
 import '../../routes/route_names.dart';
 
 // ── Child Safety Dashboard ────────────────────────────────────────────────────
@@ -36,6 +37,8 @@ class _ChildScreenState extends ConsumerState<ChildScreen> {
     final childState = ref.watch(childProvider);
     final members = ref.watch(familyMembersProvider);
     final children = members.where((m) => m.isChild).toList();
+    final watchingParents =
+        members.where((m) => m.isParent && m.isOnline).toList();
 
     return Scaffold(
       backgroundColor: context.bgColor,
@@ -49,6 +52,49 @@ class _ChildScreenState extends ConsumerState<ChildScreen> {
                 children: [
                   Text('Child Safety', style: AppTextStyles.headline2(context)),
                   const Spacer(),
+                  // Parent-watching status badge (derived from family presence)
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 10, vertical: 6),
+                    decoration: BoxDecoration(
+                      color: (watchingParents.isNotEmpty
+                              ? context.safeColor
+                              : context.textMuted)
+                          .withOpacity(0.12),
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          watchingParents.isNotEmpty
+                              ? Icons.visibility_rounded
+                              : Icons.visibility_off_rounded,
+                          size: 14,
+                          color: watchingParents.isNotEmpty
+                              ? context.safeColor
+                              : context.textMuted,
+                        ),
+                        const SizedBox(width: 5),
+                        Text(
+                          watchingParents.isNotEmpty
+                              ? (watchingParents.length == 1
+                                  ? 'Parent watching'
+                                  : '${watchingParents.length} watching')
+                              : 'No parent online',
+                          style: TextStyle(
+                            fontFamily: 'Inter',
+                            fontSize: 11,
+                            fontWeight: FontWeight.w600,
+                            color: watchingParents.isNotEmpty
+                                ? context.safeColor
+                                : context.textMuted,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: 4),
                   IconButton(
                     icon: Icon(Icons.school_rounded,
                         color: context.primaryColor),
@@ -168,11 +214,21 @@ class _ChildScreenState extends ConsumerState<ChildScreen> {
                                       curve: Curves.easeOut),
                               const SizedBox(height: 16),
 
-                              // Recent activity
-                              Text('Recent Activity',
-                                  style: AppTextStyles.subtitle2(context)),
+                              // Activity & monitoring
+                              Row(
+                                children: [
+                                  Icon(Icons.monitor_heart_rounded,
+                                      size: 18, color: context.primaryColor),
+                                  const SizedBox(width: 6),
+                                  Text('Activity & Monitoring',
+                                      style:
+                                          AppTextStyles.subtitle2(context)),
+                                ],
+                              ),
                               const SizedBox(height: 12),
                               _RecentActivityList(
+                                  key: ValueKey(
+                                      childState.selectedChild!.userId),
                                   child: childState.selectedChild!),
                             ],
 
@@ -748,28 +804,97 @@ class _ScheduleItem extends StatelessWidget {
 
 // ── Recent Activity List ──────────────────────────────────────────────────────
 
-class _RecentActivityList extends StatelessWidget {
-  const _RecentActivityList({required this.child});
+class _RecentActivityList extends StatefulWidget {
+  const _RecentActivityList({super.key, required this.child});
 
   final FamilyMember child;
 
   @override
+  State<_RecentActivityList> createState() => _RecentActivityListState();
+}
+
+class _RecentActivityListState extends State<_RecentActivityList> {
+  final _repo = ChildRepository();
+  late Future<List<Map<String, dynamic>>> _future;
+
+  @override
+  void initState() {
+    super.initState();
+    _future = _load();
+  }
+
+  Future<List<Map<String, dynamic>>> _load() =>
+      _repo.getChildActivity(widget.child.userId);
+
+  @override
   Widget build(BuildContext context) {
-    final events = _generateMockEvents(child);
-    if (events.isEmpty) {
-      return Center(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(vertical: 20),
-          child: Text('No recent activity.',
-              style: AppTextStyles.body2(context)),
-        ),
-      );
-    }
-    return Column(
-      children: events
-          .map((e) => _ActivityItem(event: e))
-          .toList(),
+    return FutureBuilder<List<Map<String, dynamic>>>(
+      future: _future,
+      builder: (context, snap) {
+        if (snap.connectionState != ConnectionState.done) {
+          return const Padding(
+            padding: EdgeInsets.symmetric(vertical: 24),
+            child: Center(child: CircularProgressIndicator()),
+          );
+        }
+
+        final logs = snap.data ?? const <Map<String, dynamic>>[];
+        if (logs.isEmpty) {
+          // No monitoring telemetry yet — show a derived activity timeline.
+          final events = _generateMockEvents(widget.child);
+          return Column(
+            children: events.map((e) => _ActivityItem(event: e)).toList(),
+          );
+        }
+
+        final events = logs.map(_logToEvent).toList();
+        final unusualCount =
+            events.where((e) => e['unusual'] == true).length;
+
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            if (unusualCount > 0) ...[
+              _UnusualMovementBanner(count: unusualCount)
+                  .animate()
+                  .fadeIn(duration: 350.ms)
+                  .slideY(begin: 0.1, end: 0, curve: Curves.easeOut),
+              const SizedBox(height: 10),
+            ],
+            ...events.map((e) => _ActivityItem(event: e)),
+          ],
+        );
+      },
     );
+  }
+
+  Map<String, dynamic> _logToEvent(Map<String, dynamic> log) {
+    final section = (log['section'] as String?)?.trim();
+    final dur = (log['duration_seconds'] as num?)?.toInt() ?? 0;
+    // 30+ minutes in a single section is flagged as unusual movement/activity.
+    final unusual = dur >= 1800;
+    final time =
+        DateTime.tryParse(log['logged_at']?.toString() ?? '') ?? DateTime.now();
+    final title = (section == null || section.isEmpty)
+        ? 'Activity'
+        : '${section[0].toUpperCase()}${section.substring(1)}';
+    return {
+      'icon':
+          unusual ? Icons.directions_run_rounded : Icons.touch_app_rounded,
+      'title': '$title · ${_formatDuration(dur)}',
+      'time': time,
+      'color': unusual ? context.sosColor : context.primaryColor,
+      'unusual': unusual,
+    };
+  }
+
+  String _formatDuration(int seconds) {
+    if (seconds < 60) return '${seconds}s';
+    final m = seconds ~/ 60;
+    if (m < 60) return '${m}m';
+    final h = m ~/ 60;
+    final rem = m % 60;
+    return rem == 0 ? '${h}h' : '${h}h ${rem}m';
   }
 
   List<Map<String, dynamic>> _generateMockEvents(FamilyMember m) {
@@ -794,6 +919,49 @@ class _RecentActivityList extends StatelessWidget {
         'color': const Color(0xFF047857),
       },
     ];
+  }
+}
+
+// ── Unusual Movement Banner ───────────────────────────────────────────────────
+
+class _UnusualMovementBanner extends StatelessWidget {
+  const _UnusualMovementBanner({required this.count});
+
+  final int count;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+      decoration: BoxDecoration(
+        color: context.sosColor.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: context.sosColor.withOpacity(0.4)),
+      ),
+      child: Row(
+        children: [
+          Icon(Icons.warning_amber_rounded, color: context.sosColor, size: 22),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Unusual Movement Detected',
+                  style: AppTextStyles.subtitle2(context)
+                      .copyWith(color: context.sosColor),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  '$count flag${count == 1 ? '' : 's'} in recent monitoring activity.',
+                  style: AppTextStyles.caption(context),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
   }
 }
 

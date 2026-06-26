@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart' hide Family;
@@ -8,7 +10,9 @@ import '../../core/theme/app_text_styles.dart';
 import '../../models/family_model.dart';
 import '../../providers/family_provider.dart';
 import '../../providers/location_provider.dart';
+import '../../repositories/journey_repository.dart';
 import '../../routes/route_names.dart';
+import '../../services/notification_service.dart';
 import '../../widgets/common/glass_card.dart';
 import '../../widgets/common/safe_scaffold.dart';
 import '../../widgets/home/family_summary_card.dart';
@@ -100,6 +104,12 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                       .fadeIn(duration: 400.ms)
                       .slideY(begin: 0.1, end: 0, curve: Curves.easeOut),
                   const SizedBox(height: 20),
+
+                  // ── Live Journey ETAs ───────────────────────────────
+                  const _ActiveJourneysSection()
+                      .animate(delay: 150.ms)
+                      .fadeIn(duration: 400.ms)
+                      .slideY(begin: 0.1, end: 0, curve: Curves.easeOut),
 
                   // ── Family Members ──────────────────────────────────
                   Row(
@@ -386,6 +396,182 @@ class _NoFamilyCard extends StatelessWidget {
                 color: context.primaryColor,
               ),
             ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ── Live Journey ETAs ─────────────────────────────────────────────────────────
+
+/// Polls active journeys, renders a live ETA countdown for each, and fires a
+/// local notification once when a journey is projected to arrive late.
+class _ActiveJourneysSection extends ConsumerStatefulWidget {
+  const _ActiveJourneysSection();
+
+  @override
+  ConsumerState<_ActiveJourneysSection> createState() =>
+      _ActiveJourneysSectionState();
+}
+
+class _ActiveJourneysSectionState
+    extends ConsumerState<_ActiveJourneysSection> {
+  final _repo = JourneyRepository.instance;
+  Timer? _timer;
+  List<Journey> _journeys = const [];
+  final Set<String> _lateNotified = {};
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) => _load());
+    // Refresh ETA countdowns and re-evaluate lateness every 30s.
+    _timer = Timer.periodic(const Duration(seconds: 30), (_) => _load());
+  }
+
+  @override
+  void dispose() {
+    _timer?.cancel();
+    super.dispose();
+  }
+
+  Future<void> _load() async {
+    final family = ref.read(selectedFamilyProvider);
+    try {
+      final journeys = await _repo.getActiveJourneys(familyId: family?.id);
+      if (!mounted) return;
+      setState(() => _journeys = journeys);
+      _checkLate(journeys);
+    } catch (_) {
+      // Keep last known journeys on transient failures.
+    }
+  }
+
+  void _checkLate(List<Journey> journeys) {
+    for (final j in journeys) {
+      if (j.isLate && !_lateNotified.contains(j.id)) {
+        _lateNotified.add(j.id);
+        final who = j.memberName ?? j.label ?? 'A family member';
+        final dest = j.endPlace ?? 'their destination';
+        NotificationService.showGeofence(
+          'Running late',
+          '$who may arrive late at $dest (ETA ${j.countdownLabel}).',
+        );
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (_journeys.isEmpty) return const SizedBox.shrink();
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Icon(Icons.route_rounded, size: 18, color: context.primaryColor),
+            const SizedBox(width: 6),
+            Text('Live ETAs',
+                style: AppTextStyles.subtitle2(context).copyWith(
+                  fontWeight: FontWeight.w700,
+                  color: context.textPrimary,
+                )),
+          ],
+        ),
+        const SizedBox(height: 10),
+        ..._journeys.map((j) => Padding(
+              padding: const EdgeInsets.only(bottom: 8),
+              child: _JourneyEtaCard(journey: j),
+            )),
+        const SizedBox(height: 20),
+      ],
+    );
+  }
+}
+
+class _JourneyEtaCard extends StatelessWidget {
+  const _JourneyEtaCard({required this.journey});
+  final Journey journey;
+
+  @override
+  Widget build(BuildContext context) {
+    final late = journey.isLate;
+    final accent = late ? context.sosColor : context.primaryColor;
+    final who = journey.memberName ?? journey.label ?? 'On the move';
+    final dest = journey.endPlace ?? 'Destination';
+
+    return GlassCard(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+      child: Row(
+        children: [
+          Container(
+            width: 40,
+            height: 40,
+            decoration: BoxDecoration(
+              color: accent.withOpacity(0.12),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Icon(
+              late ? Icons.running_with_errors_rounded : Icons.navigation_rounded,
+              color: accent,
+              size: 20,
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  who,
+                  style: AppTextStyles.body2(context).copyWith(
+                    fontWeight: FontWeight.w700,
+                    color: context.textPrimary,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                const SizedBox(height: 2),
+                Row(
+                  children: [
+                    Icon(Icons.place_rounded, size: 12, color: context.textMuted),
+                    const SizedBox(width: 3),
+                    Expanded(
+                      child: Text(
+                        dest,
+                        style: AppTextStyles.caption(context),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 8),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              Text(
+                journey.countdownLabel,
+                style: TextStyle(
+                  fontFamily: 'PlusJakartaSans',
+                  fontSize: 18,
+                  fontWeight: FontWeight.w800,
+                  color: accent,
+                ),
+              ),
+              Text(
+                late ? 'Delayed' : 'ETA',
+                style: AppTextStyles.caption(context).copyWith(
+                  color: accent,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ],
           ),
         ],
       ),

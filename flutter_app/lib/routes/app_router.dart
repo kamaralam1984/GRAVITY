@@ -27,6 +27,8 @@ import '../screens/family/members_screen.dart';
 import '../screens/family/invite_screen.dart';
 import '../screens/child/child_screen.dart';
 import '../screens/child/school_tracking_screen.dart';
+import '../screens/journeys/journeys_screen.dart';
+import '../screens/safety/check_in_screen.dart';
 import '../screens/elder/elder_screen.dart';
 import '../screens/elder/health_screen.dart';
 import '../screens/elder/medication_screen.dart';
@@ -274,6 +276,28 @@ final appRouter = GoRouter(
       path: RouteNames.schoolTracking,
       pageBuilder: (ctx, state) =>
           _slidePage(const SchoolTrackingScreen(), state),
+    ),
+
+    // ── Journeys / Timeline ────────────────────────────────────────────────
+    GoRoute(
+      path: '/journeys',
+      pageBuilder: (ctx, state) {
+        final extra = state.extra as Map<String, dynamic>?;
+        return _slidePage(
+          JourneysScreen(
+            childUserId: extra?['childUserId'] as int?,
+            childName: extra?['childName'] as String?,
+          ),
+          state,
+        );
+      },
+    ),
+
+    // ── Safe Walk / Check-in ───────────────────────────────────────────────
+    GoRoute(
+      path: '/check-in',
+      pageBuilder: (ctx, state) =>
+          _slidePage(const CheckInScreen(), state),
     ),
 
     // ── Elder care ─────────────────────────────────────────────────────────

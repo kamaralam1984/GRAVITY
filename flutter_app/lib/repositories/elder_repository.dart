@@ -45,4 +45,21 @@ class ElderRepository {
   Future<void> recordHealth(HealthRecord record) async {
     await _dio.post('/health/record', data: record.toJson());
   }
+
+  /// One-tap wellness check-in: posts today's mood to the existing
+  /// /health/record endpoint. Optionally include a step count synced from
+  /// a wearable/device.
+  Future<void> recordMood(
+    int userId,
+    String mood, {
+    int? steps,
+  }) async {
+    final today = DateTime.now().toIso8601String().split('T').first;
+    await _dio.post('/health/record', data: {
+      'user_id': userId,
+      'date': today,
+      'mood': mood,
+      if (steps != null) 'steps': steps,
+    });
+  }
 }

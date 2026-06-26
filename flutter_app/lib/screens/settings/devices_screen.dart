@@ -1,7 +1,11 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../core/constants/storage_keys.dart';
+import '../../core/services/storage_service.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_text_styles.dart';
 import '../../core/utils/app_date_utils.dart';
@@ -32,22 +36,71 @@ class _DevicesScreenState extends ConsumerState<DevicesScreen> {
   _DevicesState _state = const _DevicesState();
   final _repo = AuthRepository();
   String? _currentDeviceId;
+  Timer? _monitorTimer;
+
+  // How often the background battery-monitoring task runs.
+  static const _monitorInterval = Duration(minutes: 5);
 
   @override
   void initState() {
     super.initState();
+    _currentDeviceId =
+        StorageService.instance.getSetting<dynamic>(StorageKeys.deviceId)?.toString();
     _load();
+    // Periodically refresh the list and report this device's battery so the
+    // family can be alerted when it runs low.
+    _monitorTimer = Timer.periodic(_monitorInterval, (_) => _monitor());
+  }
+
+  @override
+  void dispose() {
+    _monitorTimer?.cancel();
+    super.dispose();
   }
 
   Future<void> _load() async {
     setState(() => _state = _DevicesState(isLoading: true));
     try {
-      // Fetch from /auth/device/my (or derive from /auth/me)
-      // Placeholder: empty list until API exists
-      await Future.delayed(const Duration(milliseconds: 600));
-      setState(() => _state = const _DevicesState(devices: []));
+      final devices = await _repo.getMyDevices();
+      if (!mounted) return;
+      setState(() => _state = _DevicesState(devices: devices));
+      await _reportThisDeviceBattery(devices);
     } catch (e) {
+      if (!mounted) return;
       setState(() => _state = _DevicesState(error: e.toString()));
+    }
+  }
+
+  /// Background-style tick: refresh devices and push the latest battery level.
+  Future<void> _monitor() async {
+    try {
+      final devices = await _repo.getMyDevices();
+      if (!mounted) return;
+      setState(() => _state = _DevicesState(devices: devices));
+      await _reportThisDeviceBattery(devices);
+    } catch (_) {
+      // Silent on background failures — keep the last known list.
+    }
+  }
+
+  /// Report the current device's battery to the backend via
+  /// PATCH /devices/{id}/battery. Only fires when a battery level is known.
+  Future<void> _reportThisDeviceBattery(List<Device> devices) async {
+    final id = _currentDeviceId;
+    if (id == null) return;
+    Device? current;
+    for (final d in devices) {
+      if (d.id.toString() == id) {
+        current = d;
+        break;
+      }
+    }
+    final level = current?.batteryLevel;
+    if (current == null || level == null) return;
+    try {
+      await _repo.reportBattery(current.id, level);
+    } catch (_) {
+      // Non-fatal.
     }
   }
 
@@ -234,10 +287,31 @@ class _DeviceTile extends StatelessWidget {
     return ctx.primaryColor;
   }
 
+  bool get _isLowBattery =>
+      device.batteryLevel != null && device.batteryLevel! <= 20;
+
+  Color _batteryColor(BuildContext ctx) {
+    final lvl = device.batteryLevel ?? 100;
+    if (lvl <= 20) return ctx.sosColor;
+    if (lvl <= 50) return ctx.warmColor;
+    return ctx.safeColor;
+  }
+
+  IconData get _batteryIcon {
+    final lvl = device.batteryLevel ?? 100;
+    if (lvl <= 20) return Icons.battery_alert_rounded;
+    if (lvl <= 50) return Icons.battery_4_bar_rounded;
+    return Icons.battery_full_rounded;
+  }
+
   @override
   Widget build(BuildContext context) {
     return GlassCard(
-      glowColor: isCurrent ? context.safeColor : null,
+      glowColor: _isLowBattery
+          ? context.sosColor
+          : isCurrent
+              ? context.safeColor
+              : null,
       padding: const EdgeInsets.all(14),
       child: Row(
         children: [
@@ -306,6 +380,44 @@ class _DeviceTile extends StatelessWidget {
                     fontSize: 11,
                   ),
                 ),
+                if (device.batteryLevel != null) ...[
+                  const SizedBox(height: 6),
+                  Row(
+                    children: [
+                      Icon(_batteryIcon,
+                          size: 15, color: _batteryColor(context)),
+                      const SizedBox(width: 4),
+                      Text(
+                        '${device.batteryLevel}%',
+                        style: AppTextStyles.caption(context).copyWith(
+                          color: _batteryColor(context),
+                          fontWeight: FontWeight.w700,
+                          fontSize: 11,
+                        ),
+                      ),
+                      if (_isLowBattery) ...[
+                        const SizedBox(width: 6),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 6, vertical: 2),
+                          decoration: BoxDecoration(
+                            color: context.sosColor.withOpacity(0.15),
+                            borderRadius: BorderRadius.circular(6),
+                          ),
+                          child: Text(
+                            'LOW BATTERY',
+                            style: AppTextStyles.caption(context).copyWith(
+                              color: context.sosColor,
+                              fontWeight: FontWeight.w700,
+                              fontSize: 9,
+                              letterSpacing: 0.4,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
+                ],
               ],
             ),
           ),

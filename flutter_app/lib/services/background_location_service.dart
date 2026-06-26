@@ -71,16 +71,65 @@ void onStart(ServiceInstance service) async {
         ),
       );
 
+      final normalisedSpeed =
+          position.speed < 0 ? 0.0 : position.speed;
+
+      // Post raw device motion to the activity classifier and adopt the
+      // server-returned transport state (driving / walking / stationary).
+      // Falls back to local speed inference if the endpoint is unreachable.
+      String activity = _inferActivity(normalisedSpeed);
+      try {
+        final actRes = await dio.post<Map<String, dynamic>>(
+          '/monitoring/activity',
+          data: {
+            'speed': normalisedSpeed,
+            'lat': position.latitude,
+            'lng': position.longitude,
+            if (deviceId != null) 'device_id': deviceId,
+          },
+        );
+        final actData = actRes.data;
+        final returned =
+            (actData?['activity'] ?? actData?['state'] ?? actData?['status'])
+                as String?;
+        if (returned != null && returned.isNotEmpty) activity = returned;
+      } catch (_) {
+        // Keep local inference on failure.
+      }
+
       await dio.post<dynamic>('/location/update', data: {
         'lat': position.latitude,
         'lng': position.longitude,
         'accuracy': position.accuracy,
-        'speed': position.speed < 0 ? 0.0 : position.speed,
+        'speed': normalisedSpeed,
         'heading': position.heading,
         'altitude': position.altitude,
         if (deviceId != null) 'device_id': deviceId,
-        'activity': _inferActivity(position.speed),
+        'activity': activity,
       });
+
+      // ── Real-time speed monitoring ───────────────────────────────────────
+      // Convert m/s → km/h and post a speeding driving event when the live GPS
+      // speed crosses the threshold. Throttled so we don't spam the endpoint.
+      final speedKmh = normalisedSpeed * 3.6;
+      if (speedKmh >= _speedingThresholdKmh &&
+          _shouldPostSpeedingEvent(DateTime.now())) {
+        final userId = StorageService.instance.getUserId();
+        if (userId != null) {
+          try {
+            await dio.post<dynamic>('/driving/event', data: {
+              'user_id': userId,
+              'type': 'speeding',
+              'lat': position.latitude,
+              'lng': position.longitude,
+              'speed': speedKmh,
+              'severity': _speedSeverity(speedKmh),
+            });
+          } catch (_) {
+            // Non-fatal — the location update already succeeded.
+          }
+        }
+      }
 
       // Update the foreground notification content.
       if (service is AndroidServiceInstance &&
@@ -91,12 +140,13 @@ void onStart(ServiceInstance service) async {
         );
       }
 
-      // Notify the main isolate with the latest position.
+      // Notify the main isolate with the latest position + activity.
       service.invoke('locationUpdate', {
         'lat': position.latitude,
         'lng': position.longitude,
         'speed': position.speed,
         'accuracy': position.accuracy,
+        'activity': activity,
         'timestamp': DateTime.now().toIso8601String(),
       });
     } on DioException catch (e) {
@@ -128,6 +178,33 @@ String _inferActivity(double speedMs) {
   if (speedMs < 2.0) return 'walking';
   if (speedMs < 8.0) return 'running';
   return 'driving';
+}
+
+// ── Speed monitoring ─────────────────────────────────────────────────────────
+
+/// Speed (km/h) above which a "speeding" driving event is generated.
+const double _speedingThresholdKmh = 100.0;
+
+/// Minimum gap between two posted speeding events (throttle).
+const Duration _speedingEventCooldown = Duration(seconds: 60);
+
+DateTime? _lastSpeedingEventAt;
+
+/// Returns true at most once per [_speedingEventCooldown].
+bool _shouldPostSpeedingEvent(DateTime now) {
+  if (_lastSpeedingEventAt != null &&
+      now.difference(_lastSpeedingEventAt!) < _speedingEventCooldown) {
+    return false;
+  }
+  _lastSpeedingEventAt = now;
+  return true;
+}
+
+/// Map a km/h speed to a driving-event severity bucket.
+String _speedSeverity(double speedKmh) {
+  if (speedKmh >= 140) return 'high';
+  if (speedKmh >= 120) return 'medium';
+  return 'low';
 }
 
 // ── Public service facade ─────────────────────────────────────────────────────

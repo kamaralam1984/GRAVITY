@@ -161,6 +161,28 @@ class AuthRepository {
     await _dio.delete<dynamic>(ApiConstants.deviceDelete(id));
   }
 
+  /// Fetch all devices registered to the current account.
+  Future<List<Device>> getMyDevices() async {
+    final res = await _dio.get<dynamic>(ApiConstants.devicesMy);
+    final data = res.data;
+    if (data is List) {
+      return data
+          .map((e) => Device.fromJson(Map<String, dynamic>.from(e as Map)))
+          .toList();
+    }
+    return const [];
+  }
+
+  /// Report a device's current battery level (0–100) to the backend.
+  /// Used by the background battery-monitoring task.
+  Future<void> reportBattery(int deviceId, int batteryLevel) async {
+    final level = batteryLevel.clamp(0, 100);
+    await _dio.patch<dynamic>(
+      ApiConstants.deviceBattery(deviceId),
+      data: {'battery_level': level},
+    );
+  }
+
   // ── Logout ────────────────────────────────────────────────────────────────
 
   Future<void> logout() async {

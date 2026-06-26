@@ -102,6 +102,25 @@ class _SosScreenState extends ConsumerState<SosScreen>
     ref.read(sosProvider.notifier).cancelSos();
   }
 
+  /// Women-safety entry point — reuses the existing SOS flow but surfaces a
+  /// discreet confirmation so the alert can be triggered quickly and quietly.
+  void _startWomenSafety() {
+    final family = ref.read(selectedFamilyProvider);
+    if (family == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please join a family first.')),
+      );
+      return;
+    }
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Women Safety SOS activating discreetly…'),
+        duration: Duration(seconds: 2),
+      ),
+    );
+    _startCountdown();
+  }
+
   @override
   void dispose() {
     _pulseCtrl.dispose();
@@ -232,6 +251,11 @@ class _SosScreenState extends ConsumerState<SosScreen>
                                 isToggle: true,
                                 value: _shakeEnabled,
                                 onToggle: _toggleShake,
+                              ),
+                              _SosOption(
+                                icon: Icons.woman_rounded,
+                                label: 'Women Safety',
+                                onTap: _startWomenSafety,
                               ),
                             ],
                           ),

@@ -35,6 +35,46 @@ class LocationRepository {
     });
   }
 
+  /// POST /monitoring/activity
+  ///
+  /// Posts raw device motion (speed-derived) and returns the server-classified
+  /// activity state (e.g. driving / walking / stationary). Falls back to a local
+  /// inference string on any failure so callers always receive a usable value.
+  Future<String> postActivity({
+    required double speed,
+    double? lat,
+    double? lng,
+    int? deviceId,
+  }) async {
+    try {
+      final res = await _dio.post<Map<String, dynamic>>(
+        '/monitoring/activity',
+        data: {
+          'speed': speed,
+          if (lat != null) 'lat': lat,
+          if (lng != null) 'lng': lng,
+          if (deviceId != null) 'device_id': deviceId,
+        },
+      );
+      final data = res.data;
+      final activity =
+          (data?['activity'] ?? data?['state'] ?? data?['status']) as String?;
+      if (activity != null && activity.isNotEmpty) return activity;
+    } catch (_) {
+      // Swallow — fall through to local inference below.
+    }
+    return inferActivity(speed);
+  }
+
+  /// Naive local activity inference from speed (m/s). Shared by the background
+  /// isolate and UI so classification rules stay consistent.
+  static String inferActivity(double speedMs) {
+    if (speedMs <= 0.5) return 'stationary';
+    if (speedMs < 2.2) return 'walking';
+    if (speedMs < 8.0) return 'running';
+    return 'driving';
+  }
+
   /// GET /location/history/{userId}
   Future<List<LocationHistory>> getHistory(int userId) async {
     final res = await _dio.get('/location/history/$userId');

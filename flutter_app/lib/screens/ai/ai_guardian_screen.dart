@@ -4,8 +4,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_text_styles.dart';
+import '../../models/family_model.dart';
 import '../../providers/ai_provider.dart';
 import '../../providers/auth_provider.dart';
+import '../../providers/family_provider.dart';
+import '../../repositories/ai_repository.dart';
 import '../../routes/route_names.dart';
 import '../../widgets/common/glass_card.dart';
 
@@ -23,6 +26,16 @@ class _AiGuardianScreenState extends ConsumerState<AiGuardianScreen>
   late final AnimationController _pulseController;
   late final Animation<double> _orbScale;
   late final Animation<double> _pulseOpacity;
+
+  RoutineAnalysis? _routine;
+
+  Future<_GuardianRiskData>? _riskFuture;
+
+  // Daily report + pattern insights
+  // (/api/ai-guardian/daily-report/{family_id} & /insights/{family_id})
+  Map<String, dynamic>? _dailyReport;
+  List<Map<String, dynamic>> _guardianInsights = const [];
+  bool _insightsLoading = false;
 
   @override
   void initState() {
@@ -51,8 +64,76 @@ class _AiGuardianScreenState extends ConsumerState<AiGuardianScreen>
       final user = ref.read(currentUserProvider);
       if (user != null) {
         ref.read(aiProvider.notifier).analyzeRoutine(user.id);
+        _loadRoutineDeviation(user.id);
+      }
+      final family = ref.read(selectedFamilyProvider);
+      final members = ref.read(familyMembersProvider);
+      if (family != null) {
+        setState(() => _riskFuture = _loadGuardianRisk(family.id, members));
+        _loadGuardianReport(family.id);
       }
     });
+  }
+
+  /// Loads the AI Guardian daily report and pattern insights for the family.
+  Future<void> _loadGuardianReport(int familyId) async {
+    if (mounted) setState(() => _insightsLoading = true);
+    final repo = AiRepository.instance;
+    try {
+      final report = await repo.getDailyReport(familyId);
+      if (mounted) setState(() => _dailyReport = report);
+    } catch (_) {}
+    try {
+      final insights = await repo.getInsights(familyId);
+      if (mounted) setState(() => _guardianInsights = insights);
+    } catch (_) {}
+    if (mounted) setState(() => _insightsLoading = false);
+  }
+
+  Future<void> _loadRoutineDeviation(int userId) async {
+    try {
+      final analysis =
+          await AiRepository.instance.analyzeRoutineDetailed(userId);
+      if (mounted) setState(() => _routine = analysis);
+    } catch (_) {}
+  }
+
+  /// Loads the family overall safety score and per-person risk levels by
+  /// combining /ai-guardian/safety-scores/{family_id} with
+  /// /ai-guardian/risk-predictions/{user_id} for each member.
+  Future<_GuardianRiskData> _loadGuardianRisk(
+      int familyId, List<FamilyMember> members) async {
+    final repo = AiRepository.instance;
+
+    int? overall;
+    try {
+      final scores = await repo.getSafetyScores(familyId);
+      overall = (scores['overall_score'] as num?)?.toInt();
+    } catch (_) {}
+
+    final people = <_PersonRisk>[];
+    for (final m in members) {
+      try {
+        final rp = await repo.getRiskPredictions(m.userId);
+        final preds = rp['predictions'];
+        String? topTitle;
+        String topSeverity = 'low';
+        if (preds is List && preds.isNotEmpty) {
+          final first = Map<String, dynamic>.from(preds.first as Map);
+          topTitle = first['title'] as String?;
+          topSeverity = (first['severity'] as String?) ?? 'low';
+        }
+        people.add(_PersonRisk(
+          name: m.name,
+          initials: m.initials,
+          score: (rp['next_24h_risk_score'] as num?)?.toInt() ?? 0,
+          topTitle: topTitle,
+          topSeverity: topSeverity,
+        ));
+      } catch (_) {}
+    }
+
+    return _GuardianRiskData(overallScore: overall, people: people);
   }
 
   @override
@@ -181,6 +262,110 @@ class _AiGuardianScreenState extends ConsumerState<AiGuardianScreen>
                   .slideY(begin: 0.08, end: 0, curve: Curves.easeOut),
             ),
           ),
+
+          // ── AI Daily Report Summary ──────────────────────────────────────
+          if (_dailyReport != null &&
+              (_dailyReport!['ai_summary'] as String?)?.isNotEmpty == true)
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+                child: _AiReportSummaryCard(report: _dailyReport!)
+                    .animate()
+                    .fadeIn(duration: 400.ms)
+                    .slideY(begin: 0.08, end: 0, curve: Curves.easeOut),
+              ),
+            ),
+
+          // ── Patterns & Insights ──────────────────────────────────────────
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(16, 24, 16, 8),
+              child: Row(
+                children: [
+                  Icon(Icons.insights_rounded,
+                      color: context.primaryColor, size: 20),
+                  const SizedBox(width: 8),
+                  Text('Patterns & Insights',
+                      style: AppTextStyles.headline3(context)),
+                ],
+              ),
+            ),
+          ),
+          if (_insightsLoading && _guardianInsights.isEmpty)
+            const SliverToBoxAdapter(
+              child: Center(
+                child: Padding(
+                  padding: EdgeInsets.all(24),
+                  child: CircularProgressIndicator(),
+                ),
+              ),
+            )
+          else if (_guardianInsights.isEmpty)
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(16, 0, 16, 0),
+                child: GlassCard(
+                  child: Center(
+                    child: Text(
+                      'No behavioural patterns detected yet.',
+                      style: AppTextStyles.body2(context),
+                    ),
+                  ),
+                ),
+              ),
+            )
+          else
+            SliverList(
+              delegate: SliverChildBuilderDelegate(
+                (ctx, i) => Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 10),
+                  child: _InsightCard(insight: _guardianInsights[i])
+                      .animate(delay: (60 * i).ms)
+                      .fadeIn(duration: 350.ms)
+                      .slideY(begin: 0.1, end: 0, curve: Curves.easeOut),
+                ),
+                childCount: _guardianInsights.length,
+              ),
+            ),
+
+          // ── Routine Monitor / Deviation ──────────────────────────────────
+          if (_routine != null && _routine!.hasDeviation)
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+                child: _RoutineMonitorCard(analysis: _routine!)
+                    .animate()
+                    .fadeIn(duration: 400.ms)
+                    .slideY(begin: 0.08, end: 0, curve: Curves.easeOut),
+              ),
+            ),
+
+          // ── Per-Person Risk Levels ───────────────────────────────────────
+          if (_riskFuture != null)
+            SliverToBoxAdapter(
+              child: FutureBuilder<_GuardianRiskData>(
+                future: _riskFuture,
+                builder: (ctx, snap) {
+                  if (snap.connectionState != ConnectionState.done) {
+                    return const Padding(
+                      padding: EdgeInsets.fromLTRB(16, 20, 16, 0),
+                      child: Center(child: CircularProgressIndicator()),
+                    );
+                  }
+                  final data = snap.data;
+                  if (data == null || data.people.isEmpty) {
+                    return const SizedBox.shrink();
+                  }
+                  return Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 24, 16, 0),
+                    child: _RiskLevelsSection(data: data)
+                        .animate()
+                        .fadeIn(duration: 400.ms)
+                        .slideY(begin: 0.08, end: 0, curve: Curves.easeOut),
+                  );
+                },
+              ),
+            ),
 
           // ── Ask AI Button ────────────────────────────────────────────────
           SliverToBoxAdapter(
@@ -603,6 +788,94 @@ class _DailyReportCard extends StatelessWidget {
   }
 }
 
+// ── Routine Monitor Card ──────────────────────────────────────────────────────
+
+class _RoutineMonitorCard extends StatelessWidget {
+  const _RoutineMonitorCard({required this.analysis});
+
+  final RoutineAnalysis analysis;
+
+  @override
+  Widget build(BuildContext context) {
+    final accent = context.sosColor;
+    final items = analysis.deviations.isNotEmpty
+        ? analysis.deviations
+        : (analysis.summary != null ? [analysis.summary!] : <String>[]);
+
+    return GlassCard(
+      glowColor: accent,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                width: 36,
+                height: 36,
+                decoration: BoxDecoration(
+                  color: accent.withOpacity(0.15),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Icon(Icons.notifications_active_rounded,
+                    color: accent, size: 20),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text('Routine Deviation Detected',
+                        style: AppTextStyles.subtitle2(context)
+                            .copyWith(color: context.textPrimary)),
+                    Text(
+                      analysis.status ?? 'Unusual activity in daily routine',
+                      style: AppTextStyles.caption(context),
+                    ),
+                  ],
+                ),
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(
+                    horizontal: 10, vertical: 4),
+                decoration: BoxDecoration(
+                  color: accent.withOpacity(0.15),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Text('ALERT',
+                    style: AppTextStyles.overline(context)
+                        .copyWith(color: accent)),
+              ),
+            ],
+          ),
+          if (items.isNotEmpty) ...[
+            const SizedBox(height: 14),
+            ...items.take(4).map(
+                  (d) => Padding(
+                    padding: const EdgeInsets.only(bottom: 8),
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Padding(
+                          padding: const EdgeInsets.only(top: 5),
+                          child: Icon(Icons.circle, size: 6, color: accent),
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(d,
+                              style: AppTextStyles.body2(context).copyWith(
+                                  color: context.textSecondary)),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
 // ── Safety Tip Card ───────────────────────────────────────────────────────────
 
 class _SafetyTipCard extends StatelessWidget {
@@ -683,6 +956,365 @@ class _SafetyTipCard extends StatelessWidget {
               ],
             ),
           ),
+        ],
+      ),
+    );
+  }
+}
+
+// ── Per-Person Risk Levels ────────────────────────────────────────────────────
+
+class _PersonRisk {
+  const _PersonRisk({
+    required this.name,
+    required this.initials,
+    required this.score,
+    this.topTitle,
+    this.topSeverity = 'low',
+  });
+
+  final String name;
+  final String initials;
+  final int score; // next-24h risk score, higher = riskier
+  final String? topTitle;
+  final String topSeverity;
+}
+
+class _GuardianRiskData {
+  const _GuardianRiskData({this.overallScore, this.people = const []});
+
+  final int? overallScore;
+  final List<_PersonRisk> people;
+}
+
+class _RiskLevelsSection extends StatelessWidget {
+  const _RiskLevelsSection({required this.data});
+
+  final _GuardianRiskData data;
+
+  Color _riskColor(int score, BuildContext ctx) {
+    if (score <= 30) return ctx.safeColor;
+    if (score <= 60) return ctx.goldColor;
+    return ctx.sosColor;
+  }
+
+  String _riskLabel(int score) {
+    if (score <= 30) return 'Low Risk';
+    if (score <= 60) return 'Moderate';
+    return 'High Risk';
+  }
+
+  Color _severityColor(String severity, BuildContext ctx) {
+    switch (severity.toLowerCase()) {
+      case 'critical':
+      case 'high':
+        return ctx.sosColor;
+      case 'medium':
+        return ctx.goldColor;
+      default:
+        return ctx.safeColor;
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final overall = data.overallScore;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Icon(Icons.groups_2_rounded, color: context.primaryColor, size: 20),
+            const SizedBox(width: 8),
+            Text('Per-Person Risk Levels',
+                style: AppTextStyles.headline3(context)),
+            const Spacer(),
+            if (overall != null)
+              Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                decoration: BoxDecoration(
+                  color: context.safeColor.withOpacity(0.15),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Text(
+                  'Family $overall%',
+                  style: AppTextStyles.caption(context).copyWith(
+                    color: context.safeColor,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ),
+          ],
+        ),
+        const SizedBox(height: 12),
+        ...List.generate(data.people.length, (i) {
+          final p = data.people[i];
+          final color = _riskColor(p.score, context);
+          final severityColor = _severityColor(p.topSeverity, context);
+          return Padding(
+            padding: const EdgeInsets.only(bottom: 10),
+            child: GlassCard(
+              padding: const EdgeInsets.all(14),
+              child: Row(
+                children: [
+                  CircleAvatar(
+                    radius: 22,
+                    backgroundColor: color.withOpacity(0.15),
+                    child: Text(
+                      p.initials,
+                      style: AppTextStyles.subtitle2(context)
+                          .copyWith(color: color, fontWeight: FontWeight.w700),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          p.name,
+                          style: AppTextStyles.subtitle2(context)
+                              .copyWith(color: context.textPrimary),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        const SizedBox(height: 2),
+                        Row(
+                          children: [
+                            Icon(Icons.insights_rounded,
+                                size: 12, color: severityColor),
+                            const SizedBox(width: 4),
+                            Expanded(
+                              child: Text(
+                                p.topTitle ?? 'All clear — no risks detected',
+                                style: AppTextStyles.caption(context),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    children: [
+                      Text(
+                        '${p.score}%',
+                        style: AppTextStyles.metricSmall(context)
+                            .copyWith(color: color, fontSize: 20),
+                      ),
+                      Text(
+                        _riskLabel(p.score),
+                        style: AppTextStyles.caption(context)
+                            .copyWith(color: color, fontWeight: FontWeight.w600),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            )
+                .animate(delay: (60 * i).ms)
+                .fadeIn(duration: 350.ms)
+                .slideY(begin: 0.1, end: 0, curve: Curves.easeOut),
+          );
+        }),
+      ],
+    );
+  }
+}
+
+// ── AI Daily Report Summary Card ──────────────────────────────────────────────
+
+class _AiReportSummaryCard extends StatelessWidget {
+  const _AiReportSummaryCard({required this.report});
+
+  final Map<String, dynamic> report;
+
+  Color _scoreColor(int s, BuildContext c) {
+    if (s >= 80) return c.safeColor;
+    if (s >= 60) return c.goldColor;
+    return c.sosColor;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final summary = report['ai_summary'] as String? ?? '';
+    final score = (report['overall_score'] as num?)?.toInt() ?? 0;
+    final color = _scoreColor(score, context);
+    final recs = (report['recommendations'] as List?)
+            ?.map((e) => e.toString())
+            .toList() ??
+        const <String>[];
+    final reportDate = report['report_date'] as String?;
+
+    return GlassCard(
+      glowColor: color,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(Icons.summarize_rounded,
+                  color: context.primaryColor, size: 20),
+              const SizedBox(width: 8),
+              Text("Today's AI Summary",
+                  style: AppTextStyles.subtitle2(context)
+                      .copyWith(color: context.textPrimary)),
+              const Spacer(),
+              Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                decoration: BoxDecoration(
+                  color: color.withOpacity(0.15),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Text('$score% safe',
+                    style: AppTextStyles.caption(context)
+                        .copyWith(color: color, fontWeight: FontWeight.w700)),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Text(summary,
+              style: AppTextStyles.body2(context)
+                  .copyWith(color: context.textSecondary)),
+          if (recs.isNotEmpty) ...[
+            const SizedBox(height: 14),
+            Text('RECOMMENDATIONS', style: AppTextStyles.overline(context)),
+            const SizedBox(height: 6),
+            ...recs.take(3).map(
+                  (r) => Padding(
+                    padding: const EdgeInsets.only(bottom: 6),
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Padding(
+                          padding: const EdgeInsets.only(top: 4),
+                          child: Icon(Icons.arrow_right_rounded,
+                              size: 16, color: color),
+                        ),
+                        const SizedBox(width: 4),
+                        Expanded(
+                          child: Text(r,
+                              style: AppTextStyles.caption(context)
+                                  .copyWith(color: context.textPrimary)),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+          ],
+          if (reportDate != null) ...[
+            const SizedBox(height: 10),
+            Text(reportDate, style: AppTextStyles.caption(context)),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+// ── Insight Card ──────────────────────────────────────────────────────────────
+
+class _InsightCard extends StatelessWidget {
+  const _InsightCard({required this.insight});
+
+  final Map<String, dynamic> insight;
+
+  IconData _icon(String? t) {
+    switch (t) {
+      case 'check':
+        return Icons.check_circle_rounded;
+      case 'heart':
+        return Icons.favorite_rounded;
+      case 'car':
+        return Icons.directions_car_rounded;
+      case 'map':
+        return Icons.location_on_rounded;
+      case 'alert':
+        return Icons.warning_amber_rounded;
+      case 'brain':
+        return Icons.psychology_rounded;
+      default:
+        return Icons.insights_rounded;
+    }
+  }
+
+  Color _hex(String? s, Color fallback) {
+    if (s == null) return fallback;
+    var h = s.replaceAll('#', '').trim();
+    if (h.length == 6) h = 'FF$h';
+    final v = int.tryParse(h, radix: 16);
+    return v == null ? fallback : Color(v);
+  }
+
+  Color _priorityColor(String? p, BuildContext c) {
+    switch (p) {
+      case 'high':
+        return c.sosColor;
+      case 'medium':
+        return c.warmColor;
+      default:
+        return c.safeColor;
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final text = insight['text'] as String? ?? '';
+    final time = insight['time'] as String? ?? '';
+    final priority = insight['priority'] as String?;
+    final dot = _hex(insight['dot_color'] as String?, context.primaryColor);
+    final icon = _icon(insight['icon_type'] as String?);
+    final pColor = _priorityColor(priority, context);
+
+    return GlassCard(
+      padding: const EdgeInsets.all(14),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            width: 40,
+            height: 40,
+            decoration: BoxDecoration(
+              color: dot.withOpacity(0.15),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Icon(icon, color: dot, size: 20),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(text,
+                    style: AppTextStyles.body2(context)
+                        .copyWith(color: context.textPrimary)),
+                if (time.isNotEmpty) ...[
+                  const SizedBox(height: 4),
+                  Text(time, style: AppTextStyles.caption(context)),
+                ],
+              ],
+            ),
+          ),
+          if (priority != null) ...[
+            const SizedBox(width: 8),
+            Container(
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+              decoration: BoxDecoration(
+                color: pColor.withOpacity(0.15),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Text(priority.toUpperCase(),
+                  style: AppTextStyles.overline(context)
+                      .copyWith(color: pColor)),
+            ),
+          ],
         ],
       ),
     );

@@ -25,6 +25,10 @@ class _HealthScreenState extends ConsumerState<HealthScreen> {
   String _selectedMetric = 'steps';
   bool _showForm = false;
 
+  // Wellness check-in
+  String? _selectedMood;
+  bool _submittingMood = false;
+
   // Form controllers
   final _stepsCtrl = TextEditingController();
   final _sleepCtrl = TextEditingController();
@@ -32,6 +36,51 @@ class _HealthScreenState extends ConsumerState<HealthScreen> {
   final _calCtrl = TextEditingController();
   final _waterCtrl = TextEditingController();
   final _activeCtrl = TextEditingController();
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final user = ref.read(currentUserProvider);
+      if (user != null) {
+        ref.read(elderProvider.notifier).loadToday(user.id);
+        ref.read(elderProvider.notifier).loadWeekly(user.id);
+      }
+    });
+  }
+
+  Future<void> _submitMood(String mood) async {
+    final user = ref.read(currentUserProvider);
+    if (user == null || _submittingMood) return;
+    setState(() {
+      _selectedMood = mood;
+      _submittingMood = true;
+    });
+    try {
+      await ref.read(elderRepositoryProvider).recordMood(user.id, mood);
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Mood logged: $mood'),
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        ),
+      );
+      await ref.read(elderProvider.notifier).loadToday(user.id);
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Could not log mood: $e'),
+          backgroundColor: context.sosColor,
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        ),
+      );
+    } finally {
+      if (mounted) setState(() => _submittingMood = false);
+    }
+  }
 
   @override
   void dispose() {
@@ -71,6 +120,23 @@ class _HealthScreenState extends ConsumerState<HealthScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            // Wellness dashboard summary (steps, mood, check-in)
+            _WellnessDashboard(
+              today: state.todayHealth,
+              score: state.wellnessScore,
+              mood: _selectedMood,
+            ).animate().fadeIn(duration: 400.ms).slideY(
+                begin: 0.06, end: 0, curve: Curves.easeOut),
+            const SizedBox(height: 20),
+
+            // One-tap mood check-in
+            _MoodCheckIn(
+              selected: _selectedMood,
+              isLoading: _submittingMood,
+              onSelect: _submitMood,
+            ),
+            const SizedBox(height: 24),
+
             // Metric selector
             _MetricSelector(
               selected: _selectedMetric,
@@ -654,6 +720,282 @@ class _MetricChip extends StatelessWidget {
           fontSize: 11,
           fontWeight: FontWeight.w600,
           color: color,
+        ),
+      ),
+    );
+  }
+}
+
+// ── Wellness Dashboard ──────────────────────────────────────────────────────
+
+class _WellnessDashboard extends StatelessWidget {
+  const _WellnessDashboard({
+    required this.today,
+    required this.score,
+    required this.mood,
+  });
+
+  final HealthRecord? today;
+  final int score;
+  final String? mood;
+
+  @override
+  Widget build(BuildContext context) {
+    final steps = today?.steps ?? 0;
+    const goal = 8000;
+    final progress = (steps / goal).clamp(0.0, 1.0);
+
+    return Container(
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        gradient: context.primaryGradient,
+        borderRadius: BorderRadius.circular(22),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Icon(Icons.favorite_rounded,
+                  color: Colors.white, size: 18),
+              const SizedBox(width: 8),
+              Text(
+                'Today\'s Wellness',
+                style: AppTextStyles.subtitle2(context)
+                    .copyWith(color: Colors.white),
+              ),
+              const Spacer(),
+              if (mood != null)
+                Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withOpacity(0.2),
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Text(
+                    mood!,
+                    style: const TextStyle(
+                      fontFamily: 'Inter',
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.white,
+                    ),
+                  ),
+                ),
+            ],
+          ),
+          const SizedBox(height: 18),
+          Row(
+            children: [
+              _DashStat(
+                value: '$steps',
+                label: 'Steps',
+                icon: Icons.directions_walk_rounded,
+              ),
+              _dashDivider(),
+              _DashStat(
+                value: '$score',
+                label: 'Wellness',
+                icon: Icons.spa_rounded,
+              ),
+              _dashDivider(),
+              _DashStat(
+                value: today?.heartRate != null ? '${today!.heartRate}' : '--',
+                label: 'BPM',
+                icon: Icons.monitor_heart_rounded,
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(10),
+            child: LinearProgressIndicator(
+              value: progress,
+              minHeight: 8,
+              backgroundColor: Colors.white.withOpacity(0.25),
+              valueColor:
+                  const AlwaysStoppedAnimation<Color>(Colors.white),
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            '$steps of $goal steps',
+            style: const TextStyle(
+              fontFamily: 'Inter',
+              fontSize: 12,
+              color: Colors.white70,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _dashDivider() => Container(
+        width: 1,
+        height: 38,
+        color: Colors.white.withOpacity(0.2),
+      );
+}
+
+class _DashStat extends StatelessWidget {
+  const _DashStat({
+    required this.value,
+    required this.label,
+    required this.icon,
+  });
+
+  final String value;
+  final String label;
+  final IconData icon;
+
+  @override
+  Widget build(BuildContext context) {
+    return Expanded(
+      child: Column(
+        children: [
+          Icon(icon, color: Colors.white, size: 20),
+          const SizedBox(height: 6),
+          Text(
+            value,
+            style: const TextStyle(
+              fontFamily: 'PlusJakartaSans',
+              fontSize: 22,
+              fontWeight: FontWeight.w700,
+              color: Colors.white,
+            ),
+          ),
+          const SizedBox(height: 2),
+          Text(
+            label,
+            style: const TextStyle(
+              fontFamily: 'Inter',
+              fontSize: 11,
+              color: Colors.white70,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ── Mood Check-In ───────────────────────────────────────────────────────────
+
+const _moods = [
+  ('Great', '😄', Color(0xFF10B981)),
+  ('Good', '🙂', Color(0xFF4B80F0)),
+  ('Okay', '😐', Color(0xFFD4A853)),
+  ('Low', '😔', Color(0xFFF08050)),
+  ('Bad', '😣', Color(0xFFEF4444)),
+];
+
+class _MoodCheckIn extends StatelessWidget {
+  const _MoodCheckIn({
+    required this.selected,
+    required this.isLoading,
+    required this.onSelect,
+  });
+
+  final String? selected;
+  final bool isLoading;
+  final ValueChanged<String> onSelect;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: context.surfaceColor,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: context.borderColor),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Text('How are you feeling?',
+                  style: AppTextStyles.subtitle2(context)),
+              const Spacer(),
+              if (isLoading)
+                SizedBox(
+                  width: 16,
+                  height: 16,
+                  child: CircularProgressIndicator(
+                      strokeWidth: 2, color: context.primaryColor),
+                ),
+            ],
+          ),
+          const SizedBox(height: 4),
+          Text('One tap to log your daily mood',
+              style: AppTextStyles.caption(context)),
+          const SizedBox(height: 14),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              for (final (label, emoji, color) in _moods)
+                _MoodButton(
+                  label: label,
+                  emoji: emoji,
+                  color: color,
+                  isSelected: selected == label,
+                  onTap: isLoading ? null : () => onSelect(label),
+                ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _MoodButton extends StatelessWidget {
+  const _MoodButton({
+    required this.label,
+    required this.emoji,
+    required this.color,
+    required this.isSelected,
+    required this.onTap,
+  });
+
+  final String label;
+  final String emoji;
+  final Color color;
+  final bool isSelected;
+  final VoidCallback? onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        width: 58,
+        padding: const EdgeInsets.symmetric(vertical: 10),
+        decoration: BoxDecoration(
+          color: isSelected ? color.withOpacity(0.18) : context.surface2Color,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: isSelected ? color : Colors.transparent,
+            width: 1.5,
+          ),
+        ),
+        child: Column(
+          children: [
+            Text(emoji, style: const TextStyle(fontSize: 24)),
+            const SizedBox(height: 6),
+            Text(
+              label,
+              style: TextStyle(
+                fontFamily: 'Inter',
+                fontSize: 10,
+                fontWeight: FontWeight.w600,
+                color: isSelected ? color : context.textSecondary,
+              ),
+            ),
+          ],
         ),
       ),
     );

@@ -7,6 +7,7 @@ import 'package:intl/intl.dart';
 import '../../core/theme/app_colors.dart';
 import '../../models/sos_model.dart';
 import '../../providers/sos_provider.dart';
+import '../settings/emergency_profile_screen.dart';
 
 // ── SOS Active Screen ─────────────────────────────────────────────────────────
 
@@ -110,7 +111,17 @@ class _SosActiveScreenState extends ConsumerState<SosActiveScreen>
                         ),
                       ),
                     ),
-                    const SizedBox(width: 48),
+                    IconButton(
+                      tooltip: 'Trusted Contacts',
+                      icon: Icon(Icons.contacts_rounded,
+                          color: context.textPrimary),
+                      onPressed: () => Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => const EmergencyProfileScreen(),
+                        ),
+                      ),
+                    ),
                   ],
                 ),
               ),
@@ -465,6 +476,24 @@ class _NoActiveAlerts extends StatelessWidget {
               padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 14),
             ),
             child: const Text('Go Back'),
+          ),
+          const SizedBox(height: 12),
+          TextButton.icon(
+            onPressed: () => Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (_) => const EmergencyProfileScreen(),
+              ),
+            ),
+            icon: Icon(Icons.contacts_rounded, color: context.primaryColor),
+            label: Text(
+              'Manage Trusted Contacts',
+              style: TextStyle(
+                fontFamily: 'Inter',
+                fontWeight: FontWeight.w600,
+                color: context.primaryColor,
+              ),
+            ),
           ),
         ],
       ),

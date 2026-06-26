@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:url_launcher/url_launcher.dart';
 
+import '../../core/network/dio_client.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_text_styles.dart';
 import '../../providers/auth_provider.dart';
@@ -10,6 +12,7 @@ import '../../routes/route_names.dart';
 import '../../widgets/common/app_button.dart';
 import '../../widgets/common/avatar_widget.dart';
 import '../../widgets/common/glass_card.dart';
+import 'emergency_profile_screen.dart';
 
 class SettingsScreen extends ConsumerWidget {
   const SettingsScreen({super.key});
@@ -130,6 +133,16 @@ class SettingsScreen extends ConsumerWidget {
                 onTap: () =>
                     Navigator.pushNamed(context, RouteNames.privacy),
               ),
+              _SettingsTile(
+                icon: Icons.medical_information_outlined,
+                label: 'Emergency Profile',
+                subtitle: 'Medical info & emergency contact',
+                onTap: () => Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (_) => const EmergencyProfileScreen(),
+                  ),
+                ),
+              ),
             ],
           ),
 
@@ -230,9 +243,41 @@ class SettingsScreen extends ConsumerWidget {
 
           const SizedBox(height: 12),
 
-          // ── About ─────────────────────────────────────────────────────────
+          // ── Enterprise & Support ─────────────────────────────────────────
           _SettingsGroup(
             index: 3,
+            title: 'Enterprise & Support',
+            children: [
+              _SettingsTile(
+                icon: Icons.business_center_rounded,
+                label: 'Enterprise Solutions',
+                subtitle: 'Schools, insurance & telecom — talk to sales',
+                onTap: () => _openContactSheet(
+                  context,
+                  category: 'enterprise',
+                  presetSubject: 'Enterprise enquiry',
+                  userEmail: user?.email,
+                ),
+              ),
+              _SettingsTile(
+                icon: Icons.support_agent_rounded,
+                label: 'Help & Support',
+                subtitle: 'Questions, issues or feedback',
+                onTap: () => _openContactSheet(
+                  context,
+                  category: 'support',
+                  presetSubject: '',
+                  userEmail: user?.email,
+                ),
+              ),
+            ],
+          ),
+
+          const SizedBox(height: 12),
+
+          // ── About ─────────────────────────────────────────────────────────
+          _SettingsGroup(
+            index: 4,
             title: 'About',
             children: [
               _SettingsTile(
@@ -240,6 +285,17 @@ class SettingsScreen extends ConsumerWidget {
                 label: 'App Version',
                 subtitle: '2.0.0 (build 200)',
                 onTap: null,
+              ),
+              _SettingsTile(
+                icon: Icons.code_rounded,
+                label: 'Developer API',
+                subtitle: 'Integrations & API keys (web portal)',
+                trailingWidget: Icon(Icons.open_in_new_rounded,
+                    color: context.textMuted, size: 18),
+                onTap: () => _openExternal(
+                  context,
+                  'https://kvltrack.kvlbusinesssolutions.com/developers',
+                ),
               ),
               _SettingsTile(
                 icon: Icons.article_outlined,
@@ -314,6 +370,20 @@ class SettingsScreen extends ConsumerWidget {
               height: MediaQuery.of(context).padding.bottom + 24),
         ],
       ),
+    );
+  }
+}
+
+// ── Helpers ───────────────────────────────────────────────────────────────────
+
+/// Opens an external URL (e.g. the developer / integrations web portal).
+Future<void> _openExternal(BuildContext context, String url) async {
+  final uri = Uri.parse(url);
+  final ok = await canLaunchUrl(uri) &&
+      await launchUrl(uri, mode: LaunchMode.externalApplication);
+  if (!ok && context.mounted) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Could not open the developer portal.')),
     );
   }
 }
@@ -434,6 +504,248 @@ class _SettingsTile extends StatelessWidget {
               ],
             ],
           ),
+        ),
+      ),
+    );
+  }
+}
+
+// ── Contact / Support Sheet ───────────────────────────────────────────────────
+
+void _openContactSheet(
+  BuildContext context, {
+  required String category,
+  required String presetSubject,
+  String? userEmail,
+}) {
+  showModalBottomSheet<void>(
+    context: context,
+    isScrollControlled: true,
+    backgroundColor: Colors.transparent,
+    builder: (_) => _ContactSupportSheet(
+      category: category,
+      presetSubject: presetSubject,
+      userEmail: userEmail,
+    ),
+  );
+}
+
+class _ContactSupportSheet extends StatefulWidget {
+  const _ContactSupportSheet({
+    required this.category,
+    required this.presetSubject,
+    this.userEmail,
+  });
+
+  final String category;
+  final String presetSubject;
+  final String? userEmail;
+
+  @override
+  State<_ContactSupportSheet> createState() => _ContactSupportSheetState();
+}
+
+class _ContactSupportSheetState extends State<_ContactSupportSheet> {
+  late final TextEditingController _subject;
+  late final TextEditingController _message;
+  late final TextEditingController _email;
+  final _phone = TextEditingController();
+  bool _sending = false;
+
+  bool get _isEnterprise => widget.category == 'enterprise';
+
+  @override
+  void initState() {
+    super.initState();
+    _subject = TextEditingController(text: widget.presetSubject);
+    _message = TextEditingController();
+    _email = TextEditingController(text: widget.userEmail ?? '');
+  }
+
+  @override
+  void dispose() {
+    _subject.dispose();
+    _message.dispose();
+    _email.dispose();
+    _phone.dispose();
+    super.dispose();
+  }
+
+  Future<void> _submit() async {
+    if (_subject.text.trim().isEmpty || _message.text.trim().isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: const Text('Please add a subject and a message'),
+          backgroundColor: context.sosColor,
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+      return;
+    }
+    setState(() => _sending = true);
+    try {
+      await DioClient.instance.post('/support/', data: {
+        'category': widget.category,
+        'subject': _subject.text.trim(),
+        'description': _message.text.trim(),
+        if (_email.text.trim().isNotEmpty) 'user_email': _email.text.trim(),
+        if (_phone.text.trim().isNotEmpty) 'user_phone': _phone.text.trim(),
+        'priority': _isEnterprise ? 'high' : 'normal',
+      });
+      if (!mounted) return;
+      Navigator.pop(context);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(_isEnterprise
+              ? 'Thanks! Our sales team will be in touch.'
+              : 'Your request has been submitted.'),
+          backgroundColor: context.safeColor,
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: const Text('Could not send. Please try again.'),
+          backgroundColor: context.sosColor,
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    } finally {
+      if (mounted) setState(() => _sending = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final title = _isEnterprise ? 'Contact Sales' : 'Help & Support';
+    final subtitle = _isEnterprise
+        ? 'Tell us about your organisation — schools, insurance or telecom — and we will reach out.'
+        : 'Send us your question or issue and our team will respond by email.';
+
+    return Padding(
+      padding: EdgeInsets.only(
+        bottom: MediaQuery.of(context).viewInsets.bottom,
+      ),
+      child: Container(
+        decoration: BoxDecoration(
+          color: context.surfaceColor,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+        ),
+        padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Center(
+              child: Container(
+                width: 40,
+                height: 4,
+                margin: const EdgeInsets.only(bottom: 16),
+                decoration: BoxDecoration(
+                  color: context.borderColor,
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+            ),
+            Row(
+              children: [
+                Container(
+                  width: 40,
+                  height: 40,
+                  decoration: BoxDecoration(
+                    color: context.primaryColor.withOpacity(0.12),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Icon(
+                    _isEnterprise
+                        ? Icons.business_center_rounded
+                        : Icons.support_agent_rounded,
+                    color: context.primaryColor,
+                    size: 20,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Text(title, style: AppTextStyles.headline3(context)),
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            Text(subtitle, style: AppTextStyles.caption(context)),
+            const SizedBox(height: 16),
+            _SheetField(controller: _subject, label: 'Subject', icon: Icons.subject_rounded),
+            const SizedBox(height: 12),
+            _SheetField(
+              controller: _message,
+              label: 'Message',
+              icon: Icons.message_outlined,
+              maxLines: 4,
+            ),
+            const SizedBox(height: 12),
+            _SheetField(
+              controller: _email,
+              label: 'Email (for reply)',
+              icon: Icons.email_outlined,
+              keyboardType: TextInputType.emailAddress,
+            ),
+            const SizedBox(height: 12),
+            _SheetField(
+              controller: _phone,
+              label: 'Phone (optional)',
+              icon: Icons.phone_outlined,
+              keyboardType: TextInputType.phone,
+            ),
+            const SizedBox(height: 20),
+            AppButton.primary(
+              label: _isEnterprise ? 'Contact Sales' : 'Submit Request',
+              icon: Icons.send_rounded,
+              isLoading: _sending,
+              onPressed: _sending ? null : _submit,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _SheetField extends StatelessWidget {
+  const _SheetField({
+    required this.controller,
+    required this.label,
+    required this.icon,
+    this.maxLines = 1,
+    this.keyboardType,
+  });
+
+  final TextEditingController controller;
+  final String label;
+  final IconData icon;
+  final int maxLines;
+  final TextInputType? keyboardType;
+
+  @override
+  Widget build(BuildContext context) {
+    return TextField(
+      controller: controller,
+      maxLines: maxLines,
+      keyboardType: keyboardType,
+      style: AppTextStyles.body2(context).copyWith(color: context.textPrimary),
+      decoration: InputDecoration(
+        labelText: label,
+        labelStyle: AppTextStyles.caption(context),
+        prefixIcon: Icon(icon, color: context.primaryColor, size: 20),
+        filled: true,
+        fillColor: context.surface2Color,
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(14),
+          borderSide: BorderSide(color: context.borderColor),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(14),
+          borderSide: BorderSide(color: context.primaryColor, width: 1.5),
         ),
       ),
     );

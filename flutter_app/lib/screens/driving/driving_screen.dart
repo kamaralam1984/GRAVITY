@@ -1,16 +1,21 @@
+import 'dart:async';
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import 'package:geolocator/geolocator.dart';
 
+import '../../core/services/storage_service.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_dimensions.dart';
 import '../../core/theme/app_text_styles.dart';
 import '../../models/driving_model.dart';
 import '../../providers/driving_provider.dart';
 import '../../providers/family_provider.dart';
+import '../../repositories/ai_repository.dart';
+import '../../repositories/driving_repository.dart';
 import '../../routes/route_names.dart';
 
 // ── Driving Safety Screen ─────────────────────────────────────────────────────
@@ -87,6 +92,14 @@ class _DrivingScreenState extends ConsumerState<DrivingScreen> {
                                     begin: 0.08,
                                     end: 0,
                                     curve: Curves.easeOut),
+                            const SizedBox(height: 16),
+
+                            // Live speed monitor
+                            const _LiveSpeedMonitor()
+                                .animate(delay: 80.ms)
+                                .fadeIn(duration: 400.ms)
+                                .slideY(begin: 0.08, end: 0,
+                                    curve: Curves.easeOut),
                             const SizedBox(height: 24),
 
                             // Summary stats
@@ -128,6 +141,16 @@ class _DrivingScreenState extends ConsumerState<DrivingScreen> {
                                 ),
                               ],
                             ),
+                            const SizedBox(height: 24),
+
+                            // AI Driving Coach
+                            _DrivingCoachPanel(
+                              familyScore: familyScore,
+                              summary: state.familySummary,
+                            )
+                                .animate(delay: 160.ms)
+                                .fadeIn(duration: 400.ms)
+                                .slideY(begin: 0.1, end: 0),
                             const SizedBox(height: 24),
 
                             // Member cards
@@ -177,6 +200,211 @@ class _DrivingScreenState extends ConsumerState<DrivingScreen> {
 
   int _countSafeDrivers(List<MemberDrivingSummary> members) {
     return members.where((m) => m.score >= 80).length;
+  }
+}
+
+// ── Live Speed Monitor ────────────────────────────────────────────────────────
+
+/// Captures live GPS speed and posts a speeding driving event when the speed
+/// crosses the threshold (throttled). Tap to start/stop monitoring.
+class _LiveSpeedMonitor extends StatefulWidget {
+  const _LiveSpeedMonitor();
+
+  @override
+  State<_LiveSpeedMonitor> createState() => _LiveSpeedMonitorState();
+}
+
+class _LiveSpeedMonitorState extends State<_LiveSpeedMonitor> {
+  static const double _thresholdKmh = 100.0;
+  static const Duration _eventCooldown = Duration(seconds: 60);
+
+  final DrivingRepository _repo = DrivingRepository();
+  StreamSubscription<Position>? _sub;
+  double _speedKmh = 0;
+  bool _monitoring = false;
+  DateTime? _lastEventAt;
+
+  @override
+  void dispose() {
+    _sub?.cancel();
+    super.dispose();
+  }
+
+  Future<void> _toggle() async {
+    if (_monitoring) {
+      await _sub?.cancel();
+      _sub = null;
+      setState(() {
+        _monitoring = false;
+        _speedKmh = 0;
+      });
+      return;
+    }
+
+    // Ensure permission before streaming.
+    var perm = await Geolocator.checkPermission();
+    if (perm == LocationPermission.denied) {
+      perm = await Geolocator.requestPermission();
+    }
+    if (perm == LocationPermission.denied ||
+        perm == LocationPermission.deniedForever) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Location permission required')),
+        );
+      }
+      return;
+    }
+
+    _sub = Geolocator.getPositionStream(
+      locationSettings: const LocationSettings(
+        accuracy: LocationAccuracy.high,
+        distanceFilter: 0,
+      ),
+    ).listen(_onPosition);
+    setState(() => _monitoring = true);
+  }
+
+  void _onPosition(Position pos) {
+    final kmh = (pos.speed < 0 ? 0.0 : pos.speed) * 3.6;
+    if (mounted) setState(() => _speedKmh = kmh);
+
+    if (kmh >= _thresholdKmh) {
+      final now = DateTime.now();
+      if (_lastEventAt == null ||
+          now.difference(_lastEventAt!) >= _eventCooldown) {
+        _lastEventAt = now;
+        _postSpeeding(pos, kmh);
+      }
+    }
+  }
+
+  Future<void> _postSpeeding(Position pos, double kmh) async {
+    final userId = StorageService.instance.getUserId();
+    if (userId == null) return;
+    try {
+      await _repo.logEvent(
+        userId: userId,
+        type: 'speeding',
+        lat: pos.latitude,
+        lng: pos.longitude,
+        speed: kmh,
+        severity: kmh >= 140
+            ? 'high'
+            : kmh >= 120
+                ? 'medium'
+                : 'low',
+      );
+    } catch (_) {
+      // Non-fatal.
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final over = _speedKmh >= _thresholdKmh;
+    final color = !_monitoring
+        ? context.textMuted
+        : over
+            ? context.sosColor
+            : context.safeColor;
+
+    return Container(
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        color: context.surfaceColor,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: color.withOpacity(0.25)),
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 64,
+            height: 64,
+            alignment: Alignment.center,
+            decoration: BoxDecoration(
+              color: color.withOpacity(0.1),
+              shape: BoxShape.circle,
+              border: Border.all(color: color.withOpacity(0.35), width: 2),
+            ),
+            child: Icon(Icons.speed_rounded, color: color, size: 28),
+          ),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('Live Speed',
+                    style: AppTextStyles.label(context).copyWith(
+                      color: context.textSecondary,
+                      fontWeight: FontWeight.w600,
+                    )),
+                const SizedBox(height: 2),
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.baseline,
+                  textBaseline: TextBaseline.alphabetic,
+                  children: [
+                    Text(
+                      _monitoring ? _speedKmh.toStringAsFixed(0) : '--',
+                      style: TextStyle(
+                        fontFamily: 'PlusJakartaSans',
+                        fontSize: 34,
+                        fontWeight: FontWeight.w800,
+                        color: color,
+                      ),
+                    ),
+                    const SizedBox(width: 4),
+                    Text('km/h', style: AppTextStyles.caption(context)),
+                  ],
+                ),
+                Text(
+                  !_monitoring
+                      ? 'Tap start to monitor your speed'
+                      : over
+                          ? 'Speeding — event logged'
+                          : 'Within safe limits',
+                  style: AppTextStyles.caption(context).copyWith(color: color),
+                ),
+              ],
+            ),
+          ),
+          GestureDetector(
+            onTap: _toggle,
+            child: Container(
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+              decoration: BoxDecoration(
+                color: _monitoring
+                    ? context.sosColor.withOpacity(0.12)
+                    : context.primaryColor,
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Row(
+                children: [
+                  Icon(
+                    _monitoring
+                        ? Icons.stop_rounded
+                        : Icons.play_arrow_rounded,
+                    size: 18,
+                    color: _monitoring ? context.sosColor : Colors.white,
+                  ),
+                  const SizedBox(width: 4),
+                  Text(
+                    _monitoring ? 'Stop' : 'Start',
+                    style: TextStyle(
+                      fontFamily: 'Inter',
+                      fontSize: 13,
+                      fontWeight: FontWeight.w700,
+                      color: _monitoring ? context.sosColor : Colors.white,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 }
 
@@ -501,6 +729,181 @@ class _MemberDrivingCard extends StatelessWidget {
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+// ── AI Driving Coach Panel ────────────────────────────────────────────────────
+
+/// On-demand AI coaching for the family's driving. Builds a compact context
+/// string from the current scores/events and asks `/ai/chat` for tips.
+class _DrivingCoachPanel extends StatefulWidget {
+  const _DrivingCoachPanel({required this.familyScore, required this.summary});
+
+  final double familyScore;
+  final List<MemberDrivingSummary> summary;
+
+  @override
+  State<_DrivingCoachPanel> createState() => _DrivingCoachPanelState();
+}
+
+class _DrivingCoachPanelState extends State<_DrivingCoachPanel> {
+  final _ai = AiRepository.instance;
+  bool _loading = false;
+  String? _advice;
+  String? _error;
+
+  String _buildContext() {
+    final totalEvents =
+        widget.summary.fold<int>(0, (s, m) => s + m.totalEvents);
+    final buffer = StringBuffer()
+      ..writeln('Family driving safety score: '
+          '${widget.familyScore.toStringAsFixed(0)}/100.')
+      ..writeln('Drivers: ${widget.summary.length}. '
+          'Total recorded events: $totalEvents.');
+    for (final m in widget.summary.take(6)) {
+      buffer.writeln('- ${m.name}: score ${m.score.toStringAsFixed(0)}, '
+          '${m.totalEvents} events.');
+    }
+    return buffer.toString();
+  }
+
+  Future<void> _coach() async {
+    setState(() {
+      _loading = true;
+      _error = null;
+    });
+    try {
+      final advice = await _ai.drivingCoach(drivingContext: _buildContext());
+      if (!mounted) return;
+      setState(() {
+        _advice = advice;
+        _loading = false;
+      });
+    } catch (_) {
+      if (!mounted) return;
+      setState(() {
+        _error = 'Coaching is unavailable right now. Please try again.';
+        _loading = false;
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: context.isDark
+              ? [const Color(0xFF1A1330), const Color(0xFF121022)]
+              : [const Color(0xFFF3EEFF), const Color(0xFFFFFFFF)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: context.primaryColor.withOpacity(0.18)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  gradient: context.primaryGradient,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: const Icon(Icons.auto_awesome_rounded,
+                    color: Colors.white, size: 18),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text('AI Driving Coach',
+                        style: AppTextStyles.subtitle2(context).copyWith(
+                          fontWeight: FontWeight.w700,
+                          color: context.textPrimary,
+                        )),
+                    Text('Personalised tips from your driving data',
+                        style: AppTextStyles.caption(context)),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 14),
+          if (_advice != null) ...[
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(14),
+              decoration: BoxDecoration(
+                color: context.surfaceColor.withOpacity(0.6),
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(color: context.borderColor),
+              ),
+              child: Text(
+                _advice!,
+                style: AppTextStyles.body2(context).copyWith(
+                  color: context.textPrimary,
+                  height: 1.5,
+                ),
+              ),
+            ),
+            const SizedBox(height: 12),
+          ],
+          if (_error != null) ...[
+            Text(_error!,
+                style: AppTextStyles.caption(context)
+                    .copyWith(color: context.sosColor)),
+            const SizedBox(height: 12),
+          ],
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton.icon(
+              onPressed: _loading ? null : _coach,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: context.primaryColor,
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(vertical: 13),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(14),
+                ),
+                elevation: 0,
+              ),
+              icon: _loading
+                  ? const SizedBox(
+                      width: 16,
+                      height: 16,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        valueColor:
+                            AlwaysStoppedAnimation<Color>(Colors.white),
+                      ),
+                    )
+                  : Icon(_advice == null
+                      ? Icons.psychology_rounded
+                      : Icons.refresh_rounded),
+              label: Text(
+                _loading
+                    ? 'Analysing…'
+                    : _advice == null
+                        ? 'Get AI Coaching'
+                        : 'Refresh Tips',
+                style: const TextStyle(
+                  fontFamily: 'Inter',
+                  fontWeight: FontWeight.w700,
+                  fontSize: 14,
+                ),
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }

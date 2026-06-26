@@ -7,7 +7,6 @@ import '../../models/family_model.dart';
 import '../../models/location_model.dart';
 import '../../routes/route_names.dart';
 import '../common/avatar_widget.dart';
-import '../common/glass_card.dart';
 
 /// Compact member row card displayed in the map's bottom sheet.
 class MemberCardWidget extends StatelessWidget {
@@ -120,12 +119,8 @@ class MemberCardWidget extends StatelessWidget {
                               )),
                           const SizedBox(width: 8),
                         ],
-                        _ActivityDot(activity: activity, isDark: isDark),
-                        const SizedBox(width: 4),
-                        Text(
-                          _capitalise(activity),
-                          style: AppTextStyles.caption(context),
-                        ),
+                        _ActivityIndicator(
+                            activity: activity, isDark: isDark),
                         if (battery != null && isOnline) ...[
                           const Spacer(),
                           Icon(
@@ -178,9 +173,6 @@ class MemberCardWidget extends StatelessWidget {
     }
     return isDark ? AppDarkColors.safe : AppLightColors.safe;
   }
-
-  String _capitalise(String s) =>
-      s.isEmpty ? s : '${s[0].toUpperCase()}${s.substring(1)}';
 }
 
 class _RoleBadge extends StatelessWidget {
@@ -214,28 +206,66 @@ class _RoleBadge extends StatelessWidget {
   }
 }
 
-class _ActivityDot extends StatelessWidget {
-  const _ActivityDot({required this.activity, required this.isDark});
+/// Surfaces the auto-detected transport/activity state returned by the
+/// `/monitoring/activity` classifier: driving, walking, running, cycling or
+/// stationary. Renders a tinted icon pill with a readable label.
+class _ActivityIndicator extends StatelessWidget {
+  const _ActivityIndicator({required this.activity, required this.isDark});
   final String activity;
   final bool isDark;
 
   @override
   Widget build(BuildContext context) {
-    final color = switch (activity.toLowerCase()) {
-      'driving' =>
-        isDark ? AppDarkColors.primary : AppLightColors.primary,
-      'walking' || 'running' =>
-        isDark ? AppDarkColors.safe : AppLightColors.safe,
-      'still' =>
-        isDark ? AppDarkColors.textMuted : AppLightColors.textMuted,
-      _ =>
-        isDark ? AppDarkColors.textMuted : AppLightColors.textMuted,
-    };
+    final (icon, color, label) = _resolve(activity.toLowerCase());
 
     return Container(
-      width: 8,
-      height: 8,
-      decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+      decoration: BoxDecoration(
+        color: color.withOpacity(0.12),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 11, color: color),
+          const SizedBox(width: 3),
+          Text(
+            label,
+            style: TextStyle(
+              fontFamily: 'Inter',
+              fontSize: 11,
+              fontWeight: FontWeight.w600,
+              color: color,
+            ),
+          ),
+        ],
+      ),
     );
   }
+
+  (IconData, Color, String) _resolve(String a) {
+    final primary = isDark ? AppDarkColors.primary : AppLightColors.primary;
+    final safe = isDark ? AppDarkColors.safe : AppLightColors.safe;
+    final gold = isDark ? AppDarkColors.gold : AppLightColors.gold;
+    final muted = isDark ? AppDarkColors.textMuted : AppLightColors.textMuted;
+
+    return switch (a) {
+      'driving' || 'in_vehicle' || 'automotive' || 'vehicle' =>
+        (Icons.directions_car_rounded, primary, 'Driving'),
+      'walking' || 'on_foot' || 'foot' =>
+        (Icons.directions_walk_rounded, safe, 'Walking'),
+      'running' =>
+        (Icons.directions_run_rounded, safe, 'Running'),
+      'cycling' || 'bicycle' || 'on_bicycle' =>
+        (Icons.directions_bike_rounded, gold, 'Cycling'),
+      'stationary' || 'still' || 'idle' =>
+        (Icons.chair_rounded, muted, 'Stationary'),
+      'offline' =>
+        (Icons.cloud_off_rounded, muted, 'Offline'),
+      _ => (Icons.my_location_rounded, muted, _capitalise(a)),
+    };
+  }
+
+  String _capitalise(String s) =>
+      s.isEmpty ? 'Unknown' : '${s[0].toUpperCase()}${s.substring(1)}';
 }
