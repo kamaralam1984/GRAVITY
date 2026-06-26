@@ -10,6 +10,7 @@ import 'package:geolocator/geolocator.dart';
 import '../core/config/app_config.dart';
 import '../core/constants/storage_keys.dart';
 import '../core/services/storage_service.dart';
+import 'location_queue_service.dart';
 
 // ── Background isolate entry point ────────────────────────────────────────────
 
@@ -50,6 +51,31 @@ void onStart(ServiceInstance service) async {
       return;
     }
 
+    final dio = Dio(
+      BaseOptions(
+        baseUrl: AppConfig.baseUrl,
+        connectTimeout: const Duration(seconds: 15),
+        receiveTimeout: const Duration(seconds: 15),
+        headers: {
+          HttpHeaders.authorizationHeader: 'Bearer $token',
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+        },
+      ),
+    );
+
+    // Offline resilience: before sending the fresh fix, drain any location
+    // updates that were queued while offline. Succeeds only when connectivity
+    // is back; draining is strict FIFO and stops at the first failure so no
+    // update is lost or reordered. Best-effort — never throws out of the tick.
+    try {
+      await LocationQueueService.instance.flush(
+        (endpoint, body) => dio.post<dynamic>(endpoint, data: body),
+      );
+    } catch (_) {
+      // Remaining items are retried on the next tick.
+    }
+
     try {
       final position = await Geolocator.getCurrentPosition(
         desiredAccuracy: LocationAccuracy.high,
@@ -57,19 +83,6 @@ void onStart(ServiceInstance service) async {
 
       final deviceId =
           StorageService.instance.getSetting<String>(StorageKeys.deviceId);
-
-      final dio = Dio(
-        BaseOptions(
-          baseUrl: AppConfig.baseUrl,
-          connectTimeout: const Duration(seconds: 15),
-          receiveTimeout: const Duration(seconds: 15),
-          headers: {
-            HttpHeaders.authorizationHeader: 'Bearer $token',
-            'Content-Type': 'application/json',
-            'Accept': 'application/json',
-          },
-        ),
-      );
 
       final normalisedSpeed =
           position.speed < 0 ? 0.0 : position.speed;
@@ -97,7 +110,7 @@ void onStart(ServiceInstance service) async {
         // Keep local inference on failure.
       }
 
-      await dio.post<dynamic>('/location/update', data: {
+      final locationBody = <String, dynamic>{
         'lat': position.latitude,
         'lng': position.longitude,
         'accuracy': position.accuracy,
@@ -106,7 +119,16 @@ void onStart(ServiceInstance service) async {
         'altitude': position.altitude,
         if (deviceId != null) 'device_id': deviceId,
         'activity': activity,
-      });
+      };
+      try {
+        await dio.post<dynamic>('/location/update', data: locationBody);
+      } on DioException catch (e) {
+        // 401 — token revoked; bubble up so the outer handler stops the service.
+        if (e.response?.statusCode == 401) rethrow;
+        // Offline / transient failure — persist the fix so it is replayed FIFO
+        // once connectivity returns. No data loss.
+        LocationQueueService.instance.enqueue(locationBody);
+      }
 
       // ── Real-time speed monitoring ───────────────────────────────────────
       // Convert m/s → km/h and post a speeding driving event when the live GPS

@@ -13,6 +13,7 @@ import '../../core/theme/app_dimensions.dart';
 import '../../core/theme/app_text_styles.dart';
 import '../../models/driving_model.dart';
 import '../../providers/driving_provider.dart';
+import '../../providers/driving_sensor_provider.dart';
 import '../../providers/family_provider.dart';
 import '../../repositories/ai_repository.dart';
 import '../../repositories/driving_repository.dart';
@@ -91,6 +92,14 @@ class _DrivingScreenState extends ConsumerState<DrivingScreen> {
                                 .slideY(
                                     begin: 0.08,
                                     end: 0,
+                                    curve: Curves.easeOut),
+                            const SizedBox(height: 16),
+
+                            // Driving sensor detection toggle
+                            const _DrivingSensorToggleCard()
+                                .animate(delay: 40.ms)
+                                .fadeIn(duration: 400.ms)
+                                .slideY(begin: 0.08, end: 0,
                                     curve: Curves.easeOut),
                             const SizedBox(height: 16),
 
@@ -200,6 +209,152 @@ class _DrivingScreenState extends ConsumerState<DrivingScreen> {
 
   int _countSafeDrivers(List<MemberDrivingSummary> members) {
     return members.where((m) => m.score >= 80).length;
+  }
+}
+
+// ── Driving Sensor Detection Toggle ───────────────────────────────────────────
+
+/// Premium status card that lets the user ENABLE/disable accelerometer-based
+/// driving detection. Wires into [drivingSensorProvider] — its notifier exposes
+/// `start()` / `stop()`, and the watched state reports whether detection is
+/// currently active.
+class _DrivingSensorToggleCard extends ConsumerWidget {
+  const _DrivingSensorToggleCard();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final bool active = ref.watch(drivingSensorProvider);
+
+    final Color accent = active ? context.safeColor : context.textMuted;
+    final String statusLabel = active ? 'Active' : 'Off';
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: context.isDark
+              ? [const Color(0xFF13201A), const Color(0xFF111420)]
+              : [const Color(0xFFEAF7F0), const Color(0xFFFFFFFF)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: accent.withOpacity(0.22)),
+        boxShadow: [
+          BoxShadow(
+            color: accent.withOpacity(active ? 0.10 : 0.0),
+            blurRadius: 18,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                width: 48,
+                height: 48,
+                alignment: Alignment.center,
+                decoration: BoxDecoration(
+                  color: accent.withOpacity(0.12),
+                  shape: BoxShape.circle,
+                  border: Border.all(color: accent.withOpacity(0.35), width: 2),
+                ),
+                child: Icon(
+                  active
+                      ? Icons.sensors_rounded
+                      : Icons.sensors_off_rounded,
+                  color: accent,
+                  size: 24,
+                ),
+              ),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Text(
+                          'Driving Detection',
+                          style: AppTextStyles.subtitle2(context).copyWith(
+                            fontWeight: FontWeight.w700,
+                            color: context.textPrimary,
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        _StatusPill(label: statusLabel, color: accent),
+                      ],
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      active
+                          ? 'Sensing motion for harsh braking & crashes'
+                          : 'Enable to auto-detect driving events',
+                      style: AppTextStyles.caption(context),
+                    ),
+                  ],
+                ),
+              ),
+              Switch.adaptive(
+                value: active,
+                activeColor: context.safeColor,
+                onChanged: (on) {
+                  final notifier = ref.read(drivingSensorProvider.notifier);
+                  if (on) {
+                    notifier.start();
+                  } else {
+                    notifier.stop();
+                  }
+                },
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _StatusPill extends StatelessWidget {
+  const _StatusPill({required this.label, required this.color});
+
+  final String label;
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+      decoration: BoxDecoration(
+        color: color.withOpacity(0.12),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: color.withOpacity(0.35)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            width: 6,
+            height: 6,
+            decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+          ),
+          const SizedBox(width: 5),
+          Text(
+            label,
+            style: TextStyle(
+              fontFamily: 'Inter',
+              fontSize: 11,
+              fontWeight: FontWeight.w700,
+              color: color,
+            ),
+          ),
+        ],
+      ),
+    );
   }
 }
 

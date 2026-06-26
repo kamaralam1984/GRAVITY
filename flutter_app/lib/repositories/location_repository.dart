@@ -1,5 +1,9 @@
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+
 import '../core/network/dio_client.dart';
 import '../models/location_model.dart';
+import '../services/connectivity_service.dart';
+import '../services/location_queue_service.dart';
 
 /// Handles all REST calls for the /location/* API group.
 class LocationRepository {
@@ -9,6 +13,11 @@ class LocationRepository {
   final _dio = DioClient.instance;
 
   /// POST /location/update
+  ///
+  /// Offline-resilient: on a delivery failure the payload is persisted to the
+  /// [LocationQueueService] so it is replayed once connectivity returns, then
+  /// the error is rethrown to preserve the original call semantics. On success
+  /// any backlog is opportunistically drained.
   Future<void> updateLocation({
     required double lat,
     required double lng,
@@ -21,7 +30,7 @@ class LocationRepository {
     int? battery,
     String? activity,
   }) async {
-    await _dio.post('/location/update', data: {
+    final body = <String, dynamic>{
       'lat': lat,
       'lng': lng,
       if (accuracy != null) 'accuracy': accuracy,
@@ -32,8 +41,29 @@ class LocationRepository {
       if (deviceId != null) 'device_id': deviceId,
       if (battery != null) 'battery': battery,
       if (activity != null) 'activity': activity,
-    });
+    };
+    try {
+      await _dio.post('/location/update', data: body);
+    } catch (_) {
+      // Persist for delivery when connectivity returns — no data loss.
+      LocationQueueService.instance.enqueue(body);
+      rethrow;
+    }
+    // Online — opportunistically flush anything queued earlier (best-effort).
+    await flushPendingLocations();
   }
+
+  /// Drain queued offline location updates via [DioClient].
+  ///
+  /// Strict FIFO, stops at the first failure. Returns the number delivered.
+  /// Safe to call repeatedly; a no-op when the queue is empty.
+  Future<int> flushPendingLocations() => LocationQueueService.instance.flush(
+        (endpoint, body) => _dio.post<dynamic>(endpoint, data: body),
+      );
+
+  /// Number of location updates currently waiting for delivery.
+  int get pendingLocationCount =>
+      LocationQueueService.instance.pendingCount;
 
   /// POST /monitoring/activity
   ///
@@ -101,3 +131,18 @@ class LocationRepository {
     return [];
   }
 }
+
+// ── Reconnect auto-flush ───────────────────────────────────────────────────────
+
+/// Watches connectivity and drains the offline location queue (main isolate)
+/// whenever the network is restored. Read/observe this provider somewhere in the
+/// widget tree (e.g. a long-lived shell) to keep it alive.
+final locationSyncProvider = Provider<void>((ref) {
+  final connectivity = ref.watch(connectivityServiceProvider);
+  final sub = connectivity.isConnectedStream.listen((connected) {
+    if (connected) {
+      LocationRepository.instance.flushPendingLocations();
+    }
+  });
+  ref.onDispose(sub.cancel);
+});

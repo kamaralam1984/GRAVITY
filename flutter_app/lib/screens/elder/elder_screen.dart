@@ -1,17 +1,137 @@
+import 'dart:async';
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import 'package:geolocator/geolocator.dart';
+import 'package:sensors_plus/sensors_plus.dart';
 
+import '../../core/services/storage_service.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_dimensions.dart';
 import '../../core/theme/app_text_styles.dart';
 import '../../models/health_model.dart';
 import '../../providers/elder_provider.dart';
 import '../../providers/auth_provider.dart';
+import '../../repositories/sos_repository.dart';
 import '../../routes/route_names.dart';
+
+// ── Fall Detection ────────────────────────────────────────────────────────────
+
+/// Immutable status surfaced by [fallDetectionProvider].
+class FallDetectionStatus {
+  const FallDetectionStatus({
+    this.enabled = false,
+    this.lastFallAt,
+    this.lastAlertSent,
+  });
+
+  /// Whether the accelerometer monitor is actively running.
+  final bool enabled;
+
+  /// Timestamp of the most recently detected fall, if any.
+  final DateTime? lastFallAt;
+
+  /// Whether the last detected fall successfully raised an SOS alert.
+  final bool? lastAlertSent;
+
+  FallDetectionStatus copyWith({
+    bool? enabled,
+    DateTime? lastFallAt,
+    bool? lastAlertSent,
+  }) =>
+      FallDetectionStatus(
+        enabled: enabled ?? this.enabled,
+        lastFallAt: lastFallAt ?? this.lastFallAt,
+        lastAlertSent: lastAlertSent ?? this.lastAlertSent,
+      );
+}
+
+/// Listens to the device accelerometer and raises an SOS alert through the
+/// existing `POST /sos/trigger` endpoint when a fall-like impact is detected.
+class FallDetectionController extends StateNotifier<FallDetectionStatus> {
+  FallDetectionController() : super(const FallDetectionStatus());
+
+  StreamSubscription<AccelerometerEvent>? _sub;
+  DateTime? _lastTrigger;
+
+  // Impact magnitude (m/s^2) that qualifies as a possible fall. Resting
+  // gravity is ~9.8; a hard impact spikes well above this.
+  static const double _impactThreshold = 28.0;
+
+  /// Begin monitoring the accelerometer for falls.
+  void start() {
+    if (state.enabled) return;
+    state = state.copyWith(enabled: true);
+    _sub = accelerometerEventStream().listen(_onSample);
+  }
+
+  /// Stop monitoring and release the sensor subscription.
+  void stop() {
+    _sub?.cancel();
+    _sub = null;
+    state = state.copyWith(enabled: false);
+  }
+
+  void _onSample(AccelerometerEvent e) {
+    final magnitude = math.sqrt(e.x * e.x + e.y * e.y + e.z * e.z);
+    if (magnitude >= _impactThreshold) {
+      _handleFall();
+    }
+  }
+
+  Future<void> _handleFall() async {
+    final now = DateTime.now();
+    // Debounce repeated spikes from a single event.
+    if (_lastTrigger != null &&
+        now.difference(_lastTrigger!).inSeconds < 30) {
+      return;
+    }
+    _lastTrigger = now;
+    state = state.copyWith(lastFallAt: now);
+
+    bool sent = false;
+    try {
+      final familyId = StorageService.instance.getSelectedFamilyId();
+      if (familyId != null) {
+        double? lat;
+        double? lng;
+        try {
+          final pos = await Geolocator.getCurrentPosition();
+          lat = pos.latitude;
+          lng = pos.longitude;
+        } catch (_) {
+          // Location optional — alert still fires without coordinates.
+        }
+        await SosRepository.instance.triggerSos(
+          familyId: familyId,
+          lat: lat,
+          lng: lng,
+          message: 'Possible fall detected — automatic alert',
+        );
+        sent = true;
+      }
+    } catch (_) {
+      // Swallow network/sensor errors; UI reflects send outcome below.
+    }
+    state = state.copyWith(lastAlertSent: sent);
+  }
+
+  @override
+  void dispose() {
+    _sub?.cancel();
+    super.dispose();
+  }
+}
+
+/// Riverpod handle for the fall-detection monitor. Call
+/// `ref.read(fallDetectionProvider.notifier).start()` / `.stop()` to toggle.
+final fallDetectionProvider =
+    StateNotifierProvider<FallDetectionController, FallDetectionStatus>(
+  (ref) => FallDetectionController(),
+);
 
 // ── Elder Care Dashboard ──────────────────────────────────────────────────────
 
@@ -38,6 +158,7 @@ class _ElderScreenState extends ConsumerState<ElderScreen> {
   Widget build(BuildContext context) {
     final state = ref.watch(elderProvider);
     final user = ref.watch(currentUserProvider);
+    final fall = ref.watch(fallDetectionProvider);
     final h = state.todayHealth;
 
     return Scaffold(
@@ -194,10 +315,16 @@ class _ElderScreenState extends ConsumerState<ElderScreen> {
 
                             // Fall detection
                             _FallDetectionCard(
-                              enabled: state.fallDetectionEnabled,
-                              onToggle: (v) => ref
-                                  .read(elderProvider.notifier)
-                                  .toggleFallDetection(v),
+                              status: fall,
+                              onToggle: (v) {
+                                final ctrl =
+                                    ref.read(fallDetectionProvider.notifier);
+                                v ? ctrl.start() : ctrl.stop();
+                                // Keep elder dashboard state in sync.
+                                ref
+                                    .read(elderProvider.notifier)
+                                    .toggleFallDetection(v);
+                              },
                             ).animate(delay: 80.ms).fadeIn(duration: 400.ms).slideY(
                                 begin: 0.08, end: 0, curve: Curves.easeOut),
                             const SizedBox(height: 20),
@@ -507,17 +634,37 @@ class _HealthCard extends StatelessWidget {
 // ── Fall Detection Card ───────────────────────────────────────────────────────
 
 class _FallDetectionCard extends StatelessWidget {
-  const _FallDetectionCard({required this.enabled, required this.onToggle});
+  const _FallDetectionCard({required this.status, required this.onToggle});
 
-  final bool enabled;
+  final FallDetectionStatus status;
   final ValueChanged<bool> onToggle;
+
+  String _formatTime(DateTime dt) {
+    final h = dt.hour % 12 == 0 ? 12 : dt.hour % 12;
+    final m = dt.minute.toString().padLeft(2, '0');
+    final ap = dt.hour < 12 ? 'AM' : 'PM';
+    return '$h:$m $ap';
+  }
 
   @override
   Widget build(BuildContext context) {
+    final enabled = status.enabled;
+    final accent = enabled ? context.safeColor : context.textMuted;
+
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: context.surfaceColor,
+        gradient: enabled
+            ? LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [
+                  context.safeColor.withOpacity(context.isDark ? 0.12 : 0.06),
+                  context.surfaceColor,
+                ],
+              )
+            : null,
+        color: enabled ? null : context.surfaceColor,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
           color: enabled
@@ -525,44 +672,105 @@ class _FallDetectionCard extends StatelessWidget {
               : context.borderColor,
         ),
       ),
+      child: Column(
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: accent.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Icon(
+                  Icons.personal_injury_rounded,
+                  color: accent,
+                  size: 24,
+                ),
+              ),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Fall Detection',
+                      style: AppTextStyles.subtitle2(context)
+                          .copyWith(color: context.textPrimary),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      enabled
+                          ? 'Active — monitoring motion to alert family on a fall'
+                          : 'Enable to detect falls and alert family via SOS',
+                      style: AppTextStyles.caption(context),
+                    ),
+                  ],
+                ),
+              ),
+              Switch.adaptive(
+                value: enabled,
+                onChanged: onToggle,
+                activeColor: context.safeColor,
+              ),
+            ],
+          ),
+          if (enabled) ...[
+            const SizedBox(height: 14),
+            _StatusPill(
+              icon: Icons.sensors_rounded,
+              color: context.safeColor,
+              label: status.lastFallAt == null
+                  ? 'Sensor armed · no falls detected'
+                  : status.lastAlertSent == true
+                      ? 'Fall at ${_formatTime(status.lastFallAt!)} · family alerted'
+                      : 'Fall at ${_formatTime(status.lastFallAt!)} · alert could not be sent',
+              danger: status.lastFallAt != null &&
+                  status.lastAlertSent != true,
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+class _StatusPill extends StatelessWidget {
+  const _StatusPill({
+    required this.icon,
+    required this.color,
+    required this.label,
+    this.danger = false,
+  });
+
+  final IconData icon;
+  final Color color;
+  final String label;
+  final bool danger;
+
+  @override
+  Widget build(BuildContext context) {
+    final c = danger ? context.sosColor : color;
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      decoration: BoxDecoration(
+        color: c.withOpacity(0.08),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: c.withOpacity(0.18)),
+      ),
       child: Row(
         children: [
-          Container(
-            padding: const EdgeInsets.all(10),
-            decoration: BoxDecoration(
-              color: (enabled ? context.safeColor : context.textMuted)
-                  .withOpacity(0.1),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Icon(
-              Icons.personal_injury_rounded,
-              color: enabled ? context.safeColor : context.textMuted,
-              size: 24,
-            ),
-          ),
-          const SizedBox(width: 14),
+          Icon(icon, size: 16, color: c),
+          const SizedBox(width: 8),
           Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Fall Detection',
-                  style: AppTextStyles.subtitle2(context)
-                      .copyWith(color: context.textPrimary),
-                ),
-                Text(
-                  enabled
-                      ? 'Active — will alert family if a fall is detected'
-                      : 'Enable to detect falls and alert family',
-                  style: AppTextStyles.caption(context),
-                ),
-              ],
+            child: Text(
+              label,
+              style: AppTextStyles.caption(context).copyWith(
+                color: c,
+                fontWeight: FontWeight.w600,
+              ),
             ),
-          ),
-          Switch.adaptive(
-            value: enabled,
-            onChanged: onToggle,
-            activeColor: context.safeColor,
           ),
         ],
       ),
