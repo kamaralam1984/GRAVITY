@@ -40,6 +40,15 @@ class RouteNames {
   static const String child = '/child';
   static const String schoolTracking = '/child/school';
 
+  // ── Transparent monitoring ────────────────────────────────────────────────
+  static const String monitor = '/monitor';
+
+  // ── Parental lock ─────────────────────────────────────────────────────────
+  static const String parentalLock = '/settings/parental-lock';
+
+  // ── Moments (family social feed) ──────────────────────────────────────────
+  static const String moments = '/family/moments';
+
   // ── Elder care ────────────────────────────────────────────────────────────
   static const String elder = '/elder';
   static const String health = '/elder/health';

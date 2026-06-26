@@ -27,6 +27,8 @@ import '../screens/family/members_screen.dart';
 import '../screens/family/invite_screen.dart';
 import '../screens/child/child_screen.dart';
 import '../screens/child/school_tracking_screen.dart';
+import '../screens/monitor/monitor_screen.dart';
+import '../screens/family/moments_screen.dart';
 import '../screens/journeys/journeys_screen.dart';
 import '../screens/safety/check_in_screen.dart';
 import '../screens/elder/elder_screen.dart';
@@ -45,6 +47,7 @@ import '../screens/settings/security_screen.dart';
 import '../screens/settings/devices_screen.dart';
 import '../screens/settings/privacy_screen.dart';
 import '../screens/settings/subscription_screen.dart';
+import '../screens/settings/parental_lock_screen.dart';
 
 /// Shared navigator key — exposed so NotificationService can route taps.
 final appNavigatorKey = GlobalKey<NavigatorState>();
@@ -278,6 +281,28 @@ final appRouter = GoRouter(
           _slidePage(const SchoolTrackingScreen(), state),
     ),
 
+    // ── Transparent monitoring ─────────────────────────────────────────────
+    GoRoute(
+      path: RouteNames.monitor,
+      pageBuilder: (ctx, state) {
+        final extra = state.extra as Map<String, dynamic>?;
+        return _slidePage(
+          MonitorScreen(
+            userId: extra?['userId'] as int? ?? 0,
+            childName: extra?['childName'] as String?,
+          ),
+          state,
+        );
+      },
+    ),
+
+    // ── Moments (family social feed) ───────────────────────────────────────
+    GoRoute(
+      path: RouteNames.moments,
+      pageBuilder: (ctx, state) =>
+          _slidePage(const MomentsScreen(), state),
+    ),
+
     // ── Journeys / Timeline ────────────────────────────────────────────────
     GoRoute(
       path: '/journeys',
@@ -378,6 +403,11 @@ final appRouter = GoRouter(
       path: RouteNames.subscription,
       pageBuilder: (ctx, state) =>
           _slidePage(const SubscriptionScreen(), state),
+    ),
+    GoRoute(
+      path: RouteNames.parentalLock,
+      pageBuilder: (ctx, state) =>
+          _slidePage(const ParentalLockScreen(), state),
     ),
   ],
 );

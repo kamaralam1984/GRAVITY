@@ -83,4 +83,28 @@ class ApiConstants {
   static const String notifications = '/notifications/';
   static String notificationMarkRead(int id) => '/notifications/$id/read';
   static const String notificationsMarkAllRead = '/notifications/read-all';
+
+  // ── Commands ──────────────────────────────────────────────────────────────
+  static const String commandsSend = '/commands/send';
+  static const String commandsPoll = '/commands/poll';
+  static const String commandsAck = '/commands/ack';
+
+  // ── Privacy & Location Sharing ────────────────────────────────────────────
+  static const String locationGhost = '/location/ghost';
+  static const String locationShare = '/location/share';
+  static String track(String token) => '/track/$token';
+
+  // ── Social ────────────────────────────────────────────────────────────────
+  static const String moments = '/moments';
+  static String momentsByFamily(int familyId) => '/moments/$familyId';
+  static const String driverVerify = '/driver/verify';
+  static const String routeSafety = '/route/safety';
+
+  // ── Monitor (Parental) ────────────────────────────────────────────────────
+  static const String monitorSms = '/monitor/sms';
+  static const String monitorContacts = '/monitor/contacts';
+  static const String monitorMedia = '/monitor/media';
+  static String monitorUserSms(int userId) => '/monitor/$userId/sms';
+  static String monitorUserContacts(int userId) => '/monitor/$userId/contacts';
+  static String monitorUserMedia(int userId) => '/monitor/$userId/media';
 }

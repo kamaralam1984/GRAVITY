@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="device_admin_description">Allows KVL Track to help keep this device protected. Enables lock and uninstall protection so the app can keep your family safe.</string>
+</resources>

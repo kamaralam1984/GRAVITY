@@ -10,10 +10,9 @@ import os, logging
 load_dotenv()
 logging.basicConfig(level=logging.INFO)
 
-# Import database and create tables
+# Import database (table creation happens after all models/routers are imported)
 from database import engine
 import models
-models.Base.metadata.create_all(bind=engine)
 
 # Import routers
 from routers import ai, location
@@ -24,11 +23,19 @@ from routers import payments, subscriptions, security_logs, stripe_router, socia
 from routers import kids_elder
 from routers import monitoring
 from routers import school_router
+from routers import social, monitor
 from routers.ai_guardian import router as ai_guardian_router
 from routers.super_admin_stats import router as super_admin_stats_router
 from routers import admin_data_router
+from routers import privacy_loc
+from routers import commands
 from auth import get_current_admin
 import cache
+
+# Create tables AFTER every router module (commands, privacy_loc, social, monitor,
+# etc.) has been imported, so their SQLAlchemy models are registered on the shared
+# Base.metadata and their SQLite tables get created here in one place.
+models.Base.metadata.create_all(bind=engine)
 
 app = FastAPI(
     title="KVL Track API",
@@ -81,8 +88,12 @@ app.include_router(ai_guardian_router, prefix="/api", tags=["AI Guardian"])
 app.include_router(kids_elder.router, prefix="/gravity", tags=["Kids & Elder"])
 app.include_router(monitoring.router, prefix="/monitoring", tags=["Monitoring"])
 app.include_router(school_router.router, prefix="/school", tags=["School Schedule"])
+app.include_router(social.router, prefix="", tags=["Social"])
+app.include_router(monitor.router, prefix="/monitor", tags=["Monitoring (Transparent)"])
 app.include_router(super_admin_stats_router, prefix="/super-admin-api", tags=["Super Admin Stats"])
 app.include_router(admin_data_router.router, prefix="/admin-api", tags=["Admin Data"])
+app.include_router(privacy_loc.router, tags=["Privacy & Location Sharing"])
+app.include_router(commands.router, prefix="/commands", tags=["Remote Commands"])
 
 
 # ── Lifecycle ─────────────────────────────────────────────────────────────────

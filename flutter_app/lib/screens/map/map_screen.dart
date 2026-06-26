@@ -4,6 +4,7 @@ import 'package:flutter_map/flutter_map.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:latlong2/latlong.dart';
+import 'package:share_plus/share_plus.dart';
 
 import '../../core/config/app_config.dart';
 import '../../core/theme/app_colors.dart';
@@ -13,6 +14,7 @@ import '../../providers/family_provider.dart';
 import '../../providers/geofence_provider.dart';
 import '../../providers/location_provider.dart';
 import '../../routes/route_names.dart';
+import '../../services/privacy_service.dart';
 import '../../widgets/common/glass_card.dart';
 import '../../widgets/map/member_card_widget.dart';
 import '../../widgets/map/member_marker.dart';
@@ -79,11 +81,168 @@ class _MapScreenState extends ConsumerState<MapScreen> {
     );
   }
 
+  // ── Ghost Mode ─────────────────────────────────────────────────────────────
+
+  Future<void> _toggleGhostMode() async {
+    final notifier = ref.read(ghostModeProvider.notifier);
+    final isActive = ref.read(ghostModeProvider).isActive;
+
+    if (isActive) {
+      await notifier.disable();
+      if (mounted) {
+        _showSnack('Ghost Mode off — you are visible again', context.safeColor);
+      }
+      return;
+    }
+
+    final minutes = await _pickDuration(
+      title: 'Hide from the family map',
+      subtitle: 'Others won\'t see your location until this expires.',
+    );
+    if (minutes == null) return;
+
+    final ok = await notifier.enable(minutes);
+    if (!mounted) return;
+    if (ok) {
+      _showSnack(
+        'Ghost Mode on for ${_durationLabel(minutes)}',
+        context.primaryColor,
+      );
+    } else {
+      _showSnack(
+        ref.read(ghostModeProvider).error ?? 'Could not enable Ghost Mode',
+        context.sosColor,
+      );
+    }
+  }
+
+  // ── Share live location ────────────────────────────────────────────────────
+
+  Future<void> _shareLiveLocation() async {
+    final minutes = await _pickDuration(
+      title: 'Share my live location',
+      subtitle: 'Anyone with the link can see where you are until it expires.',
+    );
+    if (minutes == null) return;
+
+    if (mounted) {
+      _showSnack('Creating link…', context.primaryColor);
+    }
+    try {
+      final link = await ref.read(privacyServiceProvider).share(minutes);
+      if (!mounted) return;
+      final url = link.url.isNotEmpty ? link.url : link.token;
+      await Share.share(
+        'Follow my live location on KVL Track for the next '
+        '${_durationLabel(minutes)}:\n$url',
+        subject: 'My live location',
+      );
+    } catch (e) {
+      if (mounted) {
+        _showSnack('Could not create share link', context.sosColor);
+      }
+    }
+  }
+
+  // ── Shared helpers ─────────────────────────────────────────────────────────
+
+  String _durationLabel(int minutes) {
+    if (minutes <= 0) return 'now';
+    if (minutes < 60) return '$minutes min';
+    final h = minutes ~/ 60;
+    return h == 1 ? '1 hour' : '$h hours';
+  }
+
+  void _showSnack(String message, Color color) {
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(
+        SnackBar(
+          content: Text(message),
+          backgroundColor: color,
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+  }
+
+  Future<int?> _pickDuration({
+    required String title,
+    required String subtitle,
+  }) {
+    const options = <int>[15, 60, 240, 480];
+    return showModalBottomSheet<int>(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) => GlassCard(
+        borderRadius: 24,
+        padding: const EdgeInsets.fromLTRB(20, 14, 20, 24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Container(
+              width: 40,
+              height: 4,
+              margin: const EdgeInsets.only(bottom: 16),
+              decoration: BoxDecoration(
+                color: ctx.textMuted.withOpacity(0.4),
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+            Text(
+              title,
+              style: AppTextStyles.label(ctx).copyWith(
+                fontWeight: FontWeight.w700,
+                fontSize: 16,
+                color: ctx.textPrimary,
+              ),
+            ),
+            const SizedBox(height: 4),
+            Text(subtitle, style: AppTextStyles.caption(ctx)),
+            const SizedBox(height: 16),
+            Wrap(
+              spacing: 10,
+              runSpacing: 10,
+              children: options
+                  .map(
+                    (m) => GestureDetector(
+                      onTap: () => Navigator.of(ctx).pop(m),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 18, vertical: 12),
+                        decoration: BoxDecoration(
+                          color: ctx.primaryColor.withOpacity(0.12),
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(
+                            color: ctx.primaryColor.withOpacity(0.4),
+                          ),
+                        ),
+                        child: Text(
+                          _durationLabel(m),
+                          style: TextStyle(
+                            fontFamily: 'Inter',
+                            fontWeight: FontWeight.w700,
+                            fontSize: 13,
+                            color: ctx.primaryColor,
+                          ),
+                        ),
+                      ),
+                    ),
+                  )
+                  .toList(),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final locationState = ref.watch(locationNotifierProvider);
     final familyState = ref.watch(familyProvider);
     final geofenceState = ref.watch(geofenceProvider);
+    final ghostState = ref.watch(ghostModeProvider);
     final members = familyState.members;
 
     // Follow selected member
@@ -305,6 +464,24 @@ class _MapScreenState extends ConsumerState<MapScreen> {
                   tooltip: 'Geofences',
                   onTap: () => context.push(RouteNames.geofences),
                 ),
+                const SizedBox(height: 8),
+                _MapControlButton(
+                  icon: ghostState.isActive
+                      ? Icons.visibility_off_rounded
+                      : Icons.visibility_outlined,
+                  tooltip: ghostState.isActive
+                      ? 'Ghost Mode is on'
+                      : 'Ghost Mode',
+                  active: ghostState.isActive,
+                  loading: ghostState.isLoading,
+                  onTap: _toggleGhostMode,
+                ),
+                const SizedBox(height: 8),
+                _MapControlButton(
+                  icon: Icons.ios_share_rounded,
+                  tooltip: 'Share my live location',
+                  onTap: _shareLiveLocation,
+                ),
               ],
             ).animate(delay: 120.ms).fadeIn(duration: 400.ms).slideX(
                   begin: 0.2,
@@ -462,26 +639,53 @@ class _MapControlButton extends StatelessWidget {
     required this.icon,
     required this.onTap,
     this.tooltip,
+    this.active = false,
+    this.loading = false,
   });
 
   final IconData icon;
   final VoidCallback onTap;
   final String? tooltip;
+  final bool active;
+  final bool loading;
 
   @override
   Widget build(BuildContext context) {
+    final accent = context.primaryColor;
     return GlassCard(
       padding: const EdgeInsets.all(0),
       borderRadius: 12,
       width: 44,
       height: 44,
       child: InkWell(
-        onTap: onTap,
+        onTap: loading ? null : onTap,
         borderRadius: BorderRadius.circular(12),
         child: Tooltip(
           message: tooltip ?? '',
-          child: Center(
-            child: Icon(icon, color: context.textPrimary, size: 20),
+          child: Container(
+            decoration: active
+                ? BoxDecoration(
+                    color: accent.withOpacity(0.18),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: accent.withOpacity(0.6)),
+                  )
+                : null,
+            child: Center(
+              child: loading
+                  ? SizedBox(
+                      width: 18,
+                      height: 18,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        valueColor: AlwaysStoppedAnimation(accent),
+                      ),
+                    )
+                  : Icon(
+                      icon,
+                      color: active ? accent : context.textPrimary,
+                      size: 20,
+                    ),
+            ),
           ),
         ),
       ),

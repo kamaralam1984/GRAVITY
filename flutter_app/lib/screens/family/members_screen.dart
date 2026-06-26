@@ -8,6 +8,8 @@ import '../../core/theme/app_text_styles.dart';
 import '../../models/family_model.dart';
 import '../../providers/family_provider.dart';
 import '../../providers/auth_provider.dart';
+import '../../providers/command_provider.dart';
+import '../../services/command_service.dart';
 import 'package:intl/intl.dart';
 
 // ── Members Screen ────────────────────────────────────────────────────────────
@@ -143,6 +145,10 @@ class _MembersScreenState extends ConsumerState<MembersScreen> {
   void _showMemberActions(
       BuildContext context, FamilyMember member, int? familyId) {
     if (familyId == null) return;
+    final currentUser = ref.read(currentUserProvider);
+    // Only a parent can remotely control another member's device.
+    final canControl = currentUser?.familyRole == 'parent' &&
+        member.userId != currentUser?.id;
     showModalBottomSheet(
       context: context,
       backgroundColor: context.surfaceColor,
@@ -151,6 +157,7 @@ class _MembersScreenState extends ConsumerState<MembersScreen> {
       ),
       builder: (_) => _MemberActionsSheet(
         member: member,
+        canControl: canControl,
         onRemove: () async {
           Navigator.pop(context);
           final confirmed = await _confirmRemove(context, member.name);
@@ -443,17 +450,46 @@ class _RoleBadge extends StatelessWidget {
 
 // ── Member Actions Sheet ──────────────────────────────────────────────────────
 
-class _MemberActionsSheet extends StatelessWidget {
+class _MemberActionsSheet extends ConsumerWidget {
   const _MemberActionsSheet({
     required this.member,
     required this.onRemove,
+    this.canControl = false,
   });
 
   final FamilyMember member;
   final VoidCallback onRemove;
 
+  /// Whether the current (parent) user may dispatch remote commands.
+  final bool canControl;
+
+  Future<void> _send(
+    BuildContext context,
+    WidgetRef ref,
+    String type,
+    String label,
+  ) async {
+    final messenger = ScaffoldMessenger.of(context);
+    final okColor = context.safeColor;
+    final errColor = context.sosColor;
+    final ok = await ref
+        .read(commandSendProvider.notifier)
+        .send(targetUserId: member.userId, type: type);
+    messenger.showSnackBar(
+      SnackBar(
+        content: Text(
+          ok ? '$label sent to ${member.name}' : 'Failed to send $label',
+        ),
+        backgroundColor: ok ? okColor : errColor,
+        behavior: SnackBarBehavior.floating,
+      ),
+    );
+  }
+
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final sending = ref.watch(commandSendProvider).sending;
+
     return Padding(
       padding: const EdgeInsets.all(24),
       child: Column(
@@ -485,6 +521,59 @@ class _MemberActionsSheet extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 20),
+
+          // ── Remote controls (parents only) ──────────────────────────────
+          if (canControl) ...[
+            Text(
+              'Remote Controls',
+              style: AppTextStyles.caption(context).copyWith(
+                fontWeight: FontWeight.w700,
+                letterSpacing: 0.4,
+                color: context.textMuted,
+              ),
+            ),
+            const SizedBox(height: 12),
+            Wrap(
+              spacing: 10,
+              runSpacing: 10,
+              children: [
+                _RemoteActionButton(
+                  icon: Icons.notifications_active_rounded,
+                  label: 'Ring',
+                  color: context.goldColor,
+                  enabled: !sending,
+                  onTap: () =>
+                      _send(context, ref, CommandType.ring, 'Ring'),
+                ),
+                _RemoteActionButton(
+                  icon: Icons.my_location_rounded,
+                  label: 'Locate Now',
+                  color: context.primaryColor,
+                  enabled: !sending,
+                  onTap: () =>
+                      _send(context, ref, CommandType.locate, 'Locate'),
+                ),
+                _RemoteActionButton(
+                  icon: Icons.refresh_rounded,
+                  label: 'Refresh',
+                  color: context.accentColor,
+                  enabled: !sending,
+                  onTap: () =>
+                      _send(context, ref, CommandType.refresh, 'Refresh'),
+                ),
+                _RemoteActionButton(
+                  icon: Icons.lock_outline_rounded,
+                  label: 'Lock',
+                  color: context.sosColor,
+                  enabled: !sending,
+                  onTap: () =>
+                      _send(context, ref, CommandType.restart, 'Lock'),
+                ),
+              ],
+            ),
+            const SizedBox(height: 20),
+          ],
+
           const Divider(),
           const SizedBox(height: 8),
           ListTile(
@@ -504,6 +593,59 @@ class _MemberActionsSheet extends StatelessWidget {
             contentPadding: EdgeInsets.zero,
           ),
         ],
+      ),
+    );
+  }
+}
+
+// ── Remote Action Button ──────────────────────────────────────────────────────
+
+class _RemoteActionButton extends StatelessWidget {
+  const _RemoteActionButton({
+    required this.icon,
+    required this.label,
+    required this.color,
+    required this.onTap,
+    this.enabled = true,
+  });
+
+  final IconData icon;
+  final String label;
+  final Color color;
+  final VoidCallback onTap;
+  final bool enabled;
+
+  @override
+  Widget build(BuildContext context) {
+    return Opacity(
+      opacity: enabled ? 1 : 0.5,
+      child: Material(
+        color: color.withOpacity(0.10),
+        borderRadius: BorderRadius.circular(14),
+        child: InkWell(
+          borderRadius: BorderRadius.circular(14),
+          onTap: enabled ? onTap : null,
+          child: Container(
+            padding:
+                const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(icon, color: color, size: 22),
+                const SizedBox(height: 6),
+                Text(
+                  label,
+                  style: TextStyle(
+                    fontFamily: 'Inter',
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                    color: color,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
       ),
     );
   }
