@@ -4,7 +4,7 @@ import { motion } from 'framer-motion';
 import { ArrowRight } from 'lucide-react';
 
 const WHATSAPP_URL =
-  'https://wa.me/919999999999?text=Hi%20I%20want%20to%20know%20about%20KVL Track';
+  'https://wa.me/919999999999?text=Hi%20I%20want%20to%20know%20about%20KVL%20Track';
 
 function WhatsAppIcon({ className }: { className?: string }) {
   return (

@@ -29,6 +29,8 @@ const stagger = {
   visible: { transition: { staggerChildren: 0.08 } },
 };
 
+const DOCS_URL = `${process.env.NEXT_PUBLIC_API_URL ?? ''}/docs`;
+
 function Section({ children, bg = 'var(--bg)', id }: { children: React.ReactNode; bg?: string; id?: string }) {
   const ref = useRef(null);
   const inView = useInView(ref, { once: true, margin: '-80px' });
@@ -241,7 +243,7 @@ export default function ApiDocsPage() {
                   Quick Start
                   <ChevronRight size={16} />
                 </motion.a>
-                <a href="http://localhost:8000/docs" target="_blank" rel="noopener noreferrer"
+                <a href={DOCS_URL} target="_blank" rel="noopener noreferrer"
                   style={{ padding: '14px 28px', borderRadius: 999, fontSize: 15, fontWeight: 600, border: '1px solid var(--border)', color: 'var(--text-primary)', display: 'inline-flex', alignItems: 'center', gap: 8, textDecoration: 'none', background: 'var(--bg-surface)', fontFamily: "'Inter', sans-serif" }}>
                   <BookOpen size={16} />
                   Swagger UI
@@ -401,7 +403,7 @@ export default function ApiDocsPage() {
                   style={{ padding: '14px 28px', borderRadius: 999, fontSize: 15, fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: 8, textDecoration: 'none', fontFamily: "'Inter', sans-serif' " }}>
                   Email Developer Support
                 </a>
-                <a href="http://localhost:8000/docs" target="_blank" rel="noopener noreferrer"
+                <a href={DOCS_URL} target="_blank" rel="noopener noreferrer"
                   style={{ padding: '14px 28px', borderRadius: 999, fontSize: 15, fontWeight: 600, border: '1px solid var(--border)', color: 'var(--text-primary)', display: 'inline-flex', alignItems: 'center', gap: 8, textDecoration: 'none', background: 'var(--bg)', fontFamily: "'Inter', sans-serif" }}>
                   <BookOpen size={16} />
                   Interactive Docs

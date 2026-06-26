@@ -105,8 +105,7 @@ async def chat_websocket(
     import json
     from ws_manager import manager
 
-    SECRET_KEY = os.getenv("SECRET_KEY", "gravity-secret-key")
-    ALGORITHM = os.getenv("ALGORITHM", "HS256")
+    from auth import SECRET_KEY, ALGORITHM
 
     # Verify token
     try:

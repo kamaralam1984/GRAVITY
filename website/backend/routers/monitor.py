@@ -8,7 +8,7 @@ owner of a family the target user belongs to (or the target user themselves).
 from fastapi import APIRouter, HTTPException, Depends
 from sqlalchemy.orm import Session
 from sqlalchemy import Column, Integer, String, Text, DateTime, ForeignKey, func
-from pydantic import BaseModel
+from pydantic import BaseModel, conlist
 from typing import Optional, List
 from datetime import datetime
 
@@ -72,16 +72,20 @@ class MediaItem(BaseModel):
     kind: Optional[str] = None
 
 
+# Cap batch sizes to prevent storage-exhaustion / DoS from an authed device.
+MAX_BATCH = 1000
+
+
 class SmsUpload(BaseModel):
-    items: List[SmsItem]
+    items: conlist(SmsItem, max_length=MAX_BATCH)
 
 
 class ContactsUpload(BaseModel):
-    items: List[ContactItem]
+    items: conlist(ContactItem, max_length=MAX_BATCH)
 
 
 class MediaUpload(BaseModel):
-    items: List[MediaItem]
+    items: conlist(MediaItem, max_length=MAX_BATCH)
 
 
 # ── Auth helper ──────────────────────────────────────────────────────────────

@@ -49,7 +49,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="" />
         <link rel="preconnect" href="https://images.unsplash.com" crossOrigin="" />
         <link rel="dns-prefetch" href="https://fonts.googleapis.com" />
-        <link rel="dns-prefetch" href={process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:8000'} />
+        {process.env.NEXT_PUBLIC_API_URL ? (
+          <link rel="dns-prefetch" href={process.env.NEXT_PUBLIC_API_URL} />
+        ) : null}
         {/* Prevent flash: apply stored theme before first paint */}
         <script dangerouslySetInnerHTML={{ __html: `try{var t=localStorage.getItem('gravity-theme');var p=(!t&&window.matchMedia('(prefers-color-scheme: dark)').matches)?'dark':(t||'dark');document.documentElement.classList.toggle('dark',p==='dark')}catch(e){}` }} />
       </head>

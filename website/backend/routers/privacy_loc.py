@@ -14,7 +14,8 @@ from auth import get_current_user
 
 router = APIRouter()
 
-PUBLIC_BASE_URL = "https://kvltrack.com"
+import os
+PUBLIC_BASE_URL = os.getenv("PUBLIC_BASE_URL", "https://kvltrack.kvlbusinesssolutions.com")
 
 
 # ── Models (defined here to avoid editing models.py) ──────────────────────────
@@ -64,6 +65,23 @@ def is_ghosted(db: Session, user_id: int) -> bool:
     return bool(row and row.expires_at > datetime.utcnow())
 
 
+def _bust_live_cache(db: Session, user_id: int) -> None:
+    """Invalidate cached live-location snapshots for every family the user
+    belongs to, so ghost set/clear takes effect immediately."""
+    try:
+        import cache
+        family_ids = [
+            m.family_id
+            for m in db.query(models.FamilyMember)
+            .filter(models.FamilyMember.user_id == user_id)
+            .all()
+        ]
+        for fid in family_ids:
+            cache.cdel(cache.ck("family", fid, "live"))
+    except Exception:
+        pass
+
+
 # ── Ghost mode ────────────────────────────────────────────────────────────────
 
 @router.post("/location/ghost")
@@ -82,6 +100,7 @@ def set_ghost(
         row = GhostStatus(user_id=user.id, expires_at=expires_at)
         db.add(row)
     db.commit()
+    _bust_live_cache(db, user.id)
     return {"ghost": True, "expires_at": expires_at.isoformat()}
 
 
@@ -92,6 +111,7 @@ def clear_ghost(
 ):
     db.query(GhostStatus).filter(GhostStatus.user_id == user.id).delete()
     db.commit()
+    _bust_live_cache(db, user.id)
     return {"ghost": False}
 
 
@@ -131,6 +151,11 @@ def public_track(token: str, db: Session = Depends(get_db)):
         raise HTTPException(status_code=404, detail="Invalid share link")
     if share.expires_at <= datetime.utcnow():
         raise HTTPException(status_code=410, detail="Share link expired")
+
+    # Honor ghost mode: a share link must not leak location while the owner is
+    # hidden, even if the link itself is still valid.
+    if is_ghosted(db, share.user_id):
+        raise HTTPException(status_code=410, detail="Location temporarily hidden")
 
     loc = (db.query(models.Location)
            .filter(models.Location.user_id == share.user_id)

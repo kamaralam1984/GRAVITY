@@ -6,7 +6,7 @@ from pydantic import BaseModel
 from typing import Optional
 from database import get_db
 import models, json, math
-from auth import get_current_user
+from auth import get_current_user, SECRET_KEY, ALGORITHM
 from datetime import datetime
 from ws_manager import manager
 from jose import JWTError, jwt
@@ -14,9 +14,6 @@ import os
 import cache
 
 router = APIRouter()
-
-SECRET_KEY = os.getenv("SECRET_KEY", "gravity-secret-key")
-ALGORITHM  = os.getenv("ALGORITHM", "HS256")
 
 
 class LocationUpdate(BaseModel):
@@ -303,6 +300,11 @@ def get_location_history(
         if not target_in_family:
             raise HTTPException(status_code=403, detail="Not in the same family")
 
+        # Honor ghost mode: hide another user's history while they are ghosted.
+        from routers.privacy_loc import is_ghosted
+        if is_ghosted(db, user_id):
+            return []
+
     key = cache.ck("location", user_id, "history", limit)
     cached = cache.cget(key)
     if cached is not None:
@@ -347,9 +349,15 @@ def get_family_live_locations(
     if cached is not None:
         return cached
 
+    from routers.privacy_loc import is_ghosted
+
     members = db.query(models.FamilyMember).filter(models.FamilyMember.family_id == family_id).all()
     result = []
     for m in members:
+        # Honor ghost mode: hide a ghosted member's live location (but never
+        # hide the requesting user from themselves).
+        if m.user_id != current_user.id and is_ghosted(db, m.user_id):
+            continue
         user = db.query(models.User).filter(models.User.id == m.user_id).first()
         loc = (
             db.query(models.Location)
