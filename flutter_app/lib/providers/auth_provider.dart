@@ -105,7 +105,10 @@ class AuthNotifier extends StateNotifier<AuthState> {
   }
 
   Future<void> logout() async {
-    await _repo.logout();
+    // Never let a storage error block logout — always reset auth state.
+    try {
+      await _repo.logout();
+    } catch (_) {}
     state = const AuthState();
   }
 

@@ -141,9 +141,24 @@ class StorageService {
   // ── Clear all (logout) ────────────────────────────────────────────────────
 
   Future<void> clearAll() async {
-    await _secureStorage.deleteAll();
-    await _settingsBox.clear();
-    await _cacheBox.clear();
+    // Each step is isolated: a flutter_secure_storage failure (common on some
+    // Android/emulator setups) must NOT abort clearing the Hive user data —
+    // loadFromStorage() needs the user gone to consider the session ended.
+    try {
+      await _secureStorage.deleteAll();
+    } catch (_) {
+      try {
+        await _secureStorage.delete(key: StorageKeys.accessToken);
+      } catch (_) {}
+    }
+    try {
+      await _settingsBox.delete(StorageKeys.userData);
+      await _settingsBox.delete(StorageKeys.userId);
+      await _settingsBox.clear();
+    } catch (_) {}
+    try {
+      await _cacheBox.clear();
+    } catch (_) {}
     // Preserve sync queue for retry — only clear if fully logged out
   }
 
