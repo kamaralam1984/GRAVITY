@@ -15,14 +15,22 @@ server {
         proxy_cache_bypass $http_upgrade;
     }
 
-    # Backend API (FastAPI) — incl. WebSocket (live location, chat)
-    location /api/ {
+    # WebSocket endpoints (live location + chat) — upgrade headers ONLY here
+    location ~ ^/api/(location|chat|monitoring)/ws {
         rewrite ^/api/(.*) /$1 break;
         proxy_pass http://127.0.0.1:8010;
         proxy_http_version 1.1;
         proxy_set_header Upgrade $http_upgrade;
         proxy_set_header Connection "upgrade";
+        proxy_set_header Host $host;
         proxy_read_timeout 3600s;
+    }
+
+    # Backend API (FastAPI) — plain REST (no forced upgrade)
+    location /api/ {
+        rewrite ^/api/(.*) /$1 break;
+        proxy_pass http://127.0.0.1:8010;
+        proxy_http_version 1.1;
         proxy_set_header Host $host;
         proxy_set_header X-Real-IP $remote_addr;
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
