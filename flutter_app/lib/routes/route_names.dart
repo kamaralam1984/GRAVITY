@@ -14,12 +14,27 @@ class RouteNames {
   static const String otp = '/otp';
   static const String twoFa = '/two-fa';
 
-  // ── Shell (bottom nav) ────────────────────────────────────────────────────
-  static const String home = '/home';
+  // ── Parent shell (bottom nav) ─────────────────────────────────────────────
+  static const String home = '/home'; // Parent Home (ParentDashboardScreen)
   static const String map = '/map';
   static const String sos = '/sos';
-  static const String chat = '/chat';
+  static const String parentMonitor = '/parent/monitor';
   static const String settings = '/settings';
+
+  // ── Child shell (bottom nav) ──────────────────────────────────────────────
+  static const String childHome = '/child-home'; // ChildDashboardScreen
+  static const String childSafety = '/child-safety';
+  static const String childSchool = '/child-school';
+  static const String childHealth = '/child-health';
+  static const String childMore = '/child-more';
+
+  // ── Misc ──────────────────────────────────────────────────────────────────
+  static const String chat = '/chat';
+
+  /// Role-aware landing route: children land on the child shell, everyone
+  /// else (parent / owner / none) lands on the parent shell.
+  static String homeForRole(String? familyRole) =>
+      familyRole == 'child' ? childHome : home;
 
   // ── Map sub-routes ────────────────────────────────────────────────────────
   static const String locationHistory = '/location-history';
@@ -48,6 +63,19 @@ class RouteNames {
 
   // ── Moments (family social feed) ──────────────────────────────────────────
   static const String moments = '/family/moments';
+
+  // ── Journeys / Timeline ───────────────────────────────────────────────────
+  static const String journeys = '/journeys';
+
+  // ── Safety ────────────────────────────────────────────────────────────────
+  static const String checkIn = '/check-in';
+  static const String fakeCall = '/fake-call';
+
+  // ── IoT / Smart home ──────────────────────────────────────────────────────
+  static const String iotDashboard = '/iot';
+
+  // ── Emergency profile ─────────────────────────────────────────────────────
+  static const String emergencyProfile = '/emergency-profile';
 
   // ── Elder care ────────────────────────────────────────────────────────────
   static const String elder = '/elder';

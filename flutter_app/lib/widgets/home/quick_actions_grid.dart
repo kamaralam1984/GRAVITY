@@ -76,6 +76,54 @@ class QuickActionsGrid extends StatelessWidget {
           color: context.safeColor,
           onTap: () => context.push(RouteNames.health),
         ),
+        _ActionData(
+          icon: Icons.child_care_rounded,
+          label: 'Child',
+          color: context.accentColor,
+          onTap: () => context.push(RouteNames.child),
+        ),
+        _ActionData(
+          icon: Icons.elderly_rounded,
+          label: 'Elder',
+          color: context.goldColor,
+          onTap: () => context.push(RouteNames.elder),
+        ),
+        _ActionData(
+          icon: Icons.check_circle_outline_rounded,
+          label: 'Check-in',
+          color: context.safeColor,
+          onTap: () => context.push(RouteNames.checkIn),
+        ),
+        _ActionData(
+          icon: Icons.phone_in_talk_rounded,
+          label: 'Fake Call',
+          color: context.sosColor,
+          onTap: () => context.push(RouteNames.fakeCall),
+        ),
+        _ActionData(
+          icon: Icons.visibility_rounded,
+          label: 'Monitor',
+          color: context.primaryColor,
+          onTap: () => context.push(RouteNames.monitor),
+        ),
+        _ActionData(
+          icon: Icons.photo_library_rounded,
+          label: 'Moments',
+          color: context.accentColor,
+          onTap: () => context.push(RouteNames.moments),
+        ),
+        _ActionData(
+          icon: Icons.timeline_rounded,
+          label: 'Journeys',
+          color: context.goldColor,
+          onTap: () => context.push(RouteNames.journeys),
+        ),
+        _ActionData(
+          icon: Icons.home_rounded,
+          label: 'Smart Home',
+          color: context.primaryColor,
+          onTap: () => context.push(RouteNames.iotDashboard),
+        ),
       ];
 }
 

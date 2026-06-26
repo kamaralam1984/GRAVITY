@@ -55,7 +55,8 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
     final authState = ref.read(authProvider);
 
     if (authState.isAuthenticated) {
-      context.go(RouteNames.home);
+      // Role-based landing: children → child shell, everyone else → parent shell.
+      context.go(RouteNames.homeForRole(authState.user?.familyRole));
     } else if (StorageService.instance.isOnboardingDone) {
       context.go(RouteNames.login);
     } else {

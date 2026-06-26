@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../core/services/storage_service.dart';
 import '../core/theme/app_colors.dart';
 import '../core/theme/app_dimensions.dart';
+import '../providers/auth_provider.dart';
 import '../services/notification_service.dart';
 import 'route_names.dart';
 
@@ -16,6 +18,8 @@ import '../screens/auth/forgot_password_screen.dart';
 import '../screens/auth/otp_screen.dart';
 import '../screens/auth/two_fa_screen.dart';
 import '../screens/home/home_screen.dart';
+import '../screens/dashboard/parent_dashboard_screen.dart';
+import '../screens/dashboard/child_dashboard_screen.dart';
 import '../screens/map/map_screen.dart';
 import '../screens/map/location_history_screen.dart';
 import '../screens/geofence/geofences_screen.dart';
@@ -31,6 +35,9 @@ import '../screens/monitor/monitor_screen.dart';
 import '../screens/family/moments_screen.dart';
 import '../screens/journeys/journeys_screen.dart';
 import '../screens/safety/check_in_screen.dart';
+import '../screens/safety/fake_call_screen.dart';
+import '../screens/devices/iot_dashboard_screen.dart';
+import '../screens/settings/emergency_profile_screen.dart';
 import '../screens/elder/elder_screen.dart';
 import '../screens/elder/health_screen.dart';
 import '../screens/elder/medication_screen.dart';
@@ -125,10 +132,39 @@ Future<String?> _redirect(BuildContext context, GoRouterState state) async {
   if (!hasToken && !RouteNames.isPublic(location)) {
     return RouteNames.login;
   }
-  if (hasToken && RouteNames.isAuthOnly(location)) {
+
+  if (!hasToken) return null;
+
+  // ── Authenticated: resolve the role-aware landing route ──────────────────
+  final role = _currentRole(context);
+  final roleHome = RouteNames.homeForRole(role);
+  final isChild = role == 'child';
+
+  // Send authenticated users away from auth-only screens to their role shell.
+  if (RouteNames.isAuthOnly(location)) {
+    return roleHome;
+  }
+
+  // Keep each role inside its own shell so the correct bottom nav shows.
+  if (isChild && location == RouteNames.home) {
+    return RouteNames.childHome;
+  }
+  if (!isChild && location == RouteNames.childHome) {
     return RouteNames.home;
   }
+
   return null;
+}
+
+/// Reads the authenticated user's `family_role` from the provider container.
+/// Returns `null` when unavailable (treated as a non-child / parent shell).
+String? _currentRole(BuildContext context) {
+  try {
+    final container = ProviderScope.containerOf(context, listen: false);
+    return container.read(currentUserProvider)?.familyRole;
+  } catch (_) {
+    return null;
+  }
 }
 
 // ── Router definition ─────────────────────────────────────────────────────
@@ -173,17 +209,38 @@ final appRouter = GoRouter(
       pageBuilder: (ctx, state) => _slidePage(const TwoFaScreen(), state),
     ),
 
-    // ── Shell (bottom nav) ─────────────────────────────────────────────────
+    // ── PARENT shell (bottom nav) ──────────────────────────────────────────
+    // Tabs: Home · Map · Safety(SOS) · Monitor · More(Settings)
     StatefulShellRoute.indexedStack(
-      builder: (context, state, navigationShell) =>
-          ScaffoldWithBottomNav(shell: navigationShell),
+      builder: (context, state, navigationShell) => ScaffoldWithBottomNav(
+        shell: navigationShell,
+        tabs: ScaffoldWithBottomNav.parentTabs,
+      ),
       branches: [
         StatefulShellBranch(
           routes: [
             GoRoute(
               path: RouteNames.home,
-              pageBuilder: (ctx, state) =>
-                  _fadePage(const HomeScreen(), state),
+              pageBuilder: (ctx, state) => _fadePage(
+                ParentDashboardScreen(
+                  onNavigate: (tab) {
+                    switch (tab) {
+                      case 'settings':
+                        ctx.go(RouteNames.settings);
+                        break;
+                      case 'alerts':
+                        ctx.push(RouteNames.notifications);
+                        break;
+                      case 'geofences':
+                        ctx.push(RouteNames.geofences);
+                        break;
+                      default:
+                        break;
+                    }
+                  },
+                ),
+                state,
+              ),
             ),
           ],
         ),
@@ -208,9 +265,9 @@ final appRouter = GoRouter(
         StatefulShellBranch(
           routes: [
             GoRoute(
-              path: RouteNames.chat,
+              path: RouteNames.parentMonitor,
               pageBuilder: (ctx, state) =>
-                  _fadePage(const ChatScreen(), state),
+                  _fadePage(const MonitorScreen(userId: 0), state),
             ),
           ],
         ),
@@ -224,6 +281,74 @@ final appRouter = GoRouter(
           ],
         ),
       ],
+    ),
+
+    // ── CHILD shell (bottom nav) ───────────────────────────────────────────
+    // Tabs: Home · Safety(Check-in) · School · Health · More(Settings)
+    StatefulShellRoute.indexedStack(
+      builder: (context, state, navigationShell) => ScaffoldWithBottomNav(
+        shell: navigationShell,
+        tabs: ScaffoldWithBottomNav.childTabs,
+      ),
+      branches: [
+        StatefulShellBranch(
+          routes: [
+            GoRoute(
+              path: RouteNames.childHome,
+              pageBuilder: (ctx, state) =>
+                  _fadePage(const ChildDashboardScreen(), state),
+            ),
+          ],
+        ),
+        StatefulShellBranch(
+          routes: [
+            GoRoute(
+              path: RouteNames.childSafety,
+              pageBuilder: (ctx, state) =>
+                  _fadePage(const CheckInScreen(), state),
+            ),
+          ],
+        ),
+        StatefulShellBranch(
+          routes: [
+            GoRoute(
+              path: RouteNames.childSchool,
+              pageBuilder: (ctx, state) =>
+                  _fadePage(const SchoolTrackingScreen(), state),
+            ),
+          ],
+        ),
+        StatefulShellBranch(
+          routes: [
+            GoRoute(
+              path: RouteNames.childHealth,
+              pageBuilder: (ctx, state) =>
+                  _fadePage(const HealthScreen(), state),
+            ),
+          ],
+        ),
+        StatefulShellBranch(
+          routes: [
+            GoRoute(
+              path: RouteNames.childMore,
+              pageBuilder: (ctx, state) =>
+                  _fadePage(const SettingsScreen(), state),
+            ),
+          ],
+        ),
+      ],
+    ),
+
+    // ── Chat (no longer a bottom-nav tab; kept reachable) ──────────────────
+    GoRoute(
+      path: RouteNames.chat,
+      pageBuilder: (ctx, state) => _fadePage(const ChatScreen(), state),
+    ),
+
+    // ── Legacy home (original HomeScreen, kept for direct access) ──────────
+    GoRoute(
+      path: '/legacy-home',
+      pageBuilder: (ctx, state) => _fadePage(const HomeScreen(), state),
     ),
 
     // ── Map sub-routes ─────────────────────────────────────────────────────
@@ -305,7 +430,7 @@ final appRouter = GoRouter(
 
     // ── Journeys / Timeline ────────────────────────────────────────────────
     GoRoute(
-      path: '/journeys',
+      path: RouteNames.journeys,
       pageBuilder: (ctx, state) {
         final extra = state.extra as Map<String, dynamic>?;
         return _slidePage(
@@ -320,9 +445,30 @@ final appRouter = GoRouter(
 
     // ── Safe Walk / Check-in ───────────────────────────────────────────────
     GoRoute(
-      path: '/check-in',
+      path: RouteNames.checkIn,
       pageBuilder: (ctx, state) =>
           _slidePage(const CheckInScreen(), state),
+    ),
+
+    // ── Fake Call ──────────────────────────────────────────────────────────
+    GoRoute(
+      path: RouteNames.fakeCall,
+      pageBuilder: (ctx, state) =>
+          _slidePage(const FakeCallScreen(), state),
+    ),
+
+    // ── IoT / Smart home dashboard ─────────────────────────────────────────
+    GoRoute(
+      path: RouteNames.iotDashboard,
+      pageBuilder: (ctx, state) =>
+          _slidePage(const IotDashboardScreen(), state),
+    ),
+
+    // ── Emergency profile ──────────────────────────────────────────────────
+    GoRoute(
+      path: RouteNames.emergencyProfile,
+      pageBuilder: (ctx, state) =>
+          _slidePage(const EmergencyProfileScreen(), state),
     ),
 
     // ── Elder care ─────────────────────────────────────────────────────────
@@ -418,22 +564,54 @@ class ScaffoldWithBottomNav extends StatelessWidget {
   const ScaffoldWithBottomNav({
     super.key,
     required this.shell,
+    required this.tabs,
   });
 
   final StatefulNavigationShell shell;
+  final List<_TabItem> tabs;
 
-  static const _tabs = [
+  /// PARENT bottom nav: Home · Map · Safety(SOS) · Monitor · More.
+  static const List<_TabItem> parentTabs = [
     _TabItem(icon: Icons.home_rounded, label: 'Home', path: RouteNames.home),
     _TabItem(icon: Icons.map_rounded, label: 'Map', path: RouteNames.map),
-    _TabItem(icon: Icons.shield_rounded, label: 'SOS', path: RouteNames.sos),
     _TabItem(
-        icon: Icons.chat_bubble_rounded,
-        label: 'Chat',
-        path: RouteNames.chat),
+        icon: Icons.shield_rounded,
+        label: 'Safety',
+        path: RouteNames.sos,
+        isSos: true),
     _TabItem(
-        icon: Icons.settings_rounded,
-        label: 'Settings',
+        icon: Icons.visibility_rounded,
+        label: 'Monitor',
+        path: RouteNames.parentMonitor),
+    _TabItem(
+        icon: Icons.menu_rounded,
+        label: 'More',
         path: RouteNames.settings),
+  ];
+
+  /// CHILD bottom nav: Home · Safety(Check-in) · School · Health · More.
+  static const List<_TabItem> childTabs = [
+    _TabItem(
+        icon: Icons.home_rounded,
+        label: 'Home',
+        path: RouteNames.childHome),
+    _TabItem(
+        icon: Icons.shield_rounded,
+        label: 'Safety',
+        path: RouteNames.childSafety,
+        isSos: true),
+    _TabItem(
+        icon: Icons.school_rounded,
+        label: 'School',
+        path: RouteNames.childSchool),
+    _TabItem(
+        icon: Icons.favorite_rounded,
+        label: 'Health',
+        path: RouteNames.childHealth),
+    _TabItem(
+        icon: Icons.menu_rounded,
+        label: 'More',
+        path: RouteNames.childMore),
   ];
 
   @override
@@ -463,9 +641,9 @@ class ScaffoldWithBottomNav extends StatelessWidget {
           child: SizedBox(
             height: AppDimensions.bottomNavHeight,
             child: Row(
-              children: List.generate(_tabs.length, (index) {
-                final tab = _tabs[index];
-                final isSos = index == 2;
+              children: List.generate(tabs.length, (index) {
+                final tab = tabs[index];
+                final isSos = tab.isSos;
                 final isSelected = shell.currentIndex == index;
                 final itemColor = isSos
                     ? sosColor
@@ -546,9 +724,13 @@ class _TabItem {
     required this.icon,
     required this.label,
     required this.path,
+    this.isSos = false,
   });
 
   final IconData icon;
   final String label;
   final String path;
+
+  /// Renders this tab as the prominent circular safety/SOS button.
+  final bool isSos;
 }

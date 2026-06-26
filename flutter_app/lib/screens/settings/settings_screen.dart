@@ -13,7 +13,6 @@ import '../../routes/route_names.dart';
 import '../../widgets/common/app_button.dart';
 import '../../widgets/common/avatar_widget.dart';
 import '../../widgets/common/glass_card.dart';
-import 'emergency_profile_screen.dart';
 
 class SettingsScreen extends ConsumerWidget {
   const SettingsScreen({super.key});
@@ -97,7 +96,7 @@ class SettingsScreen extends ConsumerWidget {
                 ),
                 IconButton(
                   onPressed: () =>
-                      Navigator.pushNamed(context, RouteNames.profile),
+                      context.push(RouteNames.profile),
                   icon: Icon(Icons.edit_outlined,
                       color: context.primaryColor),
                 ),
@@ -118,31 +117,33 @@ class SettingsScreen extends ConsumerWidget {
                 label: 'Profile',
                 subtitle: 'Edit name, phone, avatar',
                 onTap: () =>
-                    Navigator.pushNamed(context, RouteNames.profile),
+                    context.push(RouteNames.profile),
               ),
               _SettingsTile(
                 icon: Icons.security_rounded,
                 label: 'Security',
                 subtitle: 'Password, 2FA, biometrics',
                 onTap: () =>
-                    Navigator.pushNamed(context, RouteNames.security),
+                    context.push(RouteNames.security),
               ),
               _SettingsTile(
                 icon: Icons.privacy_tip_outlined,
                 label: 'Privacy',
                 subtitle: 'Location sharing, data',
                 onTap: () =>
-                    Navigator.pushNamed(context, RouteNames.privacy),
+                    context.push(RouteNames.privacy),
               ),
               _SettingsTile(
                 icon: Icons.medical_information_outlined,
                 label: 'Emergency Profile',
                 subtitle: 'Medical info & emergency contact',
-                onTap: () => Navigator.of(context).push(
-                  MaterialPageRoute(
-                    builder: (_) => const EmergencyProfileScreen(),
-                  ),
-                ),
+                onTap: () => context.push(RouteNames.emergencyProfile),
+              ),
+              _SettingsTile(
+                icon: Icons.lock_outline_rounded,
+                label: 'Parental Lock',
+                subtitle: 'Uninstall protection',
+                onTap: () => context.push(RouteNames.parentalLock),
               ),
             ],
           ),
@@ -169,7 +170,7 @@ class SettingsScreen extends ConsumerWidget {
                       style: AppTextStyles.label(context)),
                 ),
                 onTap: () =>
-                    Navigator.pushNamed(context, RouteNames.theme),
+                    context.push(RouteNames.theme),
               ),
               _SettingsTile(
                 icon: Icons.notifications_outlined,
@@ -198,14 +199,14 @@ class SettingsScreen extends ConsumerWidget {
                 label: 'Members',
                 subtitle: 'Manage family members',
                 onTap: () =>
-                    Navigator.pushNamed(context, RouteNames.members),
+                    context.push(RouteNames.members),
               ),
               _SettingsTile(
                 icon: Icons.devices_rounded,
                 label: 'Devices',
                 subtitle: 'Manage registered devices',
                 onTap: () =>
-                    Navigator.pushNamed(context, RouteNames.devices),
+                    context.push(RouteNames.devices),
               ),
               _SettingsTile(
                 icon: Icons.workspace_premium_rounded,
@@ -236,8 +237,7 @@ class SettingsScreen extends ConsumerWidget {
                             fontWeight: FontWeight.w700),
                   ),
                 ),
-                onTap: () => Navigator.pushNamed(
-                    context, RouteNames.subscription),
+                onTap: () => context.push(RouteNames.subscription),
               ),
             ],
           ),
