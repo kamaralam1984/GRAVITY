@@ -324,7 +324,7 @@ class SettingsScreen extends ConsumerWidget {
             onPressed: () async {
               final confirmed = await showDialog<bool>(
                 context: context,
-                builder: (_) => AlertDialog(
+                builder: (dialogCtx) => AlertDialog(
                   backgroundColor: context.surfaceColor,
                   shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(20)),
@@ -336,12 +336,12 @@ class SettingsScreen extends ConsumerWidget {
                   ),
                   actions: [
                     TextButton(
-                      onPressed: () => Navigator.pop(context, false),
+                      onPressed: () => Navigator.pop(dialogCtx, false),
                       child: Text('Cancel',
                           style: TextStyle(color: context.textMuted)),
                     ),
                     TextButton(
-                      onPressed: () => Navigator.pop(context, true),
+                      onPressed: () => Navigator.pop(dialogCtx, true),
                       child: Text(
                         'Log Out',
                         style: TextStyle(

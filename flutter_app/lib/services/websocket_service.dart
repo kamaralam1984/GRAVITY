@@ -37,6 +37,9 @@ class WebSocketService {
         '${AppConfig.wsUrl}/location/ws/$familyId?token=$token');
     try {
       _locationChannel = WebSocketChannel.connect(uri);
+      // Await the handshake so a failed upgrade is CAUGHT here instead of
+      // surfacing as an unhandled exception that destabilises the whole app.
+      await _locationChannel!.ready;
       _locationChannel!.stream.listen(
         (data) {
           if (_disposed) return;
@@ -83,6 +86,7 @@ class WebSocketService {
         '${AppConfig.wsUrl}/chat/ws/$familyId?token=$token');
     try {
       _chatChannel = WebSocketChannel.connect(uri);
+      await _chatChannel!.ready;
       _chatChannel!.stream.listen(
         (data) {
           if (_disposed) return;

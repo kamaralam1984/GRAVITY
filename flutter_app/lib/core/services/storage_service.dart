@@ -152,9 +152,12 @@ class StorageService {
       } catch (_) {}
     }
     try {
-      await _settingsBox.delete(StorageKeys.userData);
-      await _settingsBox.delete(StorageKeys.userId);
+      // Preserve onboarding-done so logout doesn't replay the intro.
+      final onboarded = _settingsBox.get(StorageKeys.onboardingDone);
       await _settingsBox.clear();
+      if (onboarded == true) {
+        await _settingsBox.put(StorageKeys.onboardingDone, true);
+      }
     } catch (_) {}
     try {
       await _cacheBox.clear();
