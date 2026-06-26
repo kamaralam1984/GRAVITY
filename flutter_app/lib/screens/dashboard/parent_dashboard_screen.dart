@@ -11,6 +11,7 @@ import '../../models/family_model.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/family_provider.dart';
 import '../../providers/sos_provider.dart';
+import '../../widgets/home/quick_actions_grid.dart';
 
 /// Parent dashboard — the Home tab content for parents.
 ///
@@ -332,6 +333,16 @@ class _ParentDashboardScreenState
                     onViewGeofences: () => _navigate('geofences'),
                   )
                       .animate(delay: 300.ms)
+                      .fadeIn(duration: 400.ms)
+                      .slideY(begin: 0.1, end: 0, curve: Curves.easeOut),
+                  const SizedBox(height: 20),
+                  // Full feature grid — parent panel only.
+                  _SectionLabel('ALL FEATURES')
+                      .animate(delay: 340.ms)
+                      .fadeIn(duration: 400.ms),
+                  const SizedBox(height: 12),
+                  const QuickActionsGrid()
+                      .animate(delay: 360.ms)
                       .fadeIn(duration: 400.ms)
                       .slideY(begin: 0.1, end: 0, curve: Curves.easeOut),
                 ],
