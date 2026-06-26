@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/theme/app_colors.dart';
@@ -98,12 +99,14 @@ class SettingsScreen extends ConsumerWidget {
                 ),
               ],
             ),
-          ),
+          ).animate().fadeIn(duration: 400.ms).slideY(
+              begin: 0.08, end: 0, curve: Curves.easeOut),
 
           const SizedBox(height: 20),
 
           // ── Account ──────────────────────────────────────────────────────
           _SettingsGroup(
+            index: 0,
             title: 'Account',
             children: [
               _SettingsTile(
@@ -134,6 +137,7 @@ class SettingsScreen extends ConsumerWidget {
 
           // ── App ───────────────────────────────────────────────────────────
           _SettingsGroup(
+            index: 1,
             title: 'App',
             children: [
               _SettingsTile(
@@ -172,6 +176,7 @@ class SettingsScreen extends ConsumerWidget {
 
           // ── Family ────────────────────────────────────────────────────────
           _SettingsGroup(
+            index: 2,
             title: 'Family',
             children: [
               _SettingsTile(
@@ -227,6 +232,7 @@ class SettingsScreen extends ConsumerWidget {
 
           // ── About ─────────────────────────────────────────────────────────
           _SettingsGroup(
+            index: 3,
             title: 'About',
             children: [
               _SettingsTile(
@@ -298,7 +304,11 @@ class SettingsScreen extends ConsumerWidget {
                 }
               }
             },
-          ),
+          ).animate(delay: 400.ms).fadeIn(duration: 400.ms).scale(
+                begin: const Offset(0.96, 0.96),
+                end: const Offset(1, 1),
+                curve: Curves.easeOut,
+              ),
 
           SizedBox(
               height: MediaQuery.of(context).padding.bottom + 24),
@@ -314,10 +324,12 @@ class _SettingsGroup extends StatelessWidget {
   const _SettingsGroup({
     required this.title,
     required this.children,
+    this.index = 0,
   });
 
   final String title;
   final List<Widget> children;
+  final int index;
 
   @override
   Widget build(BuildContext context) {
@@ -353,7 +365,10 @@ class _SettingsGroup extends StatelessWidget {
           ),
         ),
       ],
-    );
+    )
+        .animate(delay: (80 * (index + 1)).ms)
+        .fadeIn(duration: 400.ms)
+        .slideY(begin: 0.1, end: 0, curve: Curves.easeOut);
   }
 }
 

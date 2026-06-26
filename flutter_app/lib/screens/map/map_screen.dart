@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -252,7 +253,11 @@ class _MapScreenState extends ConsumerState<MapScreen> {
                   ),
                 ],
               ),
-            ),
+            ).animate().fadeIn(duration: 400.ms).slideY(
+                  begin: -0.15,
+                  end: 0,
+                  curve: Curves.easeOut,
+                ),
           ),
 
           // ── Map controls (right side) ────────────────────────────────────
@@ -301,7 +306,11 @@ class _MapScreenState extends ConsumerState<MapScreen> {
                   onTap: () => context.push(RouteNames.geofences),
                 ),
               ],
-            ),
+            ).animate(delay: 120.ms).fadeIn(duration: 400.ms).slideX(
+                  begin: 0.2,
+                  end: 0,
+                  curve: Curves.easeOut,
+                ),
           ),
 
           // ── SOS FAB ──────────────────────────────────────────────────────
@@ -329,7 +338,12 @@ class _MapScreenState extends ConsumerState<MapScreen> {
                   ),
                 ],
               ),
-            ),
+            ).animate(delay: 200.ms).scale(
+                  begin: const Offset(0.7, 0.7),
+                  end: const Offset(1, 1),
+                  duration: 350.ms,
+                  curve: Curves.easeOutBack,
+                ),
           ),
 
           // ── Active SOS Banner ────────────────────────────────────────────

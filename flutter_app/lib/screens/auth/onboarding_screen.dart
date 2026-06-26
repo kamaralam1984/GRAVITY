@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../core/services/storage_service.dart';
@@ -198,7 +199,14 @@ class _OnboardPage {
               ],
             ),
             child: Icon(icon, size: 56, color: Colors.white),
-          ),
+          )
+              .animate()
+              .fadeIn(duration: 400.ms)
+              .scale(
+                begin: const Offset(0.9, 0.9),
+                end: const Offset(1, 1),
+                curve: Curves.easeOut,
+              ),
           const SizedBox(height: AppDimensions.xl),
           Text(
             title,
@@ -211,7 +219,11 @@ class _OnboardPage {
               letterSpacing: -0.5,
               height: 1.15,
             ),
-          ),
+          ).animate(delay: 100.ms).fadeIn(duration: 400.ms).slideY(
+                begin: 0.1,
+                end: 0,
+                curve: Curves.easeOut,
+              ),
           const SizedBox(height: AppDimensions.md),
           Text(
             description,
@@ -222,7 +234,11 @@ class _OnboardPage {
               color: context.textMuted,
               height: 1.6,
             ),
-          ),
+          ).animate(delay: 160.ms).fadeIn(duration: 400.ms).slideY(
+                begin: 0.1,
+                end: 0,
+                curve: Curves.easeOut,
+              ),
           const SizedBox(height: 120),
         ],
       ),

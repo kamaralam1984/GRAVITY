@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/theme/app_colors.dart';
@@ -170,7 +171,8 @@ class _DevicesScreenState extends ConsumerState<DevicesScreen> {
                           onRevoke: isCurrent
                               ? null
                               : () => _revoke(device),
-                        );
+                        ).animate(delay: (60 * i).ms).fadeIn(duration: 350.ms).slideY(
+                            begin: 0.1, end: 0, curve: Curves.easeOut);
                       },
                     ),
     );
@@ -202,7 +204,8 @@ class _EmptyDevices extends StatelessWidget {
           ),
         ],
       ),
-    );
+    ).animate().fadeIn(duration: 450.ms).slideY(
+        begin: 0.06, end: 0, curve: Curves.easeOut);
   }
 }
 

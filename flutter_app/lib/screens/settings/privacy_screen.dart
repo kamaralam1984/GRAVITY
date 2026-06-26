@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/theme/app_colors.dart';
@@ -240,7 +241,8 @@ class _PrivacyScreenState extends ConsumerState<PrivacyScreen> {
                 ),
               ],
             ),
-          ),
+          ).animate().fadeIn(duration: 400.ms).slideY(
+              begin: 0.08, end: 0, curve: Curves.easeOut),
 
           const SizedBox(height: 16),
 
@@ -265,7 +267,8 @@ class _PrivacyScreenState extends ConsumerState<PrivacyScreen> {
                 ),
               ],
             ),
-          ),
+          ).animate(delay: 80.ms).fadeIn(duration: 400.ms).slideY(
+              begin: 0.08, end: 0, curve: Curves.easeOut),
 
           const SizedBox(height: 16),
 
@@ -314,7 +317,8 @@ class _PrivacyScreenState extends ConsumerState<PrivacyScreen> {
                 ),
               ],
             ),
-          ),
+          ).animate(delay: 160.ms).fadeIn(duration: 400.ms).slideY(
+              begin: 0.08, end: 0, curve: Curves.easeOut),
 
           const SizedBox(height: 24),
 
@@ -381,7 +385,8 @@ class _PrivacyScreenState extends ConsumerState<PrivacyScreen> {
                 ),
               ],
             ),
-          ),
+          ).animate(delay: 240.ms).fadeIn(duration: 400.ms).slideY(
+              begin: 0.08, end: 0, curve: Curves.easeOut),
 
           SizedBox(height: MediaQuery.of(context).padding.bottom + 24),
         ],

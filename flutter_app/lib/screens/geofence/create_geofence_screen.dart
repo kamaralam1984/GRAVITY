@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -160,7 +161,11 @@ class _CreateGeofenceScreenState
                   ),
               ],
             ),
-          ),
+          ).animate().fadeIn(duration: 400.ms).slideY(
+                begin: -0.15,
+                end: 0,
+                curve: Curves.easeOut,
+              ),
 
           // ── Map ───────────────────────────────────────────────────────
           Expanded(
@@ -506,7 +511,11 @@ class _CreateGeofenceScreenState
                                 ),
                               ),
                       ),
-                    ),
+                    ).animate(delay: 150.ms).fadeIn(duration: 400.ms).scale(
+                          begin: const Offset(0.96, 0.96),
+                          end: const Offset(1, 1),
+                          curve: Curves.easeOut,
+                        ),
                   ],
                 ),
               ),

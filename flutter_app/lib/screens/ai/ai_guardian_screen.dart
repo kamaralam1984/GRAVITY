@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/theme/app_colors.dart';
@@ -174,7 +175,10 @@ class _AiGuardianScreenState extends ConsumerState<AiGuardianScreen>
                 riskScore: aiState.riskScore,
                 insights: aiState.insights,
                 isDark: isDark,
-              ),
+              )
+                  .animate()
+                  .fadeIn(duration: 400.ms)
+                  .slideY(begin: 0.08, end: 0, curve: Curves.easeOut),
             ),
           ),
 
@@ -229,7 +233,10 @@ class _AiGuardianScreenState extends ConsumerState<AiGuardianScreen>
                     ],
                   ),
                 ),
-              ),
+              )
+                  .animate()
+                  .fadeIn(duration: 400.ms, delay: 100.ms)
+                  .scale(begin: const Offset(0.97, 0.97), end: const Offset(1, 1)),
             ),
           ),
 
@@ -279,7 +286,10 @@ class _AiGuardianScreenState extends ConsumerState<AiGuardianScreen>
                   final tip = aiState.safetyTips[i];
                   return Padding(
                     padding: const EdgeInsets.fromLTRB(16, 0, 16, 10),
-                    child: _SafetyTipCard(tip: tip),
+                    child: _SafetyTipCard(tip: tip)
+                        .animate(delay: (60 * i).ms)
+                        .fadeIn(duration: 350.ms)
+                        .slideY(begin: 0.1, end: 0, curve: Curves.easeOut),
                   );
                 },
                 childCount: aiState.safetyTips.length,

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
@@ -75,7 +76,11 @@ class GeofencesScreen extends ConsumerWidget {
                             .toggle(geofences[i].id, isActive: isActive),
                         onDelete: () => _confirmDelete(
                             context, ref, geofences[i]),
-                      ),
+                      ).animate(delay: (60 * i).ms).fadeIn(duration: 350.ms).slideY(
+                            begin: 0.1,
+                            end: 0,
+                            curve: Curves.easeOut,
+                          ),
                     ),
                   ),
                 ),
@@ -355,10 +360,19 @@ class _EmptyGeofenceState extends StatelessWidget {
                 style: TextStyle(
                     fontFamily: 'Inter', fontWeight: FontWeight.w700),
               ),
-            ),
+            ).animate(delay: 250.ms).scale(
+                  begin: const Offset(0.85, 0.85),
+                  end: const Offset(1, 1),
+                  duration: 300.ms,
+                  curve: Curves.easeOutBack,
+                ),
           ],
         ),
       ),
-    );
+    ).animate().fadeIn(duration: 450.ms).slideY(
+          begin: 0.08,
+          end: 0,
+          curve: Curves.easeOut,
+        );
   }
 }

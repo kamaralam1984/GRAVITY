@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
@@ -407,7 +408,11 @@ class _OtpScreenState extends ConsumerState<OtpScreen>
                     ),
                   ],
                 ),
-              ),
+              ).animate().fadeIn(duration: 400.ms).slideY(
+                    begin: 0.08,
+                    end: 0,
+                    curve: Curves.easeOut,
+                  ),
 
               const SizedBox(height: AppDimensions.xl),
             ],
@@ -468,7 +473,7 @@ class _OtpBox extends StatelessWidget {
           enabledBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(14),
             borderSide: BorderSide(
-              color: Colors.white.withOpacity(0.08),
+              color: context.borderColor,
               width: 1,
             ),
           ),

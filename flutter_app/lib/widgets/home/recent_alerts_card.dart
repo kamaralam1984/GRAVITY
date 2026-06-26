@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
@@ -100,7 +101,10 @@ class RecentAlertsCard extends ConsumerWidget {
               ),
               itemBuilder: (ctx, i) {
                 final alert = alerts[i];
-                return _AlertTile(alert: alert);
+                return _AlertTile(alert: alert)
+                    .animate(delay: (60 * i).ms)
+                    .fadeIn(duration: 350.ms)
+                    .slideX(begin: 0.08, end: 0, curve: Curves.easeOut);
               },
             ),
     );

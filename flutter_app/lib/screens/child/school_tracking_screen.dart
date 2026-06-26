@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 import 'package:intl/intl.dart';
 
 import '../../core/theme/app_colors.dart';
@@ -50,14 +51,16 @@ class _SchoolTrackingScreenState extends ConsumerState<SchoolTrackingScreen> {
               isAtSchool: isAtSchool,
               isSchoolTime: isSchoolTime,
               childName: child?.name ?? 'Child',
-            ),
+            ).animate().fadeIn(duration: 400.ms).slideY(
+                begin: 0.08, end: 0, curve: Curves.easeOut),
             const SizedBox(height: 20),
 
             // School geofence map
             _SchoolMapPreview(
               schoolName: _schoolName,
               address: _schoolAddress,
-            ),
+            ).animate(delay: 80.ms).fadeIn(duration: 400.ms).slideY(
+                begin: 0.08, end: 0, curve: Curves.easeOut),
             const SizedBox(height: 20),
 
             // Attendance log
@@ -349,9 +352,13 @@ class _AttendanceLog extends StatelessWidget {
     ];
 
     return Column(
-      children: logs
-          .map((e) => _AttendanceLogItem(entry: e))
-          .toList(),
+      children: [
+        for (var i = 0; i < logs.length; i++)
+          _AttendanceLogItem(entry: logs[i])
+              .animate(delay: (60 * i).ms)
+              .fadeIn(duration: 350.ms)
+              .slideY(begin: 0.1, end: 0, curve: Curves.easeOut),
+      ],
     );
   }
 }

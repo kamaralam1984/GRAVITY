@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/theme/app_colors.dart';
@@ -180,7 +181,10 @@ class _NotificationList extends StatelessWidget {
           child: _NotificationTile(
             notification: n,
             onTap: () => onTap(n),
-          ),
+          )
+              .animate(delay: (40 * i).ms)
+              .fadeIn(duration: 300.ms)
+              .slideY(begin: 0.1, end: 0, curve: Curves.easeOut),
         );
       },
     );
@@ -343,7 +347,10 @@ class _EmptyState extends StatelessWidget {
             style: AppTextStyles.body2(context),
           ),
         ],
-      ),
+      )
+          .animate()
+          .fadeIn(duration: 400.ms)
+          .slideY(begin: 0.08, end: 0, curve: Curves.easeOut),
     );
   }
 }

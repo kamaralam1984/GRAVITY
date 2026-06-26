@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/theme/app_colors.dart';
@@ -33,7 +34,8 @@ class ThemeScreen extends ConsumerWidget {
             Text(
               'Choose Theme',
               style: AppTextStyles.subtitle1(context),
-            ),
+            ).animate().fadeIn(duration: 400.ms).slideY(
+                begin: 0.08, end: 0, curve: Curves.easeOut),
             const SizedBox(height: 6),
             Text(
               'Select how KVL Track looks on your device.',
@@ -51,7 +53,8 @@ class ThemeScreen extends ConsumerWidget {
               onTap: () => ref
                   .read(themeModeProvider.notifier)
                   .setMode(ThemeMode.light),
-            ),
+            ).animate(delay: 80.ms).fadeIn(duration: 350.ms).slideY(
+                begin: 0.1, end: 0, curve: Curves.easeOut),
             const SizedBox(height: 12),
             _ThemeCard(
               mode: ThemeMode.dark,
@@ -64,7 +67,8 @@ class ThemeScreen extends ConsumerWidget {
               onTap: () => ref
                   .read(themeModeProvider.notifier)
                   .setMode(ThemeMode.dark),
-            ),
+            ).animate(delay: 160.ms).fadeIn(duration: 350.ms).slideY(
+                begin: 0.1, end: 0, curve: Curves.easeOut),
             const SizedBox(height: 12),
             _ThemeCard(
               mode: ThemeMode.system,
@@ -77,7 +81,8 @@ class ThemeScreen extends ConsumerWidget {
               onTap: () => ref
                   .read(themeModeProvider.notifier)
                   .setMode(ThemeMode.system),
-            ),
+            ).animate(delay: 240.ms).fadeIn(duration: 350.ms).slideY(
+                begin: 0.1, end: 0, curve: Curves.easeOut),
           ],
         ),
       ),

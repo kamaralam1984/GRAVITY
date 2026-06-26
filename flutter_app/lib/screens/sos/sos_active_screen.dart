@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
@@ -134,7 +135,8 @@ class _SosActiveScreenState extends ConsumerState<SosActiveScreen>
                               Navigator.pop(context);
                             }
                           },
-                        ),
+                        ).animate(delay: (80 * i).ms).fadeIn(duration: 400.ms).slideY(
+                            begin: 0.1, end: 0, curve: Curves.easeOut),
                       ),
               ),
             ],
@@ -466,6 +468,9 @@ class _NoActiveAlerts extends StatelessWidget {
           ),
         ],
       ),
-    );
+    ).animate().fadeIn(duration: 450.ms).scale(
+        begin: const Offset(0.92, 0.92),
+        end: const Offset(1, 1),
+        curve: Curves.easeOut);
   }
 }

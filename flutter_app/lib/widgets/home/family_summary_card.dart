@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
@@ -60,7 +61,10 @@ class FamilySummaryCard extends ConsumerWidget {
             member: member,
             location: location,
             onTap: () => ctx.push(RouteNames.map),
-          );
+          )
+              .animate(delay: (60 * i).ms)
+              .fadeIn(duration: 350.ms)
+              .slideX(begin: 0.12, end: 0, curve: Curves.easeOut);
         },
       ),
     );

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:share_plus/share_plus.dart';
 
@@ -161,7 +162,10 @@ class _InviteScreenState extends ConsumerState<InviteScreen> {
                   ),
                 ],
               ),
-            ),
+            )
+                .animate()
+                .fadeIn(duration: 400.ms)
+                .slideY(begin: 0.08, end: 0, curve: Curves.easeOut),
 
             const SizedBox(height: 20),
 
@@ -213,7 +217,10 @@ class _InviteScreenState extends ConsumerState<InviteScreen> {
                   ),
                 ),
               ],
-            ),
+            )
+                .animate(delay: 120.ms)
+                .fadeIn(duration: 400.ms)
+                .slideY(begin: 0.1, end: 0, curve: Curves.easeOut),
 
             const SizedBox(height: 32),
 
@@ -224,7 +231,10 @@ class _InviteScreenState extends ConsumerState<InviteScreen> {
                   (e) => _HowToStep(
                     step: e.key + 1,
                     text: e.value,
-                  ),
+                  )
+                      .animate(delay: (60 * e.key).ms)
+                      .fadeIn(duration: 350.ms)
+                      .slideX(begin: 0.08, end: 0, curve: Curves.easeOut),
                 ),
 
             const SizedBox(height: 24),

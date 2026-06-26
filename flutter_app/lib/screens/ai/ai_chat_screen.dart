@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/theme/app_colors.dart';
@@ -436,7 +437,9 @@ class _QuickPromptChips extends StatelessWidget {
           Wrap(
             spacing: 8,
             runSpacing: 8,
-            children: prompts.map((p) {
+            children: prompts.asMap().entries.map((entry) {
+              final i = entry.key;
+              final p = entry.value;
               return GestureDetector(
                 onTap: () => onTap(p),
                 child: Container(
@@ -454,7 +457,10 @@ class _QuickPromptChips extends StatelessWidget {
                         .copyWith(color: context.primaryColor),
                   ),
                 ),
-              );
+              )
+                  .animate(delay: (60 * i).ms)
+                  .fadeIn(duration: 300.ms)
+                  .slideY(begin: 0.2, end: 0, curve: Curves.easeOut);
             }).toList(),
           ),
         ],
@@ -569,7 +575,12 @@ class _AiInputBar extends StatelessWidget {
                           size: 20,
                         ),
                 ),
-              ),
+              ).animate().scale(
+                    duration: 300.ms,
+                    begin: const Offset(0.8, 0.8),
+                    end: const Offset(1, 1),
+                    curve: Curves.easeOut,
+                  ),
             ),
           ],
         ),

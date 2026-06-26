@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart' hide Family;
 import 'package:go_router/go_router.dart';
 
@@ -101,7 +102,13 @@ class _FamilyScreenState extends ConsumerState<FamilyScreen> {
                                 family: family,
                                 memberCount: members.length,
                                 onlineCount: onlineCount,
-                              ),
+                              )
+                                  .animate()
+                                  .fadeIn(duration: 400.ms)
+                                  .slideY(
+                                      begin: 0.08,
+                                      end: 0,
+                                      curve: Curves.easeOut),
                               const SizedBox(height: 20),
 
                               // Stats row
@@ -134,7 +141,13 @@ class _FamilyScreenState extends ConsumerState<FamilyScreen> {
                                     ),
                                   ),
                                 ],
-                              ),
+                              )
+                                  .animate(delay: 100.ms)
+                                  .fadeIn(duration: 400.ms)
+                                  .slideY(
+                                      begin: 0.1,
+                                      end: 0,
+                                      curve: Curves.easeOut),
                               const SizedBox(height: 24),
 
                               // Quick actions
@@ -193,8 +206,14 @@ class _FamilyScreenState extends ConsumerState<FamilyScreen> {
                                 context: context,
                               ),
                               const SizedBox(height: 12),
-                              ...members.take(4).map(
-                                    (m) => _MemberPreviewTile(member: m),
+                              ...members.take(4).toList().asMap().entries.map(
+                                    (e) => _MemberPreviewTile(member: e.value)
+                                        .animate(delay: (60 * e.key).ms)
+                                        .fadeIn(duration: 350.ms)
+                                        .slideX(
+                                            begin: 0.08,
+                                            end: 0,
+                                            curve: Curves.easeOut),
                                   ),
                             ] else
                               _NoFamilyState(

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../core/theme/app_colors.dart';
@@ -21,13 +22,18 @@ class QuickActionsGrid extends StatelessWidget {
       mainAxisSpacing: 10,
       childAspectRatio: 0.92,
       children: actions
-          .map((a) => _ActionCard(
-                icon: a.icon,
-                label: a.label,
-                color: a.color,
-                onTap: a.onTap,
-                isPulse: a.isPulse,
-              ))
+          .asMap()
+          .entries
+          .map((e) => _ActionCard(
+                icon: e.value.icon,
+                label: e.value.label,
+                color: e.value.color,
+                onTap: e.value.onTap,
+                isPulse: e.value.isPulse,
+              )
+                  .animate(delay: (60 * e.key).ms)
+                  .fadeIn(duration: 350.ms)
+                  .slideY(begin: 0.1, end: 0, curve: Curves.easeOut))
           .toList(),
     );
   }

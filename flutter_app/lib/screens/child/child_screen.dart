@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 import 'package:intl/intl.dart';
 
 import '../../core/theme/app_colors.dart';
@@ -56,7 +57,8 @@ class _ChildScreenState extends ConsumerState<ChildScreen> {
                   ),
                 ],
               ),
-            ),
+            ).animate().fadeIn(duration: 400.ms).slideY(
+                begin: 0.08, end: 0, curve: Curves.easeOut),
 
             Expanded(
               child: children.isEmpty
@@ -83,12 +85,24 @@ class _ChildScreenState extends ConsumerState<ChildScreen> {
 
                             if (childState.selectedChild != null) ...[
                               // Location card
-                              _LocationCard(child: childState.selectedChild!),
+                              _LocationCard(child: childState.selectedChild!)
+                                  .animate()
+                                  .fadeIn(duration: 400.ms)
+                                  .slideY(
+                                      begin: 0.08,
+                                      end: 0,
+                                      curve: Curves.easeOut),
                               const SizedBox(height: 16),
 
                               // Safety score
                               _SafetyScoreCard(
-                                  score: childState.safetyScore),
+                                      score: childState.safetyScore)
+                                  .animate(delay: 80.ms)
+                                  .fadeIn(duration: 400.ms)
+                                  .slideY(
+                                      begin: 0.08,
+                                      end: 0,
+                                      curve: Curves.easeOut),
                               const SizedBox(height: 16),
 
                               // Quick actions
@@ -104,7 +118,8 @@ class _ChildScreenState extends ConsumerState<ChildScreen> {
                                       color: context.accentColor,
                                       onTap: () => context
                                           .push(RouteNames.schoolTracking),
-                                    ),
+                                    ).animate(delay: 0.ms).fadeIn().slideY(
+                                        begin: 0.1, end: 0),
                                   ),
                                   const SizedBox(width: 10),
                                   Expanded(
@@ -114,7 +129,8 @@ class _ChildScreenState extends ConsumerState<ChildScreen> {
                                       color: context.primaryColor,
                                       onTap: () =>
                                           context.push(RouteNames.geofences),
-                                    ),
+                                    ).animate(delay: 60.ms).fadeIn().slideY(
+                                        begin: 0.1, end: 0),
                                   ),
                                   const SizedBox(width: 10),
                                   Expanded(
@@ -124,7 +140,8 @@ class _ChildScreenState extends ConsumerState<ChildScreen> {
                                       color: context.goldColor,
                                       onTap: () => context
                                           .push(RouteNames.locationHistory),
-                                    ),
+                                    ).animate(delay: 120.ms).fadeIn().slideY(
+                                        begin: 0.1, end: 0),
                                   ),
                                   const SizedBox(width: 10),
                                   Expanded(
@@ -134,14 +151,21 @@ class _ChildScreenState extends ConsumerState<ChildScreen> {
                                       color: context.sosColor,
                                       onTap: () =>
                                           context.go(RouteNames.sos),
-                                    ),
+                                    ).animate(delay: 180.ms).fadeIn().slideY(
+                                        begin: 0.1, end: 0),
                                   ),
                                 ],
                               ),
                               const SizedBox(height: 20),
 
                               // School schedule
-                              _SchoolScheduleCard(),
+                              _SchoolScheduleCard()
+                                  .animate(delay: 120.ms)
+                                  .fadeIn(duration: 400.ms)
+                                  .slideY(
+                                      begin: 0.08,
+                                      end: 0,
+                                      curve: Curves.easeOut),
                               const SizedBox(height: 16),
 
                               // Recent activity
@@ -869,7 +893,10 @@ class _NoChildrenState extends StatelessWidget {
                   borderRadius: BorderRadius.circular(12),
                 ),
               ),
-            ),
+            ).animate(delay: 150.ms).fadeIn(duration: 400.ms).scale(
+                begin: const Offset(0.95, 0.95),
+                end: const Offset(1, 1),
+                curve: Curves.easeOut),
           ],
         ),
       ),

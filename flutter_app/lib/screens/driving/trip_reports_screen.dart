@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 import 'package:intl/intl.dart';
 
 import '../../core/theme/app_colors.dart';
@@ -106,7 +107,10 @@ class _TripReportsScreenState extends ConsumerState<TripReportsScreen> {
                     itemCount: events.length,
                     separatorBuilder: (_, __) =>
                         const SizedBox(height: 10),
-                    itemBuilder: (_, i) => _EventCard(event: events[i]),
+                    itemBuilder: (_, i) => _EventCard(event: events[i])
+                        .animate(delay: (40 * (i % 10)).ms)
+                        .fadeIn(duration: 300.ms)
+                        .slideY(begin: 0.08, end: 0, curve: Curves.easeOut),
                   ),
           ),
         ],
@@ -296,8 +300,8 @@ class _EventCard extends StatelessWidget {
                       style: AppTextStyles.caption(context),
                     ),
                     if (event.timestamp != null) ...[
-                      const Text(' · ',
-                          style: TextStyle(color: Colors.grey)),
+                      Text(' · ',
+                          style: TextStyle(color: context.textMuted)),
                       Text(
                         DateFormat('hh:mm a · MMM d')
                             .format(event.timestamp!.toLocal()),

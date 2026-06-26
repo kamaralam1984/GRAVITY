@@ -2,6 +2,7 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 import 'package:intl/intl.dart';
 
 import '../../core/theme/app_colors.dart';
@@ -83,7 +84,8 @@ class _HealthScreenState extends ConsumerState<HealthScreen> {
             _WeeklyChart(
               records: state.weeklyHealth,
               metric: _selectedMetric,
-            ),
+            ).animate().fadeIn(duration: 400.ms).slideY(
+                begin: 0.08, end: 0, curve: Curves.easeOut),
             const SizedBox(height: 24),
 
             // Log health form
@@ -477,7 +479,10 @@ class _HealthForm extends StatelessWidget {
                 ),
                 elevation: 0,
               ),
-            ),
+            ).animate().fadeIn(duration: 300.ms).scale(
+                begin: const Offset(0.96, 0.96),
+                end: const Offset(1, 1),
+                curve: Curves.easeOut),
           ),
         ],
       ),
@@ -548,8 +553,13 @@ class _HistoryList extends StatelessWidget {
     }
     return Column(
       children: records
+          .asMap()
+          .entries
           .map(
-            (r) => Container(
+            (entry) {
+              final i = entry.key;
+              final r = entry.value;
+              return Container(
               margin: const EdgeInsets.only(bottom: 8),
               padding: const EdgeInsets.all(14),
               decoration: BoxDecoration(
@@ -612,7 +622,11 @@ class _HistoryList extends StatelessWidget {
                   ),
                 ],
               ),
-            ),
+            )
+                  .animate(delay: (60 * i).ms)
+                  .fadeIn(duration: 350.ms)
+                  .slideY(begin: 0.1, end: 0, curve: Curves.easeOut);
+            },
           )
           .toList(),
     );

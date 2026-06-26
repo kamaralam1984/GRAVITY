@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
 
@@ -152,7 +153,11 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                     ],
                   ),
                 ),
-              ),
+              ).animate().fadeIn(duration: 400.ms).scale(
+                    begin: const Offset(0.9, 0.9),
+                    end: const Offset(1, 1),
+                    curve: Curves.easeOut,
+                  ),
 
               const SizedBox(height: 8),
 
@@ -220,7 +225,8 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                 icon: Icons.check_rounded,
                 width: double.infinity,
                 onPressed: _save,
-              ),
+              ).animate(delay: 200.ms).fadeIn(duration: 400.ms).slideY(
+                    begin: 0.1, end: 0, curve: Curves.easeOut),
             ],
           ),
         ),

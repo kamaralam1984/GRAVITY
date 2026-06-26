@@ -3,6 +3,7 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_dimensions.dart';
@@ -79,7 +80,13 @@ class _DrivingScreenState extends ConsumerState<DrivingScreen> {
                         child: Column(
                           children: [
                             // Family score gauge
-                            _FamilyScoreGauge(score: familyScore),
+                            _FamilyScoreGauge(score: familyScore)
+                                .animate()
+                                .fadeIn(duration: 400.ms)
+                                .slideY(
+                                    begin: 0.08,
+                                    end: 0,
+                                    curve: Curves.easeOut),
                             const SizedBox(height: 24),
 
                             // Summary stats
@@ -96,7 +103,8 @@ class _DrivingScreenState extends ConsumerState<DrivingScreen> {
                                         .toString(),
                                     icon: Icons.warning_rounded,
                                     color: context.warmColor,
-                                  ),
+                                  ).animate(delay: 0.ms).fadeIn().slideY(
+                                      begin: 0.1, end: 0),
                                 ),
                                 const SizedBox(width: 10),
                                 Expanded(
@@ -105,7 +113,8 @@ class _DrivingScreenState extends ConsumerState<DrivingScreen> {
                                     value: '${state.familySummary.length}',
                                     icon: Icons.drive_eta_rounded,
                                     color: context.primaryColor,
-                                  ),
+                                  ).animate(delay: 60.ms).fadeIn().slideY(
+                                      begin: 0.1, end: 0),
                                 ),
                                 const SizedBox(width: 10),
                                 Expanded(
@@ -114,7 +123,8 @@ class _DrivingScreenState extends ConsumerState<DrivingScreen> {
                                     value: '${_countSafeDrivers(state.familySummary)}',
                                     icon: Icons.shield_rounded,
                                     color: context.safeColor,
-                                  ),
+                                  ).animate(delay: 120.ms).fadeIn().slideY(
+                                      begin: 0.1, end: 0),
                                 ),
                               ],
                             ),
@@ -131,16 +141,26 @@ class _DrivingScreenState extends ConsumerState<DrivingScreen> {
                             if (state.familySummary.isEmpty)
                               _EmptyDriving()
                             else
-                              ...state.familySummary.map(
-                                (m) => _MemberDrivingCard(
-                                  summary: m,
-                                  onTap: () {
-                                    ref
-                                        .read(drivingProvider.notifier)
-                                        .loadMemberEvents(m.userId);
-                                    context.push(RouteNames.tripReports);
-                                  },
-                                ),
+                              ...state.familySummary.asMap().entries.map(
+                                (entry) {
+                                  final i = entry.key;
+                                  final m = entry.value;
+                                  return _MemberDrivingCard(
+                                    summary: m,
+                                    onTap: () {
+                                      ref
+                                          .read(drivingProvider.notifier)
+                                          .loadMemberEvents(m.userId);
+                                      context.push(RouteNames.tripReports);
+                                    },
+                                  )
+                                      .animate(delay: (60 * i).ms)
+                                      .fadeIn(duration: 350.ms)
+                                      .slideY(
+                                          begin: 0.1,
+                                          end: 0,
+                                          curve: Curves.easeOut);
+                                },
                               ),
 
                             const SizedBox(height: 32),

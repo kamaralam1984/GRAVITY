@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
@@ -218,12 +219,20 @@ class _TwoFaScreenState extends ConsumerState<TwoFaScreen>
 
               // Show setup card with secret when in setup mode
               if (widget.mode == TwoFaMode.setup) ...[
-                _buildSetupCard(context),
+                _buildSetupCard(context).animate().fadeIn(duration: 400.ms).slideY(
+                      begin: 0.08,
+                      end: 0,
+                      curve: Curves.easeOut,
+                    ),
                 const SizedBox(height: 20),
               ],
 
               // Code entry card
-              _buildCodeEntryCard(context),
+              _buildCodeEntryCard(context).animate(delay: 80.ms).fadeIn(duration: 400.ms).slideY(
+                    begin: 0.08,
+                    end: 0,
+                    curve: Curves.easeOut,
+                  ),
 
               const SizedBox(height: AppDimensions.xl),
             ],
@@ -658,7 +667,7 @@ class _CodeBox extends StatelessWidget {
           enabledBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(14),
             borderSide: BorderSide(
-              color: Colors.white.withOpacity(0.08),
+              color: context.borderColor,
               width: 1,
             ),
           ),

@@ -13,20 +13,17 @@ import 'services/notification_service.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Firebase
-  await Firebase.initializeApp();
-
-  // Register background FCM handler before runApp
-  FirebaseMessaging.onBackgroundMessage(handleFcmBackground);
-
-  // Local notifications
-  await NotificationService.init();
-
-  // FCM (foreground + token)
-  await FcmService.init();
-
-  // Wire navigator key for notification tap routing
-  NotificationService.navigatorKey = appNavigatorKey;
+  // Firebase + push notifications — optional. Never let a missing/invalid
+  // Firebase config crash app startup; the app works without push.
+  try {
+    await Firebase.initializeApp();
+    FirebaseMessaging.onBackgroundMessage(handleFcmBackground);
+    await NotificationService.init();
+    await FcmService.init();
+    NotificationService.navigatorKey = appNavigatorKey;
+  } catch (e, st) {
+    debugPrint('Firebase/FCM init skipped (non-fatal): $e\n$st');
+  }
 
   // Local storage
   await StorageService.instance.init();

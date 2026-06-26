@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:go_router/go_router.dart';
@@ -575,7 +576,8 @@ class _ActiveSosCard extends StatelessWidget {
           ),
         ),
       ),
-    );
+    ).animate().fadeIn(duration: 350.ms).slideY(
+        begin: -0.15, end: 0, curve: Curves.easeOut);
   }
 }
 
@@ -822,7 +824,8 @@ class _EmergencyContactsList extends StatelessWidget {
               ),
             ],
           ),
-        );
+        ).animate(delay: (60 * i).ms).fadeIn(duration: 350.ms).slideY(
+            begin: 0.1, end: 0, curve: Curves.easeOut);
       },
     );
   }
@@ -861,7 +864,8 @@ class _NoFamilyPrompt extends StatelessWidget {
           ],
         ),
       ),
-    );
+    ).animate().fadeIn(duration: 400.ms).slideY(
+        begin: 0.08, end: 0, curve: Curves.easeOut);
   }
 }
 
@@ -917,7 +921,8 @@ class _SosHistoryList extends StatelessWidget {
               ),
             ],
           ),
-        );
+        ).animate(delay: (50 * i).ms).fadeIn(duration: 300.ms).slideY(
+            begin: 0.12, end: 0, curve: Curves.easeOut);
       },
     );
   }

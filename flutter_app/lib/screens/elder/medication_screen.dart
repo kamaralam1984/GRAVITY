@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_dimensions.dart';
@@ -86,7 +87,8 @@ class _MedicationScreenState extends ConsumerState<MedicationScreen> {
             _DailyProgressCard(
               taken: takenCount,
               total: totalCount,
-            ),
+            ).animate().fadeIn(duration: 400.ms).slideY(
+                begin: 0.08, end: 0, curve: Curves.easeOut),
             const SizedBox(height: 20),
 
             // Add form
@@ -129,7 +131,8 @@ class _MedicationScreenState extends ConsumerState<MedicationScreen> {
                     );
                   }
                 },
-              ),
+              ).animate().fadeIn(duration: 300.ms).slideY(
+                  begin: 0.06, end: 0, curve: Curves.easeOut),
               const SizedBox(height: 20),
             ],
 
@@ -152,8 +155,10 @@ class _MedicationScreenState extends ConsumerState<MedicationScreen> {
             else if (meds.isEmpty)
               _EmptyMedications()
             else
-              ...meds.map(
-                (m) => _MedicationTile(
+              ...meds.asMap().entries.map((entry) {
+                final i = entry.key;
+                final m = entry.value;
+                return _MedicationTile(
                   med: m,
                   isTaken: m.id != null && _takenToday.contains(m.id),
                   onTaken: () {
@@ -166,8 +171,9 @@ class _MedicationScreenState extends ConsumerState<MedicationScreen> {
                       }
                     });
                   },
-                ),
-              ),
+                ).animate(delay: (60 * i).ms).fadeIn(duration: 350.ms).slideY(
+                    begin: 0.1, end: 0, curve: Curves.easeOut);
+              }),
 
             const SizedBox(height: 40),
           ],
@@ -349,8 +355,8 @@ class _MedicationTile extends StatelessWidget {
                   children: [
                     Text(med.dosage,
                         style: AppTextStyles.caption(context)),
-                    const Text(' · ',
-                        style: TextStyle(color: Colors.grey)),
+                    Text(' · ',
+                        style: TextStyle(color: context.textMuted)),
                     Text(
                       _freqLabel(med.frequency),
                       style: AppTextStyles.caption(context),
@@ -558,7 +564,10 @@ class _AddMedicationForm extends StatelessWidget {
                 ),
                 elevation: 0,
               ),
-            ),
+            ).animate().fadeIn(duration: 300.ms).scale(
+                begin: const Offset(0.96, 0.96),
+                end: const Offset(1, 1),
+                curve: Curves.easeOut),
           ),
         ],
       ),

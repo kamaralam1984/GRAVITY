@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart' hide Family;
 import 'package:go_router/go_router.dart';
 
@@ -73,7 +74,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               child: SafeArea(
                 child: Padding(
                   padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
-                  child: _HomeAppBar(),
+                  child: _HomeAppBar()
+                      .animate()
+                      .fadeIn(duration: 400.ms)
+                      .slideY(begin: 0.08, end: 0, curve: Curves.easeOut),
                 ),
               ),
             ),
@@ -84,11 +88,17 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               sliver: SliverList(
                 delegate: SliverChildListDelegate([
                   // ── Family Selector ─────────────────────────────────
-                  const _FamilySelectorBar(),
+                  const _FamilySelectorBar()
+                      .animate(delay: 60.ms)
+                      .fadeIn(duration: 400.ms)
+                      .slideY(begin: 0.1, end: 0, curve: Curves.easeOut),
                   const SizedBox(height: 20),
 
                   // ── Safety Score ────────────────────────────────────
-                  const SafetyScoreCard(),
+                  const SafetyScoreCard()
+                      .animate(delay: 120.ms)
+                      .fadeIn(duration: 400.ms)
+                      .slideY(begin: 0.1, end: 0, curve: Curves.easeOut),
                   const SizedBox(height: 20),
 
                   // ── Family Members ──────────────────────────────────
@@ -118,7 +128,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                     ],
                   ),
                   const SizedBox(height: 8),
-                  const FamilySummaryCard(),
+                  const FamilySummaryCard()
+                      .animate(delay: 180.ms)
+                      .fadeIn(duration: 400.ms)
+                      .slideY(begin: 0.1, end: 0, curve: Curves.easeOut),
                   const SizedBox(height: 20),
 
                   // ── Quick Actions ───────────────────────────────────
@@ -128,7 +141,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                         color: context.textPrimary,
                       )),
                   const SizedBox(height: 12),
-                  const QuickActionsGrid(),
+                  const QuickActionsGrid()
+                      .animate(delay: 240.ms)
+                      .fadeIn(duration: 400.ms)
+                      .slideY(begin: 0.1, end: 0, curve: Curves.easeOut),
                   const SizedBox(height: 20),
 
                   // ── Recent Alerts ───────────────────────────────────
@@ -146,7 +162,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                     ],
                   ),
                   const SizedBox(height: 12),
-                  const RecentAlertsCard(),
+                  const RecentAlertsCard()
+                      .animate(delay: 300.ms)
+                      .fadeIn(duration: 400.ms)
+                      .slideY(begin: 0.1, end: 0, curve: Curves.easeOut),
                   const SizedBox(height: 90), // bottom nav clearance
                 ]),
               ),

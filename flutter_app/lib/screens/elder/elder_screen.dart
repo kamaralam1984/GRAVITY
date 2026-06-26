@@ -3,6 +3,7 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_dimensions.dart';
@@ -84,7 +85,13 @@ class _ElderScreenState extends ConsumerState<ElderScreen> {
                         child: Column(
                           children: [
                             // Wellness score arc
-                            _WellnessArc(score: state.wellnessScore),
+                            _WellnessArc(score: state.wellnessScore)
+                                .animate()
+                                .fadeIn(duration: 400.ms)
+                                .slideY(
+                                    begin: 0.08,
+                                    end: 0,
+                                    curve: Curves.easeOut),
                             const SizedBox(height: 20),
 
                             // Health summary row
@@ -191,7 +198,8 @@ class _ElderScreenState extends ConsumerState<ElderScreen> {
                               onToggle: (v) => ref
                                   .read(elderProvider.notifier)
                                   .toggleFallDetection(v),
-                            ),
+                            ).animate(delay: 80.ms).fadeIn(duration: 400.ms).slideY(
+                                begin: 0.08, end: 0, curve: Curves.easeOut),
                             const SizedBox(height: 20),
 
                             // Medications
@@ -233,7 +241,8 @@ class _ElderScreenState extends ConsumerState<ElderScreen> {
                                     color: context.safeColor,
                                     onTap: () =>
                                         context.push(RouteNames.health),
-                                  ),
+                                  ).animate(delay: 0.ms).fadeIn().slideY(
+                                      begin: 0.1, end: 0),
                                 ),
                                 const SizedBox(width: 10),
                                 Expanded(
@@ -243,7 +252,8 @@ class _ElderScreenState extends ConsumerState<ElderScreen> {
                                     color: context.warmColor,
                                     onTap: () =>
                                         context.push(RouteNames.medication),
-                                  ),
+                                  ).animate(delay: 60.ms).fadeIn().slideY(
+                                      begin: 0.1, end: 0),
                                 ),
                                 const SizedBox(width: 10),
                                 Expanded(
@@ -252,7 +262,8 @@ class _ElderScreenState extends ConsumerState<ElderScreen> {
                                     label: 'SOS',
                                     color: context.sosColor,
                                     onTap: () => context.go(RouteNames.sos),
-                                  ),
+                                  ).animate(delay: 120.ms).fadeIn().slideY(
+                                      begin: 0.1, end: 0),
                                 ),
                               ],
                             ),
