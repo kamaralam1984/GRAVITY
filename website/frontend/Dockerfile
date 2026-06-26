@@ -15,6 +15,11 @@ COPY . .
 ARG NEXT_PUBLIC_API_URL=http://localhost:8000
 ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL
 
+# next.config rewrites() destinations are baked into routes-manifest at build,
+# so INTERNAL_API_URL must be present during `npm run build`.
+ARG INTERNAL_API_URL=http://backend:8000
+ENV INTERNAL_API_URL=$INTERNAL_API_URL
+
 RUN npm run build
 
 # Stage 3: Production runner

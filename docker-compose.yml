@@ -81,6 +81,8 @@ services:
       args:
         # Browser-side API URL — must be reachable from user's browser
         NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:8000}
+        # Server-side rewrite target — baked into routes-manifest at build time
+        INTERNAL_API_URL: http://backend:8000
     container_name: kvltrack-frontend
     restart: unless-stopped
     environment:
