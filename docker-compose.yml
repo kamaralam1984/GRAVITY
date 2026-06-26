@@ -86,6 +86,9 @@ services:
     environment:
       NODE_ENV: production
       PORT: 3020
+      # Server-side rewrite target — reach the backend over the docker network.
+      # Without this, next.config rewrites default to 127.0.0.1:8001 (nothing) -> 500.
+      INTERNAL_API_URL: http://backend:8000
     ports:
       - "3020:3020"
     networks:
