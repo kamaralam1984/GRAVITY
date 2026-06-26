@@ -1,5 +1,7 @@
 import 'dart:convert';
 
+import 'package:go_router/go_router.dart';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 
@@ -209,24 +211,24 @@ class NotificationService {
           jsonDecode(response.payload!) as Map<String, dynamic>;
       final type = data['type'] as String?;
 
-      final nav = navigatorKey?.currentState;
-      if (nav == null) return;
+      final ctx = navigatorKey?.currentContext;
+      if (ctx == null) return;
 
       switch (type) {
         case 'sos':
-          nav.pushNamed('/sos/active');
+          ctx.push('/sos/active');
           break;
         case 'chat':
-          nav.pushNamed('/chat');
+          ctx.push('/chat');
           break;
         case 'geofence':
-          nav.pushNamed('/geofences');
+          ctx.push('/geofences');
           break;
         case 'driving':
-          nav.pushNamed('/driving');
+          ctx.push('/driving');
           break;
         default:
-          nav.pushNamed('/notifications');
+          ctx.push('/notifications');
       }
     } catch (_) {}
   }

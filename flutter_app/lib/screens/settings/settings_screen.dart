@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../core/network/dio_client.dart';
@@ -355,8 +356,7 @@ class SettingsScreen extends ConsumerWidget {
               if (confirmed == true && context.mounted) {
                 await ref.read(authProvider.notifier).logout();
                 if (context.mounted) {
-                  Navigator.pushNamedAndRemoveUntil(
-                      context, RouteNames.login, (_) => false);
+                  context.go(RouteNames.login);
                 }
               }
             },

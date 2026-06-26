@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -130,8 +131,7 @@ class _PrivacyScreenState extends ConsumerState<PrivacyScreen> {
     // Real implementation would call DELETE /auth/account
     await ref.read(authProvider.notifier).logout();
     if (mounted) {
-      Navigator.pushNamedAndRemoveUntil(
-          context, RouteNames.login, (_) => false);
+      context.go(RouteNames.login);
     }
   }
 

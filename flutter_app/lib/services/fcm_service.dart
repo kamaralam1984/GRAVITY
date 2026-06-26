@@ -1,4 +1,5 @@
 import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:go_router/go_router.dart';
 
 import '../core/network/dio_client.dart';
 import 'notification_service.dart';
@@ -89,24 +90,24 @@ class FcmService {
 
   static Future<void> _handleTap(RemoteMessage msg) async {
     final type = msg.data['type'] as String?;
-    final nav = NotificationService.navigatorKey?.currentState;
-    if (nav == null) return;
+    final ctx = NotificationService.navigatorKey?.currentContext;
+    if (ctx == null) return;
 
     switch (type) {
       case 'sos_alert':
-        nav.pushNamed('/sos/active');
+        ctx.push('/sos/active');
         break;
       case 'chat_message':
-        nav.pushNamed('/chat');
+        ctx.push('/chat');
         break;
       case 'geofence_alert':
-        nav.pushNamed('/geofences');
+        ctx.push('/geofences');
         break;
       case 'driving_event':
-        nav.pushNamed('/driving');
+        ctx.push('/driving');
         break;
       default:
-        nav.pushNamed('/notifications');
+        ctx.push('/notifications');
     }
   }
 

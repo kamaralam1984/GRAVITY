@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import 'package:go_router/go_router.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/theme/app_colors.dart';
@@ -373,7 +374,7 @@ class _AiGuardianScreenState extends ConsumerState<AiGuardianScreen>
               padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
               child: GestureDetector(
                 onTap: () =>
-                    Navigator.pushNamed(context, RouteNames.aiChat),
+                    context.push(RouteNames.aiChat),
                 child: Container(
                   height: 56,
                   decoration: BoxDecoration(
