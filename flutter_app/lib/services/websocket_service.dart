@@ -37,10 +37,12 @@ class WebSocketService {
         '${AppConfig.wsUrl}/location/ws/$familyId?token=$token');
     try {
       _locationChannel = WebSocketChannel.connect(uri);
-      _locationReconnectAttempts = 0;
       _locationChannel!.stream.listen(
         (data) {
           if (_disposed) return;
+          // Reset only on a real message — connect() returns before the
+          // handshake, so resetting here (not on attempt) keeps the cap working.
+          _locationReconnectAttempts = 0;
           try {
             final json =
                 jsonDecode(data as String) as Map<String, dynamic>;
@@ -81,10 +83,10 @@ class WebSocketService {
         '${AppConfig.wsUrl}/chat/ws/$familyId?token=$token');
     try {
       _chatChannel = WebSocketChannel.connect(uri);
-      _chatReconnectAttempts = 0;
       _chatChannel!.stream.listen(
         (data) {
           if (_disposed) return;
+          _chatReconnectAttempts = 0;
           try {
             _chatCtrl.add(
                 jsonDecode(data as String) as Map<String, dynamic>);
