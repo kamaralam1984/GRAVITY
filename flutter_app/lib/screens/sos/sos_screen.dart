@@ -125,7 +125,7 @@ class _SosScreenState extends ConsumerState<SosScreen>
     });
 
     return Scaffold(
-      backgroundColor: const Color(0xFF0B0D13),
+      backgroundColor: context.bgColor,
       body: Stack(
         children: [
           // Animated red radial glow
@@ -202,10 +202,10 @@ class _SosScreenState extends ConsumerState<SosScreen>
                                       horizontal: 40),
                                   child: Text(
                                     'Hold for 3 seconds to trigger SOS',
-                                    style: const TextStyle(
+                                    style: TextStyle(
                                       fontFamily: 'Inter',
                                       fontSize: 14,
-                                      color: Colors.white38,
+                                      color: context.textMuted,
                                     ),
                                     textAlign: TextAlign.center,
                                   ),
@@ -246,16 +246,16 @@ class _SosScreenState extends ConsumerState<SosScreen>
                               Text(
                                 'Emergency Contacts',
                                 style: AppTextStyles.subtitle2(context)
-                                    .copyWith(color: Colors.white),
+                                    .copyWith(color: context.textPrimary),
                               ),
                               const Spacer(),
                               if (family != null)
                                 Text(
                                   '${members.length} member${members.length != 1 ? 's' : ''}',
-                                  style: const TextStyle(
+                                  style: TextStyle(
                                     fontFamily: 'Inter',
                                     fontSize: 12,
-                                    color: Colors.white38,
+                                    color: context.textMuted,
                                   ),
                                 ),
                             ],
@@ -277,7 +277,7 @@ class _SosScreenState extends ConsumerState<SosScreen>
                               child: Text(
                                 'Recent Alerts',
                                 style: AppTextStyles.subtitle2(context)
-                                    .copyWith(color: Colors.white60),
+                                    .copyWith(color: context.textSecondary),
                               ),
                             ),
                           ),
@@ -316,7 +316,7 @@ class _AppBar extends StatelessWidget {
           Text(
             'Emergency SOS',
             style: AppTextStyles.headline3(context).copyWith(
-              color: Colors.white,
+              color: context.textPrimary,
               fontFamily: 'PlusJakartaSans',
             ),
           ),
@@ -532,20 +532,20 @@ class _ActiveSosCard extends StatelessWidget {
                   children: [
                     Text(
                       'SOS — ${alert.userName}',
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontFamily: 'PlusJakartaSans',
                         fontSize: 15,
                         fontWeight: FontWeight.w700,
-                        color: Colors.white,
+                        color: context.textPrimary,
                       ),
                     ),
                     const SizedBox(height: 2),
                     Text(
                       alert.placeName ?? 'Location unavailable',
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontFamily: 'Inter',
                         fontSize: 12,
-                        color: Colors.white54,
+                        color: context.textMuted,
                       ),
                     ),
                   ],
@@ -597,28 +597,28 @@ class _CountdownDisplay extends StatelessWidget {
       children: [
         Text(
           'Sending in $countdown...',
-          style: const TextStyle(
+          style: TextStyle(
             fontFamily: 'PlusJakartaSans',
             fontSize: 30,
             fontWeight: FontWeight.w800,
-            color: Colors.white,
+            color: context.textPrimary,
             letterSpacing: -0.5,
           ),
         ),
         const SizedBox(height: 16),
         OutlinedButton.icon(
           onPressed: onCancel,
-          icon: const Icon(Icons.close_rounded, color: Colors.white, size: 18),
-          label: const Text(
+          icon: Icon(Icons.close_rounded, color: context.textPrimary, size: 18),
+          label: Text(
             'Cancel',
             style: TextStyle(
               fontFamily: 'Inter',
-              color: Colors.white,
+              color: context.textPrimary,
               fontWeight: FontWeight.w600,
             ),
           ),
           style: OutlinedButton.styleFrom(
-            side: const BorderSide(color: Colors.white38),
+            side: BorderSide(color: context.borderColor),
             padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 12),
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(30),
@@ -664,27 +664,29 @@ class _SosOption extends StatelessWidget {
               shape: BoxShape.circle,
               color: active
                   ? const Color(0xFFDC2626).withOpacity(0.2)
-                  : Colors.white.withOpacity(0.07),
+                  : (context.isDark
+                      ? Colors.white.withOpacity(0.07)
+                      : Colors.black.withOpacity(0.05)),
               border: Border.all(
                 color: active
                     ? const Color(0xFFEF4444)
-                    : Colors.white.withOpacity(0.2),
+                    : context.borderColor,
                 width: 1.5,
               ),
             ),
             child: Icon(
               icon,
-              color: active ? const Color(0xFFFF6B6B) : Colors.white60,
+              color: active ? const Color(0xFFFF6B6B) : context.textSecondary,
               size: 30,
             ),
           ),
           const SizedBox(height: 8),
           Text(
             label,
-            style: const TextStyle(
+            style: TextStyle(
               fontFamily: 'Inter',
               fontSize: 12,
-              color: Colors.white54,
+              color: context.textSecondary,
             ),
           ),
           if (isToggle) ...[
@@ -695,7 +697,9 @@ class _SosOption extends StatelessWidget {
               decoration: BoxDecoration(
                 color: active
                     ? const Color(0xFFEF4444).withOpacity(0.15)
-                    : Colors.white.withOpacity(0.05),
+                    : (context.isDark
+                        ? Colors.white.withOpacity(0.05)
+                        : Colors.black.withOpacity(0.04)),
                 borderRadius: BorderRadius.circular(10),
               ),
               child: Text(
@@ -706,7 +710,7 @@ class _SosOption extends StatelessWidget {
                   fontWeight: FontWeight.w700,
                   color: active
                       ? const Color(0xFFEF4444)
-                      : Colors.white24,
+                      : context.textMuted,
                   letterSpacing: 0.5,
                 ),
               ),
@@ -730,12 +734,12 @@ class _EmergencyContactsList extends StatelessWidget {
     if (members.isEmpty) {
       return Padding(
         padding: const EdgeInsets.symmetric(horizontal: 24),
-        child: const Text(
+        child: Text(
           'No family members yet.',
           style: TextStyle(
             fontFamily: 'Inter',
             fontSize: 14,
-            color: Colors.white30,
+            color: context.textMuted,
           ),
           textAlign: TextAlign.center,
         ),
@@ -752,9 +756,11 @@ class _EmergencyContactsList extends StatelessWidget {
         return Container(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
           decoration: BoxDecoration(
-            color: Colors.white.withOpacity(0.05),
+            color: context.isDark
+                ? Colors.white.withOpacity(0.05)
+                : Colors.black.withOpacity(0.04),
             borderRadius: BorderRadius.circular(14),
-            border: Border.all(color: Colors.white.withOpacity(0.08)),
+            border: Border.all(color: context.borderColor),
           ),
           child: Row(
             children: [
@@ -778,19 +784,19 @@ class _EmergencyContactsList extends StatelessWidget {
                   children: [
                     Text(
                       m.name,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontFamily: 'Inter',
                         fontSize: 14,
                         fontWeight: FontWeight.w600,
-                        color: Colors.white,
+                        color: context.textPrimary,
                       ),
                     ),
                     Text(
                       m.role,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontFamily: 'Inter',
                         fontSize: 12,
-                        color: Colors.white38,
+                        color: context.textMuted,
                       ),
                     ),
                   ],
@@ -803,7 +809,7 @@ class _EmergencyContactsList extends StatelessWidget {
                   shape: BoxShape.circle,
                   color: m.isOnline
                       ? const Color(0xFF10B981)
-                      : Colors.white24,
+                      : context.textMuted,
                   boxShadow: m.isOnline
                       ? [
                           BoxShadow(
@@ -832,20 +838,22 @@ class _NoFamilyPrompt extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.all(24),
         decoration: BoxDecoration(
-          color: Colors.white.withOpacity(0.04),
+          color: context.isDark
+              ? Colors.white.withOpacity(0.04)
+              : Colors.black.withOpacity(0.03),
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: Colors.white12),
+          border: Border.all(color: context.borderColor),
         ),
         child: Column(
           children: [
-            const Icon(Icons.group_add_rounded, color: Colors.white24, size: 40),
+            Icon(Icons.group_add_rounded, color: context.textMuted, size: 40),
             const SizedBox(height: 10),
-            const Text(
+            Text(
               'Join or create a family to\nenable SOS alerts to your contacts.',
               style: TextStyle(
                 fontFamily: 'Inter',
                 fontSize: 14,
-                color: Colors.white38,
+                color: context.textMuted,
                 height: 1.5,
               ),
               textAlign: TextAlign.center,
@@ -879,7 +887,9 @@ class _SosHistoryList extends StatelessWidget {
           margin: const EdgeInsets.only(bottom: 8),
           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
           decoration: BoxDecoration(
-            color: Colors.white.withOpacity(0.04),
+            color: context.isDark
+                ? Colors.white.withOpacity(0.04)
+                : Colors.black.withOpacity(0.03),
             borderRadius: BorderRadius.circular(12),
           ),
           child: Row(
@@ -890,19 +900,19 @@ class _SosHistoryList extends StatelessWidget {
               Expanded(
                 child: Text(
                   '${a.userName} — ${a.placeName ?? 'Unknown location'}',
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontFamily: 'Inter',
                     fontSize: 13,
-                    color: Colors.white54,
+                    color: context.textSecondary,
                   ),
                 ),
               ),
               Text(
                 _relativeTime(a.triggeredAt),
-                style: const TextStyle(
+                style: TextStyle(
                   fontFamily: 'Inter',
                   fontSize: 11,
-                  color: Colors.white30,
+                  color: context.textMuted,
                 ),
               ),
             ],

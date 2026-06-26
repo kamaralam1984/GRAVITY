@@ -4,8 +4,8 @@ class AppConfig {
   AppConfig._();
 
   // Base URLs
-  static const String baseUrl = 'https://kvltrack.kvlbusinesssolutions.com';
-  static const String wsUrl = 'wss://kvltrack.kvlbusinesssolutions.com';
+  static const String baseUrl = 'https://kvltrack.kvlbusinesssolutions.com/api';
+  static const String wsUrl = 'wss://kvltrack.kvlbusinesssolutions.com/api';
 
   // App identity
   static const String appName = 'KVL Track';
@@ -25,17 +25,18 @@ class AppConfig {
   static const int wsMaxReconnectAttempts = 10;
   static const Duration wsPingInterval = Duration(seconds: 30);
 
-  // Map tiles
+  // Map tiles — CartoDB basemaps: free, no API key, premium look.
+  // Light = Positron, Dark = Dark Matter.
   static const String mapTileUrl =
-      'https://tile.openstreetmap.org/{z}/{x}/{y}.png';
+      'https://basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png';
   static const String mapDarkTileUrl =
-      'https://tiles.stadiamaps.com/tiles/alidade_smooth_dark/{z}/{x}/{y}{r}.png';
+      'https://basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png';
 
   // Map attribution
   static const String mapAttribution =
-      '© OpenStreetMap contributors';
+      '© OpenStreetMap © CARTO';
   static const String mapDarkAttribution =
-      '© Stadia Maps © OpenMapTiles © OpenStreetMap contributors';
+      '© OpenStreetMap © CARTO';
 
   // Push notifications
   static const String fcmChannelId = 'kvl_track_default';

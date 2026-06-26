@@ -4,7 +4,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
 import '../../core/theme/app_colors.dart';
-import '../../core/theme/app_text_styles.dart';
 import '../../models/sos_model.dart';
 import '../../providers/sos_provider.dart';
 
@@ -58,7 +57,7 @@ class _SosActiveScreenState extends ConsumerState<SosActiveScreen>
     final alerts = sosState.activeSos;
 
     return Scaffold(
-      backgroundColor: const Color(0xFF0B0D13),
+      backgroundColor: context.bgColor,
       body: AnimatedBuilder(
         animation: _flashCtrl,
         builder: (_, child) {
@@ -86,8 +85,8 @@ class _SosActiveScreenState extends ConsumerState<SosActiveScreen>
                 child: Row(
                   children: [
                     IconButton(
-                      icon: const Icon(Icons.arrow_back_rounded,
-                          color: Colors.white),
+                      icon: Icon(Icons.arrow_back_rounded,
+                          color: context.textPrimary),
                       onPressed: () => Navigator.pop(context),
                     ),
                     Expanded(
@@ -101,7 +100,7 @@ class _SosActiveScreenState extends ConsumerState<SosActiveScreen>
                             fontWeight: FontWeight.w800,
                             color: Color.lerp(
                               const Color(0xFFEF4444),
-                              Colors.white,
+                              context.textPrimary,
                               _flashCtrl.value,
                             ),
                             letterSpacing: 1.5,
@@ -166,7 +165,7 @@ class _AlertCard extends StatelessWidget {
     return Container(
       margin: const EdgeInsets.only(bottom: 20),
       decoration: BoxDecoration(
-        color: const Color(0xFF111420),
+        color: context.surfaceColor,
         borderRadius: BorderRadius.circular(24),
         border: Border.all(
           color: const Color(0xFFDC2626).withOpacity(0.5),
@@ -283,7 +282,7 @@ class _AlertCard extends StatelessWidget {
                 const SizedBox(height: 8),
                 _InfoRow(
                   icon: Icons.access_time_rounded,
-                  iconColor: Colors.white38,
+                  iconColor: context.textMuted,
                   label: 'Triggered',
                   value: DateFormat('dd MMM yyyy · HH:mm')
                       .format(alert.triggeredAt.toLocal()),
@@ -296,7 +295,7 @@ class _AlertCard extends StatelessWidget {
                   Container(
                     height: 140,
                     decoration: BoxDecoration(
-                      color: const Color(0xFF181C2B),
+                      color: context.surface2Color,
                       borderRadius: BorderRadius.circular(14),
                       border: Border.all(
                         color: const Color(0xFFDC2626).withOpacity(0.3),
@@ -305,10 +304,10 @@ class _AlertCard extends StatelessWidget {
                     child: Stack(
                       alignment: Alignment.center,
                       children: [
-                        const Icon(
+                        Icon(
                           Icons.map_outlined,
                           size: 48,
-                          color: Colors.white12,
+                          color: context.textMuted.withOpacity(0.3),
                         ),
                         Column(
                           mainAxisAlignment: MainAxisAlignment.center,
@@ -318,10 +317,10 @@ class _AlertCard extends StatelessWidget {
                             const SizedBox(height: 6),
                             Text(
                               '${alert.lat!.toStringAsFixed(4)}, ${alert.lng!.toStringAsFixed(4)}',
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontFamily: 'Inter',
                                 fontSize: 12,
-                                color: Colors.white38,
+                                color: context.textMuted,
                               ),
                             ),
                           ],
@@ -393,20 +392,20 @@ class _InfoRow extends StatelessWidget {
             children: [
               Text(
                 label.toUpperCase(),
-                style: const TextStyle(
+                style: TextStyle(
                   fontFamily: 'Inter',
                   fontSize: 10,
                   fontWeight: FontWeight.w600,
-                  color: Colors.white38,
+                  color: context.textMuted,
                   letterSpacing: 0.8,
                 ),
               ),
               Text(
                 value,
-                style: const TextStyle(
+                style: TextStyle(
                   fontFamily: 'Inter',
                   fontSize: 14,
-                  color: Colors.white,
+                  color: context.textPrimary,
                 ),
               ),
             ],
@@ -434,30 +433,30 @@ class _NoActiveAlerts extends StatelessWidget {
             size: 64,
           ),
           const SizedBox(height: 16),
-          const Text(
+          Text(
             'No active alerts',
             style: TextStyle(
               fontFamily: 'PlusJakartaSans',
               fontSize: 22,
               fontWeight: FontWeight.w700,
-              color: Colors.white,
+              color: context.textPrimary,
             ),
           ),
           const SizedBox(height: 8),
-          const Text(
+          Text(
             'Everyone is safe.',
             style: TextStyle(
               fontFamily: 'Inter',
               fontSize: 14,
-              color: Colors.white38,
+              color: context.textMuted,
             ),
           ),
           const SizedBox(height: 32),
           OutlinedButton(
             onPressed: onBack,
             style: OutlinedButton.styleFrom(
-              foregroundColor: Colors.white,
-              side: const BorderSide(color: Colors.white24),
+              foregroundColor: context.textPrimary,
+              side: BorderSide(color: context.borderColor),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(30),
               ),
