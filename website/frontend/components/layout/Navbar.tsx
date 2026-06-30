@@ -95,6 +95,83 @@ function LogoMark({ scrolled }: { scrolled: boolean }) {
   );
 }
 
+const APK_URL = 'https://github.com/kamaralam1984/GRAVITY/releases/download/latest/KVL-Track-latest.apk';
+
+/* ─── Android SVG icon ───────────────────────────────────────────────────────── */
+function AndroidIcon() {
+  return (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+      <path d="M17.523 15.341a1 1 0 01-1 1H7.477a1 1 0 01-1-1V9h11.046v6.341zM7.43 4.81l-1.43-2.47a.3.3 0 01.52-.3l1.45 2.51A8.95 8.95 0 0112 4c1.49 0 2.9.36 4.03.55l1.45-2.51a.3.3 0 01.52.3l-1.43 2.47A8.02 8.02 0 0120 9H4a8.02 8.02 0 013.43-4.19zM9.5 7a.5.5 0 100-1 .5.5 0 000 1zm5 0a.5.5 0 100-1 .5.5 0 000 1zM5 9h14v1H5V9zm1 6.341V17a1 1 0 001 1h1v2a1 1 0 002 0v-2h4v2a1 1 0 002 0v-2h1a1 1 0 001-1v-1.659H6v.659z"/>
+    </svg>
+  );
+}
+
+/* ─── Download Button ────────────────────────────────────────────────────────── */
+function DownloadAppButton({ isDark, mobile = false }: { isDark: boolean; mobile?: boolean }) {
+  const [pulse, setPulse] = useState(false);
+
+  useEffect(() => {
+    const t = setInterval(() => { setPulse(p => !p); }, 2800);
+    return () => clearInterval(t);
+  }, []);
+
+  if (mobile) {
+    return (
+      <a
+        href={APK_URL}
+        download
+        className="flex items-center justify-center gap-2 py-4 text-base font-bold rounded-2xl"
+        style={{
+          background: 'linear-gradient(135deg, #3DDC84 0%, #2BA868 100%)',
+          color: '#fff',
+          textDecoration: 'none',
+          fontFamily: "'Inter', sans-serif",
+          boxShadow: '0 4px 20px rgba(61,220,132,0.35)',
+        }}
+      >
+        <AndroidIcon />
+        Download Android App
+      </a>
+    );
+  }
+
+  return (
+    <a
+      href={APK_URL}
+      download
+      className="relative flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-semibold transition-all duration-200 focus:outline-none overflow-hidden"
+      style={{
+        background: 'linear-gradient(135deg, #3DDC84 0%, #2BA868 100%)',
+        color: '#fff',
+        textDecoration: 'none',
+        boxShadow: '0 2px 12px rgba(61,220,132,0.30)',
+        fontFamily: "'Inter', sans-serif",
+      }}
+      onMouseEnter={e => { (e.currentTarget as HTMLElement).style.transform = 'translateY(-1px)'; (e.currentTarget as HTMLElement).style.boxShadow = '0 6px 20px rgba(61,220,132,0.45)'; }}
+      onMouseLeave={e => { (e.currentTarget as HTMLElement).style.transform = ''; (e.currentTarget as HTMLElement).style.boxShadow = '0 2px 12px rgba(61,220,132,0.30)'; }}
+    >
+      {/* Pulse ring */}
+      <span
+        className="absolute inset-0 rounded-xl"
+        style={{
+          boxShadow: pulse ? '0 0 0 3px rgba(61,220,132,0.25)' : '0 0 0 0px rgba(61,220,132,0)',
+          transition: 'box-shadow 0.6s ease',
+          pointerEvents: 'none',
+        }}
+      />
+      <AndroidIcon />
+      <span>Download App</span>
+      {/* FREE badge */}
+      <span
+        className="text-[9px] font-bold px-1.5 py-0.5 rounded-full leading-none"
+        style={{ background: 'rgba(0,0,0,0.2)', letterSpacing: '0.05em' }}
+      >
+        FREE
+      </span>
+    </a>
+  );
+}
+
 /* ─── Ecosystem Dropdown ─────────────────────────────────────────────────────── */
 function EcosystemDropdown({ isDark, onClose }: { isDark: boolean; onClose: () => void }) {
   return (
@@ -464,6 +541,9 @@ export default function Navbar() {
 
           {/* ── Desktop right side ─────────────────────────────────────────── */}
           <div className="hidden lg:flex items-center gap-2.5">
+            {/* Download App button */}
+            <DownloadAppButton isDark={isDark} />
+
             {/* Theme toggle */}
             <motion.button
               onClick={toggleTheme}
@@ -730,6 +810,7 @@ export default function Navbar() {
                   </>
                 ) : (
                   <>
+                    <DownloadAppButton isDark={isDark} mobile />
                     <Link href="/signup" onClick={() => setMenuOpen(false)}
                       className="block text-center py-4 text-base font-bold rounded-2xl btn-gold"
                       style={{ fontFamily: "'Inter', sans-serif", textDecoration: 'none' }}>
