@@ -51,6 +51,10 @@ dev_dependencies:
   integration_test:
     sdk: flutter
 
+dependency_overrides:
+  record_linux: ^0.8.0
+  record_platform_interface: ^1.6.0
+
 flutter:
   uses-material-design: true
 
