@@ -3,6 +3,8 @@
 import { motion } from 'framer-motion'
 import Image from 'next/image'
 
+const APK_URL = 'https://github.com/kamaralam1984/GRAVITY/releases/download/latest/KVL-Track-latest.apk'
+
 /* ─────────────── Apple icon ─────────────── */
 function AppleIcon() {
   return (
@@ -21,21 +23,44 @@ function PlayStoreIcon() {
   )
 }
 
+/* ─────────────── Android APK icon ─────────────── */
+function AndroidIcon() {
+  return (
+    <svg viewBox="0 0 24 24" fill="currentColor" className="w-6 h-6 flex-shrink-0">
+      <path d="M17.523 15.341a1 1 0 01-1 1H7.477a1 1 0 01-1-1V9h11.046v6.341zM7.43 4.81l-1.43-2.47a.3.3 0 01.52-.3l1.45 2.51A8.95 8.95 0 0112 4c1.49 0 2.9.36 4.03.55l1.45-2.51a.3.3 0 01.52.3l-1.43 2.47A8.02 8.02 0 0120 9H4a8.02 8.02 0 013.43-4.19zM9.5 7a.5.5 0 100-1 .5.5 0 000 1zm5 0a.5.5 0 100-1 .5.5 0 000 1zM5 9h14v1H5V9zm1 6.341V17a1 1 0 001 1h1v2a1 1 0 002 0v-2h4v2a1 1 0 002 0v-2h1a1 1 0 001-1v-1.659H6v.659z"/>
+    </svg>
+  )
+}
+
+/* ─────────────── Download icon ─────────────── */
+function DownloadIcon() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2"
+      strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5 flex-shrink-0">
+      <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4" />
+      <polyline points="7 10 12 15 17 10" />
+      <line x1="12" y1="15" x2="12" y2="3" />
+    </svg>
+  )
+}
+
 /* ─────────────── Store button ─────────────── */
 function StoreButton({
   icon,
   line1,
   line2,
   delay,
+  href = '#download',
 }: {
   icon: React.ReactNode
   line1: string
   line2: string
   delay: number
+  href?: string
 }) {
   return (
     <motion.a
-      href="#download"
+      href={href}
       initial={{ opacity: 0, y: 16 }}
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true }}
@@ -49,6 +74,7 @@ function StoreButton({
         backdropFilter: 'blur(20px)',
         WebkitBackdropFilter: 'blur(20px)',
         boxShadow: '0 4px 20px rgba(0,0,0,0.25)',
+        textDecoration: 'none',
       }}
       onMouseEnter={(e) => {
         const el = e.currentTarget as HTMLAnchorElement
@@ -378,10 +404,55 @@ export default function DownloadCTA() {
           Join 50,000+ families already protected by KVL Track.
         </motion.p>
 
+        {/* Primary APK download button */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.6, ease: 'easeOut', delay: 0.3 }}
+          className="mt-8"
+        >
+          <motion.a
+            href={APK_URL}
+            download
+            whileHover={{ scale: 1.04, y: -2 }}
+            whileTap={{ scale: 0.96 }}
+            className="inline-flex items-center gap-3 px-8 py-4 rounded-2xl font-bold text-lg focus:outline-none"
+            style={{
+              background: 'linear-gradient(135deg, #D4A853 0%, #F5C842 50%, #D4A853 100%)',
+              backgroundSize: '200% auto',
+              color: '#1A0F05',
+              boxShadow: '0 8px 32px rgba(212,168,83,0.45), 0 0 0 1px rgba(212,168,83,0.3)',
+              textDecoration: 'none',
+              fontFamily: 'var(--font-display, "Plus Jakarta Sans", sans-serif)',
+            }}
+          >
+            <AndroidIcon />
+            Download for Android
+            <span
+              className="text-xs font-semibold px-2 py-0.5 rounded-full"
+              style={{ background: 'rgba(26,15,5,0.2)', color: '#1A0F05' }}
+            >
+              FREE
+            </span>
+          </motion.a>
+        </motion.div>
+
         {/* Store buttons */}
-        <div className="flex flex-wrap gap-4 justify-center mt-8">
-          <StoreButton icon={<AppleIcon />} line1="Download on the" line2="App Store" delay={0.35} />
-          <StoreButton icon={<PlayStoreIcon />} line1="Get it on" line2="Google Play" delay={0.45} />
+        <div className="flex flex-wrap gap-4 justify-center mt-4">
+          <StoreButton
+            icon={<AppleIcon />}
+            line1="Coming Soon on"
+            line2="App Store"
+            delay={0.4}
+          />
+          <StoreButton
+            icon={<DownloadIcon />}
+            line1="Direct APK Download"
+            line2="KVL-Track-latest.apk"
+            delay={0.5}
+            href={APK_URL}
+          />
         </div>
 
         {/* Social proof */}
@@ -389,11 +460,11 @@ export default function DownloadCTA() {
           initial={{ opacity: 0 }}
           whileInView={{ opacity: 1 }}
           viewport={{ once: true }}
-          transition={{ duration: 0.6, delay: 0.55 }}
+          transition={{ duration: 0.6, delay: 0.6 }}
           className="mt-7 text-sm"
           style={{ color: 'rgba(255,255,255,0.5)' }}
         >
-          ★★★★★ 4.9 rating · 50K+ downloads · Free to start
+          Android 7.0+ · Free to download · No account required
         </motion.p>
 
         {/* Trust badges */}
