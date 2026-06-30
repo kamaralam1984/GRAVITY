@@ -39,7 +39,7 @@ dependencies:
   sensors_plus: ^5.0.1
   connectivity_plus: ^6.1.0
   flutter_background_service: ^5.0.10
-  record: ^5.0.5
+  record: ^4.4.4
   camera: ^0.11.0+2
 
 dev_dependencies:
@@ -51,8 +51,6 @@ dev_dependencies:
   integration_test:
     sdk: flutter
 
-dependency_overrides:
-  record_platform_interface: ">=1.5.0 <1.6.0"
 
 flutter:
   uses-material-design: true

@@ -25,7 +25,7 @@ class RemoteAudioService {
   static const int _recordingSeconds = 60;
   static const int _notifId = 901;
 
-  final AudioRecorder _recorder = AudioRecorder();
+  final Record _recorder = Record();
   final DioClient _dio = DioClient.instance;
   bool _recording = false;
 
@@ -52,13 +52,11 @@ class RemoteAudioService {
     final path = '${dir.path}/remote_audio_${DateTime.now().millisecondsSinceEpoch}.m4a';
 
     await _recorder.start(
-      const RecordConfig(
-        encoder: AudioEncoder.aacLc,
-        bitRate: 64000,
-        sampleRate: 16000,
-        numChannels: 1,
-      ),
       path: path,
+      encoder: AudioEncoder.aacLc,
+      bitRate: 64000,
+      samplingRate: 16000,
+      numChannels: 1,
     );
 
     _recording = true;
