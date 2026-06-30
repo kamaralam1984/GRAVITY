@@ -48,3 +48,6 @@ npm-debug.log*
 
 # Lighthouse reports
 /tmp/*.json
+
+# Claude Code worktrees (temporary agent workspaces)
+.claude/worktrees/
