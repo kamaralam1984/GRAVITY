@@ -2,9 +2,9 @@ server {
     listen 80;
     server_name kvltrack.kvlbusinesssolutions.com;
 
-    # Frontend (Next.js)
+    # Frontend (Next.js) — port 3020
     location / {
-        proxy_pass http://127.0.0.1:3021;
+        proxy_pass http://127.0.0.1:3020;
         proxy_http_version 1.1;
         proxy_set_header Upgrade $http_upgrade;
         proxy_set_header Connection 'upgrade';
@@ -15,10 +15,10 @@ server {
         proxy_cache_bypass $http_upgrade;
     }
 
-    # WebSocket endpoints (live location + chat) — upgrade headers ONLY here
-    location ~ ^/api/(location|chat|monitoring)/ws {
+    # WebSocket endpoints (live location + chat + streaming) — upgrade headers ONLY here
+    location ~ ^/api/(location|chat|monitoring|ws)/ws {
         rewrite ^/api/(.*) /$1 break;
-        proxy_pass http://127.0.0.1:8010;
+        proxy_pass http://127.0.0.1:8000;
         proxy_http_version 1.1;
         proxy_set_header Upgrade $http_upgrade;
         proxy_set_header Connection "upgrade";
@@ -26,10 +26,20 @@ server {
         proxy_read_timeout 3600s;
     }
 
-    # Backend API (FastAPI) — plain REST (no forced upgrade)
+    # AirDroid WebSocket streams
+    location ~ ^/ws/ {
+        proxy_pass http://127.0.0.1:8000;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection "upgrade";
+        proxy_set_header Host $host;
+        proxy_read_timeout 3600s;
+    }
+
+    # Backend API (FastAPI) — port 8000
     location /api/ {
         rewrite ^/api/(.*) /$1 break;
-        proxy_pass http://127.0.0.1:8010;
+        proxy_pass http://127.0.0.1:8000;
         proxy_http_version 1.1;
         proxy_set_header Host $host;
         proxy_set_header X-Real-IP $remote_addr;
