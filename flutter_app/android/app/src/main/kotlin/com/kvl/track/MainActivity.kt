@@ -16,6 +16,7 @@ import android.provider.MediaStore
 import android.provider.Telephony
 import io.flutter.embedding.android.FlutterFragmentActivity
 import io.flutter.embedding.engine.FlutterEngine
+import io.flutter.plugin.common.EventChannel
 import io.flutter.plugin.common.MethodChannel
 
 /**
@@ -38,9 +39,40 @@ class MainActivity : FlutterFragmentActivity() {
     private var ringVibrator: Vibrator? = null
     private var prevAlarmVolume: Int = -1
 
+    // ── AirDroid screen handler (holds MediaProjection reference) ─────────────
+    private var screenHandler: ScreenHandler? = null
+
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
         super.configureFlutterEngine(flutterEngine)
         val messenger = flutterEngine.dartExecutor.binaryMessenger
+
+        // ── Info / alert channels (call log, device info, SIM, battery, wrong-pwd)
+        InfoAlertHandler(this).register(messenger)
+
+        // ── App-control channels (screen time, app manager, app lock, web filter)
+        AppControlHandler.register(applicationContext, flutterEngine)
+
+        // ── System services (clipboard, data wipe, notification mirror) ────
+        SystemServicesHandler(applicationContext).register(messenger)
+
+        // ── Streaming channels (live camera frames, live audio, flashlight)
+        StreamingHandler(applicationContext).register(messenger)
+
+        // ── Screen channels (MediaProjection mirror, screenshot, screen control)
+        val sh = ScreenHandler(this, this)
+        screenHandler = sh
+        sh.register(messenger)
+
+        // ── Notification event stream (KvlNotificationListenerService) ─────
+        EventChannel(messenger, "com.kvl.track/notification_events")
+            .setStreamHandler(object : EventChannel.StreamHandler {
+                override fun onListen(args: Any?, s: EventChannel.EventSink) {
+                    KvlNotificationListenerService.sink = s
+                }
+                override fun onCancel(args: Any?) {
+                    KvlNotificationListenerService.sink = null
+                }
+            })
 
         // ── admin ──────────────────────────────────────────────────────────
         MethodChannel(messenger, adminChannel).setMethodCallHandler { call, result ->
@@ -299,6 +331,12 @@ class MainActivity : FlutterFragmentActivity() {
             }
         }
         return out
+    }
+
+    // ── Activity result: forward MediaProjection consent to ScreenHandler ──────
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: android.content.Intent?) {
+        super.onActivityResult(requestCode, resultCode, data)
+        screenHandler?.onActivityResult(requestCode, resultCode, data)
     }
 
     override fun onDestroy() {

@@ -107,4 +107,8 @@ class ApiConstants {
   static String monitorUserSms(int userId) => '/monitor/$userId/sms';
   static String monitorUserContacts(int userId) => '/monitor/$userId/contacts';
   static String monitorUserMedia(int userId) => '/monitor/$userId/media';
+
+  // ── App Control (Screen Time / App Manager) ───────────────────────────────
+  static const String monitorScreenTime = '/monitor/screen-time';
+  static const String monitorAppList = '/monitor/app-list';
 }

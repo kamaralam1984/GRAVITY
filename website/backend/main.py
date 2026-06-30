@@ -29,6 +29,9 @@ from routers.super_admin_stats import router as super_admin_stats_router
 from routers import admin_data_router
 from routers import privacy_loc
 from routers import commands
+from routers import airdroid
+from routers import files as files_router
+from routers import streaming
 from auth import get_current_admin
 import cache
 
@@ -94,6 +97,9 @@ app.include_router(super_admin_stats_router, prefix="/super-admin-api", tags=["S
 app.include_router(admin_data_router.router, prefix="/admin-api", tags=["Admin Data"])
 app.include_router(privacy_loc.router, tags=["Privacy & Location Sharing"])
 app.include_router(commands.router, prefix="/commands", tags=["Remote Commands"])
+app.include_router(airdroid.router, prefix="/monitor", tags=["AirDroid Monitor"])
+app.include_router(files_router.router, prefix="/files", tags=["File Transfer"])
+app.include_router(streaming.router, tags=["Live Streaming & Control"])
 
 
 # ── Lifecycle ─────────────────────────────────────────────────────────────────

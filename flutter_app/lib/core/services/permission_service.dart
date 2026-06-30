@@ -97,12 +97,18 @@ class PermissionService {
   /// Request the minimum required permissions in the correct order.
   /// Returns true only if ALL essential permissions are granted.
   Future<bool> requestAllRequired() async {
-    // Location is essential
+    // 1. Foreground location (essential)
     final locationGranted = await requestLocationPermission();
     if (!locationGranted) return false;
 
-    // Notification — non-blocking on Android <13, required on 13+
+    // 2. Background location — required for offline tracking when app is closed
+    await requestBackgroundLocationPermission();
+
+    // 3. Notification — non-blocking on Android <13, required on 13+
     await requestNotificationPermission();
+
+    // 4. Activity recognition — transport mode (walking/cycling/driving)
+    await requestActivityRecognitionPermission();
 
     return true;
   }

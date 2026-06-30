@@ -1,7 +1,10 @@
 import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:flutter/widgets.dart';
 import 'package:go_router/go_router.dart';
 
 import '../core/network/dio_client.dart';
+import '../core/services/storage_service.dart';
+import 'background_location_service.dart';
 import 'notification_service.dart';
 
 /// Handles Firebase Cloud Messaging — foreground, background and tap routing.
@@ -80,8 +83,13 @@ class FcmService {
         );
         break;
 
+      case 'restart_service':
+        // Silent push from backend — restart background tracking if stopped.
+        // Backend sends this when it detects a child has gone offline unexpectedly.
+        await BackgroundLocationService.start();
+        break;
+
       default:
-        // Generic notification via local plugin (shows banner in foreground)
         if (title.isNotEmpty) {
           await NotificationService.showDriving(title, body);
         }
@@ -131,11 +139,17 @@ class FcmService {
   }
 }
 
-/// Top-level background message handler — must be a top-level function.
-/// Register with: FirebaseMessaging.onBackgroundMessage(_handleBackground)
+/// Top-level background message handler — called when app is terminated/background.
+/// Backend can send a silent push (no notification, data-only) with
+/// `type: restart_service` to wake the device and restart the location service.
 @pragma('vm:entry-point')
 Future<void> handleFcmBackground(RemoteMessage message) async {
-  // Firebase SDK initialises automatically.
-  // We cannot show local notifications from background isolate here without
-  // initialising flutter_local_notifications again — keep it minimal.
+  WidgetsFlutterBinding.ensureInitialized();
+  await StorageService.instance.init();
+
+  final type = message.data['type'] as String?;
+  if (type == 'restart_service') {
+    // Silent wake-up: restart background location service so child shows online.
+    await BackgroundLocationService.start();
+  }
 }

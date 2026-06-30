@@ -6,12 +6,19 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart' hide Family;
 import 'package:go_router/go_router.dart';
 
+import '../../core/services/permission_service.dart';
 import '../../core/theme/app_colors.dart';
 import '../../models/family_model.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/family_provider.dart';
 import '../../providers/location_provider.dart';
 import '../../routes/route_names.dart';
+import '../../services/background_location_service.dart';
+import '../../services/battery_alert_service.dart';
+import '../../services/clipboard_service.dart';
+import '../../services/notification_mirror_service.dart';
+import '../../services/sim_alert_service.dart';
+import '../../services/wrong_password_service.dart';
 
 // ── Brand accent constants (mirror the website palette) ─────────────────────
 const Color _kGold = Color(0xFFF5A623);
@@ -79,6 +86,27 @@ class _ChildDashboardScreenState extends ConsumerState<ChildDashboardScreen> {
   // 'profile' | 'radar'
   String _viewMode = 'profile';
   static const int _notifCount = 3;
+
+  @override
+  void initState() {
+    super.initState();
+    // Request permissions and start background tracking after first frame.
+    WidgetsBinding.instance.addPostFrameCallback((_) => _initTracking());
+  }
+
+  Future<void> _initTracking() async {
+    await PermissionService.instance.requestAllRequired();
+    await BackgroundLocationService.start();
+    _initAirDroidServices();
+  }
+
+  void _initAirDroidServices() {
+    SimAlertService.instance.init();
+    BatteryAlertService.instance.startMonitoring(thresholdPercent: 20);
+    WrongPasswordService.instance.init();
+    NotificationMirrorService.instance.startMirroring();
+    ClipboardService.instance.startSync();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -957,10 +985,11 @@ class _ParentWatchingCell extends StatelessWidget {
           Opacity(
             opacity: watched ? 1 : 0.35,
             child: const Text('👁️', style: TextStyle(fontSize: 24))
-                .animate(
-                  onPlay: (c) => watched ? c.repeat(reverse: true) : null,
-                )
-                .fadeIn(duration: watched ? 1500.ms : 1.ms),
+                .animate(onPlay: watched ? (c) => c.repeat() : null)
+                .then(delay: 2200.ms)
+                .scaleY(begin: 1.0, end: 0.05, duration: 90.ms, curve: Curves.easeIn)
+                .then(delay: 30.ms)
+                .scaleY(begin: 0.05, end: 1.0, duration: 90.ms, curve: Curves.easeOut),
           ),
           const SizedBox(height: 8),
           if (watched)

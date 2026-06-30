@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:io';
 import 'dart:ui' show DartPluginRegistrant;
 
+import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_background_service/flutter_background_service.dart';
@@ -14,66 +15,62 @@ import 'location_queue_service.dart';
 
 // ── Background isolate entry point ────────────────────────────────────────────
 
-/// Top-level function — must be annotated so the VM can locate it in the
-/// background isolate.
 @pragma('vm:entry-point')
 void onStart(ServiceInstance service) async {
   WidgetsFlutterBinding.ensureInitialized();
   DartPluginRegistrant.ensureInitialized();
-
-  // StorageService must be re-initialised inside the background isolate.
   await StorageService.instance.init();
 
   // Android foreground / background toggle commands.
   if (service is AndroidServiceInstance) {
-    service.on('setAsForeground').listen((_) {
-      service.setAsForegroundService();
-    });
-    service.on('setAsBackground').listen((_) {
-      service.setAsBackgroundService();
-    });
+    service.on('setAsForeground').listen((_) => service.setAsForegroundService());
+    service.on('setAsBackground').listen((_) => service.setAsBackgroundService());
   }
-
-  // Stop command from the main isolate.
   service.on('stopService').listen((_) => service.stopSelf());
 
-  // ── Periodic location upload every 30 seconds ──────────────────────────────
-  int secondsElapsed = 0;
+  // ── Shared state for this isolate ──────────────────────────────────────────
+  bool _wasOffline = false;
 
-  Timer.periodic(const Duration(seconds: 1), (timer) async {
-    secondsElapsed++;
-    if (secondsElapsed % AppConfig.locationUpdateIntervalSeconds != 0) return;
-
+  // Build an authenticated Dio client from the stored token.
+  Future<Dio?> _buildDio() async {
     final token = await StorageService.instance.getToken();
-    if (token == null || token.isEmpty) {
-      timer.cancel();
+    if (token == null || token.isEmpty) return null;
+    return Dio(BaseOptions(
+      baseUrl: AppConfig.baseUrl,
+      connectTimeout: const Duration(seconds: 15),
+      receiveTimeout: const Duration(seconds: 15),
+      headers: {
+        HttpHeaders.authorizationHeader: 'Bearer $token',
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+      },
+    ));
+  }
+
+  // ── Core tick: get GPS fix, flush queue, post location ────────────────────
+  Future<void> _tick({bool immediate = false}) async {
+    final dio = await _buildDio();
+    if (dio == null) {
       service.stopSelf();
       return;
     }
 
-    final dio = Dio(
-      BaseOptions(
-        baseUrl: AppConfig.baseUrl,
-        connectTimeout: const Duration(seconds: 15),
-        receiveTimeout: const Duration(seconds: 15),
-        headers: {
-          HttpHeaders.authorizationHeader: 'Bearer $token',
-          'Content-Type': 'application/json',
-          'Accept': 'application/json',
-        },
-      ),
-    );
-
-    // Offline resilience: before sending the fresh fix, drain any location
-    // updates that were queued while offline. Succeeds only when connectivity
-    // is back; draining is strict FIFO and stops at the first failure so no
-    // update is lost or reordered. Best-effort — never throws out of the tick.
+    // Drain any queued fixes first (strict FIFO, stops on first failure).
     try {
       await LocationQueueService.instance.flush(
         (endpoint, body) => dio.post<dynamic>(endpoint, data: body),
       );
-    } catch (_) {
-      // Remaining items are retried on the next tick.
+    } catch (_) {}
+
+    // If this is an immediate reconnect-ping, also send a lightweight presence
+    // heartbeat so the backend marks the child online right away.
+    if (immediate) {
+      try {
+        await dio.post<dynamic>('/presence/heartbeat');
+      } catch (_) {
+        // Endpoint may not exist yet — silently ignore; the location update
+        // below will serve the same purpose for online-presence detection.
+      }
     }
 
     try {
@@ -83,13 +80,9 @@ void onStart(ServiceInstance service) async {
 
       final deviceId =
           StorageService.instance.getSetting<String>(StorageKeys.deviceId);
+      final normalisedSpeed = position.speed < 0 ? 0.0 : position.speed;
 
-      final normalisedSpeed =
-          position.speed < 0 ? 0.0 : position.speed;
-
-      // Post raw device motion to the activity classifier and adopt the
-      // server-returned transport state (driving / walking / stationary).
-      // Falls back to local speed inference if the endpoint is unreachable.
+      // Server-side activity classification, with local fallback.
       String activity = _inferActivity(normalisedSpeed);
       try {
         final actRes = await dio.post<Map<String, dynamic>>(
@@ -101,14 +94,11 @@ void onStart(ServiceInstance service) async {
             if (deviceId != null) 'device_id': deviceId,
           },
         );
-        final actData = actRes.data;
-        final returned =
-            (actData?['activity'] ?? actData?['state'] ?? actData?['status'])
-                as String?;
+        final returned = (actRes.data?['activity'] ??
+            actRes.data?['state'] ??
+            actRes.data?['status']) as String?;
         if (returned != null && returned.isNotEmpty) activity = returned;
-      } catch (_) {
-        // Keep local inference on failure.
-      }
+      } catch (_) {}
 
       final locationBody = <String, dynamic>{
         'lat': position.latitude,
@@ -120,19 +110,19 @@ void onStart(ServiceInstance service) async {
         if (deviceId != null) 'device_id': deviceId,
         'activity': activity,
       };
+
       try {
         await dio.post<dynamic>('/location/update', data: locationBody);
       } on DioException catch (e) {
-        // 401 — token revoked; bubble up so the outer handler stops the service.
-        if (e.response?.statusCode == 401) rethrow;
-        // Offline / transient failure — persist the fix so it is replayed FIFO
-        // once connectivity returns. No data loss.
+        if (e.response?.statusCode == 401) {
+          service.stopSelf();
+          return;
+        }
+        // Offline — queue so it is replayed when connectivity returns.
         LocationQueueService.instance.enqueue(locationBody);
       }
 
-      // ── Real-time speed monitoring ───────────────────────────────────────
-      // Convert m/s → km/h and post a speeding driving event when the live GPS
-      // speed crosses the threshold. Throttled so we don't spam the endpoint.
+      // Speeding event.
       final speedKmh = normalisedSpeed * 3.6;
       if (speedKmh >= _speedingThresholdKmh &&
           _shouldPostSpeedingEvent(DateTime.now())) {
@@ -147,13 +137,11 @@ void onStart(ServiceInstance service) async {
               'speed': speedKmh,
               'severity': _speedSeverity(speedKmh),
             });
-          } catch (_) {
-            // Non-fatal — the location update already succeeded.
-          }
+          } catch (_) {}
         }
       }
 
-      // Update the foreground notification content.
+      // Update foreground notification.
       if (service is AndroidServiceInstance &&
           await service.isForegroundService()) {
         service.setForegroundNotificationInfo(
@@ -162,7 +150,7 @@ void onStart(ServiceInstance service) async {
         );
       }
 
-      // Notify the main isolate with the latest position + activity.
+      // Notify main isolate.
       service.invoke('locationUpdate', {
         'lat': position.latitude,
         'lng': position.longitude,
@@ -172,15 +160,41 @@ void onStart(ServiceInstance service) async {
         'timestamp': DateTime.now().toIso8601String(),
       });
     } on DioException catch (e) {
-      // 401 — token revoked; stop the service.
-      if (e.response?.statusCode == 401) {
-        timer.cancel();
-        service.stopSelf();
-      }
-      // Other transient errors are swallowed; the next tick will retry.
-    } catch (_) {
-      // Swallow — keep running on geolocator / unknown errors.
+      if (e.response?.statusCode == 401) service.stopSelf();
+    } catch (_) {}
+  }
+
+  // ── AirDroid-style connectivity watcher ────────────────────────────────────
+  // When internet comes back after being offline, immediately send a location
+  // update + presence heartbeat instead of waiting for the next 30-second tick.
+  // This is what makes the child appear online again the moment connectivity
+  // is restored — the same pattern used by AirDroid / Life360.
+  Connectivity().onConnectivityChanged.listen((results) async {
+    final online = results.any((r) => r != ConnectivityResult.none);
+    if (online && _wasOffline) {
+      _wasOffline = false;
+      // Fire immediately — do NOT await so the listener doesn't block.
+      _tick(immediate: true);
+    } else if (!online) {
+      _wasOffline = true;
     }
+  });
+
+  // ── Periodic location upload every 30 seconds ──────────────────────────────
+  int secondsElapsed = 0;
+  Timer.periodic(const Duration(seconds: 1), (timer) async {
+    secondsElapsed++;
+    if (secondsElapsed % AppConfig.locationUpdateIntervalSeconds != 0) return;
+
+    // Check token is still valid before ticking.
+    final token = await StorageService.instance.getToken();
+    if (token == null || token.isEmpty) {
+      timer.cancel();
+      service.stopSelf();
+      return;
+    }
+
+    await _tick();
   });
 }
 
@@ -192,9 +206,8 @@ Future<bool> onIosBackground(ServiceInstance service) async {
   return true;
 }
 
-// ── Helper ─────────────────────────────────────────────────────────────────────
+// ── Helpers ─────────────────────────────────────────────────────────────────
 
-/// Naively infer activity type from speed (m/s).
 String _inferActivity(double speedMs) {
   if (speedMs <= 0.5) return 'stationary';
   if (speedMs < 2.0) return 'walking';
@@ -202,17 +215,10 @@ String _inferActivity(double speedMs) {
   return 'driving';
 }
 
-// ── Speed monitoring ─────────────────────────────────────────────────────────
-
-/// Speed (km/h) above which a "speeding" driving event is generated.
 const double _speedingThresholdKmh = 100.0;
-
-/// Minimum gap between two posted speeding events (throttle).
 const Duration _speedingEventCooldown = Duration(seconds: 60);
-
 DateTime? _lastSpeedingEventAt;
 
-/// Returns true at most once per [_speedingEventCooldown].
 bool _shouldPostSpeedingEvent(DateTime now) {
   if (_lastSpeedingEventAt != null &&
       now.difference(_lastSpeedingEventAt!) < _speedingEventCooldown) {
@@ -222,7 +228,6 @@ bool _shouldPostSpeedingEvent(DateTime now) {
   return true;
 }
 
-/// Map a km/h speed to a driving-event severity bucket.
 String _speedSeverity(double speedKmh) {
   if (speedKmh >= 140) return 'high';
   if (speedKmh >= 120) return 'medium';
@@ -231,15 +236,9 @@ String _speedSeverity(double speedKmh) {
 
 // ── Public service facade ─────────────────────────────────────────────────────
 
-/// Public API consumed by the main isolate to start, stop and query the
-/// background location service.
 class BackgroundLocationService {
   BackgroundLocationService._();
 
-  // ── Initialise & start ────────────────────────────────────────────────────
-
-  /// Configure and start the background service.
-  /// Safe to call multiple times — no-ops if already running.
   static Future<void> start() async {
     final service = FlutterBackgroundService();
 
@@ -247,7 +246,7 @@ class BackgroundLocationService {
       androidConfiguration: AndroidConfiguration(
         onStart: onStart,
         isForegroundMode: true,
-        autoStart: false,
+        autoStart: true,
         notificationChannelId: 'kvl_location_service',
         initialNotificationTitle: AppConfig.appName,
         initialNotificationContent: 'Starting location service…',
@@ -263,34 +262,19 @@ class BackgroundLocationService {
     await service.startService();
   }
 
-  // ── Stop ──────────────────────────────────────────────────────────────────
-
-  /// Request the background service to stop gracefully.
   static Future<void> stop() async {
-    final service = FlutterBackgroundService();
-    service.invoke('stopService');
+    FlutterBackgroundService().invoke('stopService');
   }
 
-  // ── Status ────────────────────────────────────────────────────────────────
-
-  /// Returns [true] if the background service is currently running.
   static Future<bool> get isRunning async =>
       FlutterBackgroundService().isRunning();
 
-  // ── Foreground / background mode switch ──────────────────────────────────
-
-  /// Switch the Android service to foreground mode (shows persistent notification).
   static void setForeground() =>
       FlutterBackgroundService().invoke('setAsForeground');
 
-  /// Switch the Android service to background mode (no persistent notification).
   static void setBackground() =>
       FlutterBackgroundService().invoke('setAsBackground');
 
-  // ── Location update stream ────────────────────────────────────────────────
-
-  /// Stream of location payloads forwarded from the background isolate.
-  /// Each event is a [Map] with keys: lat, lng, speed, accuracy, timestamp.
   static Stream<Map<String, dynamic>?> get locationUpdates =>
       FlutterBackgroundService().on('locationUpdate');
 }

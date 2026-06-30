@@ -26,4 +26,11 @@ class AdminReceiver : DeviceAdminReceiver() {
     override fun onDisableRequested(context: Context, intent: Intent): CharSequence {
         return "Disabling device admin will turn off family protection for KVL Track."
     }
+
+    override fun onPasswordFailed(context: Context, intent: Intent) {
+        super.onPasswordFailed(context, intent)
+        val prefs = context.getSharedPreferences("kvl_track_prefs", Context.MODE_PRIVATE)
+        val current = prefs.getInt("wrong_password_count", 0)
+        prefs.edit().putInt("wrong_password_count", current + 1).apply()
+    }
 }

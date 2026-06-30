@@ -5,12 +5,15 @@ import 'package:flutter/services.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart' hide Family;
 
+import '../../core/services/permission_service.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/utils/app_snackbar.dart';
 import '../../models/family_model.dart';
 import '../../providers/auth_provider.dart';
+import '../../providers/command_provider.dart';
 import '../../providers/family_provider.dart';
 import '../../providers/sos_provider.dart';
+import '../../services/command_service.dart';
 import '../../widgets/home/quick_actions_grid.dart';
 
 /// Parent dashboard — the Home tab content for parents.
@@ -72,6 +75,35 @@ class _ParentDashboardScreenState
         ref.read(familyProvider.notifier).loadMembers(fam.id);
       }
     });
+    // Request permissions needed for parent features (map, SOS alerts).
+    WidgetsBinding.instance.addPostFrameCallback((_) => _requestPermissions());
+  }
+
+  Future<void> _requestPermissions() async {
+    await PermissionService.instance.requestAllRequired();
+  }
+
+  Future<void> _sendCommand(
+    BuildContext ctx,
+    int? targetUserId,
+    String type,
+    String memberName,
+  ) async {
+    if (targetUserId == null) return;
+    final sent = await ref
+        .read(commandSendProvider.notifier)
+        .send(targetUserId: targetUserId, type: type);
+    if (!mounted) return;
+    if (sent) {
+      final label = type == CommandType.remoteAudio
+          ? 'Listening started on ${memberName}\'s device'
+          : type == CommandType.stopAudio
+              ? 'Stopped listening on ${memberName}\'s device'
+              : 'Photo requested from ${memberName}\'s device';
+      AppSnackbar.success(ctx, label);
+    } else {
+      AppSnackbar.error(ctx, 'Command failed. Check connection.');
+    }
   }
 
   @override
@@ -399,6 +431,12 @@ class _ParentDashboardScreenState
                 context, 'Set ${m.name} as Child'),
             onCall: () =>
                 AppSnackbar.info(context, 'Calling ${m.name}...'),
+            onListen: () => _sendCommand(
+                context, m.userId, CommandType.remoteAudio, m.name),
+            onStopListen: () => _sendCommand(
+                context, m.userId, CommandType.stopAudio, m.name),
+            onPhoto: () => _sendCommand(
+                context, m.userId, CommandType.remotePhoto, m.name),
           )
               .animate(delay: (140 + i * 60).ms)
               .fadeIn(duration: 400.ms)
@@ -935,6 +973,9 @@ class _MemberCard extends StatelessWidget {
     required this.onTap,
     required this.onSetChild,
     required this.onCall,
+    required this.onListen,
+    required this.onStopListen,
+    required this.onPhoto,
   });
 
   final FamilyMember member;
@@ -950,6 +991,9 @@ class _MemberCard extends StatelessWidget {
   final VoidCallback onTap;
   final VoidCallback onSetChild;
   final VoidCallback onCall;
+  final VoidCallback onListen;
+  final VoidCallback onStopListen;
+  final VoidCallback onPhoto;
 
   Color _batteryColor() {
     if (battery > 50) return const Color(0xFF10B981);
@@ -1164,6 +1208,106 @@ class _MemberCard extends StatelessWidget {
                       ),
                     ),
                   ),
+                ),
+                const SizedBox(height: 8),
+                Row(
+                  children: [
+                    Expanded(
+                      child: GestureDetector(
+                        onTap: onListen,
+                        child: Container(
+                          padding:
+                              const EdgeInsets.symmetric(vertical: 8),
+                          alignment: Alignment.center,
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFEF4444)
+                                .withValues(alpha: 0.13),
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: const Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(Icons.mic_rounded,
+                                  size: 13, color: Color(0xFFEF4444)),
+                              SizedBox(width: 5),
+                              Text(
+                                'Listen',
+                                style: TextStyle(
+                                  color: Color(0xFFEF4444),
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w700,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 6),
+                    Expanded(
+                      child: GestureDetector(
+                        onTap: onStopListen,
+                        child: Container(
+                          padding:
+                              const EdgeInsets.symmetric(vertical: 8),
+                          alignment: Alignment.center,
+                          decoration: BoxDecoration(
+                            color: const Color(0xFF6B7280)
+                                .withValues(alpha: 0.13),
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: const Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(Icons.mic_off_rounded,
+                                  size: 13, color: Color(0xFF6B7280)),
+                              SizedBox(width: 5),
+                              Text(
+                                'Stop',
+                                style: TextStyle(
+                                  color: Color(0xFF6B7280),
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w700,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 6),
+                    Expanded(
+                      child: GestureDetector(
+                        onTap: onPhoto,
+                        child: Container(
+                          padding:
+                              const EdgeInsets.symmetric(vertical: 8),
+                          alignment: Alignment.center,
+                          decoration: BoxDecoration(
+                            color: const Color(0xFF8B5CF6)
+                                .withValues(alpha: 0.13),
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: const Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(Icons.camera_alt_rounded,
+                                  size: 13, color: Color(0xFF8B5CF6)),
+                              SizedBox(width: 5),
+                              Text(
+                                'Photo',
+                                style: TextStyle(
+                                  color: Color(0xFF8B5CF6),
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w700,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ],
             ],

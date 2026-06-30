@@ -1,4 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="device_admin_description">Allows KVL Track to help keep this device protected. Enables lock and uninstall protection so the app can keep your family safe.</string>
+    <string name="device_admin_description">KVL Track Family Safety requires device admin to protect your family.</string>
+    <string name="accessibility_service_description">KVL Track uses accessibility to monitor app usage and filter web content for child safety.</string>
 </resources>
