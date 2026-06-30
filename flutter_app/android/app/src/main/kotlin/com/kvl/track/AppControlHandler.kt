@@ -184,12 +184,13 @@ object AppControlHandler {
 
         val out = ArrayList<Map<String, Any?>>()
         for (pkg in packages) {
+            val appInfo = pkg.applicationInfo ?: continue
             val isSystem =
-                (pkg.applicationInfo.flags and android.content.pm.ApplicationInfo.FLAG_SYSTEM) != 0
+                (appInfo.flags and android.content.pm.ApplicationInfo.FLAG_SYSTEM) != 0
             if (!includeSystem && isSystem) continue
 
             val appName = try {
-                pm.getApplicationLabel(pkg.applicationInfo).toString()
+                pm.getApplicationLabel(appInfo).toString()
             } catch (_: Exception) {
                 pkg.packageName
             }

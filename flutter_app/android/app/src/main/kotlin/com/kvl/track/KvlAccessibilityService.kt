@@ -46,6 +46,9 @@ import io.flutter.plugin.common.EventChannel
 class KvlAccessibilityService : AccessibilityService() {
 
     companion object {
+        /** Live instance of the service — set on connect, cleared on destroy. */
+        var instance: KvlAccessibilityService? = null
+
         /** EventSink used by agent-5 (screenshot / screen-control) to push events to Flutter. */
         var sink: EventChannel.EventSink? = null
 
@@ -70,6 +73,7 @@ class KvlAccessibilityService : AccessibilityService() {
 
     override fun onServiceConnected() {
         super.onServiceConnected()
+        instance = this
         val info = AccessibilityServiceInfo().apply {
             eventTypes = (
                 AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED or
@@ -90,6 +94,11 @@ class KvlAccessibilityService : AccessibilityService() {
 
     override fun onInterrupt() {
         // No-op: required by interface.
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        instance = null
     }
 
     // ── Event dispatch ────────────────────────────────────────────────────────
