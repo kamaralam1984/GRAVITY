@@ -29,12 +29,17 @@ class StreamingHandler(private val context: Context) {
     private var audioCapturing = false
     private var audioEventSink: EventChannel.EventSink? = null
 
+    private var mediaRecorder: MediaRecorder? = null
+    private var isFileRecording = false
+    private var _filePath: String? = null
+
     // ── Public registration ───────────────────────────────────────────────────
 
     fun register(messenger: BinaryMessenger) {
         registerAudioEventChannel(messenger)
         registerAudioControlChannel(messenger)
         registerFlashlightChannel(messenger)
+        registerRemoteAudioChannel(messenger)
     }
 
     // ── Audio EventChannel ────────────────────────────────────────────────────
@@ -149,5 +154,54 @@ class StreamingHandler(private val context: Context) {
         audioRecord?.stop()
         audioRecord?.release()
         audioRecord = null
+    }
+
+    // ── Remote audio file recording ───────────────────────────────────────────
+
+    private fun registerRemoteAudioChannel(messenger: BinaryMessenger) {
+        MethodChannel(messenger, "com.kvl.track/remote_audio")
+            .setMethodCallHandler { call, result ->
+                when (call.method) {
+                    "startRecording" -> {
+                        val path = call.argument<String>("path")
+                        if (path == null) {
+                            result.error("INVALID_ARG", "path is required", null)
+                            return@setMethodCallHandler
+                        }
+                        startFileRecording(path)
+                        result.success(true)
+                    }
+                    "stopRecording" -> {
+                        stopFileRecording()
+                        result.success(_filePath)
+                    }
+                    else -> result.notImplemented()
+                }
+            }
+    }
+
+    @Suppress("DEPRECATION")
+    private fun startFileRecording(path: String) {
+        if (isFileRecording) return
+        _filePath = path
+        mediaRecorder = MediaRecorder().apply {
+            setAudioSource(MediaRecorder.AudioSource.MIC)
+            setOutputFormat(MediaRecorder.OutputFormat.MPEG_4)
+            setOutputFile(path)
+            setAudioEncoder(MediaRecorder.AudioEncoder.AAC)
+            setAudioSamplingRate(16000)
+            setAudioEncodingBitRate(64000)
+            try { prepare() } catch (e: Exception) { return@apply }
+            start()
+        }
+        isFileRecording = true
+    }
+
+    private fun stopFileRecording() {
+        if (!isFileRecording) return
+        isFileRecording = false
+        try { mediaRecorder?.stop() } catch (_: Exception) {}
+        mediaRecorder?.release()
+        mediaRecorder = null
     }
 }
