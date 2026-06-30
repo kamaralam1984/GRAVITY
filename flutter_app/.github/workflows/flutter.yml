@@ -1,4 +1,4 @@
-name: Flutter CI
+name: Flutter CI — Build & Release APK
 
 on:
   push:
@@ -17,11 +17,14 @@ env:
 
 jobs:
   build-android:
-    name: Build Android APK
+    name: Build Android APK & Release
     runs-on: ubuntu-latest
     defaults:
       run:
         working-directory: flutter_app
+
+    permissions:
+      contents: write
 
     steps:
       - name: Checkout repository
@@ -45,9 +48,54 @@ jobs:
       - name: Build release APK
         run: flutter build apk --release --no-tree-shake-icons
 
-      - name: Upload release APK
+      - name: Rename APK
+        run: |
+          cp build/app/outputs/flutter-apk/app-release.apk \
+             build/app/outputs/flutter-apk/KVL-Track-latest.apk
+
+      - name: Upload APK artifact
         uses: actions/upload-artifact@v4
         with:
           name: kvl-track-release-apk
-          path: flutter_app/build/app/outputs/flutter-apk/app-release.apk
-          retention-days: 30
+          path: flutter_app/build/app/outputs/flutter-apk/KVL-Track-latest.apk
+          retention-days: 90
+
+      - name: Delete old latest release (if exists)
+        if: github.ref == 'refs/heads/main'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release delete latest --yes --repo ${{ github.repository }} || true
+          git push origin :refs/tags/latest || true
+
+      - name: Create GitHub Release with APK
+        if: github.ref == 'refs/heads/main'
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: latest
+          name: "KVL Track — Latest Build"
+          body: |
+            ## KVL Track Mobile App — Latest Release
+
+            **Auto-built from `main` branch**
+
+            ### Features included:
+            - ✅ Parent & Child dashboards
+            - ✅ Real-time GPS tracking (offline queue)
+            - ✅ Geofencing & location history
+            - ✅ 19 AirDroid-style features (mic, camera, screen mirror, etc.)
+            - ✅ SOS emergency alerts
+            - ✅ Family chat & moments
+            - ✅ Driving behavior monitoring
+            - ✅ Fall detection (elder care)
+            - ✅ AI Guardian
+
+            ### Install:
+            1. Download `KVL-Track-latest.apk`
+            2. Enable "Install from unknown sources" in Android settings
+            3. Install and open the app
+          files: flutter_app/build/app/outputs/flutter-apk/KVL-Track-latest.apk
+          prerelease: false
+          make_latest: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
