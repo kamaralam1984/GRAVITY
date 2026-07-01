@@ -128,13 +128,40 @@ class MainActivity : FlutterFragmentActivity() {
         // ── monitor ────────────────────────────────────────────────────────
         MethodChannel(messenger, monitorChannel).setMethodCallHandler { call, result ->
             when (call.method) {
-                "readSms" -> result.success(readSms())
-                "readContacts" -> result.success(readContacts())
-                "readMediaList" -> result.success(readMediaList())
+                "readSms" -> result.success(guardedRead(android.Manifest.permission.READ_SMS, ::readSms))
+                "readContacts" -> result.success(guardedRead(android.Manifest.permission.READ_CONTACTS, ::readContacts))
+                "readMediaList" -> result.success(guardedRead(readMediaListPermission(), ::readMediaList))
                 else -> result.notImplemented()
             }
         }
     }
+
+    /**
+     * Runs [read] only if [permission] is currently granted, and swallows any
+     * SecurityException from the underlying ContentResolver query — a denied
+     * or revoked permission must never crash the whole process.
+     */
+    private fun guardedRead(
+        permission: String,
+        read: () -> List<Map<String, Any?>>
+    ): List<Map<String, Any?>> {
+        val granted = androidx.core.content.ContextCompat.checkSelfPermission(
+            this, permission
+        ) == android.content.pm.PackageManager.PERMISSION_GRANTED
+        if (!granted) return emptyList()
+        return try {
+            read()
+        } catch (e: SecurityException) {
+            emptyList()
+        }
+    }
+
+    private fun readMediaListPermission(): String =
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            android.Manifest.permission.READ_MEDIA_IMAGES
+        } else {
+            android.Manifest.permission.READ_EXTERNAL_STORAGE
+        }
 
     // ── Device admin helpers ────────────────────────────────────────────────
     private fun dpm(): DevicePolicyManager =

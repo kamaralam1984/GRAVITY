@@ -23,6 +23,7 @@ class NotificationService {
   static const String _geofenceChannelId = 'geofence_channel';
   static const String _chatChannelId = 'chat_channel';
   static const String _drivingChannelId = 'driving_channel';
+  static const String _locationServiceChannelId = 'kvl_location_service';
 
   // ── Init ───────────────────────────────────────────────────────────────────
 
@@ -91,6 +92,20 @@ class NotificationService {
         description: 'Driving safety events',
         importance: Importance.defaultImportance,
         playSound: false,
+      ),
+    );
+
+    // Required by BackgroundLocationService's foreground service — must
+    // exist before flutter_background_service calls startForeground(),
+    // otherwise Android can kill the app right after it starts the service.
+    await androidPlugin.createNotificationChannel(
+      const AndroidNotificationChannel(
+        _locationServiceChannelId,
+        'Location Tracking',
+        description: 'Ongoing background location tracking service',
+        importance: Importance.low,
+        playSound: false,
+        showBadge: false,
       ),
     );
   }

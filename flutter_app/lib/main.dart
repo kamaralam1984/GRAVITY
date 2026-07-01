@@ -13,14 +13,22 @@ import 'services/notification_service.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
+  // Notification channels must exist before any foreground service (e.g.
+  // BackgroundLocationService) tries to post to them — this must NOT be
+  // gated behind Firebase init succeeding.
+  try {
+    await NotificationService.init();
+    NotificationService.navigatorKey = appNavigatorKey;
+  } catch (e, st) {
+    debugPrint('NotificationService init failed (non-fatal): $e\n$st');
+  }
+
   // Firebase + push notifications — optional. Never let a missing/invalid
   // Firebase config crash app startup; the app works without push.
   try {
     await Firebase.initializeApp();
     FirebaseMessaging.onBackgroundMessage(handleFcmBackground);
-    await NotificationService.init();
     await FcmService.init();
-    NotificationService.navigatorKey = appNavigatorKey;
   } catch (e, st) {
     debugPrint('Firebase/FCM init skipped (non-fatal): $e\n$st');
   }
