@@ -82,7 +82,7 @@ class _FileExplorerScreenState extends ConsumerState<FileExplorerScreen> {
     try {
       final res = await _dio.get(
         '/monitor/file-listing/${widget.targetUserId}',
-        queryParameters: {'path': path},
+        params: {'path': path},
       );
       final data = res.data;
       final rawEntries = (data is Map ? data['entries'] : null) as List?;

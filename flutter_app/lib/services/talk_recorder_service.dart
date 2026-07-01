@@ -74,7 +74,7 @@ class TalkRecorderService {
       final res = await _dio.post(
         '/monitor/talk/upload',
         data: formData,
-        queryParameters: {'target_user_id': targetUserId},
+        params: {'target_user_id': targetUserId},
       );
       final url = (res.data as Map?)?['url'] as String?;
       AppLogger.i(_tag, 'Talk clip uploaded → $url');
