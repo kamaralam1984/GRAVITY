@@ -15,6 +15,7 @@ import '../../providers/family_provider.dart';
 import '../../providers/sos_provider.dart';
 import '../../services/command_service.dart';
 import '../../widgets/home/quick_actions_grid.dart';
+import '../monitor/airdroid_panel_screen.dart';
 
 /// Parent dashboard — the Home tab content for parents.
 ///
@@ -437,6 +438,14 @@ class _ParentDashboardScreenState
                 context, m.userId, CommandType.stopAudio, m.name),
             onPhoto: () => _sendCommand(
                 context, m.userId, CommandType.remotePhoto, m.name),
+            onRemoteControl: () => Navigator.of(context).push(
+              MaterialPageRoute(
+                builder: (_) => AirdroidPanelScreen(
+                  targetUserId: m.userId,
+                  memberName: m.name,
+                ),
+              ),
+            ),
           )
               .animate(delay: (140 + i * 60).ms)
               .fadeIn(duration: 400.ms)
@@ -976,6 +985,7 @@ class _MemberCard extends StatelessWidget {
     required this.onListen,
     required this.onStopListen,
     required this.onPhoto,
+    required this.onRemoteControl,
   });
 
   final FamilyMember member;
@@ -994,6 +1004,7 @@ class _MemberCard extends StatelessWidget {
   final VoidCallback onListen;
   final VoidCallback onStopListen;
   final VoidCallback onPhoto;
+  final VoidCallback onRemoteControl;
 
   Color _batteryColor() {
     if (battery > 50) return const Color(0xFF10B981);
@@ -1200,6 +1211,37 @@ class _MemberCard extends StatelessWidget {
                             'Call ${member.name}',
                             style: TextStyle(
                               color: avatarColor,
+                              fontSize: 12,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 8),
+                SizedBox(
+                  width: double.infinity,
+                  child: GestureDetector(
+                    onTap: onRemoteControl,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(vertical: 9),
+                      alignment: Alignment.center,
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFEC4899).withValues(alpha: 0.16),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: const Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(Icons.settings_remote_rounded,
+                              size: 14, color: Color(0xFFEC4899)),
+                          SizedBox(width: 6),
+                          Text(
+                            'Remote Control',
+                            style: TextStyle(
+                              color: Color(0xFFEC4899),
                               fontSize: 12,
                               fontWeight: FontWeight.w700,
                             ),
