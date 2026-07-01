@@ -6,6 +6,7 @@ import android.hardware.camera2.CameraManager
 import android.media.AudioAttributes
 import android.media.AudioFormat
 import android.media.AudioRecord
+import android.media.AudioTrack
 import android.media.MediaPlayer
 import android.media.MediaRecorder
 import android.os.Handler
@@ -20,6 +21,7 @@ import io.flutter.plugin.common.MethodChannel
  * Channels exposed:
  *   - EventChannel  "com.kvl.track/audio_stream_events"  — raw PCM chunks (ByteArray)
  *   - MethodChannel "com.kvl.track/audio_stream"          — startAudioCapture / stopAudioCapture
+ *   - MethodChannel "com.kvl.track/audio_playback"        — start / write(bytes) / stop — parent-side live audio playback
  *   - MethodChannel "com.kvl.track/flashlight"            — setTorch(enable) / isTorchOn
  *   - MethodChannel "com.kvl.track/remote_audio"          — startRecording(path) / stopRecording
  *   - MethodChannel "com.kvl.track/talk"                  — playUrl(url) / stop — talk-to-device playback
@@ -39,11 +41,14 @@ class StreamingHandler(private val context: Context) {
 
     private var talkPlayer: MediaPlayer? = null
 
+    private var audioTrack: AudioTrack? = null
+
     // ── Public registration ───────────────────────────────────────────────────
 
     fun register(messenger: BinaryMessenger) {
         registerAudioEventChannel(messenger)
         registerAudioControlChannel(messenger)
+        registerAudioPlaybackChannel(messenger)
         registerFlashlightChannel(messenger)
         registerRemoteAudioChannel(messenger)
         registerTalkChannel(messenger)
@@ -161,6 +166,79 @@ class StreamingHandler(private val context: Context) {
         audioRecord?.stop()
         audioRecord?.release()
         audioRecord = null
+    }
+
+    // ── Parent-side live audio playback ───────────────────────────────────────
+    //
+    // Plays the raw 16kHz mono 16-bit PCM chunks relayed from a child's live
+    // audio stream (see LiveAudioStreamService on the child / the
+    // /ws/view/audio/{childUserId} viewer relay) via a streaming AudioTrack.
+
+    private fun registerAudioPlaybackChannel(messenger: BinaryMessenger) {
+        MethodChannel(messenger, "com.kvl.track/audio_playback")
+            .setMethodCallHandler { call, result ->
+                when (call.method) {
+                    "start" -> {
+                        startAudioPlayback()
+                        result.success(true)
+                    }
+                    "write" -> {
+                        val bytes = call.argument<ByteArray>("bytes")
+                        if (bytes != null) {
+                            try {
+                                audioTrack?.write(bytes, 0, bytes.size)
+                            } catch (_: Exception) {
+                            }
+                        }
+                        result.success(true)
+                    }
+                    "stop" -> {
+                        stopAudioPlayback()
+                        result.success(true)
+                    }
+                    else -> result.notImplemented()
+                }
+            }
+    }
+
+    private fun startAudioPlayback() {
+        if (audioTrack != null) return
+
+        val sampleRate = 16000
+        val minBuffer = AudioTrack.getMinBufferSize(
+            sampleRate,
+            AudioFormat.CHANNEL_OUT_MONO,
+            AudioFormat.ENCODING_PCM_16BIT,
+        )
+
+        audioTrack = AudioTrack(
+            AudioAttributes.Builder()
+                .setUsage(AudioAttributes.USAGE_VOICE_COMMUNICATION)
+                .setContentType(AudioAttributes.CONTENT_TYPE_SPEECH)
+                .build(),
+            AudioFormat.Builder()
+                .setSampleRate(sampleRate)
+                .setChannelMask(AudioFormat.CHANNEL_OUT_MONO)
+                .setEncoding(AudioFormat.ENCODING_PCM_16BIT)
+                .build(),
+            maxOf(minBuffer, 4096) * 2,
+            AudioTrack.MODE_STREAM,
+            android.media.AudioManager.AUDIO_SESSION_ID_GENERATE,
+        )
+        try {
+            audioTrack?.play()
+        } catch (e: Exception) {
+            audioTrack = null
+        }
+    }
+
+    private fun stopAudioPlayback() {
+        try {
+            audioTrack?.stop()
+            audioTrack?.release()
+        } catch (_: Exception) {
+        }
+        audioTrack = null
     }
 
     // ── Remote audio file recording ───────────────────────────────────────────

@@ -8,6 +8,7 @@ import '../../services/sms_export_service.dart';
 import '../../services/talk_recorder_service.dart';
 import 'bulk_actions_screen.dart';
 import 'file_explorer_screen.dart';
+import 'live_stream_viewer_screen.dart';
 import 'mirrored_notifications_screen.dart';
 import 'remote_control_screen.dart';
 
@@ -359,6 +360,24 @@ class _AirdroidPanelScreenState extends ConsumerState<AirdroidPanelScreen> {
     await _send(CommandType.screenControlStop);
   }
 
+  // ── Live streaming viewers ─────────────────────────────────────────────────
+
+  /// Sends the stream's start command, then opens the live viewer. The
+  /// viewer itself sends the matching stop command when the parent leaves it.
+  Future<void> _openStreamViewer(String streamType, String startCommand) async {
+    await _send(startCommand);
+    if (!mounted) return;
+    await Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => LiveStreamViewerScreen(
+          streamType: streamType,
+          targetUserId: widget.targetUserId,
+          memberName: widget.memberName,
+        ),
+      ),
+    );
+  }
+
   // ── Remote App Install dialog ─────────────────────────────────────────────
 
   Future<void> _promptAppInstall() async {
@@ -650,7 +669,8 @@ class _AirdroidPanelScreenState extends ConsumerState<AirdroidPanelScreen> {
                       loading: _pendingCommand == CommandType.cameraStreamStart,
                       onTap: isLoading
                           ? null
-                          : () => _send(CommandType.cameraStreamStart),
+                          : () => _openStreamViewer(
+                              'camera', CommandType.cameraStreamStart),
                     ),
                     const SizedBox(width: 8),
                     _CommandButton(
@@ -679,7 +699,8 @@ class _AirdroidPanelScreenState extends ConsumerState<AirdroidPanelScreen> {
                       loading: _pendingCommand == CommandType.audioStreamStart,
                       onTap: isLoading
                           ? null
-                          : () => _send(CommandType.audioStreamStart),
+                          : () => _openStreamViewer(
+                              'audio', CommandType.audioStreamStart),
                     ),
                     const SizedBox(width: 8),
                     _CommandButton(
@@ -709,7 +730,8 @@ class _AirdroidPanelScreenState extends ConsumerState<AirdroidPanelScreen> {
                           _pendingCommand == CommandType.screenMirrorStart,
                       onTap: isLoading
                           ? null
-                          : () => _send(CommandType.screenMirrorStart),
+                          : () => _openStreamViewer(
+                              'screen', CommandType.screenMirrorStart),
                     ),
                     const SizedBox(width: 8),
                     _CommandButton(
