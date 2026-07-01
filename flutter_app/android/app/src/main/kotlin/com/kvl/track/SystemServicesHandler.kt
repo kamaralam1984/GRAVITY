@@ -1,11 +1,13 @@
 package com.kvl.track
 
+import android.app.RemoteInput
 import android.app.admin.DevicePolicyManager
 import android.content.ClipData
 import android.content.ClipboardManager
 import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
+import android.os.Bundle
 import android.provider.Settings
 import io.flutter.plugin.common.BinaryMessenger
 import io.flutter.plugin.common.MethodChannel
@@ -88,6 +90,39 @@ class SystemServicesHandler(private val context: Context) {
                                 .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
                         )
                         result.success(true)
+                    }
+                    "sendNotificationReply" -> {
+                        val replyId = call.argument<String>("replyId")
+                        val text = call.argument<String>("text") ?: ""
+                        val action = replyId?.let {
+                            KvlNotificationListenerService.replyableActions[it]
+                        }
+                        if (action == null) {
+                            result.error(
+                                "REPLY_NOT_FOUND",
+                                "No stored reply action for replyId=$replyId",
+                                null
+                            )
+                        } else {
+                            try {
+                                val intent = Intent()
+                                val bundle = Bundle()
+                                for (remoteInput in action.remoteInputs) {
+                                    bundle.putCharSequence(remoteInput.resultKey, text)
+                                }
+                                RemoteInput.addResultsToIntent(
+                                    action.remoteInputs,
+                                    intent,
+                                    bundle
+                                )
+                                action.actionIntent.send(context, 0, intent)
+                                // One-shot — drop the stashed action once used.
+                                KvlNotificationListenerService.replyableActions.remove(replyId)
+                                result.success(true)
+                            } catch (e: Exception) {
+                                result.error("REPLY_SEND_ERROR", e.message, null)
+                            }
+                        }
                     }
                     else -> result.notImplemented()
                 }

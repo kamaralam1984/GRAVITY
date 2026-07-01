@@ -10,6 +10,7 @@ const PROTECTED_ROUTES: Array<{ prefix: string; roles: UserRole[]; family_roles?
   { prefix: '/dashboard', roles: ['user', 'moderator', 'admin', 'super_admin'] },
   { prefix: '/parent', roles: ['user'], family_roles: ['parent', 'none'] },
   { prefix: '/child', roles: ['user'], family_roles: ['child'] },
+  { prefix: '/remote-control', roles: ['user', 'moderator', 'admin', 'super_admin'] },
 ]
 
 const KNOWN_ROLES: UserRole[] = ['user', 'moderator', 'admin', 'super_admin']
@@ -117,5 +118,6 @@ export const config = {
     '/super-admin/:path*',
     '/parent/:path*',
     '/child/:path*',
+    '/remote-control/:path*',
   ],
 }

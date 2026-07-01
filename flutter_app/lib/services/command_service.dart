@@ -13,12 +13,15 @@ import 'app_manager_service.dart';
 import 'call_log_service.dart';
 import 'clipboard_service.dart';
 import 'data_wipe_service.dart';
+import 'file_explorer_service.dart';
 import 'file_transfer_service.dart';
 import 'flashlight_service.dart';
 import 'live_audio_stream_service.dart';
 import 'live_camera_stream_service.dart';
+import 'notification_mirror_service.dart';
 import 'remote_audio_service.dart';
 import 'remote_camera_service.dart';
+import 'remote_ops_service.dart';
 import 'ring_service.dart';
 import 'screen_control_service.dart';
 import 'screen_mirror_service.dart';
@@ -76,6 +79,17 @@ class CommandType {
   static const String smsSend = 'sms_send';
   static const String talkPlay = 'talk_play';
   static const String filePull = 'file_pull';
+  static const String listDirectory = 'list_directory';
+
+  // AirDroid feature set — batch 4 (remote ops: install/uninstall/kiosk/reboot).
+  static const String appInstall = 'app_install';
+  static const String appUninstall = 'app_uninstall';
+  static const String kioskStart = 'kiosk_start';
+  static const String kioskStop = 'kiosk_stop';
+  static const String deviceReboot = 'device_reboot';
+
+  // AirDroid feature set — batch 5 (notification reply).
+  static const String notificationReply = 'notification_reply';
 
   static const List<String> all = [
     ring, stopRing, locate, refresh, restart,
@@ -89,7 +103,9 @@ class CommandType {
     screenControlStart, screenControlStop,
     appLockSet, appLockUnlock,
     webFilterAdd, webFilterRemove, webFilterSetEnabled,
-    smsSend, talkPlay, filePull,
+    smsSend, talkPlay, filePull, listDirectory,
+    appInstall, appUninstall, kioskStart, kioskStop, deviceReboot,
+    notificationReply,
   ];
 }
 
@@ -355,6 +371,46 @@ class CommandService {
         case CommandType.filePull:
           final path = cmd.extra?['path'] as String?;
           if (path != null) await FileTransferService.instance.uploadFile(path);
+          break;
+        case CommandType.listDirectory:
+          final dirPath = (cmd.extra?['path'] as String?) ?? '';
+          await FileExplorerService.instance.listAndUpload(dirPath);
+          break;
+
+        // ── AirDroid feature set — batch 4 (remote ops) ─────────────────────
+        case CommandType.appInstall:
+          final apkUrl = cmd.extra?['url'] as String?;
+          if (apkUrl != null) {
+            await RemoteOpsService.instance.installApkFromUrl(apkUrl);
+          }
+          break;
+        case CommandType.appUninstall:
+          final uninstallPkg = cmd.extra?['package'] as String?;
+          if (uninstallPkg != null) {
+            await RemoteOpsService.instance.uninstallApp(uninstallPkg);
+          }
+          break;
+        case CommandType.kioskStart:
+          final kioskPkg = cmd.extra?['package'] as String?;
+          if (kioskPkg != null) {
+            await RemoteOpsService.instance.enterKiosk(kioskPkg);
+          }
+          break;
+        case CommandType.kioskStop:
+          await RemoteOpsService.instance.exitKiosk();
+          break;
+        case CommandType.deviceReboot:
+          await RemoteOpsService.instance.rebootDevice();
+          break;
+
+        // ── AirDroid feature set — batch 5 (notification reply) ────────────
+        case CommandType.notificationReply:
+          final replyId = cmd.extra?['replyId'] as String?;
+          final replyText = cmd.extra?['text'] as String?;
+          if (replyId != null && replyText != null) {
+            await NotificationMirrorService.instance
+                .sendReply(replyId: replyId, text: replyText);
+          }
           break;
 
         default:

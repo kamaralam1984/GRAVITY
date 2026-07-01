@@ -35,7 +35,9 @@ ALLOWED_TYPES = {
     "screen_control_start", "screen_control_stop",
     "app_lock_set", "app_lock_unlock",
     "web_filter_add", "web_filter_remove", "web_filter_set_enabled",
-    "sms_send", "talk_play", "file_pull",
+    "sms_send", "talk_play", "file_pull", "list_directory",
+    "app_install", "app_uninstall", "kiosk_start", "kiosk_stop", "device_reboot",
+    "notification_reply",
 }
 
 

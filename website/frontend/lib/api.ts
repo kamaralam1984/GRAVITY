@@ -188,3 +188,9 @@ export const drivingApi = {
   events: (limit = 50) => apiFetch<any[]>("/driving/events?limit=" + limit),
   stats: () => apiFetch<any>("/driving/stats"),
 }
+
+// ── Commands API — remote device commands (ring, screen mirror, etc.) ──────
+export const commandsApi = {
+  send: (targetUserId: number, type: string, extra?: Record<string, any>) =>
+    apiFetch<any>("/commands/send", { method: "POST", body: JSON.stringify({ target_user_id: targetUserId, type, extra }) }),
+}

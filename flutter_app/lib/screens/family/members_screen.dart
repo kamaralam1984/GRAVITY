@@ -10,6 +10,7 @@ import '../../providers/family_provider.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/command_provider.dart';
 import '../../services/command_service.dart';
+import '../monitor/bulk_actions_screen.dart';
 import 'package:intl/intl.dart';
 
 // ── Members Screen ────────────────────────────────────────────────────────────
@@ -51,6 +52,13 @@ class _MembersScreenState extends ConsumerState<MembersScreen> {
         backgroundColor: context.bgColor,
         elevation: 0,
         actions: [
+          IconButton(
+            icon: const Icon(Icons.broadcast_on_personal_rounded),
+            tooltip: 'Bulk actions (multiple devices)',
+            onPressed: () => Navigator.of(context).push(
+              MaterialPageRoute(builder: (_) => const BulkActionsScreen()),
+            ),
+          ),
           if (state.selectedFamily != null)
             Padding(
               padding: const EdgeInsets.only(right: 8),

@@ -1,10 +1,17 @@
 package com.kvl.track
 
+import android.app.Notification
+import android.app.PendingIntent
+import android.content.Intent
+import android.app.RemoteInput
+import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
 import android.service.notification.NotificationListenerService as NLS
 import android.service.notification.StatusBarNotification
 import io.flutter.plugin.common.EventChannel
+import java.util.UUID
+import java.util.concurrent.ConcurrentHashMap
 
 /**
  * Android [NotificationListenerService] that captures every notification posted
@@ -40,14 +47,33 @@ import io.flutter.plugin.common.EventChannel
  * The user must also grant "Notification access" in system settings. Use
  * [NotificationMirrorService.isListenerEnabled] / [openListenerSettings] from
  * the Flutter layer to check and guide them there.
+ *
+ * ── Reply support ──────────────────────────────────────────────────────────
+ * When a posted notification exposes an [Notification.Action] with non-null
+ * [Notification.Action.remoteInputs] (the "Reply" action most messaging apps
+ * expose), the relevant [PendingIntent] and [RemoteInput] set are stashed in
+ * [replyableActions] keyed by a generated id. That id is included in the
+ * mirrored payload as `replyId` (`replyable: true`) so a parent can trigger
+ * [sendReply] later via the `com.kvl.track/notification_mirror` method
+ * channel's `sendNotificationReply` call — without ever opening the source
+ * app on the child device.
  */
 class KvlNotificationListenerService : NLS() {
+
+    /** A stashed reply action captured from a posted notification. */
+    data class ReplyAction(
+        val actionIntent: PendingIntent,
+        val remoteInputs: Array<RemoteInput>,
+    )
 
     companion object {
         /** Set by MainActivity's EventChannel stream handler. Nullable — the
          *  EventChannel may not be ready yet when the first notification fires. */
         @Volatile
         var sink: EventChannel.EventSink? = null
+
+        /** replyId -> captured reply action, in-memory (cleared on process death). */
+        val replyableActions = ConcurrentHashMap<String, ReplyAction>()
     }
 
     private val mainHandler = Handler(Looper.getMainLooper())
@@ -56,8 +82,8 @@ class KvlNotificationListenerService : NLS() {
         super.onNotificationPosted(sbn)
         try {
             val extras = sbn.notification.extras
-            val title = extras.getString(android.app.Notification.EXTRA_TITLE) ?: ""
-            val text = extras.getCharSequence(android.app.Notification.EXTRA_TEXT)
+            val title = extras.getString(Notification.EXTRA_TITLE) ?: ""
+            val text = extras.getCharSequence(Notification.EXTRA_TEXT)
                 ?.toString() ?: ""
             val pkg = sbn.packageName
 
@@ -71,13 +97,35 @@ class KvlNotificationListenerService : NLS() {
                 pkg
             }
 
-            val data: Map<String, Any> = mapOf(
+            // Look for a "Reply" action exposing RemoteInput(s).
+            var replyId: String? = null
+            val actions = sbn.notification.actions
+            if (actions != null) {
+                for (action in actions) {
+                    val remoteInputs = action.remoteInputs
+                    if (remoteInputs != null && remoteInputs.isNotEmpty()) {
+                        val id = UUID.randomUUID().toString()
+                        replyableActions[id] = ReplyAction(
+                            actionIntent = action.actionIntent,
+                            remoteInputs = remoteInputs,
+                        )
+                        replyId = id
+                        break
+                    }
+                }
+            }
+
+            val data: MutableMap<String, Any> = mutableMapOf(
                 "packageName" to pkg,
                 "appName" to appName,
                 "title" to title,
                 "text" to text,
-                "timestamp" to System.currentTimeMillis()
+                "timestamp" to System.currentTimeMillis(),
+                "replyable" to (replyId != null)
             )
+            if (replyId != null) {
+                data["replyId"] = replyId
+            }
 
             // EventSink must be called on the main thread.
             mainHandler.post {

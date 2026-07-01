@@ -5,16 +5,21 @@ This is intentionally transparent (the app stays visible). Uploads are
 authenticated as the device's own user; reads require the caller to be the
 owner of a family the target user belongs to (or the target user themselves).
 """
-from fastapi import APIRouter, HTTPException, Depends
+import csv
+import io
+
+from fastapi import APIRouter, HTTPException, Depends, Query
+from fastapi.responses import StreamingResponse
 from sqlalchemy.orm import Session
 from sqlalchemy import Column, Integer, String, Text, DateTime, ForeignKey, func
 from pydantic import BaseModel, conlist
 from typing import Optional, List
 from datetime import datetime
+from jose import JWTError, jwt
 
 from database import get_db, Base, engine
 import models
-from auth import get_current_user
+from auth import get_current_user, oauth2_scheme, SECRET_KEY, ALGORITHM
 
 router = APIRouter()
 
@@ -114,6 +119,38 @@ def _assert_can_read(caller: models.User, target_user_id: int, db: Session):
     raise HTTPException(status_code=403, detail="Not authorized to view this user's data")
 
 
+def _get_user_from_token(token: str, db: Session) -> Optional[models.User]:
+    """Decode a raw JWT and return the matching user, or None on any failure.
+    Mirrors streaming.py's `_authenticate_ws` token-decoding pattern."""
+    try:
+        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM], options={"verify_sub": False})
+        user_id = int(payload.get("sub", 0))
+    except (JWTError, ValueError, TypeError):
+        return None
+    return db.query(models.User).filter(models.User.id == user_id).first()
+
+
+def _get_current_user_header_or_query(
+    token_header: Optional[str],
+    token_query: Optional[str],
+    db: Session,
+) -> models.User:
+    """Auth fallback for endpoints that must be openable directly in a browser
+    (e.g. a CSV export download link), where the browser cannot attach a
+    `Authorization: Bearer` header. Accepts the normal header first, falling
+    back to a `?token=` query param — mirrors the pattern used by
+    streaming.py's websocket auth (`token: str = Query(...)`)."""
+    raw = token_header or token_query
+    if not raw:
+        raise HTTPException(status_code=401, detail="Not authenticated")
+    user = _get_user_from_token(raw, db)
+    if not user:
+        raise HTTPException(status_code=401, detail="Invalid token")
+    if not user.is_active:
+        raise HTTPException(status_code=401, detail="Account not verified. Please complete signup.")
+    return user
+
+
 # ── Upload endpoints (child device uploads its own data) ─────────────────────
 
 @router.post("/sms")
@@ -197,6 +234,47 @@ def get_sms(
         }
         for r in rows
     ]
+
+
+@router.get("/{user_id}/sms/export")
+def export_sms(
+    user_id: int,
+    token: Optional[str] = Query(default=None),
+    token_header: Optional[str] = Depends(oauth2_scheme),
+    db: Session = Depends(get_db),
+):
+    """Download the FULL (uncapped) SMS history for [user_id] as a CSV file.
+
+    Unlike GET /{user_id}/sms (capped at 500, JSON), this returns every row
+    with a `Content-Disposition: attachment` header so it can be opened
+    directly by a browser / downloaded via `url_launcher` on the client.
+
+    Auth: accepts the normal `Authorization: Bearer` header OR a `?token=`
+    query param (browser download links can't attach custom headers), mirroring
+    streaming.py's websocket token-query-param auth pattern.
+    """
+    user = _get_current_user_header_or_query(token_header, token, db)
+    _assert_can_read(user, user_id, db)
+
+    rows = (
+        db.query(MonitorSms)
+        .filter(MonitorSms.user_id == user_id)
+        .order_by(MonitorSms.id.asc())
+        .all()
+    )
+
+    buffer = io.StringIO()
+    writer = csv.writer(buffer)
+    writer.writerow(["address", "body", "timestamp", "kind"])
+    for r in rows:
+        writer.writerow([r.address or "", r.body or "", r.ts or "", r.kind or ""])
+    buffer.seek(0)
+
+    return StreamingResponse(
+        iter([buffer.getvalue()]),
+        media_type="text/csv",
+        headers={"Content-Disposition": "attachment; filename=sms_export.csv"},
+    )
 
 
 @router.get("/{user_id}/contacts")

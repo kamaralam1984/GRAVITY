@@ -16,12 +16,24 @@ class NotificationEntry {
   /// Unix epoch milliseconds when the notification was posted.
   final int timestamp;
 
+  /// Whether this notification exposed a "Reply" action with a [RemoteInput]
+  /// that KVL Track captured, allowing a parent to reply without opening the
+  /// source app. Additive field — defaults to `false` for older payloads.
+  final bool replyable;
+
+  /// Opaque id identifying the stored reply action on the child device, to be
+  /// echoed back via the `notification_reply` command's `extra.replyId`.
+  /// Null when [replyable] is `false`.
+  final String? replyId;
+
   const NotificationEntry({
     required this.packageName,
     required this.appName,
     required this.title,
     required this.text,
     required this.timestamp,
+    this.replyable = false,
+    this.replyId,
   });
 
   factory NotificationEntry.fromMap(Map<String, dynamic> m) {
@@ -31,6 +43,22 @@ class NotificationEntry {
       title: (m['title'] as String?) ?? '',
       text: (m['text'] as String?) ?? '',
       timestamp: (m['timestamp'] as int?) ?? 0,
+      replyable: (m['replyable'] as bool?) ?? false,
+      replyId: m['replyId'] as String?,
+    );
+  }
+
+  /// Parses a JSON map as returned by `GET /monitor/{user_id}/notifications`
+  /// (snake_case keys, as uploaded via [toJson]).
+  factory NotificationEntry.fromJson(Map<String, dynamic> j) {
+    return NotificationEntry(
+      packageName: (j['package_name'] as String?) ?? '',
+      appName: (j['app_name'] as String?) ?? '',
+      title: (j['title'] as String?) ?? '',
+      text: (j['text'] as String?) ?? '',
+      timestamp: int.tryParse('${j['timestamp'] ?? 0}') ?? 0,
+      replyable: (j['replyable'] as bool?) ?? false,
+      replyId: j['reply_id'] as String?,
     );
   }
 
@@ -40,6 +68,8 @@ class NotificationEntry {
         'title': title,
         'text': text,
         'timestamp': timestamp,
+        'replyable': replyable,
+        if (replyId != null) 'reply_id': replyId,
       };
 }
 
@@ -155,4 +185,23 @@ class NotificationMirrorService {
   /// entries last, capped at 200).
   List<NotificationEntry> get recentNotifications =>
       List.unmodifiable(_buffer);
+
+  // ── Notification reply (child device only) ───────────────────────────────
+
+  /// Sends [text] as a reply to the notification identified by [replyId],
+  /// via the native `RemoteInput` action captured by
+  /// [KvlNotificationListenerService]. Invoked on the child device in
+  /// response to a `notification_reply` remote command.
+  Future<bool> sendReply({required String replyId, required String text}) async {
+    try {
+      final ok = await _ch.invokeMethod<bool>('sendNotificationReply', {
+        'replyId': replyId,
+        'text': text,
+      });
+      return ok ?? false;
+    } on PlatformException catch (e) {
+      AppLogger.e(_tag, 'sendNotificationReply failed', e);
+      return false;
+    }
+  }
 }

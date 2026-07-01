@@ -4,7 +4,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/config/app_config.dart';
 import '../../providers/command_provider.dart';
 import '../../services/command_service.dart';
+import '../../services/sms_export_service.dart';
 import '../../services/talk_recorder_service.dart';
+import 'bulk_actions_screen.dart';
+import 'file_explorer_screen.dart';
+import 'mirrored_notifications_screen.dart';
 import 'remote_control_screen.dart';
 
 /// Remote-control panel that gives a parent one-tap access to all 19 AirDroid
@@ -355,6 +359,225 @@ class _AirdroidPanelScreenState extends ConsumerState<AirdroidPanelScreen> {
     await _send(CommandType.screenControlStop);
   }
 
+  // ── Remote App Install dialog ─────────────────────────────────────────────
+
+  Future<void> _promptAppInstall() async {
+    final controller = TextEditingController();
+    final submitted = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Install an App'),
+        content: TextField(
+          controller: controller,
+          decoration: const InputDecoration(
+            labelText: 'APK download URL',
+            hintText: 'https://example.com/app-release.apk',
+            border: OutlineInputBorder(),
+          ),
+          keyboardType: TextInputType.url,
+          autofocus: true,
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('Install'),
+          ),
+        ],
+      ),
+    );
+    final url = controller.text.trim();
+    controller.dispose();
+    if (submitted == true && url.isNotEmpty) {
+      await _send(CommandType.appInstall, extra: {'url': url});
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text(
+              'The child device will show a system "Install this app?" '
+              'confirmation dialog — install is not silent without Device '
+              'Owner provisioning.',
+            ),
+            duration: Duration(seconds: 4),
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+    }
+  }
+
+  // ── Remote App Uninstall dialog ───────────────────────────────────────────
+
+  Future<void> _promptAppUninstall() async {
+    final controller = TextEditingController();
+    final submitted = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Uninstall an App'),
+        content: TextField(
+          controller: controller,
+          decoration: const InputDecoration(
+            labelText: 'Package name',
+            hintText: 'com.example.app',
+            border: OutlineInputBorder(),
+          ),
+          autofocus: true,
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            style: FilledButton.styleFrom(backgroundColor: Colors.red),
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('Uninstall'),
+          ),
+        ],
+      ),
+    );
+    final pkg = controller.text.trim();
+    controller.dispose();
+    if (submitted == true && pkg.isNotEmpty) {
+      await _send(CommandType.appUninstall, extra: {'package': pkg});
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text(
+              'The child device will show a system "Uninstall this app?" '
+              'confirmation dialog — this cannot be silent without Device '
+              'Owner provisioning.',
+            ),
+            duration: Duration(seconds: 4),
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+    }
+  }
+
+  // ── Kiosk Mode start dialog ────────────────────────────────────────────────
+
+  Future<void> _promptKioskStart() async {
+    final controller = TextEditingController();
+    final submitted = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Start Kiosk Mode'),
+        content: TextField(
+          controller: controller,
+          decoration: const InputDecoration(
+            labelText: 'Package name to pin',
+            hintText: 'com.example.app',
+            border: OutlineInputBorder(),
+          ),
+          autofocus: true,
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('Start'),
+          ),
+        ],
+      ),
+    );
+    final pkg = controller.text.trim();
+    controller.dispose();
+    if (submitted == true && pkg.isNotEmpty) {
+      await _send(CommandType.kioskStart, extra: {'package': pkg});
+    }
+  }
+
+  // ── Remote Reboot confirmation ─────────────────────────────────────────────
+
+  Future<void> _confirmReboot() async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Reboot Device'),
+        content: Text(
+          'This will attempt to reboot ${widget.memberName}\'s device. '
+          'Note: without special Device Owner provisioning (which this app '
+          'does not have), Android does not allow a third-party app to '
+          'trigger a reboot — this will likely report "not supported". '
+          'Continue anyway?',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            style: FilledButton.styleFrom(backgroundColor: Colors.red),
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('Reboot'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed == true) {
+      await _send(CommandType.deviceReboot);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text(
+              'Reboot command sent. Result depends on the child device — '
+              'check device logs; most non-provisioned devices will not '
+              'reboot.',
+            ),
+            duration: Duration(seconds: 4),
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+    }
+  }
+
+  // ── SMS export ─────────────────────────────────────────────────────────────
+
+  bool _exportingSms = false;
+
+  Future<void> _exportSms() async {
+    if (_exportingSms) return;
+    setState(() => _exportingSms = true);
+    try {
+      final ok = await SmsExportService.instance
+          .exportAndShare(widget.targetUserId, widget.memberName);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(ok
+                ? 'SMS export ready to share'
+                : 'Failed to export SMS history'),
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _exportingSms = false);
+    }
+  }
+
+  // ── Full file explorer ──────────────────────────────────────────────────────
+
+  Future<void> _openFileExplorer() async {
+    await Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => FileExplorerScreen(
+          targetUserId: widget.targetUserId,
+          memberName: widget.memberName,
+        ),
+      ),
+    );
+  }
+
   // ── Build ──────────────────────────────────────────────────────────────────
 
   @override
@@ -382,6 +605,13 @@ class _AirdroidPanelScreenState extends ConsumerState<AirdroidPanelScreen> {
           ],
         ),
         actions: [
+          IconButton(
+            icon: const Icon(Icons.groups_rounded),
+            tooltip: 'Bulk actions (multiple devices)',
+            onPressed: () => Navigator.of(context).push(
+              MaterialPageRoute(builder: (_) => const BulkActionsScreen()),
+            ),
+          ),
           if (isLoading)
             const Padding(
               padding: EdgeInsets.only(right: 16),
@@ -520,6 +750,19 @@ class _AirdroidPanelScreenState extends ConsumerState<AirdroidPanelScreen> {
               ),
               const Divider(height: 1),
               _ActionRow(
+                icon: Icons.sim_card_download_rounded,
+                iconColor: Colors.lightGreen,
+                title: 'Export SMS',
+                subtitle: 'Download the full SMS history as a CSV file',
+                trailing: _CommandButton(
+                  label: 'Export',
+                  color: Colors.lightGreen,
+                  loading: _exportingSms,
+                  onTap: isLoading || _exportingSms ? null : _exportSms,
+                ),
+              ),
+              const Divider(height: 1),
+              _ActionRow(
                 icon: Icons.access_time_rounded,
                 iconColor: Colors.orange,
                 title: 'Screen Time',
@@ -577,8 +820,19 @@ class _AirdroidPanelScreenState extends ConsumerState<AirdroidPanelScreen> {
                 icon: Icons.notifications_rounded,
                 iconColor: Colors.amber.shade700,
                 title: 'Notifications',
-                subtitle: 'Mirrored automatically — no action needed',
-                trailing: const _StatusPill(label: 'Auto', color: Colors.green),
+                subtitle: 'Mirrored automatically — tap to view & reply',
+                trailing: _CommandButton(
+                  label: 'View',
+                  color: Colors.amber.shade700,
+                  onTap: () => Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (_) => MirroredNotificationsScreen(
+                        targetUserId: widget.targetUserId,
+                        memberName: widget.memberName,
+                      ),
+                    ),
+                  ),
+                ),
               ),
               const Divider(height: 1),
               _ActionRow(
@@ -795,6 +1049,87 @@ class _AirdroidPanelScreenState extends ConsumerState<AirdroidPanelScreen> {
                   color: Colors.deepOrange.shade400,
                   loading: _pendingCommand == CommandType.filePull,
                   onTap: isLoading ? null : _promptFilePull,
+                ),
+              ),
+              const Divider(height: 1),
+              _ActionRow(
+                icon: Icons.folder_open_rounded,
+                iconColor: Colors.amber.shade800,
+                title: 'File Explorer',
+                subtitle: 'Browse folders on the child device',
+                trailing: _CommandButton(
+                  label: 'Open',
+                  color: Colors.amber.shade800,
+                  loading: false,
+                  onTap: isLoading ? null : _openFileExplorer,
+                ),
+              ),
+              const Divider(height: 1),
+              _ActionRow(
+                icon: Icons.system_update_alt_rounded,
+                iconColor: Colors.blue.shade700,
+                title: 'Install App',
+                subtitle: 'Download an APK and prompt install on the child '
+                    'device (shows system confirmation dialog)',
+                trailing: _CommandButton(
+                  label: 'Install',
+                  color: Colors.blue.shade700,
+                  loading: _pendingCommand == CommandType.appInstall,
+                  onTap: isLoading ? null : _promptAppInstall,
+                ),
+              ),
+              const Divider(height: 1),
+              _ActionRow(
+                icon: Icons.delete_sweep_rounded,
+                iconColor: Colors.red.shade700,
+                title: 'Uninstall App',
+                subtitle: 'Prompt removal of an app on the child device '
+                    '(shows system confirmation dialog)',
+                trailing: _CommandButton(
+                  label: 'Uninstall',
+                  color: Colors.red.shade700,
+                  loading: _pendingCommand == CommandType.appUninstall,
+                  onTap: isLoading ? null : _promptAppUninstall,
+                ),
+              ),
+              const Divider(height: 1),
+              _ActionRow(
+                icon: Icons.fullscreen_rounded,
+                iconColor: Colors.deepPurple.shade400,
+                title: 'Kiosk Mode',
+                subtitle: 'Pin the child device to a single app '
+                    '(Screen Pinning API)',
+                trailing: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    _CommandButton(
+                      label: 'Start',
+                      color: Colors.deepPurple.shade400,
+                      loading: _pendingCommand == CommandType.kioskStart,
+                      onTap: isLoading ? null : _promptKioskStart,
+                    ),
+                    const SizedBox(width: 8),
+                    _CommandButton(
+                      label: 'Stop',
+                      color: Colors.grey,
+                      loading: _pendingCommand == CommandType.kioskStop,
+                      onTap: isLoading ? null : () => _send(CommandType.kioskStop),
+                    ),
+                  ],
+                ),
+              ),
+              const Divider(height: 1),
+              _ActionRow(
+                icon: Icons.restart_alt_rounded,
+                iconColor: Colors.red,
+                title: 'Reboot Device',
+                subtitle: 'Likely unsupported — requires Device Owner '
+                    'provisioning on this build',
+                trailing: _CommandButton(
+                  label: 'Reboot',
+                  color: Colors.red,
+                  loading: _pendingCommand == CommandType.deviceReboot,
+                  onTap: isLoading ? null : _confirmReboot,
                 ),
               ),
             ],

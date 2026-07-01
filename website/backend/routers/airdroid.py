@@ -105,6 +105,11 @@ class MonitorNotification(Base):
     title        = Column(String, nullable=True)
     text         = Column(Text, nullable=True)
     timestamp    = Column(String, nullable=True)
+    # Additive: whether the native listener captured a "Reply" RemoteInput
+    # action for this notification, and the opaque id identifying it on the
+    # child device (echoed back via the `notification_reply` command).
+    replyable    = Column(Integer, nullable=True)   # 0 / 1
+    reply_id     = Column(String, nullable=True)
     created_at   = Column(DateTime(timezone=True), server_default=func.now())
 
 
@@ -155,7 +160,47 @@ class MonitorFile(Base):
     created_at  = Column(DateTime(timezone=True), server_default=func.now())
 
 
+class FileListing(Base):
+    """A directory listing snapshot uploaded by the child device in response to
+    a `list_directory` remote command — the poll pipeline is fire-and-forget,
+    so the child proactively uploads its answer for the parent to fetch."""
+    __tablename__ = "file_listings"
+    id          = Column(Integer, primary_key=True, index=True)
+    user_id     = Column(Integer, ForeignKey("users.id"), nullable=False, index=True)
+    path        = Column(String, nullable=False, index=True)
+    entries_json = Column(Text, nullable=True)   # JSON-encoded list of entry dicts
+    created_at  = Column(DateTime(timezone=True), server_default=func.now())
+
+
 Base.metadata.create_all(bind=engine)
+
+# Defensive migration: ensure file_listings exists even if create_all already
+# ran at import time elsewhere before this model was added.
+try:
+    with engine.connect() as conn:
+        conn.exec_driver_sql(
+            "CREATE TABLE IF NOT EXISTS file_listings ("
+            "id INTEGER PRIMARY KEY, user_id INTEGER NOT NULL, "
+            "path VARCHAR NOT NULL, entries_json TEXT, "
+            "created_at TIMESTAMP)"
+        )
+        conn.commit()
+except Exception:
+    pass  # table already exists (or dialect quirk) — safe to ignore
+
+# Defensive migration: add the `replyable`/`reply_id` columns to a
+# pre-existing `monitor_notifications` table that predates them (create_all
+# only creates missing tables, it never alters existing ones).
+for _stmt in (
+    "ALTER TABLE monitor_notifications ADD COLUMN replyable INTEGER",
+    "ALTER TABLE monitor_notifications ADD COLUMN reply_id VARCHAR",
+):
+    try:
+        with engine.connect() as conn:
+            conn.exec_driver_sql(_stmt)
+            conn.commit()
+    except Exception:
+        pass  # column already exists (or dialect quirk) — safe to ignore
 
 
 # ══════════════════════════════════════════════════════════════════════════════
@@ -204,6 +249,8 @@ class NotificationItem(BaseModel):
     title:        Optional[str] = None
     text:         Optional[str] = None
     timestamp:    Optional[int] = None
+    replyable:    Optional[bool] = False
+    reply_id:     Optional[str] = None
 
 
 class NotificationsUpload(BaseModel):
@@ -230,6 +277,19 @@ class SecurityAlertUpload(BaseModel):
     alert_type: str                        # wrong_password / sim_change / low_battery
     detail:     Optional[Any] = None
     timestamp:  Optional[str] = None
+
+
+class FileEntry(BaseModel):
+    name:        Optional[str] = None
+    path:        Optional[str] = None
+    isDirectory: Optional[bool] = False
+    size:        Optional[int] = None
+    modified:    Optional[int] = None
+
+
+class FileListingUpload(BaseModel):
+    path:    str
+    entries: List[FileEntry]
 
 
 # ══════════════════════════════════════════════════════════════════════════════
@@ -359,6 +419,8 @@ def upload_notifications(
             title=n.title,
             text=n.text,
             timestamp=str(n.timestamp) if n.timestamp else None,
+            replyable=1 if n.replyable else 0,
+            reply_id=n.reply_id,
         )
         for n in data.notifications
     ]
@@ -550,6 +612,27 @@ async def upload_generic_file(
     return {"id": row.id, "filename": row.filename, "size": size, "url": _file_url(row)}
 
 
+@router.post("/file-listing/upload")
+def upload_file_listing(
+    data: FileListingUpload,
+    current_user: models.User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """Child device uploads a directory listing in response to a `list_directory`
+    remote command (the poll pipeline is fire-and-forget, so the child proactively
+    pushes its answer here for the parent to fetch via GET /file-listing/{user_id})."""
+    import json
+    row = FileListing(
+        user_id=current_user.id,
+        path=data.path,
+        entries_json=json.dumps([e.dict() for e in data.entries]),
+    )
+    db.add(row)
+    db.commit()
+    db.refresh(row)
+    return {"id": row.id, "path": row.path, "stored": len(data.entries)}
+
+
 @router.post("/talk/upload")
 async def upload_talk_audio(
     target_user_id: int,
@@ -648,7 +731,7 @@ def get_notifications(
         .limit(500)
         .all()
     )
-    return [{"id": r.id, "package_name": r.package_name, "app_name": r.app_name, "title": r.title, "text": r.text, "timestamp": r.timestamp, "created_at": r.created_at.isoformat() if r.created_at else None} for r in rows]
+    return [{"id": r.id, "package_name": r.package_name, "app_name": r.app_name, "title": r.title, "text": r.text, "timestamp": r.timestamp, "replyable": bool(r.replyable), "reply_id": r.reply_id, "created_at": r.created_at.isoformat() if r.created_at else None} for r in rows]
 
 
 @router.get("/{user_id}/clipboard")
@@ -773,6 +856,36 @@ def get_generic_files(
         .all()
     )
     return [{"id": r.id, "filename": r.filename, "size": r.file_size, "timestamp": r.timestamp, "url": _file_url(r), "created_at": r.created_at.isoformat() if r.created_at else None} for r in rows]
+
+
+@router.get("/file-listing/{user_id}")
+def get_file_listing(
+    user_id: int,
+    path: str = "",
+    current_user: models.User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """Parent fetches the most recent directory listing uploaded by the child
+    for the given [path] (empty string = the child's default/root listing)."""
+    import json
+    _assert_can_read(current_user, user_id, db)
+    row = (
+        db.query(FileListing)
+        .filter(FileListing.user_id == user_id, FileListing.path == path)
+        .order_by(FileListing.id.desc())
+        .first()
+    )
+    if not row:
+        return {"path": path, "entries": [], "created_at": None}
+    try:
+        entries = json.loads(row.entries_json) if row.entries_json else []
+    except (TypeError, ValueError):
+        entries = []
+    return {
+        "path": row.path,
+        "entries": entries,
+        "created_at": row.created_at.isoformat() if row.created_at else None,
+    }
 
 
 @router.get("/files/{file_id}/download")

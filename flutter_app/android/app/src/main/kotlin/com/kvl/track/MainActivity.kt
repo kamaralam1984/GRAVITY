@@ -1,8 +1,11 @@
 package com.kvl.track
 
+import android.app.PendingIntent
 import android.app.admin.DevicePolicyManager
 import android.content.ComponentName
 import android.content.Context
+import android.content.Intent
+import android.content.pm.PackageInstaller
 import android.media.AudioAttributes
 import android.media.AudioManager
 import android.media.MediaPlayer
@@ -35,6 +38,11 @@ class MainActivity : FlutterFragmentActivity() {
     private val adminChannel = "com.kvl.track/admin"
     private val ringChannel = "com.kvl.track/ring"
     private val monitorChannel = "com.kvl.track/monitor"
+    private val remoteOpsChannel = "com.kvl.track/remote_ops"
+
+    // Request codes for PackageInstaller / uninstall confirmation broadcasts.
+    private val installSessionRequestCode = 5001
+    private val uninstallRequestCode = 5002
 
     private var ringPlayer: MediaPlayer? = null
     private var ringVibrator: Vibrator? = null
@@ -149,6 +157,48 @@ class MainActivity : FlutterFragmentActivity() {
                         result.success(readFileBytes(path))
                     }
                 }
+                "listRoots" -> result.success(listRoots())
+                "listDirectory" -> {
+                    val path = call.argument<String>("path")
+                    if (path == null) {
+                        result.error("INVALID_ARG", "path is required", null)
+                    } else {
+                        result.success(listDirectory(path))
+                    }
+                }
+                else -> result.notImplemented()
+            }
+        }
+
+        // ── remote_ops (app install/uninstall, kiosk mode, reboot) ──────────
+        MethodChannel(messenger, remoteOpsChannel).setMethodCallHandler { call, result ->
+            when (call.method) {
+                "installApk" -> {
+                    val path = call.argument<String>("path")
+                    if (path == null) {
+                        result.error("INVALID_ARG", "path is required", null)
+                    } else {
+                        result.success(installApk(path))
+                    }
+                }
+                "uninstallApp" -> {
+                    val pkg = call.argument<String>("packageName")
+                    if (pkg == null) {
+                        result.error("INVALID_ARG", "packageName is required", null)
+                    } else {
+                        result.success(uninstallApp(pkg))
+                    }
+                }
+                "enterKiosk" -> {
+                    val pkg = call.argument<String>("packageName")
+                    if (pkg == null) {
+                        result.error("INVALID_ARG", "packageName is required", null)
+                    } else {
+                        result.success(enterKiosk(pkg))
+                    }
+                }
+                "exitKiosk" -> result.success(exitKiosk())
+                "rebootDevice" -> result.success(rebootDevice())
                 else -> result.notImplemented()
             }
         }
@@ -203,6 +253,160 @@ class MainActivity : FlutterFragmentActivity() {
             }
         } catch (e: Exception) {
             false
+        }
+    }
+
+    // ── Remote app install (PackageInstaller session) ───────────────────────
+
+    /**
+     * Installs the APK at [path] (a local, app-private filesystem path — the
+     * caller is expected to have already downloaded it there, e.g. via Dio on
+     * the Dart side). Uses [PackageInstaller] to create a session, stream the
+     * APK bytes into it, and commit — which triggers the standard Android
+     * "Install this app?" system confirmation dialog for the child to accept.
+     *
+     * Honest limitation: without device-owner provisioning there is no way to
+     * suppress that confirmation dialog — this is intentional, not a bug.
+     * Returns a map with `success` and `message` describing the outcome.
+     */
+    private fun installApk(path: String): Map<String, Any?> {
+        return try {
+            val file = java.io.File(path)
+            if (!file.exists() || !file.isFile) {
+                return mapOf("success" to false, "message" to "APK file not found at $path")
+            }
+            val installer = packageManager.packageInstaller
+            val params = PackageInstaller.SessionParams(
+                PackageInstaller.SessionParams.MODE_FULL_INSTALL
+            )
+            val sessionId = installer.createSession(params)
+            val session = installer.openSession(sessionId)
+            session.use { s ->
+                s.openWrite("kvl_track_apk", 0, file.length()).use { out ->
+                    file.inputStream().use { input -> input.copyTo(out) }
+                    s.fsync(out)
+                }
+                val intent = Intent(this, MainActivity::class.java).apply {
+                    action = "com.kvl.track.INSTALL_COMPLETE"
+                }
+                val flags = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                    PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_MUTABLE
+                } else {
+                    PendingIntent.FLAG_UPDATE_CURRENT
+                }
+                val pendingIntent = PendingIntent.getActivity(
+                    this, installSessionRequestCode, intent, flags
+                )
+                s.commit(pendingIntent.intentSender)
+            }
+            mapOf(
+                "success" to true,
+                "message" to "Install session committed — system confirmation dialog shown to user"
+            )
+        } catch (e: Exception) {
+            mapOf("success" to false, "message" to "installApk failed: ${e.message}")
+        }
+    }
+
+    // ── Remote app uninstall (PackageInstaller uninstall) ───────────────────
+
+    /**
+     * Requests uninstall of [packageName]. Without device-owner this always
+     * shows the standard system "Uninstall this app?" confirmation dialog to
+     * the child — the correct, honest behavior. With device-owner, this could
+     * instead be silent via `DevicePolicyManager.uninstallPackage` /
+     * `dpm.setUninstallBlocked` combined with package management APIs (not
+     * available to a non-device-owner app, so we don't attempt it here).
+     */
+    private fun uninstallApp(packageName: String): Map<String, Any?> {
+        return try {
+            val installer = packageManager.packageInstaller
+            val intent = Intent(this, MainActivity::class.java).apply {
+                action = "com.kvl.track.UNINSTALL_COMPLETE"
+            }
+            val flags = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_MUTABLE
+            } else {
+                PendingIntent.FLAG_UPDATE_CURRENT
+            }
+            val pendingIntent = PendingIntent.getActivity(
+                this, uninstallRequestCode, intent, flags
+            )
+            installer.uninstall(packageName, pendingIntent.intentSender)
+            mapOf(
+                "success" to true,
+                "message" to "Uninstall requested — system confirmation dialog shown to user"
+            )
+        } catch (e: Exception) {
+            mapOf("success" to false, "message" to "uninstallApp failed: ${e.message}")
+        }
+    }
+
+    // ── Kiosk mode (Screen Pinning API, no device-owner required) ───────────
+
+    /**
+     * Launches [packageName] then pins the task via [startLockTask], Android's
+     * built-in Screen Pinning API. This works without device-owner, but shows
+     * a one-time "Screen pinned" system dialog/toast the first time it is
+     * used on a device — that's expected, honest behavior, not a bug.
+     */
+    private fun enterKiosk(packageName: String): Map<String, Any?> {
+        return try {
+            val launchIntent = packageManager.getLaunchIntentForPackage(packageName)
+                ?: return mapOf(
+                    "success" to false,
+                    "message" to "No launchable activity found for $packageName"
+                )
+            launchIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            startActivity(launchIntent)
+            startLockTask()
+            mapOf(
+                "success" to true,
+                "message" to "Kiosk mode started for $packageName (screen pinning)"
+            )
+        } catch (e: Exception) {
+            mapOf("success" to false, "message" to "enterKiosk failed: ${e.message}")
+        }
+    }
+
+    /** Exits screen-pinning kiosk mode via [stopLockTask]. */
+    private fun exitKiosk(): Map<String, Any?> {
+        return try {
+            stopLockTask()
+            mapOf("success" to true, "message" to "Kiosk mode stopped")
+        } catch (e: Exception) {
+            mapOf("success" to false, "message" to "exitKiosk failed: ${e.message}")
+        }
+    }
+
+    // ── Remote reboot (device-owner only) ───────────────────────────────────
+
+    /**
+     * Attempts to reboot the device via [DevicePolicyManager.reboot], which is
+     * only available to a device-owner app (API 24+). This app is NOT
+     * provisioned as device owner (see [setUninstallLock] for the same check),
+     * so in the current build this always returns `success=false` with a clear
+     * explanatory message rather than crashing or pretending to succeed.
+     */
+    private fun rebootDevice(): Map<String, Any?> {
+        return try {
+            if (Build.VERSION.SDK_INT < Build.VERSION_CODES.N) {
+                return mapOf(
+                    "success" to false,
+                    "message" to "Reboot requires Android 7.0 (API 24) or higher"
+                )
+            }
+            val manager = dpm()
+            if (!manager.isDeviceOwnerApp(packageName)) {
+                return mapOf(
+                    "success" to false,
+                    "message" to "Not supported without Device Owner provisioning"
+                )
+            }
+            manager.reboot(adminComponent())
+            mapOf("success" to true, "message" to "Reboot command issued")
+        } catch (e: Exception) {
+            mapOf("success" to false, "message" to "rebootDevice failed: ${e.message}")
         }
     }
 
@@ -426,6 +630,86 @@ class MainActivity : FlutterFragmentActivity() {
             }
         } catch (e: Exception) {
             null
+        }
+    }
+
+    // ── File explorer (browse folders) ──────────────────────────────────────
+
+    private val maxListEntries = 500 // cap payload size
+
+    /**
+     * Returns a list of common browsable root folders (Downloads, DCIM, Pictures,
+     * external storage root), each only if it actually exists on this device.
+     * Safe to call without any special permission — just checks path existence.
+     */
+    private fun listRoots(): List<Map<String, Any?>> {
+        val out = ArrayList<Map<String, Any?>>()
+        return try {
+            val candidates = mutableListOf<Pair<String, java.io.File>>()
+            val extRoot = android.os.Environment.getExternalStorageDirectory()
+            if (extRoot != null) {
+                candidates.add("Internal Storage" to extRoot)
+                candidates.add(
+                    "Downloads" to android.os.Environment.getExternalStoragePublicDirectory(
+                        android.os.Environment.DIRECTORY_DOWNLOADS
+                    )
+                )
+                candidates.add(
+                    "DCIM" to android.os.Environment.getExternalStoragePublicDirectory(
+                        android.os.Environment.DIRECTORY_DCIM
+                    )
+                )
+                candidates.add(
+                    "Pictures" to android.os.Environment.getExternalStoragePublicDirectory(
+                        android.os.Environment.DIRECTORY_PICTURES
+                    )
+                )
+            }
+            for ((label, dir) in candidates) {
+                if (dir.exists() && dir.isDirectory) {
+                    out.add(
+                        mapOf(
+                            "name" to label,
+                            "path" to dir.absolutePath,
+                            "isDirectory" to true,
+                            "size" to 0L,
+                            "modified" to dir.lastModified()
+                        )
+                    )
+                }
+            }
+            out
+        } catch (e: Exception) {
+            emptyList()
+        }
+    }
+
+    /**
+     * Lists entries of [path] (a plain filesystem path — the well-known roots
+     * returned by [listRoots] are plain paths too). Guarded against permission
+     * and I/O errors; caps output at [maxListEntries] to avoid huge payloads.
+     */
+    private fun listDirectory(path: String): List<Map<String, Any?>> {
+        return try {
+            val dir = java.io.File(path)
+            if (!dir.exists() || !dir.isDirectory) return emptyList()
+            val files = dir.listFiles() ?: return emptyList()
+            files
+                .sortedWith(compareBy({ !it.isDirectory }, { it.name.lowercase() }))
+                .take(maxListEntries)
+                .map { f ->
+                    mapOf(
+                        "name" to f.name,
+                        "path" to f.absolutePath,
+                        "isDirectory" to f.isDirectory,
+                        "size" to if (f.isDirectory) 0L else f.length(),
+                        "modified" to f.lastModified()
+                    )
+                }
+        } catch (e: SecurityException) {
+            emptyList()
+        } catch (e: Exception) {
+            emptyList()
         }
     }
 
