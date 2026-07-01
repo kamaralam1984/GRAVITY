@@ -12,9 +12,15 @@ from auth import get_current_user
 
 router = APIRouter()
 
-# ── Upload base directory (persists via Docker volume /app/data) ──────────────
+# ── Upload base directory (persists via Docker volume /app/data on Docker
+# deployments; falls back to a local dir next to this file for bare-metal
+# deployments where /app doesn't exist or isn't writable) ─────────────────────
 UPLOAD_DIR = os.environ.get("UPLOAD_DIR", "/app/data/uploads")
-os.makedirs(UPLOAD_DIR, exist_ok=True)
+try:
+    os.makedirs(UPLOAD_DIR, exist_ok=True)
+except OSError:
+    UPLOAD_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "data", "uploads")
+    os.makedirs(UPLOAD_DIR, exist_ok=True)
 
 
 class ChatAttachment(Base):

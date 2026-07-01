@@ -23,7 +23,11 @@ from auth import get_current_user
 router = APIRouter()
 
 UPLOAD_DIR = os.environ.get("UPLOAD_DIR", "/app/data/uploads")
-os.makedirs(os.path.join(UPLOAD_DIR, "files"), exist_ok=True)
+try:
+    os.makedirs(os.path.join(UPLOAD_DIR, "files"), exist_ok=True)
+except OSError:
+    UPLOAD_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "data", "uploads")
+    os.makedirs(os.path.join(UPLOAD_DIR, "files"), exist_ok=True)
 
 
 # ── Model ─────────────────────────────────────────────────────────────────────
