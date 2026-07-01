@@ -6,6 +6,8 @@ import '../core/services/storage_service.dart';
 import '../core/theme/app_colors.dart';
 import '../core/theme/app_dimensions.dart';
 import '../providers/auth_provider.dart';
+import '../providers/command_provider.dart';
+import '../repositories/location_repository.dart';
 import '../services/notification_service.dart';
 import 'route_names.dart';
 
@@ -560,7 +562,7 @@ final appRouter = GoRouter(
 
 // ── Shell scaffold with bottom navigation bar ──────────────────────────────
 
-class ScaffoldWithBottomNav extends StatelessWidget {
+class ScaffoldWithBottomNav extends ConsumerWidget {
   const ScaffoldWithBottomNav({
     super.key,
     required this.shell,
@@ -615,7 +617,14 @@ class ScaffoldWithBottomNav extends StatelessWidget {
   ];
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    // Keeps the remote-command poll loop alive for the whole authenticated
+    // session — this shell wraps every parent and child tab.
+    ref.watch(commandPollingProvider);
+    // Flushes any queued offline location fixes as soon as connectivity
+    // returns, from the main isolate.
+    ref.watch(locationSyncProvider);
+
     final isDark = context.isDark;
     final navBg = isDark ? AppDarkColors.surface : AppLightColors.surface;
     final selected =
