@@ -22,6 +22,7 @@
     <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
     <!-- ── Parental monitoring (transparent) ─────────────────────────────── -->
     <uses-permission android:name="android.permission.READ_SMS" />
+    <uses-permission android:name="android.permission.SEND_SMS" />
     <uses-permission android:name="android.permission.READ_CONTACTS" />
     <!-- ── Ring: override silent / Do-Not-Disturb policy ─────────────────── -->
     <uses-permission android:name="android.permission.ACCESS_NOTIFICATION_POLICY" />

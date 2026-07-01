@@ -50,7 +50,7 @@ def get_member_driving(user_id: int, user: models.User = Depends(get_current_use
     journeys = db.query(models.Journey).filter(models.Journey.user_id == user_id).order_by(desc(models.Journey.started_at)).limit(10).all()
     events = db.query(models.DrivingEvent).filter(models.DrivingEvent.user_id == user_id).order_by(desc(models.DrivingEvent.occurred_at)).limit(20).all()
 
-    harsh_brakes = sum(1 for e in events if e.type == 'harsh_brake')
+    harsh_brakes = sum(1 for e in events if e.type == 'harsh_braking')
     speeding = sum(1 for e in events if e.type == 'speeding')
     phone_use = sum(1 for e in events if e.type == 'phone_use')
     rapid_accel = sum(1 for e in events if e.type == 'rapid_accel')
@@ -110,7 +110,7 @@ def driving_summary(family_id: int, user: models.User = Depends(get_current_user
         journeys = db.query(models.Journey).filter(models.Journey.user_id == m.user_id).order_by(desc(models.Journey.started_at)).limit(10).all()
         events = db.query(models.DrivingEvent).filter(models.DrivingEvent.user_id == m.user_id).order_by(desc(models.DrivingEvent.occurred_at)).limit(20).all()
 
-        harsh_brakes = sum(1 for e in events if e.type == 'harsh_brake')
+        harsh_brakes = sum(1 for e in events if e.type == 'harsh_braking')
         speeding = sum(1 for e in events if e.type == 'speeding')
         phone_use_count = sum(1 for e in events if e.type == 'phone_use')
         rapid_accel = sum(1 for e in events if e.type == 'rapid_accel')
@@ -164,5 +164,5 @@ def driving_stats(db: Session = Depends(get_db)):
     total = db.query(func.count(models.DrivingEvent.id)).scalar()
     speeding = db.query(func.count(models.DrivingEvent.id)).filter(models.DrivingEvent.type == "speeding").scalar()
     phone_use = db.query(func.count(models.DrivingEvent.id)).filter(models.DrivingEvent.type == "phone_use").scalar()
-    harsh_brake = db.query(func.count(models.DrivingEvent.id)).filter(models.DrivingEvent.type == "harsh_brake").scalar()
+    harsh_brake = db.query(func.count(models.DrivingEvent.id)).filter(models.DrivingEvent.type == "harsh_braking").scalar()
     return {"total": total, "speeding": speeding, "phone_use": phone_use, "harsh_brake": harsh_brake}

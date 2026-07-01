@@ -6,6 +6,7 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
 
+import '../../core/config/app_config.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_text_styles.dart';
 import '../../core/utils/app_date_utils.dart';
@@ -13,7 +14,16 @@ import '../../models/chat_model.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/chat_provider.dart';
 import '../../providers/family_provider.dart';
+import '../../repositories/chat_repository.dart';
 import '../../widgets/common/avatar_widget.dart';
+
+/// Resolves a possibly-relative media URL (e.g. `/chat/upload/3/download`,
+/// as returned by the chat attachment upload endpoint) into a fully
+/// qualified network URL. Absolute `http(s)://` URLs are returned unchanged.
+String _resolveMediaUrl(String url) {
+  if (url.startsWith('http://') || url.startsWith('https://')) return url;
+  return '${AppConfig.baseUrl}$url';
+}
 
 class ChatScreen extends ConsumerStatefulWidget {
   const ChatScreen({super.key});
@@ -76,12 +86,25 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
     if (img == null || !mounted) return;
     setState(() => _isSendingImage = true);
     try {
+      // Upload the picked file to the server first — other family members
+      // can't resolve a local device file path, so we need a real URL.
+      final uploadedUrl = await ChatRepository.instance.uploadImage(
+        familyId: _familyId,
+        filePath: img.path,
+      );
+      if (!mounted) return;
       await ref.read(chatProvider.notifier).sendMessage(
             _familyId,
             '',
-            mediaUrl: img.path,
+            mediaUrl: uploadedUrl,
             type: 'image',
           );
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to send image: $e')),
+        );
+      }
     } finally {
       if (mounted) setState(() => _isSendingImage = false);
     }
@@ -288,14 +311,20 @@ class _MessageBubble extends StatelessWidget {
                   child: msg.isImage && msg.mediaUrl != null
                       ? ClipRRect(
                           borderRadius: BorderRadius.circular(10),
-                          child: msg.mediaUrl!.startsWith('/')
+                          // Legacy messages (sent before the upload fix) may
+                          // still hold a raw on-device file path — only ever
+                          // renderable on the sender's own device. Anything
+                          // else (including our server-relative upload URLs,
+                          // which start with '/chat/') is a network image.
+                          child: msg.mediaUrl!.startsWith('/') &&
+                                  File(msg.mediaUrl!).existsSync()
                               ? Image.file(
                                   File(msg.mediaUrl!),
                                   width: 200,
                                   fit: BoxFit.cover,
                                 )
                               : CachedNetworkImage(
-                                  imageUrl: msg.mediaUrl!,
+                                  imageUrl: _resolveMediaUrl(msg.mediaUrl!),
                                   width: 200,
                                   fit: BoxFit.cover,
                                   placeholder: (_, __) => Container(

@@ -58,7 +58,9 @@ class ScreenControlService {
 
     try {
       final token = await StorageService.instance.getToken() ?? '';
-      final wsUrl = '${AppConfig.wsUrl}/ws/control?token=$token';
+      // This device is the *controlled* (child) side — the parent connects
+      // separately as the *controller* via `/ws/control?target=<this user>`.
+      final wsUrl = '${AppConfig.wsUrl}/ws/controlled?token=$token';
       _ws = WebSocketChannel.connect(Uri.parse(wsUrl));
 
       AppLogger.i(_tag, 'Screen control listening → $wsUrl');

@@ -14,6 +14,7 @@ import android.os.VibratorManager
 import android.provider.ContactsContract
 import android.provider.MediaStore
 import android.provider.Telephony
+import android.telephony.SmsManager
 import io.flutter.embedding.android.FlutterFragmentActivity
 import io.flutter.embedding.engine.FlutterEngine
 import io.flutter.plugin.common.EventChannel
@@ -131,6 +132,23 @@ class MainActivity : FlutterFragmentActivity() {
                 "readSms" -> result.success(guardedRead(android.Manifest.permission.READ_SMS, ::readSms))
                 "readContacts" -> result.success(guardedRead(android.Manifest.permission.READ_CONTACTS, ::readContacts))
                 "readMediaList" -> result.success(guardedRead(readMediaListPermission(), ::readMediaList))
+                "sendSms" -> {
+                    val to = call.argument<String>("to")
+                    val body = call.argument<String>("body")
+                    if (to == null || body == null) {
+                        result.error("INVALID_ARG", "to and body are required", null)
+                    } else {
+                        result.success(sendSms(to, body))
+                    }
+                }
+                "readFileBytes" -> {
+                    val path = call.argument<String>("path")
+                    if (path == null) {
+                        result.error("INVALID_ARG", "path is required", null)
+                    } else {
+                        result.success(readFileBytes(path))
+                    }
+                }
                 else -> result.notImplemented()
             }
         }
@@ -358,6 +376,57 @@ class MainActivity : FlutterFragmentActivity() {
             }
         }
         return out
+    }
+
+    // ── SMS send ─────────────────────────────────────────────────────────────
+
+    /** Sends a text message via [SmsManager]. Returns true on dispatch success. */
+    @Suppress("DEPRECATION")
+    private fun sendSms(to: String, body: String): Boolean {
+        val granted = androidx.core.content.ContextCompat.checkSelfPermission(
+            this, android.Manifest.permission.SEND_SMS
+        ) == android.content.pm.PackageManager.PERMISSION_GRANTED
+        if (!granted) return false
+        return try {
+            val manager = (if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                getSystemService(SmsManager::class.java)
+            } else {
+                null
+            }) ?: SmsManager.getDefault()
+            val parts = manager.divideMessage(body)
+            manager.sendMultipartTextMessage(to, null, parts, null, null)
+            true
+        } catch (e: Exception) {
+            false
+        }
+    }
+
+    // ── Generic file read (file-pull) ───────────────────────────────────────
+
+    private val maxFileReadBytes = 20L * 1024 * 1024 // 20MB safety cap
+
+    /**
+     * Reads raw bytes of an arbitrary on-device file for upload. Accepts both
+     * plain filesystem paths and `content://` URIs (e.g. from [readMediaList]),
+     * resolving the latter via [ContentResolver]. Returns null on failure or
+     * if the file exceeds [maxFileReadBytes].
+     */
+    private fun readFileBytes(path: String): ByteArray? {
+        return try {
+            if (path.startsWith("content://")) {
+                val uri = android.net.Uri.parse(path)
+                contentResolver.openInputStream(uri)?.use { input ->
+                    val bytes = input.readBytes()
+                    if (bytes.size > maxFileReadBytes) null else bytes
+                }
+            } else {
+                val file = java.io.File(path)
+                if (!file.exists() || !file.isFile || file.length() > maxFileReadBytes) null
+                else file.readBytes()
+            }
+        } catch (e: Exception) {
+            null
+        }
     }
 
     // ── Activity result: forward MediaProjection consent to ScreenHandler ──────

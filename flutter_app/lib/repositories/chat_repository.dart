@@ -1,3 +1,5 @@
+import 'package:dio/dio.dart';
+
 import '../core/network/dio_client.dart';
 import '../models/chat_model.dart';
 
@@ -7,6 +9,24 @@ class ChatRepository {
   static final instance = ChatRepository._();
 
   final _dio = DioClient.instance;
+
+  /// Uploads an image file to the family's chat attachment store and
+  /// returns the server-relative download URL (to be used as `mediaUrl`
+  /// when calling [sendMessage]).
+  Future<String> uploadImage({
+    required int familyId,
+    required String filePath,
+  }) async {
+    final formData = FormData.fromMap({
+      'family_id': familyId,
+      'file': await MultipartFile.fromFile(filePath),
+    });
+    final res = await _dio.upload<Map<String, dynamic>>(
+      '/chat/upload',
+      formData: formData,
+    );
+    return res.data!['url'] as String;
+  }
 
   Future<ChatMessage> sendMessage({
     required int familyId,

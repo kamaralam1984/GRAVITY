@@ -40,6 +40,12 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
   Future<void> _checkBiometric() async {
     try {
+      // Only offer the biometric shortcut if the device supports it AND the
+      // user has explicitly turned it on in Settings > Security.
+      if (!StorageService.instance.isBiometricEnabled) {
+        if (mounted) setState(() => _biometricAvailable = false);
+        return;
+      }
       final canCheck = await _auth.canCheckBiometrics;
       final isSupported = await _auth.isDeviceSupported();
       if (mounted) {

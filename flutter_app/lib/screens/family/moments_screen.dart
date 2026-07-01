@@ -1,15 +1,28 @@
+import 'dart:io';
+
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:image_picker/image_picker.dart';
 
+import '../../core/config/app_config.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_text_styles.dart';
 import '../../core/utils/app_date_utils.dart';
 import '../../providers/family_provider.dart';
 import '../../providers/moments_provider.dart';
+import '../../repositories/chat_repository.dart';
 import '../../repositories/moments_repository.dart';
 import '../../widgets/common/avatar_widget.dart';
+
+/// Resolves a possibly-relative media URL (e.g. `/chat/upload/3/download`,
+/// as returned by the attachment upload endpoint) into a fully qualified
+/// network URL. Absolute `http(s)://` URLs are returned unchanged.
+String _resolveMediaUrl(String url) {
+  if (url.startsWith('http://') || url.startsWith('https://')) return url;
+  return '${AppConfig.baseUrl}$url';
+}
 
 /// Family Moments — a premium social feed where family members share photos
 /// and captions with each other.
@@ -308,9 +321,8 @@ class _MomentImage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isNetwork = url.startsWith('http');
-    if (!isNetwork) {
-      // Local path fallback (optimistic post before upload completes).
+    if (url.isEmpty) {
+      // No image to show (defensive — callers should already guard on this).
       return Container(
         height: 220,
         width: double.infinity,
@@ -320,7 +332,7 @@ class _MomentImage extends StatelessWidget {
       );
     }
     return CachedNetworkImage(
-      imageUrl: url,
+      imageUrl: _resolveMediaUrl(url),
       width: double.infinity,
       fit: BoxFit.cover,
       placeholder: (_, __) => Container(
@@ -409,6 +421,8 @@ class _ComposerSheetState extends ConsumerState<_ComposerSheet> {
   final TextEditingController _captionCtrl = TextEditingController();
   final TextEditingController _imageUrlCtrl = TextEditingController();
   bool _showImageField = false;
+  File? _pickedImage;
+  bool _isUploading = false;
 
   @override
   void dispose() {
@@ -417,15 +431,87 @@ class _ComposerSheetState extends ConsumerState<_ComposerSheet> {
     super.dispose();
   }
 
+  Future<void> _pickImage(ImageSource source) async {
+    final picker = ImagePicker();
+    final XFile? img =
+        await picker.pickImage(source: source, imageQuality: 80);
+    if (img == null || !mounted) return;
+    setState(() {
+      _pickedImage = File(img.path);
+      _showImageField = false;
+      _imageUrlCtrl.clear();
+    });
+  }
+
+  Future<void> _showImageSourcePicker() async {
+    final source = await showModalBottomSheet<ImageSource>(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (sheetContext) => SafeArea(
+        child: Container(
+          decoration: BoxDecoration(
+            color: context.surfaceColor,
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              ListTile(
+                leading: Icon(Icons.photo_camera_rounded,
+                    color: context.primaryColor),
+                title: const Text('Take a photo'),
+                onTap: () => Navigator.pop(sheetContext, ImageSource.camera),
+              ),
+              ListTile(
+                leading: Icon(Icons.photo_library_rounded,
+                    color: context.primaryColor),
+                title: const Text('Choose from gallery'),
+                onTap: () => Navigator.pop(sheetContext, ImageSource.gallery),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+    if (source != null) {
+      await _pickImage(source);
+    }
+  }
+
   Future<void> _submit() async {
     final caption = _captionCtrl.text.trim();
-    final imageUrl = _imageUrlCtrl.text.trim();
-    if (caption.isEmpty && imageUrl.isEmpty) return;
+    final pastedUrl = _imageUrlCtrl.text.trim();
+    if (caption.isEmpty && pastedUrl.isEmpty && _pickedImage == null) return;
+
+    String? imageUrl = pastedUrl.isEmpty ? null : pastedUrl;
+
+    if (_pickedImage != null) {
+      setState(() => _isUploading = true);
+      try {
+        imageUrl = await ChatRepository.instance.uploadImage(
+          familyId: widget.familyId,
+          filePath: _pickedImage!.path,
+        );
+      } catch (e) {
+        if (!mounted) return;
+        setState(() => _isUploading = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to upload photo: $e'),
+            backgroundColor: context.sosColor,
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+        return;
+      }
+      if (!mounted) return;
+      setState(() => _isUploading = false);
+    }
 
     final ok = await ref.read(momentsProvider.notifier).postMoment(
           widget.familyId,
           caption: caption,
-          imageUrl: imageUrl.isEmpty ? null : imageUrl,
+          imageUrl: imageUrl,
         );
     if (!mounted) return;
     if (ok) {
@@ -508,7 +594,38 @@ class _ComposerSheetState extends ConsumerState<_ComposerSheet> {
               ),
             ),
             const SizedBox(height: 12),
-            if (_showImageField) ...[
+            if (_pickedImage != null) ...[
+              Stack(
+                children: [
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(16),
+                    child: Image.file(
+                      _pickedImage!,
+                      width: double.infinity,
+                      height: 180,
+                      fit: BoxFit.cover,
+                    ),
+                  ),
+                  Positioned(
+                    top: 8,
+                    right: 8,
+                    child: GestureDetector(
+                      onTap: () => setState(() => _pickedImage = null),
+                      child: Container(
+                        padding: const EdgeInsets.all(4),
+                        decoration: const BoxDecoration(
+                          color: Colors.black54,
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Icon(Icons.close_rounded,
+                            color: Colors.white, size: 18),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+            ] else if (_showImageField) ...[
               TextField(
                 controller: _imageUrlCtrl,
                 keyboardType: TextInputType.url,
@@ -537,26 +654,40 @@ class _ComposerSheetState extends ConsumerState<_ComposerSheet> {
                 ),
               ),
               const SizedBox(height: 12),
-            ] else
-              Align(
-                alignment: Alignment.centerLeft,
-                child: TextButton.icon(
-                  onPressed: () =>
-                      setState(() => _showImageField = true),
-                  icon: Icon(Icons.add_photo_alternate_rounded,
-                      color: context.primaryColor, size: 20),
-                  label: Text(
-                    'Add a photo',
-                    style: AppTextStyles.button(context)
-                        .copyWith(color: context.primaryColor),
+            ],
+            Align(
+              alignment: Alignment.centerLeft,
+              child: Wrap(
+                spacing: 4,
+                children: [
+                  TextButton.icon(
+                    onPressed: _showImageSourcePicker,
+                    icon: Icon(Icons.add_photo_alternate_rounded,
+                        color: context.primaryColor, size: 20),
+                    label: Text(
+                      _pickedImage != null ? 'Change photo' : 'Add a photo',
+                      style: AppTextStyles.button(context)
+                          .copyWith(color: context.primaryColor),
+                    ),
                   ),
-                ),
+                  if (_pickedImage == null && !_showImageField)
+                    TextButton(
+                      onPressed: () =>
+                          setState(() => _showImageField = true),
+                      child: Text(
+                        'or paste a URL',
+                        style: AppTextStyles.body2(context)
+                            .copyWith(color: context.textMuted),
+                      ),
+                    ),
+                ],
               ),
+            ),
             const SizedBox(height: 6),
             SizedBox(
               width: double.infinity,
               child: GestureDetector(
-                onTap: isPosting ? null : _submit,
+                onTap: (isPosting || _isUploading) ? null : _submit,
                 child: Container(
                   height: 52,
                   alignment: Alignment.center,
@@ -571,7 +702,7 @@ class _ComposerSheetState extends ConsumerState<_ComposerSheet> {
                       ),
                     ],
                   ),
-                  child: isPosting
+                  child: (isPosting || _isUploading)
                       ? const SizedBox(
                           width: 22,
                           height: 22,

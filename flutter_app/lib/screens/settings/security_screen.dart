@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:qr_flutter/qr_flutter.dart';
 
+import '../../core/services/storage_service.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_text_styles.dart';
 import '../../providers/auth_provider.dart';
@@ -40,6 +42,7 @@ class _SecurityScreenState extends ConsumerState<SecurityScreen> {
   @override
   void initState() {
     super.initState();
+    _biometricEnabled = StorageService.instance.isBiometricEnabled;
     _load2faStatus();
   }
 
@@ -154,9 +157,19 @@ class _SecurityScreenState extends ConsumerState<SecurityScreen> {
           mainAxisSize: MainAxisSize.min,
           children: [
             if (_twoFaQrUrl != null)
-              Image.network(_twoFaQrUrl!, width: 150, height: 150,
-                  errorBuilder: (_, __, ___) =>
-                      const Icon(Icons.qr_code_rounded, size: 80)),
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: QrImageView(
+                  data: _twoFaQrUrl!,
+                  version: QrVersions.auto,
+                  size: 150,
+                  gapless: false,
+                ),
+              ),
             const SizedBox(height: 12),
             Text(
               'Scan this QR with your authenticator app, then enter the 6-digit code to confirm.',
@@ -478,8 +491,10 @@ class _SecurityScreenState extends ConsumerState<SecurityScreen> {
                 ),
                 Switch(
                   value: _biometricEnabled,
-                  onChanged: (v) =>
-                      setState(() => _biometricEnabled = v),
+                  onChanged: (v) {
+                    setState(() => _biometricEnabled = v);
+                    StorageService.instance.setBiometricEnabled(v);
+                  },
                   activeColor: context.goldColor,
                 ),
               ],

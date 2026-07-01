@@ -72,6 +72,7 @@ class FamilyMember {
     this.speed,
     this.heading,
     this.accuracy,
+    this.phone,
   });
 
   final int userId;
@@ -82,6 +83,7 @@ class FamilyMember {
   final String role;
   final String? avatarUrl;
   final bool isOnline;
+  final String? phone;
 
   // Location fields (may be null if user has not shared location)
   final double? lat;
@@ -126,6 +128,7 @@ class FamilyMember {
         speed: _toDouble(json['speed']),
         heading: _toDouble(json['heading']),
         accuracy: _toDouble(json['accuracy']),
+        phone: json['phone'] as String?,
       );
 
   Map<String, dynamic> toJson() => {
@@ -144,6 +147,7 @@ class FamilyMember {
         'speed': speed,
         'heading': heading,
         'accuracy': accuracy,
+        'phone': phone,
       };
 
   FamilyMember copyWith({
@@ -162,6 +166,7 @@ class FamilyMember {
     double? speed,
     double? heading,
     double? accuracy,
+    String? phone,
   }) =>
       FamilyMember(
         userId: userId ?? this.userId,
@@ -179,6 +184,7 @@ class FamilyMember {
         speed: speed ?? this.speed,
         heading: heading ?? this.heading,
         accuracy: accuracy ?? this.accuracy,
+        phone: phone ?? this.phone,
       );
 
   @override

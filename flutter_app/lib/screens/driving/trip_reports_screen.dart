@@ -127,7 +127,7 @@ class _TripReportsScreenState extends ConsumerState<TripReportsScreen> {
         color: (ctx) => ctx.sosColor,
       ),
       _EventTypeInfo(
-        key: 'hard_brake',
+        key: 'harsh_braking',
         label: 'Hard Brake',
         icon: Icons.warning_rounded,
         color: (ctx) => ctx.warmColor,
@@ -336,7 +336,7 @@ class _EventCard extends StatelessWidget {
       case 'speeding':
         return _IconColorPair(
             Icons.speed_rounded, ctx.sosColor);
-      case 'hard_brake':
+      case 'harsh_braking':
         return _IconColorPair(
             Icons.warning_rounded, ctx.warmColor);
       case 'rapid_acceleration':

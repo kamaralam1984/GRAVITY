@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:geolocator/geolocator.dart';
+import 'package:image_picker/image_picker.dart';
 
 import '../../core/services/storage_service.dart';
 import '../../core/theme/app_colors.dart';
@@ -106,6 +107,22 @@ class _DrivingScreenState extends ConsumerState<DrivingScreen> {
                             // Live speed monitor
                             const _LiveSpeedMonitor()
                                 .animate(delay: 80.ms)
+                                .fadeIn(duration: 400.ms)
+                                .slideY(begin: 0.08, end: 0,
+                                    curve: Curves.easeOut),
+                            const SizedBox(height: 16),
+
+                            // Route safety score for the current location
+                            const _RouteSafetyCard()
+                                .animate(delay: 100.ms)
+                                .fadeIn(duration: 400.ms)
+                                .slideY(begin: 0.08, end: 0,
+                                    curve: Curves.easeOut),
+                            const SizedBox(height: 16),
+
+                            // Driver identity verification
+                            const _DriverVerifyCard()
+                                .animate(delay: 120.ms)
                                 .fadeIn(duration: 400.ms)
                                 .slideY(begin: 0.08, end: 0,
                                     curve: Curves.easeOut),
@@ -554,6 +571,299 @@ class _LiveSpeedMonitorState extends State<_LiveSpeedMonitor> {
                     ),
                   ),
                 ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ── Route Safety Card ─────────────────────────────────────────────────────────
+
+/// Fetches a safety score for the current GPS location from
+/// `GET /route/safety` and displays it as a compact card.
+class _RouteSafetyCard extends StatefulWidget {
+  const _RouteSafetyCard();
+
+  @override
+  State<_RouteSafetyCard> createState() => _RouteSafetyCardState();
+}
+
+class _RouteSafetyCardState extends State<_RouteSafetyCard> {
+  final DrivingRepository _repo = DrivingRepository();
+  bool _loading = false;
+  RouteSafety? _safety;
+  String? _error;
+
+  @override
+  void initState() {
+    super.initState();
+    _load();
+  }
+
+  Future<void> _load() async {
+    setState(() {
+      _loading = true;
+      _error = null;
+    });
+    try {
+      var perm = await Geolocator.checkPermission();
+      if (perm == LocationPermission.denied) {
+        perm = await Geolocator.requestPermission();
+      }
+      if (perm == LocationPermission.denied ||
+          perm == LocationPermission.deniedForever) {
+        if (mounted) {
+          setState(() {
+            _loading = false;
+            _error = 'Location permission required';
+          });
+        }
+        return;
+      }
+      final pos = await Geolocator.getCurrentPosition();
+      final safety = await _repo.getRouteSafety(
+        lat: pos.latitude,
+        lng: pos.longitude,
+      );
+      if (!mounted) return;
+      setState(() {
+        _safety = safety;
+        _loading = false;
+      });
+    } catch (_) {
+      if (!mounted) return;
+      setState(() {
+        _error = 'Route safety unavailable right now';
+        _loading = false;
+      });
+    }
+  }
+
+  Color _levelColor(BuildContext context, String level) {
+    switch (level) {
+      case 'safe':
+        return context.safeColor;
+      case 'caution':
+        return context.sosColor;
+      default:
+        return context.warmColor;
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final safety = _safety;
+    final color = safety == null
+        ? context.textMuted
+        : _levelColor(context, safety.level);
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        color: context.surfaceColor,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: color.withOpacity(0.22)),
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 48,
+            height: 48,
+            alignment: Alignment.center,
+            decoration: BoxDecoration(
+              color: color.withOpacity(0.12),
+              shape: BoxShape.circle,
+              border: Border.all(color: color.withOpacity(0.35), width: 2),
+            ),
+            child: Icon(Icons.shield_moon_rounded, color: color, size: 24),
+          ),
+          const SizedBox(width: 14),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Route Safety',
+                  style: AppTextStyles.subtitle2(context).copyWith(
+                    fontWeight: FontWeight.w700,
+                    color: context.textPrimary,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                if (_loading)
+                  Text('Checking current area…',
+                      style: AppTextStyles.caption(context))
+                else if (_error != null)
+                  Text(_error!,
+                      style: AppTextStyles.caption(context)
+                          .copyWith(color: context.sosColor))
+                else if (safety != null)
+                  Text(
+                    '${safety.level[0].toUpperCase()}${safety.level.substring(1)}'
+                    ' · ${safety.factors.join(', ').replaceAll('_', ' ')}',
+                    style: AppTextStyles.caption(context),
+                  ),
+              ],
+            ),
+          ),
+          if (_loading)
+            const SizedBox(
+              width: 22,
+              height: 22,
+              child: CircularProgressIndicator(strokeWidth: 2),
+            )
+          else if (safety != null)
+            Text(
+              '${safety.score}',
+              style: TextStyle(
+                fontFamily: 'PlusJakartaSans',
+                fontSize: 26,
+                fontWeight: FontWeight.w800,
+                color: color,
+              ),
+            )
+          else
+            IconButton(
+              icon: Icon(Icons.refresh_rounded, color: context.primaryColor),
+              onPressed: _load,
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+// ── Driver Verify Card ────────────────────────────────────────────────────────
+
+/// Lets a family member confirm "it's me driving" by taking a selfie, which
+/// is submitted to `POST /driver/verify`.
+class _DriverVerifyCard extends StatefulWidget {
+  const _DriverVerifyCard();
+
+  @override
+  State<_DriverVerifyCard> createState() => _DriverVerifyCardState();
+}
+
+class _DriverVerifyCardState extends State<_DriverVerifyCard> {
+  final DrivingRepository _repo = DrivingRepository();
+  bool _verifying = false;
+  bool? _lastResult;
+
+  Future<void> _verify() async {
+    final picker = ImagePicker();
+    final img = await picker.pickImage(
+      source: ImageSource.camera,
+      preferredCameraDevice: CameraDevice.front,
+      imageQuality: 80,
+    );
+    if (img == null || !mounted) return;
+
+    setState(() {
+      _verifying = true;
+      _lastResult = null;
+    });
+    try {
+      final ok = await _repo.verifyDriver(selfieUrl: img.path);
+      if (!mounted) return;
+      setState(() {
+        _lastResult = ok;
+        _verifying = false;
+      });
+    } catch (_) {
+      if (!mounted) return;
+      setState(() {
+        _lastResult = false;
+        _verifying = false;
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final color = _lastResult == true
+        ? context.safeColor
+        : _lastResult == false
+            ? context.sosColor
+            : context.goldColor;
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        color: context.surfaceColor,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: color.withOpacity(0.22)),
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 48,
+            height: 48,
+            alignment: Alignment.center,
+            decoration: BoxDecoration(
+              color: color.withOpacity(0.12),
+              shape: BoxShape.circle,
+              border: Border.all(color: color.withOpacity(0.35), width: 2),
+            ),
+            child: Icon(Icons.face_retouching_natural_rounded,
+                color: color, size: 24),
+          ),
+          const SizedBox(width: 14),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Verify Driver',
+                  style: AppTextStyles.subtitle2(context).copyWith(
+                    fontWeight: FontWeight.w700,
+                    color: context.textPrimary,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  _lastResult == true
+                      ? 'Identity verified'
+                      : _lastResult == false
+                          ? 'Verification failed — try again'
+                          : 'Confirm who is currently driving',
+                  style: AppTextStyles.caption(context),
+                ),
+              ],
+            ),
+          ),
+          ElevatedButton.icon(
+            onPressed: _verifying ? null : _verify,
+            style: ElevatedButton.styleFrom(
+              backgroundColor: context.primaryColor,
+              foregroundColor: Colors.white,
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+              elevation: 0,
+            ),
+            icon: _verifying
+                ? const SizedBox(
+                    width: 14,
+                    height: 14,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                    ),
+                  )
+                : const Icon(Icons.camera_alt_rounded, size: 16),
+            label: const Text(
+              'Verify',
+              style: TextStyle(
+                fontFamily: 'Inter',
+                fontWeight: FontWeight.w700,
+                fontSize: 13,
               ),
             ),
           ),

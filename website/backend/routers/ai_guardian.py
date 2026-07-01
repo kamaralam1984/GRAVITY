@@ -54,6 +54,8 @@ class DailyReportResponse(BaseModel):
     overall_score: int
     events: List[ReportEvent]
     recommendations: List[str]
+    is_fallback: bool = False  # True when ai_summary is a canned template, not live AI output
+    source: str = "ai"         # "ai" | "template"
 
 
 class InsightItem(BaseModel):
@@ -86,6 +88,8 @@ class AskResponse(BaseModel):
     related_members: List[str]
     action_items: List[str]
     generated_at: str
+    is_fallback: bool = False  # True when response is a canned template, not live AI output
+    source: str = "ai"         # "ai" | "template"
 
 
 class RiskPrediction(BaseModel):
@@ -217,7 +221,7 @@ async def get_safety_scores(family_id: int, db: Session = Depends(get_db)):
 
     harsh_count = sum(
         1 for e in driving_events_24h
-        if e.type in ("harsh_brake", "rapid_accel") or e.severity == "high"
+        if e.type in ("harsh_braking", "rapid_accel") or e.severity == "high"
     )
     high_severity_driving = sum(1 for e in driving_events_24h if e.severity == "high")
 
@@ -513,6 +517,7 @@ async def get_daily_report(family_id: int, db: Session = Depends(get_db)):
     )
     user_msg = f"Family ID {family_id} — today's events:\n{events_text}"
     ai_text = await _call_ai(system_prompt, user_msg, max_tokens=400)
+    is_fallback = ai_text is None
 
     if ai_text and "RECOMMENDATIONS:" in ai_text:
         parts = ai_text.split("RECOMMENDATIONS:", 1)
@@ -522,7 +527,7 @@ async def get_daily_report(family_id: int, db: Session = Depends(get_db)):
     elif ai_text:
         ai_summary = ai_text
     else:
-        # Graceful fallback
+        # Graceful fallback — no provider available/succeeded; template text only.
         if alert_count > 0:
             ai_summary = (
                 f"Family safety requires attention today — {alert_count} alert(s) detected. "
@@ -556,6 +561,8 @@ async def get_daily_report(family_id: int, db: Session = Depends(get_db)):
         overall_score=overall_score,
         events=events,
         recommendations=recommendations,
+        is_fallback=is_fallback,
+        source="template" if is_fallback else "ai",
     )
 
 
@@ -887,6 +894,7 @@ Health records (today):
         user_message += f"\n\nAdditional context: {body.context}"
 
     ai_text = await _call_ai(system_prompt, user_message, max_tokens=500)
+    is_fallback = ai_text is None
 
     related_members: List[str] = list(member_map.values())[:3]
     action_items: List[str] = ["View family dashboard", "View today's report"]
@@ -946,6 +954,8 @@ Health records (today):
         related_members=related_members,
         action_items=action_items,
         generated_at=_now_iso(),
+        is_fallback=is_fallback,
+        source="template" if is_fallback else "ai",
     )
 
 
@@ -984,7 +994,7 @@ async def get_risk_predictions(user_id: int, db: Session = Depends(get_db)):
     total_signals += len(driving_14d)
 
     if driving_14d:
-        harsh_events = [e for e in driving_14d if e.type in ("harsh_brake", "rapid_accel")]
+        harsh_events = [e for e in driving_14d if e.type in ("harsh_braking", "rapid_accel")]
         high_sev = [e for e in driving_14d if e.severity == "high"]
         speeding = [e for e in driving_14d if e.type == "speeding"]
         phone_use = [e for e in driving_14d if e.type == "phone_use"]

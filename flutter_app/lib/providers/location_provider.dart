@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../models/location_model.dart';
 import '../models/sos_model.dart';
+import '../services/notification_service.dart';
 import '../services/websocket_service.dart';
 
 // ── State ─────────────────────────────────────────────────────────────────────
@@ -125,6 +126,21 @@ class LocationNotifier extends StateNotifier<LocationState> {
     // Keep max 50 events
     if (events.length > 50) events.removeRange(50, events.length);
     state = state.copyWith(geofenceEvents: events);
+
+    final type = msg['type'] as String?;
+    final geofenceName = msg['geofence_name']?.toString() ?? 'Geofence';
+    final userName = msg['user_name']?.toString();
+    if (type == 'geofence_enter') {
+      NotificationService.showGeofence(
+        geofenceName,
+        '${userName ?? 'Someone'} entered $geofenceName',
+      );
+    } else if (type == 'geofence_exit') {
+      NotificationService.showGeofence(
+        geofenceName,
+        '${userName ?? 'Someone'} left $geofenceName',
+      );
+    }
   }
 
   void clearSos() {

@@ -1,13 +1,60 @@
-from fastapi import APIRouter, HTTPException, Depends, WebSocket, Query
+import os, shutil, uuid
+
+from fastapi import APIRouter, HTTPException, Depends, WebSocket, Query, File, UploadFile
+from fastapi.responses import FileResponse
 from sqlalchemy.orm import Session
-from sqlalchemy import desc, func
+from sqlalchemy import Column, Integer, String, DateTime, ForeignKey, desc, func
 from pydantic import BaseModel
 from typing import Optional
-from database import get_db
+from database import Base, engine, get_db
 import models
 from auth import get_current_user
 
 router = APIRouter()
+
+# ── Upload base directory (persists via Docker volume /app/data) ──────────────
+UPLOAD_DIR = os.environ.get("UPLOAD_DIR", "/app/data/uploads")
+os.makedirs(UPLOAD_DIR, exist_ok=True)
+
+
+class ChatAttachment(Base):
+    """A file (image, etc.) attached to a chat message or Moments post.
+
+    Stored per-family — any member of the family it was uploaded to can read
+    it back. Deliberately NOT the single-owner `/files/*` model, which only
+    lets the original uploader download a file again.
+    """
+    __tablename__ = "chat_attachments"
+    id          = Column(Integer, primary_key=True, index=True)
+    family_id   = Column(Integer, ForeignKey("families.id"), nullable=False, index=True)
+    uploader_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    filename    = Column(String, nullable=True)
+    orig_name   = Column(String, nullable=True)
+    file_path   = Column(String, nullable=True)
+    file_size   = Column(Integer, nullable=True)
+    mime_type   = Column(String, nullable=True)
+    created_at  = Column(DateTime(timezone=True), server_default=func.now())
+
+
+Base.metadata.create_all(bind=engine)
+
+
+def _assert_family_member(user: models.User, family_id: int, db: Session):
+    """Same-family check (not same-user-id): any member (or owner) of the
+    family may read attachments shared within it."""
+    membership = db.query(models.FamilyMember).filter(
+        models.FamilyMember.family_id == family_id,
+        models.FamilyMember.user_id == user.id,
+    ).first()
+    if membership:
+        return
+    owns = db.query(models.Family).filter(
+        models.Family.id == family_id, models.Family.owner_id == user.id,
+    ).first()
+    if owns:
+        return
+    raise HTTPException(status_code=403, detail="Not a member of this family")
+
 
 class MessageCreate(BaseModel):
     family_id: int
@@ -22,6 +69,65 @@ def send_message(data: MessageCreate, user: models.User = Depends(get_current_us
     db.commit()
     db.refresh(msg)
     return {"id": msg.id, "message": "Sent"}
+
+@router.post("/upload")
+async def upload_chat_attachment(
+    family_id: int,
+    file: UploadFile = File(...),
+    user: models.User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """Upload an image (or other file) to attach to a chat message.
+
+    Stored per-family under UPLOAD_DIR/chat/{family_id}/ and readable by any
+    member of that family via GET /chat/upload/{id}/download — the returned
+    `url` should be used as `media_url` in POST /chat/send.
+    """
+    _assert_family_member(user, family_id, db)
+
+    dest_dir = os.path.join(UPLOAD_DIR, "chat", str(family_id))
+    os.makedirs(dest_dir, exist_ok=True)
+    ext = os.path.splitext(file.filename or "")[1] or ".bin"
+    filename = f"{uuid.uuid4().hex}{ext}"
+    dest_path = os.path.join(dest_dir, filename)
+    with open(dest_path, "wb") as f:
+        shutil.copyfileobj(file.file, f)
+    size = os.path.getsize(dest_path)
+
+    row = ChatAttachment(
+        family_id=family_id,
+        uploader_id=user.id,
+        filename=filename,
+        orig_name=file.filename,
+        file_path=dest_path,
+        file_size=size,
+        mime_type=file.content_type,
+    )
+    db.add(row)
+    db.commit()
+    db.refresh(row)
+    return {
+        "id": row.id,
+        "url": f"/chat/upload/{row.id}/download",
+        "size": size,
+        "mime_type": row.mime_type,
+    }
+
+
+@router.get("/upload/{attachment_id}/download")
+def download_chat_attachment(
+    attachment_id: int,
+    user: models.User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    row = db.query(ChatAttachment).filter(ChatAttachment.id == attachment_id).first()
+    if not row:
+        raise HTTPException(status_code=404, detail="Not found")
+    _assert_family_member(user, row.family_id, db)
+    if not row.file_path or not os.path.exists(row.file_path):
+        raise HTTPException(status_code=404, detail="File missing on disk")
+    return FileResponse(row.file_path, filename=row.orig_name or row.filename, media_type=row.mime_type or "application/octet-stream")
+
 
 @router.get("/family/{family_id}")
 def get_messages(

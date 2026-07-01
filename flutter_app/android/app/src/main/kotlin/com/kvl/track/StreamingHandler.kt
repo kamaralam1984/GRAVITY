@@ -3,8 +3,10 @@ package com.kvl.track
 import android.content.Context
 import android.hardware.camera2.CameraCharacteristics
 import android.hardware.camera2.CameraManager
+import android.media.AudioAttributes
 import android.media.AudioFormat
 import android.media.AudioRecord
+import android.media.MediaPlayer
 import android.media.MediaRecorder
 import android.os.Handler
 import android.os.Looper
@@ -19,6 +21,8 @@ import io.flutter.plugin.common.MethodChannel
  *   - EventChannel  "com.kvl.track/audio_stream_events"  — raw PCM chunks (ByteArray)
  *   - MethodChannel "com.kvl.track/audio_stream"          — startAudioCapture / stopAudioCapture
  *   - MethodChannel "com.kvl.track/flashlight"            — setTorch(enable) / isTorchOn
+ *   - MethodChannel "com.kvl.track/remote_audio"          — startRecording(path) / stopRecording
+ *   - MethodChannel "com.kvl.track/talk"                  — playUrl(url) / stop — talk-to-device playback
  *
  * Register this from [MainActivity.configureFlutterEngine] by calling
  *   StreamingHandler(applicationContext).register(messenger)
@@ -33,6 +37,8 @@ class StreamingHandler(private val context: Context) {
     private var isFileRecording = false
     private var _filePath: String? = null
 
+    private var talkPlayer: MediaPlayer? = null
+
     // ── Public registration ───────────────────────────────────────────────────
 
     fun register(messenger: BinaryMessenger) {
@@ -40,6 +46,7 @@ class StreamingHandler(private val context: Context) {
         registerAudioControlChannel(messenger)
         registerFlashlightChannel(messenger)
         registerRemoteAudioChannel(messenger)
+        registerTalkChannel(messenger)
     }
 
     // ── Audio EventChannel ────────────────────────────────────────────────────
@@ -203,5 +210,63 @@ class StreamingHandler(private val context: Context) {
         try { mediaRecorder?.stop() } catch (_: Exception) {}
         mediaRecorder?.release()
         mediaRecorder = null
+    }
+
+    // ── Talk-to-device playback ────────────────────────────────────────────────
+
+    private fun registerTalkChannel(messenger: BinaryMessenger) {
+        MethodChannel(messenger, "com.kvl.track/talk")
+            .setMethodCallHandler { call, result ->
+                when (call.method) {
+                    "playUrl" -> {
+                        val url = call.argument<String>("url")
+                        if (url == null) {
+                            result.error("INVALID_ARG", "url is required", null)
+                            return@setMethodCallHandler
+                        }
+                        @Suppress("UNCHECKED_CAST")
+                        val headers = call.argument<Map<String, String>>("headers")
+                        playTalkUrl(url, headers)
+                        result.success(true)
+                    }
+                    "stop" -> {
+                        stopTalkPlayback()
+                        result.success(true)
+                    }
+                    else -> result.notImplemented()
+                }
+            }
+    }
+
+    private fun playTalkUrl(url: String, headers: Map<String, String>?) {
+        stopTalkPlayback()
+        try {
+            talkPlayer = MediaPlayer().apply {
+                setAudioAttributes(
+                    AudioAttributes.Builder()
+                        .setUsage(AudioAttributes.USAGE_VOICE_COMMUNICATION)
+                        .setContentType(AudioAttributes.CONTENT_TYPE_SPEECH)
+                        .build()
+                )
+                setDataSource(context, android.net.Uri.parse(url), headers)
+                setOnCompletionListener { stopTalkPlayback() }
+                setOnErrorListener { _, _, _ -> stopTalkPlayback(); true }
+                prepareAsync()
+                setOnPreparedListener { it.start() }
+            }
+        } catch (e: Exception) {
+            stopTalkPlayback()
+        }
+    }
+
+    private fun stopTalkPlayback() {
+        talkPlayer?.let {
+            try {
+                if (it.isPlaying) it.stop()
+            } catch (_: Exception) {
+            }
+            it.release()
+        }
+        talkPlayer = null
     }
 }

@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:developer' as developer;
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -6,9 +7,12 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:go_router/go_router.dart';
+import 'package:url_launcher/url_launcher.dart';
 
+import '../../core/services/permission_service.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_text_styles.dart';
+import '../../models/family_model.dart';
 import '../../models/sos_model.dart';
 import '../../providers/sos_provider.dart';
 import '../../providers/family_provider.dart';
@@ -53,6 +57,27 @@ class _SosScreenState extends ConsumerState<SosScreen>
 
   Future<void> _fetchLocation() async {
     try {
+      var granted = await PermissionService.instance.isLocationGranted();
+      if (!granted) {
+        granted = await PermissionService.instance.requestLocationPermission();
+      }
+      if (!granted) {
+        developer.log(
+          'SOS: location permission denied, SOS will trigger without coordinates.',
+          name: 'SosScreen',
+        );
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text(
+                'Location permission denied. SOS alerts will be sent without your location.',
+              ),
+            ),
+          );
+        }
+        return;
+      }
+
       final pos = await Geolocator.getCurrentPosition(
         locationSettings: const LocationSettings(
           accuracy: LocationAccuracy.high,
@@ -65,7 +90,23 @@ class _SosScreenState extends ConsumerState<SosScreen>
           _currentLng = pos.longitude;
         });
       }
-    } catch (_) {}
+    } catch (e, st) {
+      developer.log(
+        'SOS: failed to get current location, SOS will trigger without coordinates.',
+        name: 'SosScreen',
+        error: e,
+        stackTrace: st,
+      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text(
+              'Could not get your location. SOS alerts will be sent without it.',
+            ),
+          ),
+        );
+      }
+    }
   }
 
   void _toggleShake(bool v) {
@@ -753,7 +794,45 @@ class _SosOption extends StatelessWidget {
 class _EmergencyContactsList extends StatelessWidget {
   const _EmergencyContactsList({required this.members});
 
-  final List members;
+  final List<FamilyMember> members;
+
+  Future<void> _call(BuildContext context, String phone) async {
+    final uri = Uri(scheme: 'tel', path: phone);
+    try {
+      final ok = await launchUrl(uri, mode: LaunchMode.externalApplication);
+      if (!ok && context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Could not start the call.')),
+        );
+      }
+    } catch (e) {
+      developer.log('SOS: failed to launch call', name: 'SosScreen', error: e);
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Could not start the call.')),
+        );
+      }
+    }
+  }
+
+  Future<void> _sms(BuildContext context, String phone) async {
+    final uri = Uri(scheme: 'sms', path: phone);
+    try {
+      final ok = await launchUrl(uri, mode: LaunchMode.externalApplication);
+      if (!ok && context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Could not open messaging app.')),
+        );
+      }
+    } catch (e) {
+      developer.log('SOS: failed to launch sms', name: 'SosScreen', error: e);
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Could not open messaging app.')),
+        );
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -779,6 +858,8 @@ class _EmergencyContactsList extends StatelessWidget {
       separatorBuilder: (_, __) => const SizedBox(height: 8),
       itemBuilder: (ctx, i) {
         final m = members[i];
+        final phone = m.phone;
+        final hasPhone = phone != null && phone.trim().isNotEmpty;
         return Container(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
           decoration: BoxDecoration(
@@ -818,7 +899,7 @@ class _EmergencyContactsList extends StatelessWidget {
                       ),
                     ),
                     Text(
-                      m.role,
+                      hasPhone ? phone : m.role,
                       style: TextStyle(
                         fontFamily: 'Inter',
                         fontSize: 12,
@@ -828,6 +909,22 @@ class _EmergencyContactsList extends StatelessWidget {
                   ],
                 ),
               ),
+              if (hasPhone) ...[
+                IconButton(
+                  onPressed: () => _call(context, phone),
+                  icon: const Icon(Icons.call_rounded),
+                  color: const Color(0xFF10B981),
+                  tooltip: 'Call ${m.name}',
+                  visualDensity: VisualDensity.compact,
+                ),
+                IconButton(
+                  onPressed: () => _sms(context, phone),
+                  icon: const Icon(Icons.sms_rounded),
+                  color: context.textSecondary,
+                  tooltip: 'Message ${m.name}',
+                  visualDensity: VisualDensity.compact,
+                ),
+              ],
               Container(
                 width: 9,
                 height: 9,

@@ -6,11 +6,13 @@ Contract (mounted at /commands, /api prefix added by nginx):
 - GET  /commands/poll                                  -> pending commands for caller's device
 - POST /commands/ack   {command_id:int}                -> mark a command acknowledged/done
 """
+import json
+
 from fastapi import APIRouter, HTTPException, Depends
 from sqlalchemy.orm import Session
 from sqlalchemy import Column, Integer, String, DateTime, func
 from pydantic import BaseModel
-from typing import List, Optional
+from typing import List, Optional, Dict, Any
 from datetime import datetime
 
 from database import get_db, Base
@@ -19,8 +21,22 @@ import models
 
 router = APIRouter()
 
-# Allowed command types per shared contract
-ALLOWED_TYPES = {"ring", "locate", "refresh", "restart", "stop_ring"}
+# Allowed command types per shared contract — must mirror CommandType in
+# flutter_app/lib/services/command_service.dart.
+ALLOWED_TYPES = {
+    "ring", "stop_ring", "locate", "refresh", "restart",
+    "remote_audio", "stop_audio", "remote_photo",
+    "call_logs", "screen_time", "app_list", "block_app", "unblock_app",
+    "screenshot", "flashlight_on", "flashlight_off", "storage_info",
+    "screen_mirror_start", "screen_mirror_stop",
+    "camera_stream_start", "camera_stream_stop",
+    "audio_stream_start", "audio_stream_stop",
+    "remote_wipe", "clipboard_get", "clipboard_set",
+    "screen_control_start", "screen_control_stop",
+    "app_lock_set", "app_lock_unlock",
+    "web_filter_add", "web_filter_remove", "web_filter_set_enabled",
+    "sms_send", "talk_play", "file_pull",
+}
 
 
 # ── Model ─────────────────────────────────────────────────────────────────────
@@ -33,6 +49,10 @@ class Command(Base):
     # Whose device the command targets (the child / family member)
     target_user_id = Column(Integer, nullable=False, index=True)
     type = Column(String, nullable=False)
+    # JSON-encoded payload for commands that need extra data (e.g. block_app's
+    # package, clipboard_set's text, sms_send's to/body). Nullable for the
+    # simple no-payload commands.
+    extra = Column(String, nullable=True)
     status = Column(String, default="pending", index=True)  # pending / acked
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     acked_at = Column(DateTime(timezone=True), nullable=True)
@@ -44,12 +64,23 @@ try:
 except Exception:
     pass
 
+# Defensive migration: add the `extra` column to a pre-existing `commands`
+# table that was created before this column existed (create_all only creates
+# missing tables, it never alters existing ones).
+try:
+    with __import__("database").engine.connect() as conn:
+        conn.exec_driver_sql("ALTER TABLE commands ADD COLUMN extra VARCHAR")
+        conn.commit()
+except Exception:
+    pass  # column already exists (or dialect quirk) — safe to ignore
+
 
 # ── Schemas ───────────────────────────────────────────────────────────────────
 
 class SendCommand(BaseModel):
     target_user_id: int
     type: str
+    extra: Optional[Dict[str, Any]] = None
 
 
 class AckCommand(BaseModel):
@@ -61,11 +92,30 @@ class CommandResponse(BaseModel):
     sender_id: int
     target_user_id: int
     type: str
+    extra: Optional[Dict[str, Any]] = None
     status: str
     created_at: Optional[datetime] = None
 
     class Config:
         from_attributes = True
+
+    @classmethod
+    def from_orm_command(cls, cmd: "Command") -> "CommandResponse":
+        parsed: Optional[Dict[str, Any]] = None
+        if cmd.extra:
+            try:
+                parsed = json.loads(cmd.extra)
+            except (TypeError, ValueError):
+                parsed = None
+        return cls(
+            id=cmd.id,
+            sender_id=cmd.sender_id,
+            target_user_id=cmd.target_user_id,
+            type=cmd.type,
+            extra=parsed,
+            status=cmd.status,
+            created_at=cmd.created_at,
+        )
 
 
 # ── Helpers ───────────────────────────────────────────────────────────────────
@@ -134,12 +184,13 @@ def send_command(
         sender_id=current_user.id,
         target_user_id=data.target_user_id,
         type=data.type,
+        extra=json.dumps(data.extra) if data.extra is not None else None,
         status="pending",
     )
     db.add(cmd)
     db.commit()
     db.refresh(cmd)
-    return cmd
+    return CommandResponse.from_orm_command(cmd)
 
 
 @router.get("/poll", response_model=List[CommandResponse])
@@ -157,7 +208,7 @@ def poll_commands(
         .order_by(Command.created_at.asc())
         .all()
     )
-    return cmds
+    return [CommandResponse.from_orm_command(c) for c in cmds]
 
 
 @router.post("/ack")

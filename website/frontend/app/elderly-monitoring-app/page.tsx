@@ -48,7 +48,7 @@ const FEATURES = [
   {
     icon: <Activity size={24} />,
     title: 'Fall Detection',
-    description: 'KVL Track detects sudden falls using the phone accelerometer and gyroscope. An SOS countdown activates — if your parent does not dismiss it in 30 seconds, all caregivers are alerted automatically.',
+    description: 'KVL Track detects sudden falls using the phone accelerometer (free-fall followed by an impact signature). A 15-second confirmation countdown appears — if your parent does not tap "I\'m Safe," an SOS alert with GPS location is sent to caregivers automatically.',
     color: '#EF4444',
   },
   {
@@ -77,17 +77,17 @@ const FEATURES = [
   },
   {
     icon: <AlertCircle size={24} />,
-    title: 'Emergency Escalation',
-    description: 'When fall detection or SOS triggers, KVL Track escalates through all designated emergency contacts in order — until someone responds. No alert is ever left unacknowledged.',
+    title: 'Emergency Contacts',
+    description: 'When fall detection or SOS triggers, all caregivers in the family circle are alerted immediately with GPS location. From the Emergency Contacts list, any caregiver can call or text a contact with one tap.',
     color: '#8B5CF6',
   },
 ]
 
 const STATS = [
-  { value: '500K+', label: 'Seniors Monitored', color: '#EC4899' },
-  { value: '98.4%', label: 'Fall Detection Accuracy', color: '#EF4444' },
   { value: '8', label: 'Caregivers Per Senior', color: '#4B80F0' },
-  { value: '4.2 min', label: 'Average Emergency Response', color: '#10B981' },
+  { value: '15 sec', label: 'Fall Confirmation Window', color: '#EF4444' },
+  { value: '24/7', label: 'Live Location Tracking', color: '#EC4899' },
+  { value: '1-tap', label: 'Emergency Contact Calling', color: '#10B981' },
 ]
 
 const FAQS = [
@@ -97,7 +97,7 @@ const FAQS = [
   },
   {
     q: 'How does fall detection work?',
-    a: "KVL Track's fall detection uses the phone's accelerometer, gyroscope, and barometer to identify sudden impact events followed by inactivity — the signature motion pattern of a fall. When detected, a 30-second countdown notification appears on your parent's screen. If they do not dismiss it (indicating they are incapacitated), all caregivers receive an immediate SOS alert with GPS coordinates and an audio clip of the surrounding environment.",
+    a: "KVL Track's fall detection uses the phone's accelerometer to identify the free-fall-then-impact motion signature of a fall. When detected, a 15-second confirmation notification appears on your parent's screen with \"I'm Safe\" and \"Alert Now\" options. If they do not respond in time, caregivers receive an immediate SOS alert with GPS coordinates.",
   },
   {
     q: 'Does my parent need a smartphone?',
@@ -105,11 +105,11 @@ const FAQS = [
   },
   {
     q: 'Can multiple caregivers monitor the same person?',
-    a: "Yes. KVL Track supports up to 8 designated caregivers for a single senior account. Each caregiver installs the KVL Track app and is invited to the senior's monitoring circle. All caregivers share the same real-time view — location, wellness score, medication log, and recent activity. Emergency alerts are sent to all caregivers simultaneously, and the escalation system contacts them in sequence until someone acknowledges the alert.",
+    a: "Yes. KVL Track supports up to 8 designated caregivers for a single senior account. Each caregiver installs the KVL Track app and is invited to the senior's monitoring circle. All caregivers share the same real-time view — location, wellness score, medication log, and recent activity. Emergency alerts (fall detection, SOS) are sent to all caregivers simultaneously, and any caregiver can call or text an emergency contact directly from the app with one tap.",
   },
   {
     q: 'What happens when a fall is detected?',
-    a: "When fall detection activates: (1) A 30-second countdown notification appears on your parent's phone — they can dismiss it if they are fine. (2) If not dismissed, all registered caregivers receive an immediate push notification with GPS location. (3) Audio recording starts from the phone's microphone and is shared with caregivers via the app. (4) If no caregiver acknowledges within 5 minutes, KVL Track escalates to the next contact in the sequence. (5) Depending on your plan, 112/emergency services can also be automatically contacted.",
+    a: "When fall detection activates: (1) A 15-second confirmation notification appears on your parent's phone with \"I'm Safe\" and \"Alert Now\" buttons. (2) If they tap \"I'm Safe,\" nothing further happens. (3) If they don't respond in time (or tap \"Alert Now\"), all registered caregivers receive an immediate push notification with GPS location. (4) Any caregiver can then call or text the senior or another emergency contact directly from the app.",
   },
 ]
 

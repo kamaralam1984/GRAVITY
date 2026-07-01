@@ -1151,6 +1151,10 @@ class _AiReportSummaryCard extends StatelessWidget {
             .toList() ??
         const <String>[];
     final reportDate = report['report_date'] as String?;
+    // Backend sets this when no AI provider was available/succeeded and the
+    // summary text is a canned template rather than live AI output.
+    final isFallback = report['is_fallback'] == true ||
+        report['source'] == 'template';
 
     return GlassCard(
       glowColor: color,
@@ -1179,6 +1183,30 @@ class _AiReportSummaryCard extends StatelessWidget {
               ),
             ],
           ),
+          if (isFallback) ...[
+            const SizedBox(height: 8),
+            Container(
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+              decoration: BoxDecoration(
+                color: context.textMuted.withOpacity(0.12),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(Icons.info_outline_rounded,
+                      size: 13, color: context.textMuted),
+                  const SizedBox(width: 4),
+                  Text(
+                    'Basic mode — AI unavailable, showing a standard summary',
+                    style: AppTextStyles.caption(context)
+                        .copyWith(color: context.textMuted),
+                  ),
+                ],
+              ),
+            ),
+          ],
           const SizedBox(height: 12),
           Text(summary,
               style: AppTextStyles.body2(context)

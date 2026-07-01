@@ -8,20 +8,26 @@ import '../core/constants/api_constants.dart';
 import '../core/network/dio_client.dart';
 import '../repositories/location_repository.dart';
 import '../services/background_location_service.dart';
+import 'app_lock_service.dart';
 import 'app_manager_service.dart';
 import 'call_log_service.dart';
 import 'clipboard_service.dart';
 import 'data_wipe_service.dart';
+import 'file_transfer_service.dart';
 import 'flashlight_service.dart';
 import 'live_audio_stream_service.dart';
 import 'live_camera_stream_service.dart';
 import 'remote_audio_service.dart';
 import 'remote_camera_service.dart';
 import 'ring_service.dart';
+import 'screen_control_service.dart';
 import 'screen_mirror_service.dart';
 import 'screen_time_service.dart';
 import 'screenshot_service.dart';
+import 'sms_service.dart';
 import 'storage_info_service.dart';
+import 'talk_service.dart';
+import 'web_filter_service.dart';
 
 // ── Command types ───────────────────────────────────────────────────────────
 
@@ -59,6 +65,18 @@ class CommandType {
   static const String clipboardGet = 'clipboard_get';
   static const String clipboardSet = 'clipboard_set';
 
+  // AirDroid feature set — batch 3.
+  static const String screenControlStart = 'screen_control_start';
+  static const String screenControlStop = 'screen_control_stop';
+  static const String appLockSet = 'app_lock_set';
+  static const String appLockUnlock = 'app_lock_unlock';
+  static const String webFilterAdd = 'web_filter_add';
+  static const String webFilterRemove = 'web_filter_remove';
+  static const String webFilterSetEnabled = 'web_filter_set_enabled';
+  static const String smsSend = 'sms_send';
+  static const String talkPlay = 'talk_play';
+  static const String filePull = 'file_pull';
+
   static const List<String> all = [
     ring, stopRing, locate, refresh, restart,
     remoteAudio, stopAudio, remotePhoto,
@@ -68,6 +86,10 @@ class CommandType {
     cameraStreamStart, cameraStreamStop,
     audioStreamStart, audioStreamStop,
     remoteWipe, clipboardGet, clipboardSet,
+    screenControlStart, screenControlStop,
+    appLockSet, appLockUnlock,
+    webFilterAdd, webFilterRemove, webFilterSetEnabled,
+    smsSend, talkPlay, filePull,
   ];
 }
 
@@ -158,14 +180,17 @@ class CommandService {
 
   // ── Outbound (parent → child) ─────────────────────────────────────────────
 
-  /// POST /commands/send — dispatch a [type] command to [targetUserId]'s device.
+  /// POST /commands/send — dispatch a [type] command to [targetUserId]'s device,
+  /// optionally carrying [extra] payload data (e.g. `{'package': ...}`).
   Future<void> sendCommand({
     required int targetUserId,
     required String type,
+    Map<String, dynamic>? extra,
   }) async {
     await _dio.post(ApiConstants.commandsSend, data: {
       'target_user_id': targetUserId,
       'type': type,
+      if (extra != null) 'extra': extra,
     });
   }
 
@@ -283,6 +308,53 @@ class CommandService {
         case CommandType.clipboardSet:
           final text = cmd.extra?['text'] as String?;
           if (text != null) await ClipboardService.instance.receiveClipboard(text);
+          break;
+
+        // ── AirDroid feature set — batch 3 ──────────────────────────────────
+        case CommandType.screenControlStart:
+          await ScreenControlService.instance.startListening();
+          break;
+        case CommandType.screenControlStop:
+          await ScreenControlService.instance.stopListening();
+          break;
+        case CommandType.appLockSet:
+          final packages = (cmd.extra?['packages'] as List?)
+                  ?.map((e) => e.toString())
+                  .toList() ??
+              const <String>[];
+          final pin = (cmd.extra?['pin'] as String?) ?? '0000';
+          await AppLockService.instance.setLockedApps(packages, pin: pin);
+          break;
+        case CommandType.appLockUnlock:
+          final pkg3 = cmd.extra?['package'] as String?;
+          if (pkg3 != null) await AppLockService.instance.unlockApp(pkg3);
+          break;
+        case CommandType.webFilterAdd:
+          final url = cmd.extra?['url'] as String?;
+          if (url != null) await WebFilterService.instance.addBlockedUrl(url);
+          break;
+        case CommandType.webFilterRemove:
+          final url2 = cmd.extra?['url'] as String?;
+          if (url2 != null) await WebFilterService.instance.removeBlockedUrl(url2);
+          break;
+        case CommandType.webFilterSetEnabled:
+          final enabled = cmd.extra?['enabled'] as bool? ?? true;
+          await WebFilterService.instance.setEnabled(enabled);
+          break;
+        case CommandType.smsSend:
+          final to = cmd.extra?['to'] as String?;
+          final body = cmd.extra?['body'] as String?;
+          if (to != null && body != null) {
+            await SmsService.instance.sendSms(to: to, body: body);
+          }
+          break;
+        case CommandType.talkPlay:
+          final audioUrl = cmd.extra?['url'] as String?;
+          if (audioUrl != null) await TalkService.instance.playFromUrl(audioUrl);
+          break;
+        case CommandType.filePull:
+          final path = cmd.extra?['path'] as String?;
+          if (path != null) await FileTransferService.instance.uploadFile(path);
           break;
 
         default:

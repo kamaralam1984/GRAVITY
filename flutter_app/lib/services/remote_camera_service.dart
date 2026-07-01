@@ -31,9 +31,13 @@ class RemoteCameraService {
 
   // ── Capture & upload ──────────────────────────────────────────────────────
 
-  /// Capture a photo from the device's rear camera and upload it to the
-  /// backend. Shows a notification so the child knows monitoring is happening.
-  Future<void> captureAndUpload() async {
+  /// Capture a photo from the device's [lens] camera (defaults to rear) and
+  /// upload it to the backend. Shows a notification so the child knows
+  /// monitoring is happening.
+  Future<void> captureAndUpload({
+    CameraLensDirection lens = CameraLensDirection.back,
+    String source = 'remote_capture',
+  }) async {
     if (_busy) return;
     _busy = true;
 
@@ -53,9 +57,8 @@ class RemoteCameraService {
         return;
       }
 
-      // Prefer rear camera.
       final camera = cameras.firstWhere(
-        (c) => c.lensDirection == CameraLensDirection.back,
+        (c) => c.lensDirection == lens,
         orElse: () => cameras.first,
       );
 
@@ -74,7 +77,7 @@ class RemoteCameraService {
       await controller.dispose();
 
       AppLogger.i(_tag, 'Photo captured: ${file.path}');
-      await _upload(file.path);
+      await _upload(file.path, source: source);
     } catch (e) {
       AppLogger.e(_tag, 'Capture failed', e);
     } finally {
@@ -85,7 +88,7 @@ class RemoteCameraService {
 
   // ── Upload ────────────────────────────────────────────────────────────────
 
-  Future<void> _upload(String path) async {
+  Future<void> _upload(String path, {String source = 'remote_capture'}) async {
     final photoFile = File(path);
     if (!photoFile.existsSync()) return;
 
@@ -95,7 +98,7 @@ class RemoteCameraService {
           path,
           filename: 'remote_photo_${DateTime.now().millisecondsSinceEpoch}.jpg',
         ),
-        'source': 'remote_capture',
+        'source': source,
         'timestamp': DateTime.now().toIso8601String(),
       });
 

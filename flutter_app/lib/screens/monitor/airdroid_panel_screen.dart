@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../core/config/app_config.dart';
 import '../../providers/command_provider.dart';
 import '../../services/command_service.dart';
+import '../../services/talk_recorder_service.dart';
+import 'remote_control_screen.dart';
 
 /// Remote-control panel that gives a parent one-tap access to all 19 AirDroid
 /// features for a selected child device.
@@ -35,13 +38,10 @@ class _AirdroidPanelScreenState extends ConsumerState<AirdroidPanelScreen> {
     setState(() => _pendingCommand = type);
     try {
       final notifier = ref.read(commandSendProvider.notifier);
-      // The standard sendCommand does not carry `extra`; for commands that
-      // need extra data we extend via the service directly so the backend
-      // can forward it.  For now we call the standard path — extra params are
-      // a backend concern (the child side reads them from the server payload).
       await notifier.send(
         targetUserId: widget.targetUserId,
         type: type,
+        extra: extra,
       );
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -117,12 +117,242 @@ class _AirdroidPanelScreenState extends ConsumerState<AirdroidPanelScreen> {
         ],
       ),
     );
+    final text = controller.text.trim();
     controller.dispose();
-    if (submitted == true && controller.text.trim().isNotEmpty) {
-      // Pass extra via a separate low-level call — we extend CommandService
-      // to accept extra when the backend supports it.
-      await _send(CommandType.clipboardSet);
+    if (submitted == true && text.isNotEmpty) {
+      await _send(CommandType.clipboardSet, extra: {'text': text});
     }
+  }
+
+  // ── App Lock dialog ────────────────────────────────────────────────────────
+
+  Future<void> _promptAppLock() async {
+    final pkgController = TextEditingController();
+    final pinController = TextEditingController();
+    final submitted = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Lock Apps'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            TextField(
+              controller: pkgController,
+              decoration: const InputDecoration(
+                labelText: 'Package names (comma-separated)',
+                hintText: 'com.instagram.android, com.tiktok',
+                border: OutlineInputBorder(),
+              ),
+            ),
+            const SizedBox(height: 12),
+            TextField(
+              controller: pinController,
+              decoration: const InputDecoration(
+                labelText: 'Unlock PIN',
+                border: OutlineInputBorder(),
+              ),
+              keyboardType: TextInputType.number,
+              obscureText: true,
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('Apply'),
+          ),
+        ],
+      ),
+    );
+    final packages = pkgController.text
+        .split(',')
+        .map((e) => e.trim())
+        .where((e) => e.isNotEmpty)
+        .toList();
+    final pin = pinController.text.trim();
+    pkgController.dispose();
+    pinController.dispose();
+    if (submitted == true && packages.isNotEmpty && pin.isNotEmpty) {
+      await _send(CommandType.appLockSet, extra: {
+        'packages': packages,
+        'pin': pin,
+      });
+    }
+  }
+
+  // ── Web Filter dialogs ─────────────────────────────────────────────────────
+
+  Future<void> _promptWebFilterAdd() async {
+    final controller = TextEditingController();
+    final submitted = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Block a Website'),
+        content: TextField(
+          controller: controller,
+          decoration: const InputDecoration(
+            hintText: 'e.g. pornhub.com',
+            border: OutlineInputBorder(),
+          ),
+          autofocus: true,
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('Block'),
+          ),
+        ],
+      ),
+    );
+    final url = controller.text.trim();
+    controller.dispose();
+    if (submitted == true && url.isNotEmpty) {
+      await _send(CommandType.webFilterAdd, extra: {'url': url});
+    }
+  }
+
+  // ── SMS Send dialog ────────────────────────────────────────────────────────
+
+  Future<void> _promptSmsSend() async {
+    final toController = TextEditingController();
+    final bodyController = TextEditingController();
+    final submitted = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Send SMS from Child Device'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            TextField(
+              controller: toController,
+              decoration: const InputDecoration(
+                labelText: 'To (phone number)',
+                border: OutlineInputBorder(),
+              ),
+              keyboardType: TextInputType.phone,
+            ),
+            const SizedBox(height: 12),
+            TextField(
+              controller: bodyController,
+              decoration: const InputDecoration(
+                labelText: 'Message',
+                border: OutlineInputBorder(),
+              ),
+              maxLines: 3,
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('Send'),
+          ),
+        ],
+      ),
+    );
+    final to = toController.text.trim();
+    final body = bodyController.text.trim();
+    toController.dispose();
+    bodyController.dispose();
+    if (submitted == true && to.isNotEmpty && body.isNotEmpty) {
+      await _send(CommandType.smsSend, extra: {'to': to, 'body': body});
+    }
+  }
+
+  // ── File Pull dialog ───────────────────────────────────────────────────────
+
+  Future<void> _promptFilePull() async {
+    final controller = TextEditingController();
+    final submitted = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Pull a File'),
+        content: TextField(
+          controller: controller,
+          decoration: const InputDecoration(
+            labelText: 'File path or content:// URI',
+            hintText: 'from the Monitor screen\'s Photos tab',
+            border: OutlineInputBorder(),
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('Pull'),
+          ),
+        ],
+      ),
+    );
+    final path = controller.text.trim();
+    controller.dispose();
+    if (submitted == true && path.isNotEmpty) {
+      await _send(CommandType.filePull, extra: {'path': path});
+    }
+  }
+
+  // ── Talk-to-device: record 5s and push to child ───────────────────────────
+
+  bool _talkRecording = false;
+
+  Future<void> _recordAndSendTalk() async {
+    if (_talkRecording || _pendingCommand != null) return;
+    final started = await TalkRecorderService.instance.start();
+    if (!started || !mounted) return;
+    setState(() => _talkRecording = true);
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Recording… speak now (5s)'),
+        duration: Duration(seconds: 5),
+        behavior: SnackBarBehavior.floating,
+      ),
+    );
+    await Future<void>.delayed(const Duration(seconds: 5));
+    final relativeUrl =
+        await TalkRecorderService.instance.stopAndUpload(widget.targetUserId);
+    if (!mounted) return;
+    setState(() => _talkRecording = false);
+    if (relativeUrl == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Recording failed to upload')),
+      );
+      return;
+    }
+    await _send(CommandType.talkPlay, extra: {
+      'url': '${AppConfig.baseUrl}$relativeUrl',
+    });
+  }
+
+  // ── Remote screen control ─────────────────────────────────────────────────
+
+  Future<void> _openControlPad() async {
+    // Ask the child to start listening, then open the local gesture pad.
+    await _send(CommandType.screenControlStart);
+    if (!mounted) return;
+    await Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => RemoteControlScreen(
+          targetUserId: widget.targetUserId,
+          memberName: widget.memberName,
+        ),
+      ),
+    );
+    await _send(CommandType.screenControlStop);
   }
 
   // ── Build ──────────────────────────────────────────────────────────────────
@@ -455,6 +685,116 @@ class _AirdroidPanelScreenState extends ConsumerState<AirdroidPanelScreen> {
                   color: Colors.red,
                   loading: _pendingCommand == CommandType.remoteWipe,
                   onTap: isLoading ? null : _confirmWipe,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 20),
+
+          // ── REMOTE CONTROL ───────────────────────────────────────────────────
+          _SectionHeader(
+            icon: Icons.settings_remote_rounded,
+            label: 'Remote Control',
+            color: Colors.pink,
+          ),
+          _ActionCard(
+            children: [
+              _ActionRow(
+                icon: Icons.touch_app_rounded,
+                iconColor: Colors.pink,
+                title: 'Screen Control',
+                subtitle: 'Tap/swipe/back on the child device remotely',
+                trailing: _CommandButton(
+                  label: 'Open Pad',
+                  color: Colors.pink,
+                  loading: _pendingCommand == CommandType.screenControlStart,
+                  onTap: isLoading ? null : _openControlPad,
+                ),
+              ),
+              const Divider(height: 1),
+              _ActionRow(
+                icon: Icons.lock_person_rounded,
+                iconColor: Colors.brown,
+                title: 'App Lock',
+                subtitle: 'PIN-lock specific apps on the child device',
+                trailing: _CommandButton(
+                  label: 'Configure',
+                  color: Colors.brown,
+                  loading: _pendingCommand == CommandType.appLockSet,
+                  onTap: isLoading ? null : _promptAppLock,
+                ),
+              ),
+              const Divider(height: 1),
+              _ActionRow(
+                icon: Icons.public_off_rounded,
+                iconColor: Colors.indigo,
+                title: 'Web Filter',
+                subtitle: 'Block a website/domain in the browser',
+                trailing: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    _CommandButton(
+                      label: 'Add',
+                      color: Colors.indigo,
+                      loading: _pendingCommand == CommandType.webFilterAdd,
+                      onTap: isLoading ? null : _promptWebFilterAdd,
+                    ),
+                    const SizedBox(width: 8),
+                    _CommandButton(
+                      label: 'Enable',
+                      color: Colors.indigo,
+                      loading:
+                          _pendingCommand == CommandType.webFilterSetEnabled,
+                      onTap: isLoading
+                          ? null
+                          : () => _send(
+                                CommandType.webFilterSetEnabled,
+                                extra: {'enabled': true},
+                              ),
+                    ),
+                  ],
+                ),
+              ),
+              const Divider(height: 1),
+              _ActionRow(
+                icon: Icons.record_voice_over_rounded,
+                iconColor: Colors.teal,
+                title: 'Talk to Device',
+                subtitle: _talkRecording
+                    ? 'Recording… speak now'
+                    : 'Record a 5s voice message to play on the child device',
+                trailing: _CommandButton(
+                  label: _talkRecording ? 'Recording…' : 'Record & Send',
+                  color: Colors.teal,
+                  loading: _talkRecording,
+                  onTap:
+                      (isLoading || _talkRecording) ? null : _recordAndSendTalk,
+                ),
+              ),
+              const Divider(height: 1),
+              _ActionRow(
+                icon: Icons.sms_rounded,
+                iconColor: Colors.lightGreen.shade700,
+                title: 'Send SMS',
+                subtitle: 'Send a text message from the child device',
+                trailing: _CommandButton(
+                  label: 'Compose',
+                  color: Colors.lightGreen.shade700,
+                  loading: _pendingCommand == CommandType.smsSend,
+                  onTap: isLoading ? null : _promptSmsSend,
+                ),
+              ),
+              const Divider(height: 1),
+              _ActionRow(
+                icon: Icons.file_present_rounded,
+                iconColor: Colors.deepOrange.shade400,
+                title: 'File Transfer',
+                subtitle: 'Pull an arbitrary file from the child device',
+                trailing: _CommandButton(
+                  label: 'Pull',
+                  color: Colors.deepOrange.shade400,
+                  loading: _pendingCommand == CommandType.filePull,
+                  onTap: isLoading ? null : _promptFilePull,
                 ),
               ),
             ],

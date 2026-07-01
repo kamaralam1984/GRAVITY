@@ -1,139 +1,27 @@
-import 'dart:async';
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter_animate/flutter_animate.dart';
-import 'package:geolocator/geolocator.dart';
-import 'package:sensors_plus/sensors_plus.dart';
 
-import '../../core/services/storage_service.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_dimensions.dart';
 import '../../core/theme/app_text_styles.dart';
 import '../../models/health_model.dart';
 import '../../providers/elder_provider.dart';
 import '../../providers/auth_provider.dart';
-import '../../repositories/sos_repository.dart';
+import '../../providers/fall_detection_provider.dart';
 import '../../routes/route_names.dart';
 
-// ── Fall Detection ────────────────────────────────────────────────────────────
-
-/// Immutable status surfaced by [fallDetectionProvider].
-class FallDetectionStatus {
-  const FallDetectionStatus({
-    this.enabled = false,
-    this.lastFallAt,
-    this.lastAlertSent,
-  });
-
-  /// Whether the accelerometer monitor is actively running.
-  final bool enabled;
-
-  /// Timestamp of the most recently detected fall, if any.
-  final DateTime? lastFallAt;
-
-  /// Whether the last detected fall successfully raised an SOS alert.
-  final bool? lastAlertSent;
-
-  FallDetectionStatus copyWith({
-    bool? enabled,
-    DateTime? lastFallAt,
-    bool? lastAlertSent,
-  }) =>
-      FallDetectionStatus(
-        enabled: enabled ?? this.enabled,
-        lastFallAt: lastFallAt ?? this.lastFallAt,
-        lastAlertSent: lastAlertSent ?? this.lastAlertSent,
-      );
-}
-
-/// Listens to the device accelerometer and raises an SOS alert through the
-/// existing `POST /sos/trigger` endpoint when a fall-like impact is detected.
-class FallDetectionController extends StateNotifier<FallDetectionStatus> {
-  FallDetectionController() : super(const FallDetectionStatus());
-
-  StreamSubscription<AccelerometerEvent>? _sub;
-  DateTime? _lastTrigger;
-
-  // Impact magnitude (m/s^2) that qualifies as a possible fall. Resting
-  // gravity is ~9.8; a hard impact spikes well above this.
-  static const double _impactThreshold = 28.0;
-
-  /// Begin monitoring the accelerometer for falls.
-  void start() {
-    if (state.enabled) return;
-    state = state.copyWith(enabled: true);
-    _sub = accelerometerEventStream().listen(_onSample);
-  }
-
-  /// Stop monitoring and release the sensor subscription.
-  void stop() {
-    _sub?.cancel();
-    _sub = null;
-    state = state.copyWith(enabled: false);
-  }
-
-  void _onSample(AccelerometerEvent e) {
-    final magnitude = math.sqrt(e.x * e.x + e.y * e.y + e.z * e.z);
-    if (magnitude >= _impactThreshold) {
-      _handleFall();
-    }
-  }
-
-  Future<void> _handleFall() async {
-    final now = DateTime.now();
-    // Debounce repeated spikes from a single event.
-    if (_lastTrigger != null &&
-        now.difference(_lastTrigger!).inSeconds < 30) {
-      return;
-    }
-    _lastTrigger = now;
-    state = state.copyWith(lastFallAt: now);
-
-    bool sent = false;
-    try {
-      final familyId = StorageService.instance.getSelectedFamilyId();
-      if (familyId != null) {
-        double? lat;
-        double? lng;
-        try {
-          final pos = await Geolocator.getCurrentPosition();
-          lat = pos.latitude;
-          lng = pos.longitude;
-        } catch (_) {
-          // Location optional — alert still fires without coordinates.
-        }
-        await SosRepository.instance.triggerSos(
-          familyId: familyId,
-          lat: lat,
-          lng: lng,
-          message: 'Possible fall detected — automatic alert',
-        );
-        sent = true;
-      }
-    } catch (_) {
-      // Swallow network/sensor errors; UI reflects send outcome below.
-    }
-    state = state.copyWith(lastAlertSent: sent);
-  }
-
-  @override
-  void dispose() {
-    _sub?.cancel();
-    super.dispose();
-  }
-}
-
-/// Riverpod handle for the fall-detection monitor. Call
-/// `ref.read(fallDetectionProvider.notifier).start()` / `.stop()` to toggle.
-final fallDetectionProvider =
-    StateNotifierProvider<FallDetectionController, FallDetectionStatus>(
-  (ref) => FallDetectionController(),
-);
-
 // ── Elder Care Dashboard ──────────────────────────────────────────────────────
+//
+// Fall detection is implemented by [FallDetectionService] +
+// [FallDetectionNotifier] (see providers/fall_detection_provider.dart and
+// services/fall_detection_service.dart), which detects the free-fall →
+// impact signature (rather than a raw impact-only threshold), debounces
+// repeated bounces from a single incident, and gives the elder a
+// confirmation countdown to cancel a false alarm before an SOS is raised.
 
 class ElderScreen extends ConsumerStatefulWidget {
   const ElderScreen({super.key});
@@ -319,12 +207,18 @@ class _ElderScreenState extends ConsumerState<ElderScreen> {
                               onToggle: (v) {
                                 final ctrl =
                                     ref.read(fallDetectionProvider.notifier);
-                                v ? ctrl.start() : ctrl.stop();
+                                v ? ctrl.startMonitoring() : ctrl.stopMonitoring();
                                 // Keep elder dashboard state in sync.
                                 ref
                                     .read(elderProvider.notifier)
                                     .toggleFallDetection(v);
                               },
+                              onMarkSafe: () => ref
+                                  .read(fallDetectionProvider.notifier)
+                                  .markSafe(),
+                              onTriggerNow: () => ref
+                                  .read(fallDetectionProvider.notifier)
+                                  .triggerNow(),
                             ).animate(delay: 80.ms).fadeIn(duration: 400.ms).slideY(
                                 begin: 0.08, end: 0, curve: Curves.easeOut),
                             const SizedBox(height: 20),
@@ -634,10 +528,17 @@ class _HealthCard extends StatelessWidget {
 // ── Fall Detection Card ───────────────────────────────────────────────────────
 
 class _FallDetectionCard extends StatelessWidget {
-  const _FallDetectionCard({required this.status, required this.onToggle});
+  const _FallDetectionCard({
+    required this.status,
+    required this.onToggle,
+    required this.onMarkSafe,
+    required this.onTriggerNow,
+  });
 
-  final FallDetectionStatus status;
+  final FallDetectionState status;
   final ValueChanged<bool> onToggle;
+  final VoidCallback onMarkSafe;
+  final VoidCallback onTriggerNow;
 
   String _formatTime(DateTime dt) {
     final h = dt.hour % 12 == 0 ? 12 : dt.hour % 12;
@@ -648,7 +549,7 @@ class _FallDetectionCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final enabled = status.enabled;
+    final enabled = status.isMonitoring;
     final accent = enabled ? context.safeColor : context.textMuted;
 
     return Container(
@@ -667,9 +568,11 @@ class _FallDetectionCard extends StatelessWidget {
         color: enabled ? null : context.surfaceColor,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: enabled
-              ? context.safeColor.withOpacity(0.3)
-              : context.borderColor,
+          color: status.pendingFall
+              ? context.sosColor.withOpacity(0.5)
+              : enabled
+                  ? context.safeColor.withOpacity(0.3)
+                  : context.borderColor,
         ),
       ),
       child: Column(
@@ -715,20 +618,120 @@ class _FallDetectionCard extends StatelessWidget {
               ),
             ],
           ),
-          if (enabled) ...[
+          // Confirmation countdown — the elder can cancel a false alarm before
+          // the SOS alert is actually sent.
+          if (status.pendingFall) ...[
+            const SizedBox(height: 14),
+            _FallConfirmBanner(
+              countdown: status.countdown,
+              onMarkSafe: onMarkSafe,
+              onTriggerNow: onTriggerNow,
+            ),
+          ] else if (status.isPosting) ...[
+            const SizedBox(height: 14),
+            _StatusPill(
+              icon: Icons.sensors_rounded,
+              color: context.sosColor,
+              label: 'Sending SOS alert to family…',
+              danger: true,
+            ),
+          ] else if (enabled) ...[
             const SizedBox(height: 14),
             _StatusPill(
               icon: Icons.sensors_rounded,
               color: context.safeColor,
-              label: status.lastFallAt == null
+              label: status.lastFall == null
                   ? 'Sensor armed · no falls detected'
-                  : status.lastAlertSent == true
-                      ? 'Fall at ${_formatTime(status.lastFallAt!)} · family alerted'
-                      : 'Fall at ${_formatTime(status.lastFallAt!)} · alert could not be sent',
-              danger: status.lastFallAt != null &&
-                  status.lastAlertSent != true,
+                  : status.alertSentAt != null
+                      ? 'Fall at ${_formatTime(status.lastFall!.detectedAt)} · family alerted'
+                      : status.error != null
+                          ? 'Fall at ${_formatTime(status.lastFall!.detectedAt)} · alert could not be sent'
+                          : 'Fall at ${_formatTime(status.lastFall!.detectedAt)} · cancelled by you',
+              danger: status.lastFall != null &&
+                  status.alertSentAt == null &&
+                  status.error != null,
             ),
           ],
+        ],
+      ),
+    );
+  }
+}
+
+/// Shown while a detected fall is awaiting confirmation. Gives the elder a
+/// short window to cancel a false alarm (e.g. the phone was dropped, not the
+/// person) before the SOS alert automatically fires.
+class _FallConfirmBanner extends StatelessWidget {
+  const _FallConfirmBanner({
+    required this.countdown,
+    required this.onMarkSafe,
+    required this.onTriggerNow,
+  });
+
+  final int countdown;
+  final VoidCallback onMarkSafe;
+  final VoidCallback onTriggerNow;
+
+  @override
+  Widget build(BuildContext context) {
+    final c = context.sosColor;
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: c.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: c.withOpacity(0.3)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(Icons.warning_amber_rounded, color: c, size: 20),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  'Possible fall detected — alerting family in $countdown s',
+                  style: AppTextStyles.body2(context)
+                      .copyWith(color: c, fontWeight: FontWeight.w700),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 4),
+          Text(
+            'If you are okay, tap "I\'m Safe" to cancel this alert.',
+            style: AppTextStyles.caption(context),
+          ),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              Expanded(
+                child: OutlinedButton(
+                  onPressed: onMarkSafe,
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: context.safeColor,
+                    side: BorderSide(color: context.safeColor),
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                  ),
+                  child: const Text("I'm Safe"),
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: ElevatedButton(
+                  onPressed: onTriggerNow,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: c,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                  ),
+                  child: const Text('Alert Now'),
+                ),
+              ),
+            ],
+          ),
         ],
       ),
     );

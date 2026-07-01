@@ -73,10 +73,15 @@ class CommandSendNotifier extends StateNotifier<CommandSendState> {
   Future<bool> send({
     required int targetUserId,
     required String type,
+    Map<String, dynamic>? extra,
   }) async {
     state = state.copyWith(sending: true, clearError: true);
     try {
-      await _service.sendCommand(targetUserId: targetUserId, type: type);
+      await _service.sendCommand(
+        targetUserId: targetUserId,
+        type: type,
+        extra: extra,
+      );
       state = state.copyWith(
         sending: false,
         lastSentType: type,

@@ -226,7 +226,7 @@ class DrivingEvent(Base):
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
     journey_id = Column(Integer, ForeignKey("journeys.id"), nullable=True)
-    type = Column(String, nullable=False)  # speeding/phone_use/harsh_brake/rapid_accel
+    type = Column(String, nullable=False)  # speeding/phone_use/harsh_braking/rapid_accel
     lat = Column(Float, nullable=True)
     lng = Column(Float, nullable=True)
     speed = Column(Float, nullable=True)

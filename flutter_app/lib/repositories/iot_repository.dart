@@ -123,19 +123,18 @@ class IotRepository {
   }
 
   /// Lock or unlock a smart lock. Returns true on success.
+  ///
+  /// Matches the backend's `POST /titan/locks/{lock_id}/action` endpoint,
+  /// which expects a JSON body `{"action": "lock" | "unlock"}`.
   Future<bool> setLock(int lockId, {required bool locked}) async {
     try {
       await _dio.post(
-        '/titan/locks/$lockId/${locked ? 'lock' : 'unlock'}',
+        '/titan/locks/$lockId/action',
+        data: {'action': locked ? 'lock' : 'unlock'},
       );
       return true;
     } catch (_) {
-      try {
-        await _dio.post('/titan/locks/$lockId', data: {'locked': locked});
-        return true;
-      } catch (_) {
-        return false;
-      }
+      return false;
     }
   }
 

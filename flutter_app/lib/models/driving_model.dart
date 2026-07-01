@@ -14,7 +14,7 @@ class DrivingEvent {
   final int? id;
   final int? userId;
 
-  /// 'hard_brake' | 'rapid_acceleration' | 'sharp_corner' | 'speeding' | 'distraction'
+  /// 'harsh_braking' | 'rapid_acceleration' | 'sharp_corner' | 'speeding' | 'distraction'
   final String type;
   final double lat;
   final double lng;
@@ -31,7 +31,7 @@ class DrivingEvent {
 
   String get typeLabel {
     switch (type) {
-      case 'hard_brake':
+      case 'harsh_braking':
         return 'Hard Braking';
       case 'rapid_acceleration':
         return 'Rapid Acceleration';

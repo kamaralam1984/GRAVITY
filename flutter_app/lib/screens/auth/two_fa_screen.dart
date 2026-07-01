@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:qr_flutter/qr_flutter.dart';
 
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_dimensions.dart';
@@ -316,6 +317,25 @@ class _TwoFaScreenState extends ConsumerState<TwoFaScreen>
 
                 if (_qrUrl != null) ...[
                   const SizedBox(height: 16),
+                  Center(
+                    child: Container(
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(
+                          color: context.primaryColor.withOpacity(0.2),
+                        ),
+                      ),
+                      child: QrImageView(
+                        data: _qrUrl!,
+                        version: QrVersions.auto,
+                        size: 200,
+                        gapless: false,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
                   Container(
                     width: double.infinity,
                     padding: const EdgeInsets.all(12),
@@ -332,7 +352,7 @@ class _TwoFaScreenState extends ConsumerState<TwoFaScreen>
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'QR Code URL:',
+                          'Can\'t scan? Use this URL:',
                           style: TextStyle(
                             fontFamily: 'Inter',
                             fontSize: 11,

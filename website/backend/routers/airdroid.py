@@ -520,6 +520,60 @@ async def upload_camera_photo(
     return {"id": row.id, "filename": filename, "size": size}
 
 
+@router.post("/file/upload")
+async def upload_generic_file(
+    file: UploadFile = File(...),
+    source_path: Optional[str] = None,
+    current_user: models.User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """Child device uploads an arbitrary requested file (generic file-pull)."""
+    filename, path, size = _save_upload(file, "files", current_user.id)
+    row = MonitorFile(
+        user_id=current_user.id,
+        file_type="file",
+        filename=file.filename or filename,
+        file_path=path,
+        file_size=size,
+        timestamp=datetime.utcnow().isoformat(),
+        source=source_path or "file_pull",
+    )
+    db.add(row)
+    db.commit()
+    db.refresh(row)
+    return {"id": row.id, "filename": row.filename, "size": size, "url": _file_url(row)}
+
+
+@router.post("/talk/upload")
+async def upload_talk_audio(
+    target_user_id: int,
+    audio: UploadFile = File(...),
+    current_user: models.User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """Parent uploads a voice clip to be played on [target_user_id]'s device.
+
+    Stored under the *target's* user_id (not the uploader's) so the child
+    device — the eventual downloader — passes the `caller.id == row.user_id`
+    fast-path in [_assert_can_read].
+    """
+    _assert_can_read(current_user, target_user_id, db)
+    filename, path, size = _save_upload(audio, "talk", target_user_id)
+    row = MonitorFile(
+        user_id=target_user_id,
+        file_type="talk_audio",
+        filename=filename,
+        file_path=path,
+        file_size=size,
+        timestamp=datetime.utcnow().isoformat(),
+        source=f"talk_from_{current_user.id}",
+    )
+    db.add(row)
+    db.commit()
+    db.refresh(row)
+    return {"id": row.id, "filename": filename, "size": size, "url": _file_url(row)}
+
+
 # ══════════════════════════════════════════════════════════════════════════════
 # Read endpoints (parent reads child's data)
 # ══════════════════════════════════════════════════════════════════════════════
@@ -691,6 +745,23 @@ def get_camera_photos(
     rows = (
         db.query(MonitorFile)
         .filter(MonitorFile.user_id == user_id, MonitorFile.file_type == "camera_photo")
+        .order_by(MonitorFile.id.desc())
+        .limit(100)
+        .all()
+    )
+    return [{"id": r.id, "filename": r.filename, "size": r.file_size, "timestamp": r.timestamp, "url": _file_url(r), "created_at": r.created_at.isoformat() if r.created_at else None} for r in rows]
+
+
+@router.get("/{user_id}/files")
+def get_generic_files(
+    user_id: int,
+    current_user: models.User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    _assert_can_read(current_user, user_id, db)
+    rows = (
+        db.query(MonitorFile)
+        .filter(MonitorFile.user_id == user_id, MonitorFile.file_type == "file")
         .order_by(MonitorFile.id.desc())
         .limit(100)
         .all()
