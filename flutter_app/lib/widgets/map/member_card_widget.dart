@@ -16,12 +16,18 @@ class MemberCardWidget extends StatelessWidget {
     this.location,
     this.onTap,
     this.isSelected = false,
-  });
+    bool? isOnline,
+  }) : _isOnlineOverride = isOnline;
 
   final FamilyMember member;
   final LocationUpdate? location;
   final VoidCallback? onTap;
   final bool isSelected;
+
+  /// Lets the caller supply a more up-to-date online signal (e.g. a live
+  /// websocket push) than `member.isOnline`'s periodic-refresh snapshot.
+  /// Falls back to `member.isOnline` when not provided.
+  final bool? _isOnlineOverride;
 
   @override
   Widget build(BuildContext context) {
@@ -33,8 +39,7 @@ class MemberCardWidget extends StatelessWidget {
     final speed = location?.speed != null
         ? '${(location!.speed! * 3.6).round()} km/h'
         : null;
-    final isOnline =
-        member.isOnline || location != null;
+    final isOnline = _isOnlineOverride ?? member.isOnline;
 
     return GestureDetector(
       onTap: onTap,

@@ -1,7 +1,9 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_map/flutter_map.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart' hide Family;
 import 'package:go_router/go_router.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:share_plus/share_plus.dart';
@@ -33,17 +35,37 @@ class _MapScreenState extends ConsumerState<MapScreen> {
 
   bool _localDarkMode = true; // Map tile theme (independent of app theme)
   int? _followingUserId;
+  Timer? _refreshTimer;
 
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _localDarkMode = context.isDark;
+      _connectAndRefresh();
     });
+    // The family members list (which carries each member's `isOnline`
+    // snapshot) is otherwise only fetched once at app start / family
+    // switch, so it goes stale the moment someone comes online/offline
+    // while this tab is open. Poll it while the Map tab is visible.
+    _refreshTimer = Timer.periodic(const Duration(seconds: 20), (_) {
+      final family = ref.read(familyProvider).selectedFamily;
+      if (family != null) {
+        ref.read(familyProvider.notifier).loadMembers(family.id);
+      }
+    });
+  }
+
+  void _connectAndRefresh() {
+    final family = ref.read(familyProvider).selectedFamily;
+    if (family == null) return;
+    ref.read(locationNotifierProvider.notifier).connect(family.id);
+    ref.read(familyProvider.notifier).loadMembers(family.id);
   }
 
   @override
   void dispose() {
+    _refreshTimer?.cancel();
     _mapCtrl.dispose();
     _sheetCtrl.dispose();
     super.dispose();
@@ -245,9 +267,33 @@ class _MapScreenState extends ConsumerState<MapScreen> {
     final ghostState = ref.watch(ghostModeProvider);
     final members = familyState.members;
 
+    // `locationState.memberLocations` only has an entry once a member's
+    // device pushes a live update over the websocket — a member whose app
+    // is backgrounded (still updating via the periodic REST endpoint) would
+    // otherwise never get a pin at all. Seed markers from the last-known
+    // REST location too, letting a live websocket update override it.
+    final markerLocations = <int, LocationUpdate>{
+      for (final m in members)
+        if (m.lat != null && m.lng != null)
+          m.userId: LocationUpdate(
+            userId: m.userId,
+            name: m.name,
+            lat: m.lat!,
+            lng: m.lng!,
+            placeName: m.placeName,
+            battery: m.battery,
+            activity: m.activity,
+            speed: m.speed,
+            heading: m.heading,
+            accuracy: m.accuracy,
+            timestamp: m.lastSeen ?? DateTime.now(),
+          ),
+      ...locationState.memberLocations,
+    };
+
     // Follow selected member
     if (_followingUserId != null) {
-      final loc = locationState.memberLocations[_followingUserId];
+      final loc = markerLocations[_followingUserId];
       if (loc != null) {
         WidgetsBinding.instance.addPostFrameCallback((_) {
           if (mounted) {
@@ -312,12 +358,16 @@ class _MapScreenState extends ConsumerState<MapScreen> {
 
               // Member markers
               MarkerLayer(
-                markers: locationState.memberLocations.values
+                markers: markerLocations.values
                     .map((loc) {
                   final member = members.where((m) => m.userId == loc.userId);
-                  final isOnline = member.isNotEmpty
-                      ? member.first.isOnline
-                      : true;
+                  // A live websocket push for this member is a stronger
+                  // online signal than the periodically-refreshed REST
+                  // snapshot, so it takes priority when present.
+                  final isOnline = locationState.onlineUserIds
+                          .contains(loc.userId) ||
+                      locationState.memberLocations.containsKey(loc.userId) ||
+                      (member.isNotEmpty && member.first.isOnline);
                   return Marker(
                     point: LatLng(loc.lat, loc.lng),
                     width: 70,
@@ -404,7 +454,7 @@ class _MapScreenState extends ConsumerState<MapScreen> {
                       const SizedBox(width: 4),
                       Text(
                         locationState.isConnected
-                            ? '${locationState.memberLocations.length} live'
+                            ? '${markerLocations.length} live'
                             : 'Offline',
                         style: AppTextStyles.caption(context),
                       ),
@@ -428,8 +478,7 @@ class _MapScreenState extends ConsumerState<MapScreen> {
                 _MapControlButton(
                   icon: Icons.my_location_rounded,
                   tooltip: 'Center on all',
-                  onTap: () =>
-                      _centerOnAll(locationState.memberLocations),
+                  onTap: () => _centerOnAll(markerLocations),
                 ),
                 const SizedBox(height: 8),
                 _MapControlButton(
@@ -609,11 +658,16 @@ class _MapScreenState extends ConsumerState<MapScreen> {
                               itemCount: members.length,
                               itemBuilder: (ctx, i) {
                                 final m = members[i];
-                                final loc = locationState
-                                    .memberLocations[m.userId];
+                                final loc = markerLocations[m.userId];
+                                final isOnline = locationState.onlineUserIds
+                                        .contains(m.userId) ||
+                                    locationState.memberLocations
+                                        .containsKey(m.userId) ||
+                                    m.isOnline;
                                 return MemberCardWidget(
                                   member: m,
                                   location: loc,
+                                  isOnline: isOnline,
                                   isSelected:
                                       _followingUserId == m.userId,
                                   onTap: () => _centerOnMember(loc),

@@ -2,10 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:go_router/go_router.dart';
 import 'package:latlong2/latlong.dart';
 
 import '../../core/config/app_config.dart';
+import '../../core/services/permission_service.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_text_styles.dart';
 import '../../providers/family_provider.dart';
@@ -33,6 +35,8 @@ class _CreateGeofenceScreenState
   bool _alertOnEnter = true;
   bool _alertOnExit = true;
   bool _saving = false;
+  bool _locating = true;
+  String? _locationError;
 
   static const _types = [
     ('home', Icons.home_rounded, 'Home'),
@@ -51,14 +55,64 @@ class _CreateGeofenceScreenState
   ];
 
   @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) => _useCurrentLocation());
+  }
+
+  @override
   void dispose() {
     _nameCtrl.dispose();
     super.dispose();
   }
 
+  /// Zone center defaults to the device's current GPS location — the map is
+  /// display-only now, there is no tap-to-place gesture.
+  Future<void> _useCurrentLocation() async {
+    setState(() {
+      _locating = true;
+      _locationError = null;
+    });
+    try {
+      var granted = await PermissionService.instance.isLocationGranted();
+      if (!granted) {
+        granted = await PermissionService.instance.requestLocationPermission();
+      }
+      if (!granted) {
+        if (mounted) {
+          setState(() {
+            _locating = false;
+            _locationError = 'Location permission denied';
+          });
+        }
+        return;
+      }
+      final pos = await Geolocator.getCurrentPosition(
+        locationSettings: const LocationSettings(
+          accuracy: LocationAccuracy.high,
+          timeLimit: Duration(seconds: 10),
+        ),
+      );
+      final point = LatLng(pos.latitude, pos.longitude);
+      if (!mounted) return;
+      setState(() {
+        _center = point;
+        _locating = false;
+      });
+      _mapCtrl.move(point, 16);
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _locating = false;
+          _locationError = 'Could not get current location';
+        });
+      }
+    }
+  }
+
   Future<void> _save() async {
     if (_center == null) {
-      _showError('Tap on the map to place the zone center');
+      _showError('Could not determine current location — try again');
       return;
     }
     if (!(_formKey.currentState?.validate() ?? false)) return;
@@ -175,11 +229,8 @@ class _CreateGeofenceScreenState
                 FlutterMap(
                   mapController: _mapCtrl,
                   options: MapOptions(
-                    initialCenter: const LatLng(20.5937, 78.9629),
-                    initialZoom: 12,
-                    onTap: (_, point) {
-                      setState(() => _center = point);
-                    },
+                    initialCenter: _center ?? const LatLng(20.5937, 78.9629),
+                    initialZoom: _center != null ? 16 : 12,
                   ),
                   children: [
                     TileLayer(
@@ -226,8 +277,8 @@ class _CreateGeofenceScreenState
                       ),
                   ],
                 ),
-                // Tap hint
-                if (_center == null)
+                // Locating current position
+                if (_locating)
                   Center(
                     child: IgnorePointer(
                       child: GlassCard(
@@ -237,18 +288,66 @@ class _CreateGeofenceScreenState
                         child: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            Icon(Icons.touch_app_rounded,
-                                color: context.primaryColor, size: 18),
-                            const SizedBox(width: 8),
+                            SizedBox(
+                              width: 16,
+                              height: 16,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                color: context.primaryColor,
+                              ),
+                            ),
+                            const SizedBox(width: 10),
                             Text(
-                              'Tap map to place zone center',
+                              'Finding current location…',
                               style: AppTextStyles.label(context),
                             ),
                           ],
                         ),
                       ),
                     ),
+                  )
+                else if (_locationError != null)
+                  Center(
+                    child: GlassCard(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 16, vertical: 10),
+                      borderRadius: 12,
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(Icons.location_off_rounded,
+                                  color: context.sosColor, size: 18),
+                              const SizedBox(width: 8),
+                              Text(
+                                _locationError!,
+                                style: AppTextStyles.label(context),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 8),
+                          TextButton(
+                            onPressed: _useCurrentLocation,
+                            child: const Text('Retry'),
+                          ),
+                        ],
+                      ),
+                    ),
                   ),
+                // Recenter-to-current-location button
+                Positioned(
+                  right: 12,
+                  bottom: 12,
+                  child: FloatingActionButton.small(
+                    heroTag: 'geofence_recenter',
+                    onPressed: _locating ? null : _useCurrentLocation,
+                    backgroundColor: context.surface2Color,
+                    foregroundColor: context.primaryColor,
+                    child: const Icon(Icons.my_location_rounded),
+                  ),
+                ),
               ],
             ),
           ),
