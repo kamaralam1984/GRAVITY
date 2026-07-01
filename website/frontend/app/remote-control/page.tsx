@@ -36,6 +36,9 @@ export default function RemoteControlPickerPage() {
       router.replace('/login?redirect=/remote-control')
       return
     }
+    // Narrowed to a plain number here so the nested async closure below
+    // doesn't lose TypeScript's null-check narrowing on `user`.
+    const currentUserId = user.id
 
     async function load() {
       try {
@@ -48,7 +51,7 @@ export default function RemoteControlPickerPage() {
         const fid = families[0].id
         const list = await familiesApi.members(fid)
         // Exclude the logged-in parent themselves from the controllable list
-        const others = Array.isArray(list) ? list.filter((m: Member) => m.user_id !== user.id) : []
+        const others = Array.isArray(list) ? list.filter((m: Member) => m.user_id !== currentUserId) : []
         setMembers(others)
       } catch (e: any) {
         setError(e?.message || 'Failed to load family members')
